@@ -1,5 +1,7 @@
 # Manor Hi-Fi Round 2 — Build Spec (for builder agents)
 
+_Last updated: 2026-08-21_
+
 You are building HI-FI static mockup artboards for Manor, a personal productivity macOS app (Electron). Three aesthetic directions share ONE locked structure. You build ONE direction (told in your prompt), 11 artboards, as `.dc.html` files in `/Users/user/Projects/my-notion-replacement/docs/design/canvas/`.
 
 Read before building:

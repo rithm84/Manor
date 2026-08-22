@@ -1,5 +1,7 @@
 # AGENTS
 
+_Last updated: 2026-08-21_
+
 Operational guide for coding agents working on Manor.
 
 ## Project Overview
@@ -28,9 +30,9 @@ my-notion-replacement/
 │   ├── PRD.md                # The product decision record — the source of truth
 │   ├── NOTION-REPORT.md      # Research on the legacy Notion system being replaced
 │   ├── NOTION-DESIGN.md      # Study of Notion's interface craft (reference)
+│   ├── DESIGN.md             # Binding design charter: Atelier tokens, type roles, copy voice
 │   └── design/canvas/        # Design-canvas working files (SPEC.md §B mirrors the mock canon)
 ├── app/                      # The Electron shell (electron-vite + React 19 + TS)
-│   ├── DESIGN.md             # Binding design charter: Atelier tokens, type roles, copy voice
 │   └── src/renderer/src/     # data/mock.ts = single mock-data source; pages/; components/ui/
 ├── .agents/skills/
 │   ├── emilkowalski-design/  # Vendored design/animation skills (7)
@@ -62,7 +64,7 @@ work:
 2. `docs/NOTION-REPORT.md` — skim for legacy context; §5 lists the Notion
    workarounds Manor exists to eliminate.
 
-Before any UI/UX work, additionally read `app/DESIGN.md` (the design
+Before any UI/UX work, additionally read `docs/DESIGN.md` (the design
 charter) and `docs/NOTION-DESIGN.md` (micro-interaction craft reference).
 
 ## Decisions Discipline
@@ -146,4 +148,8 @@ Notion, Cron Calendar, Obvious).
   parallel data; extend mock.ts additively instead.
 - **Docs:** one source of truth per fact — abridge and point rather than
   duplicate across docs. New long-form research goes in `docs/`.
+- **Last-updated stamps:** every doc (this file, `docs/*.md`,
+  `app/README.md`, `docs/design/canvas/SPEC.md`) carries a
+  `_Last updated: YYYY-MM-DD_` line under its title. Whenever you edit a
+  doc, update its stamp in the same change.
 - **Deletions of user work and destructive git operations: ask first.**

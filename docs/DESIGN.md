@@ -1,6 +1,8 @@
 # Manor — Design Charter (hi-fi Electron shell)
 
-The binding design reference for everyone building `app/`. Read fully before writing any UI. The product-mechanics truth is `docs/BRAINSTORM.md`; the canonical mock-data story is `docs/design/canvas/SPEC.md` §B (reuse it exactly — one story everywhere). The anti-patterns in `AGENTS.md` are hard rules; violating them is a failed deliverable.
+_Last updated: 2026-08-21_
+
+The binding design reference for everyone building `app/`. Read fully before writing any UI. The product-mechanics truth is `docs/PRD.md`; the canonical mock-data story is `app/src/renderer/src/data/mock.ts` (mirrored in `docs/design/canvas/SPEC.md` §B — one story everywhere). The anti-patterns in `AGENTS.md` are hard rules; violating them is a failed deliverable.
 
 ## Direction
 

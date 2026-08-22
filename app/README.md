@@ -1,5 +1,7 @@
 # Manor (hi-fi UI shell)
 
+_Last updated: 2026-08-21_
+
 The Electron shell for Manor: UI only, mock data, no backend, no network
 calls at runtime. Design charter: `DESIGN.md` in this directory. Product
 truth: `../docs/BRAINSTORM.md`.

@@ -1,5 +1,7 @@
 # Notion Design Notes
 
+_Last updated: 2026-08-20_
+
 A study of Notion's interface design and product philosophy — normalized notes from a talk (timestamps reference the source video). Reference material on how a mature block/database product handles micro-interaction craft, primitive design, and iteration.
 
 ---
