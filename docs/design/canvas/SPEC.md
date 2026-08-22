@@ -2,12 +2,12 @@
 
 _Last updated: 2026-08-21_
 
-You are building HI-FI static mockup artboards for Manor, a personal productivity macOS app (Electron). Three aesthetic directions share ONE locked structure. You build ONE direction (told in your prompt), 11 artboards, as `.dc.html` files in `/Users/user/Projects/my-notion-replacement/docs/design/canvas/`.
+You are building HI-FI static mockup artboards for Manor, a personal productivity macOS app (Electron). Three aesthetic directions share ONE locked structure. You build ONE direction (told in your prompt), 11 artboards, as `.dc.html` files in `<repo root>/docs/design/canvas/`.
 
 Read before building:
 1. This file, fully.
-2. `/Users/user/Projects/my-notion-replacement/.agents/skills/emilkowalski-design/emil-design-eng/SKILL.md` — the polish/craft bar.
-3. `/Users/user/Projects/my-notion-replacement/docs/PRD.md` §5–§7 (product truths).
+2. `<repo root>/.agents/skills/emilkowalski-design/emil-design-eng/SKILL.md` — the polish/craft bar.
+3. `<repo root>/docs/PRD.md` §5–§7 (product truths).
 
 ## A. File format (violations break the canvas — follow exactly)
 

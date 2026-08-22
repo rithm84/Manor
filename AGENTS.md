@@ -25,7 +25,7 @@ Do not start an ARCHITECTURE doc unprompted.
 ## Repository Layout
 
 ```
-my-notion-replacement/
+manor/
 ├── docs/
 │   ├── PRD.md                # The product decision record — the source of truth
 │   ├── NOTION-REPORT.md      # Research on the legacy Notion system being replaced
