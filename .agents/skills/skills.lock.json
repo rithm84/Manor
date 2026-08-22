@@ -1,0 +1,58 @@
+{
+  "lockfileVersion": 1,
+  "generated": "2026-08-21T05:22:25+00:00",
+  "sources": {
+    "emilkowalski/skills": {
+      "repo": "https://github.com/emilkowalski/skills",
+      "ref": "main",
+      "commit": "e879241fab3cdb22e8d95587cdbf40b57a88d7da",
+      "skills": {
+        "animate": {
+          "path": ".agents/skills/emilkowalski-design/animate",
+          "files": {
+            "RECIPES.md": "sha256:21ff63d84391db8d96ecdf9170095f55a42c836ccc36fd3269c4772bab031ba2",
+            "SKILL.md": "sha256:f6317335da2662e92270dc0a6128bea95d7216cd751f86628e3ac6b72804e805"
+          }
+        },
+        "apple-design": {
+          "path": ".agents/skills/emilkowalski-design/apple-design",
+          "files": {
+            "SKILL.md": "sha256:11840b24a11d7f94f39c6aaab074750ae4e4de4ef54ee4b1dd97e16ebd485e61"
+          }
+        },
+        "prototype": {
+          "path": ".agents/skills/emilkowalski-design/prototype",
+          "files": {
+            "PICKER.md": "sha256:31a55eec94715cc79942e91e172e539e3031dcd5e2e5ee7c1446cf2caee960a6",
+            "SKILL.md": "sha256:2ad8401c4deaddb54947fb65247f790e7b3d8784e35312bcbedbfb1d59cd89ce"
+          }
+        },
+        "pick-ui-library": {
+          "path": ".agents/skills/emilkowalski-design/pick-ui-library",
+          "files": {
+            "SKILL.md": "sha256:4b889bd6c08358499ac4a7202b8af71ffbd3485d2468f7b09d0613bbe7b24bf4"
+          }
+        },
+        "review-animations": {
+          "path": ".agents/skills/emilkowalski-design/review-animations",
+          "files": {
+            "SKILL.md": "sha256:61cf8ac0c4c8e1f63385298c546b16c65ca9aec34abddcd04e821c16712d671d",
+            "STANDARDS.md": "sha256:e7d3605034acda54ca13e43aec9e64d65b53de20f75b11b8d694e373012fbe07"
+          }
+        },
+        "emil-design-eng": {
+          "path": ".agents/skills/emilkowalski-design/emil-design-eng",
+          "files": {
+            "SKILL.md": "sha256:e71de849347050c2c573c1cf24d742d5a13459557ecffa6e562f08006f46b5b7"
+          }
+        },
+        "animation-vocabulary": {
+          "path": ".agents/skills/emilkowalski-design/animation-vocabulary",
+          "files": {
+            "SKILL.md": "sha256:d718b48fe3c7898804d588f050a2e266d82c9f5ef51da256c8cb8b5951527757"
+          }
+        }
+      }
+    }
+  }
+}

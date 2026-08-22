@@ -1,0 +1,604 @@
+/* Jobs page: to-apply table, pipeline board, funnel, add-role modal. Tokens only. */
+
+/* --- Header ---------------------------------------------------------------- */
+
+.jobs-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 var(--space-6);
+}
+
+.jobs-title {
+  font-size: var(--display-md);
+  line-height: 1.15;
+}
+
+.jobs-meta {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-body);
+  color: var(--ink-muted);
+}
+
+/* --- Sections --------------------------------------------------------------- */
+
+.jobs-section {
+  margin-bottom: var(--space-8);
+}
+
+.jobs-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.jobs-section-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-emphasis);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.jobs-section-count {
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.jobs-section-note {
+  font-size: var(--text-body);
+  color: var(--ink-muted);
+}
+
+/* --- To apply table --------------------------------------------------------- */
+
+.toapply {
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.toapply-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.1fr) 1.5fr 0.7fr 90px 118px;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+}
+
+.toapply-head {
+  height: 32px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-canvas);
+}
+
+.toapply-item {
+  height: 42px;
+  border-bottom: 1px solid var(--hairline);
+  cursor: grab;
+  transition:
+    background-color var(--duration-fast) ease,
+    opacity 220ms var(--ease-out),
+    transform 220ms var(--ease-out);
+}
+
+.toapply-item:active {
+  cursor: grabbing;
+}
+
+.toapply-item:last-child {
+  border-bottom: none;
+}
+
+.toapply-item:hover {
+  background: var(--surface-canvas);
+}
+
+.toapply-item.is-leaving {
+  opacity: 0;
+  transform: translateX(12px);
+  pointer-events: none;
+}
+
+.toapply-company {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.toapply-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  flex-shrink: 0;
+}
+
+.toapply-dot--spacer {
+  background: transparent;
+}
+
+.toapply-role {
+  color: var(--ink-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toapply-loc,
+.toapply-age {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.toapply-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.toapply-action .ui-button {
+  height: 26px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.toapply-item:hover .toapply-action .ui-button,
+.toapply-action .ui-button:focus-visible {
+  opacity: 1;
+}
+
+.toapply-empty {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  font-size: var(--text-body);
+  color: var(--ink-muted);
+}
+
+/* --- Funnel ------------------------------------------------------------------ */
+
+.funnel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.funnel-step {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 64px;
+}
+
+.funnel-top {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.funnel-num {
+  font-size: var(--text-emphasis);
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.funnel-label {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.funnel-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--surface-strong);
+  overflow: hidden;
+}
+
+.funnel-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+
+.funnel-step--applied .funnel-fill {
+  background: var(--forest);
+}
+
+.funnel-step--oa .funnel-fill {
+  background: var(--amber);
+}
+
+.funnel-step--interview .funnel-fill {
+  background: var(--coral);
+}
+
+.funnel-step--offer .funnel-fill {
+  background: var(--gold);
+}
+
+.funnel-sep {
+  color: var(--ink-muted);
+  opacity: 0.6;
+  margin-bottom: 6px;
+}
+
+/* --- Pipeline board ---------------------------------------------------------- */
+
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.pipeline-col {
+  border-radius: var(--radius-card);
+  padding: var(--space-2);
+  transition: box-shadow var(--duration-fast) ease;
+}
+
+.pipeline-col.is-dropover {
+  box-shadow: inset 0 0 0 1.5px var(--coral);
+}
+
+.pipeline-drop-slot {
+  height: 38px;
+  border: 1.5px dashed var(--coral);
+  border-radius: var(--radius-control);
+  background: var(--coral-soft);
+  opacity: 0.8;
+}
+
+.pipeline-col--applied {
+  background: var(--forest-soft);
+}
+
+.pipeline-col--oa {
+  background: var(--pill-today-tint);
+}
+
+.pipeline-col--interview {
+  background: var(--coral-soft);
+}
+
+.pipeline-col--decided {
+  background: var(--surface-soft);
+}
+
+.pipeline-col-head {
+  display: flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-1) var(--space-2);
+}
+
+.pipeline-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pipeline-card {
+  position: relative;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  cursor: grab;
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    transform var(--duration-press) var(--ease-out),
+    opacity var(--duration-fast) ease,
+    background-color 480ms ease;
+}
+
+.pipeline-card:hover {
+  border-color: var(--surface-strong);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Lift at the grab moment; the drag ghost snapshots this state. */
+.pipeline-card:active:not(:has(button:active)) {
+  cursor: grabbing;
+  transform: scale(1.015);
+  box-shadow: var(--shadow-overlay);
+}
+
+/* The source card while its ghost travels. */
+.pipeline-card.is-dragging {
+  opacity: 0.35;
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
+.pipeline-card.is-arrived {
+  background: var(--pill-today-tint);
+}
+
+.pipeline-card-company {
+  font-weight: 500;
+  color: var(--ink);
+  padding-right: var(--space-5);
+}
+
+.pipeline-card-role {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pipeline-card-detail {
+  margin-top: 3px;
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.pipeline-card-detail.is-due {
+  color: #b0721f;
+  font-weight: 500;
+}
+
+.pipeline-card-detail.is-rejected {
+  color: var(--ink-muted);
+}
+
+.pipeline-card-menu {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.pipeline-card-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-chip);
+  color: var(--ink-muted);
+  opacity: 0;
+  transition:
+    opacity var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+
+.pipeline-card:hover .pipeline-card-menu-btn,
+.pipeline-card-menu-btn[aria-expanded='true'] {
+  opacity: 1;
+}
+
+.pipeline-card-menu-btn:hover {
+  background: var(--surface-soft);
+  color: var(--ink-body);
+}
+
+.pipeline-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 168px;
+  padding: var(--space-1);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-overlay);
+  transform-origin: top right;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96) translateY(-2px);
+  }
+}
+
+.pipeline-menu-label {
+  padding: 4px var(--space-2) 2px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.pipeline-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-chip);
+  font-size: var(--text-body);
+  color: var(--ink-body);
+  text-align: left;
+}
+
+.pipeline-menu-item:hover {
+  background: var(--surface-soft);
+}
+
+.pipeline-menu-item--danger {
+  color: var(--error);
+}
+
+.pipeline-menu-item--danger:hover {
+  background: var(--error-soft);
+}
+
+.pipeline-col-empty {
+  padding: var(--space-3) var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+/* --- Role side peek ------------------------------------------------------------ */
+
+.jpeek {
+  display: flex;
+  flex-direction: column;
+}
+
+.jpeek-role {
+  font-size: var(--text-emphasis);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.jpeek-sub {
+  margin-top: 2px;
+  font-size: var(--text-body);
+  color: var(--ink-muted);
+}
+
+.jpeek-props {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.jpeek-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 32px;
+}
+
+.jpeek-row--tall {
+  align-items: flex-start;
+}
+
+.jpeek-row--tall .jpeek-label {
+  padding-top: 6px;
+}
+
+.jpeek-label {
+  width: 104px;
+  flex-shrink: 0;
+  font-size: var(--text-body);
+  color: var(--ink-muted);
+}
+
+.jpeek-value {
+  font-size: var(--text-body);
+  color: var(--ink-body);
+}
+
+.jpeek-value.is-muted {
+  color: var(--ink-muted);
+}
+
+.jpeek-link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.jpeek-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: var(--radius-chip);
+  color: var(--ink-muted);
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+}
+
+.jpeek-open:hover {
+  background: var(--surface-soft);
+  color: var(--ink-body);
+}
+
+.jpeek-notes {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  font-size: var(--text-body);
+  line-height: 1.55;
+  color: var(--ink-body);
+  resize: vertical;
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.jpeek-notes::placeholder {
+  color: var(--ink-muted);
+}
+
+.jpeek-notes:hover {
+  border-color: var(--surface-strong);
+}
+
+.jpeek-notes:focus {
+  border-color: var(--coral);
+  box-shadow: var(--focus-ring);
+}
+
+/* --- Add role modal ----------------------------------------------------------- */
+
+.addrole {
+  padding: var(--space-5);
+}
+
+.addrole-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: var(--space-4);
+}
+
+.addrole-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.addrole-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.addrole-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.addrole-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}

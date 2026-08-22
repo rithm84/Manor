@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;0,600;1,500&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'Inter', -apple-system, sans-serif; color: #3d3d3a; }
+    a { color: #cc785c; } a:hover { color: #a9583e; }
+  </style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; overflow: hidden; background: #faf9f5; display: flex;">
+
+  <!-- ===== Left nav ===== -->
+  <div style="width: 208px; flex-shrink: 0; box-sizing: border-box; border-right: 1px solid #e6dfd8; display: flex; flex-direction: column; padding: 20px 12px 16px 12px;">
+    <div style="padding: 2px 10px 20px 10px; font-family: 'EB Garamond', serif; font-weight: 600; font-size: 21px; letter-spacing: -0.3px; color: #141413;">Manor</div>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 L8 3 L13 7.5 V13 H9.5 V9.5 H6.5 V13 H3 Z"></path></svg></span><span>Home</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"></rect><path d="M2.5 6.5 H13.5"></path><path d="M5.5 2 V4.5"></path><path d="M10.5 2 V4.5"></path></svg></span><span>Calendar</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 C9.5 4 12 6.2 12 9.2 A4 4 0 0 1 4 9.2 C4 7.4 5 6.1 6.1 5.1 C6.3 6.2 6.9 7 7.7 7.4 C7.2 5.6 7.5 3.7 8 2 Z"></path></svg></span><span>Habits</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8 H3.5"></path><rect x="3.5" y="5.5" width="2.2" height="5" rx="0.8"></rect><path d="M5.7 8 H10.3"></path><rect x="10.3" y="5.5" width="2.2" height="5" rx="0.8"></rect><path d="M12.5 8 H14"></path></svg></span><span>Fitness</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"></circle><path d="M5.8 6.5 H5.81"></path><path d="M10.2 6.5 H10.21"></path><path d="M5.5 9.5 C6.3 10.6 9.7 10.6 10.5 9.5"></path></svg></span><span>Mood &amp; Focus</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4 L2.5 8 L6 12"></path><path d="M10 4 L13.5 8 L10 12"></path></svg></span><span>LeetCode</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="11" height="8" rx="1.5"></rect><path d="M6 5 V3.8 A1.3 1.3 0 0 1 7.3 2.5 H8.7 A1.3 1.3 0 0 1 10 3.8 V5"></path><path d="M2.5 8.5 H13.5"></path></svg></span><span>Jobs</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #141413; background: #efe9de;"><span style="display: flex; color: #cc785c;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5 H9.5 L12 5 V13.5 H4 Z"></path><path d="M9.5 2.5 V5 H12"></path><path d="M6 8.5 H10"></path><path d="M6 11 H10"></path></svg></span><span>Notes</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 H11.5 V13.5 L8 10.8 L4.5 13.5 Z"></path></svg></span><span>Bookmarks</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"></rect><path d="M5.5 7 V5 A2.5 2.5 0 0 1 10.5 5 V7"></path></svg></span><span>Journal</span></div>
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="border-top: 1px solid #e6dfd8; padding-top: 10px; display: flex; flex-direction: column; gap: 2px;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5 L9.1 6.9 L13.5 8 L9.1 9.1 L8 13.5 L6.9 9.1 L2.5 8 L6.9 6.9 Z"></path></svg></span><span>Alfred &middot; audit</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; color: #6c6a64;"><span style="display: flex;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5 H13.5"></path><circle cx="6" cy="5.5" r="1.8"></circle><path d="M2.5 10.5 H13.5"></path><circle cx="10" cy="10.5" r="1.8"></circle></svg></span><span>Settings</span></div>
+    </div>
+  </div>
+
+  <!-- ===== Folder tree ===== -->
+  <div style="width: 212px; flex-shrink: 0; box-sizing: border-box; background: #f5f0e8; border-right: 1px solid #e6dfd8; display: flex; flex-direction: column; padding: 16px 12px; gap: 2px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 6px 10px 6px;">
+      <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #a8a29a;">Folders</span>
+      <span style="display: flex; color: #6c6a64;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 3 V13"></path><path d="M3 8 H13"></path></svg></span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 8px; background: #efe9de;">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#6c6a64" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5 L8 9.5 L11 6.5"></path></svg>
+      <span style="font-size: 12.5px; font-weight: 500; color: #141413; flex: 1;">Calc III</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #a8a29a;">4</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1px; padding: 2px 0 2px 20px;">
+      <span style="font-size: 12px; font-weight: 500; color: #a9583e; padding: 4px 8px; border-radius: 6px;">Ch 14 review</span>
+      <span style="font-size: 12px; color: #6c6a64; padding: 4px 8px; border-radius: 6px;">Ch 13 &mdash; Green&#39;s Theorem</span>
+      <span style="font-size: 12px; color: #6c6a64; padding: 4px 8px; border-radius: 6px;">Midterm 2 formula sheet</span>
+      <span style="font-size: 12px; color: #6c6a64; padding: 4px 8px; border-radius: 6px;">Series convergence tests</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 8px;">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#a8a29a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 5 L9.5 8 L6.5 11"></path></svg>
+      <span style="font-size: 12.5px; font-weight: 500; color: #3d3d3a; flex: 1;">CS 225</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #a8a29a;">7</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 8px;">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#a8a29a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 5 L9.5 8 L6.5 11"></path></svg>
+      <span style="font-size: 12.5px; font-weight: 500; color: #3d3d3a; flex: 1;">Manor</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #a8a29a;">11</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 8px;">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#a8a29a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 5 L9.5 8 L6.5 11"></path></svg>
+      <span style="font-size: 12.5px; font-weight: 500; color: #3d3d3a; flex: 1;">Misc</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #a8a29a;">3</span>
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="font-size: 10px; color: #a8a29a; padding: 0 6px; line-height: 1.5;">Offline capture queues locally and syncs after lecture.</div>
+  </div>
+
+  <!-- ===== Doc list ===== -->
+  <div style="width: 248px; flex-shrink: 0; box-sizing: border-box; border-right: 1px solid #e6dfd8; display: flex; flex-direction: column; padding: 16px 10px; gap: 4px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 8px 8px 8px;">
+      <span style="font-size: 12.5px; font-weight: 600; color: #141413;">Calc III</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #a8a29a;">4 docs</span>
+    </div>
+    <div style="border: 1px solid #e6dfd8; background: #efe9de; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12.5px; font-weight: 500; color: #141413;">Ch 14 review</span>
+      <span style="font-size: 11px; color: #6c6a64; line-height: 1.4;">Partials, gradients, Lagrange&#8230;</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #a8a29a;">edited 12:40 today</span>
+    </div>
+    <!-- hovered row -->
+    <div style="border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; background: #f5f0e8;">
+      <span style="font-size: 12.5px; font-weight: 500; color: #3d3d3a;">Ch 13 &mdash; Green&#39;s Theorem</span>
+      <span style="font-size: 11px; color: #6c6a64; line-height: 1.4;">Orientation, circulation vs flux</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #a8a29a;">Aug 12</span>
+    </div>
+    <div style="border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12.5px; font-weight: 500; color: #3d3d3a;">Midterm 2 formula sheet</span>
+      <span style="font-size: 11px; color: #6c6a64; line-height: 1.4;">One page, allowed in exam</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #a8a29a;">Aug 8</span>
+    </div>
+    <div style="border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12.5px; font-weight: 500; color: #3d3d3a;">Series convergence tests</span>
+      <span style="font-size: 11px; color: #6c6a64; line-height: 1.4;">Ratio vs root, when each wins</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #a8a29a;">Jul 30</span>
+    </div>
+  </div>
+
+  <!-- ===== Editor ===== -->
+  <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden;">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 14px 36px 0 36px;">
+      <span style="font-size: 11.5px; color: #a8a29a;">Calc III</span>
+      <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#c4bcae" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4 L10 8 L6.5 12"></path></svg>
+      <span style="font-size: 11.5px; color: #6c6a64;">Ch 14 review</span>
+      <span style="flex: 1;"></span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #a8a29a;">saved &middot; 12:40</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 18px 36px 20px 36px; overflow: hidden;">
+      <div style="font-family: 'EB Garamond', serif; font-weight: 500; font-size: 34px; letter-spacing: -0.5px; color: #141413; line-height: 1.1;">Calc III &mdash; Ch 14 review</div>
+      <div style="font-size: 14.5px; color: #3d3d3a; line-height: 1.65; max-width: 620px;">The whole chapter is one move done four ways: linearize a surface, then read everything off the linearization. Partial derivatives give the slopes, the gradient stacks them into the direction of steepest ascent, and the tangent plane is just the linear approximation wearing a hat. For the exam: Lagrange multipliers are where the points go &mdash; set &nabla;f = &lambda;&nabla;g, then check the boundary by hand.</div>
+      <!-- code block -->
+      <div style="background: #181715; border-radius: 12px; overflow: hidden; max-width: 620px; flex-shrink: 0;">
+        <div style="background: #1f1e1b; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #8d887e;">gradient_check.py</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #6c6a64;">python</span>
+        </div>
+        <div style="padding: 14px 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; color: #c9c4ba; display: flex; flex-direction: column;">
+          <span><span style="color: #cc785c;">import</span> numpy <span style="color: #cc785c;">as</span> np</span>
+          <span>&nbsp;</span>
+          <span><span style="color: #cc785c;">def</span> <span style="color: #e8a55a;">grad</span>(f, p, h):</span>
+          <span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6c6a64;"># central difference, one axis at a time</span></span>
+          <span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #cc785c;">return</span> np.array([(f(p + h*e) - f(p - h*e)) / (<span style="color: #d4a017;">2</span>*h)</span>
+          <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #cc785c;">for</span> e <span style="color: #cc785c;">in</span> np.eye(len(p))])</span>
+          <span>&nbsp;</span>
+          <span>f = <span style="color: #cc785c;">lambda</span> v: v[<span style="color: #d4a017;">0</span>]**<span style="color: #d4a017;">2</span> * np.sin(v[<span style="color: #d4a017;">1</span>])</span>
+          <span>grad(f, np.array([<span style="color: #d4a017;">1.0</span>, np.pi/<span style="color: #d4a017;">2</span>]), <span style="color: #d4a017;">1e-5</span>)  <span style="color: #6c6a64;"># [2. 0.]</span></span>
+        </div>
+      </div>
+      <!-- image attachment placeholder -->
+      <div style="max-width: 620px; height: 130px; border: 1.5px dashed #d8cfc0; border-radius: 12px; background: #f5f0e8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0;">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="#a8a29a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="1.5"></rect><circle cx="5.5" cy="6.5" r="1.2"></circle><path d="M2 11 L6 7.5 L9 10 L11 8.5 L14 11"></path></svg>
+        <span style="font-size: 11.5px; color: #6c6a64;">level-curves sketch &middot; from lecture, Aug 18</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; max-width: 620px;">
+        <div style="font-family: 'EB Garamond', serif; font-weight: 500; font-size: 21px; letter-spacing: -0.3px; color: #141413;">Lagrange &mdash; exam recipe</div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #3d3d3a; line-height: 1.55;">
+          <div style="display: flex; gap: 10px;"><span style="font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; font-size: 12px; color: #a9583e; flex-shrink: 0; padding-top: 1px;">1.</span><span>Write &nabla;f = &lambda;&nabla;g and the constraint g = 0 as one system.</span></div>
+          <div style="display: flex; gap: 10px;"><span style="font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; font-size: 12px; color: #a9583e; flex-shrink: 0; padding-top: 1px;">2.</span><span>Solve for candidates &mdash; watch the &lambda; = 0 and division-by-zero branches.</span></div>
+          <div style="display: flex; gap: 10px;"><span style="font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; font-size: 12px; color: #a9583e; flex-shrink: 0; padding-top: 1px;">3.</span><span>Evaluate f at every candidate and at boundary corners; the extremes are just the biggest and smallest numbers on the list.</span></div>
+        </div>
+      </div>
+      <div style="flex: 1;"></div>
+      <div style="display: flex; align-items: center; gap: 8px; border-top: 1px solid #efe9de; padding-top: 10px; max-width: 620px;">
+        <span style="display: flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 500; color: #6c6a64; border: 1px solid #e6dfd8; border-radius: 100px; padding: 3px 10px; background: #f5f0e8;"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#cc785c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5 L9.1 6.9 L13.5 8 L9.1 9.1 L8 13.5 L6.9 9.1 L2.5 8 L6.9 6.9 Z"></path></svg><span>agent-readable &middot; embedded for retrieval</span></span>
+        <span style="font-size: 10.5px; color: #a8a29a;">ask Alfred &quot;what were the Lagrange steps&quot; anywhere</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

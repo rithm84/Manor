@@ -1,0 +1,248 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'Geist', 'Helvetica Neue', sans-serif; font-size: 13.5px; color: #e8e2d9; background: #141210; -webkit-font-smoothing: antialiased; }
+    a { color: #6fa8dc; text-decoration: none; } a:hover { color: #9cc4e8; }
+  </style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; overflow: hidden; display: flex; background: #141210;">
+
+  <div style="width: 188px; flex-shrink: 0; box-sizing: border-box; background: #1b1815; border-right: 1px solid #312b24; display: flex; flex-direction: column; gap: 18px; padding: 18px 10px 14px;">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 8px;">
+      <div style="width: 8px; height: 8px; border-radius: 2px; background: #ffc014; box-shadow: 0 0 10px rgba(255,192,20,0.4);"></div>
+      <div style="font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.18em; color: #e8e2d9;">MANOR</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5L8 3l5 4.5V13H9.8v-3H6.2v3H3z"></path></svg><span>Home</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="10" rx="2"></rect><path d="M2.5 6.5h11M5.5 2v2.5M10.5 2v2.5"></path></svg><span>Calendar</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #e8e2d9; background: #292420; box-shadow: inset 2px 0 0 #ffc014;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5c1.6 2 3.5 3.9 3.5 6.4a3.5 3.5 0 1 1-7 0c0-1.5.7-2.7 1.7-4 .5.9 1 1.4 1.7 1.7C7.7 5.2 7.6 3.9 8 2.5z"></path></svg><span>Habits</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5h2.6L6.4 4l3.2 8 1.8-3.5H14"></path></svg><span>Fitness</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"></circle><path d="M5.9 9.6c.6.8 1.3 1.2 2.1 1.2s1.5-.4 2.1-1.2"></path><path d="M6.1 6.4h.01M9.9 6.4h.01"></path></svg><span>Mood &amp; Focus</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4.5L2.5 8 6 11.5M10 4.5L13.5 8 10 11.5"></path></svg><span>LeetCode</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="11" height="8" rx="2"></rect><path d="M5.5 5V4A1.5 1.5 0 0 1 7 2.5h2A1.5 1.5 0 0 1 10.5 4v1"></path></svg><span>Jobs</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5h5.5l2.5 2.5v8.5H4z"></path><path d="M9.5 2.5V5H12"></path></svg><span>Notes</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5h7v11L8 10.8l-3.5 2.7z"></path></svg><span>Bookmarks</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"></rect><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"></path></svg><span>Journal</span></div>
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.2L9.1 6.9 13.8 8 9.1 9.1 8 13.8 6.9 9.1 2.2 8 6.9 6.9z"></path></svg><span>Alfred audit</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h11M2.5 10.5h11"></path><circle cx="10" cy="5.5" r="1.7" fill="#1b1815"></circle><circle cx="6" cy="10.5" r="1.7" fill="#1b1815"></circle></svg><span>Settings</span></div>
+    </div>
+  </div>
+
+  <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 18px 22px;">
+
+    <div style="display: flex; align-items: center; gap: 12px; height: 40px;">
+      <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: #e8e2d9;">Habits</div>
+      <div style="display: flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: #221e1a; border: 1px solid #312b24;"><span style="font-family: 'Geist Mono', monospace; font-size: 11px; font-variant-numeric: tabular-nums; color: #9a9184;">6/10 TODAY</span></div>
+      <div style="flex: 1;"></div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 8px; border: 1px solid #3f382f; color: #9a9184;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5.5 3.5v9M10.5 3.5v9"></path></svg><span style="font-size: 12.5px; font-weight: 500;">Pause</span></div>
+      <div style="display: flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 9px; background: #e8e2d9;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2" stroke-linecap="round"><path d="M8 3.5v9M3.5 8h9"></path></svg><span style="font-size: 13px; font-weight: 600; color: #141210;">New habit</span></div>
+    </div>
+
+    <div style="flex: 1; display: flex; gap: 14px; min-height: 0;">
+
+      <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; padding: 6px 0; border-radius: 12px; background: #1b1815; border: 1px solid #312b24;">
+        <div style="display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 8px 18px 8px 16px; border-bottom: 1px solid #241f1b;">
+          <span style="width: 26px;"></span>
+          <span style="flex: 1; font-family: 'Geist Mono', monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.12em; color: #6b6459;">HABIT</span>
+          <span style="width: 72px; font-family: 'Geist Mono', monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.12em; color: #6b6459;">STREAK</span>
+          <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.12em; color: #6b6459;">BEST</span>
+          <span style="width: 128px; font-family: 'Geist Mono', monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.12em; color: #6b6459;">M T W T F S S</span>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column;">
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 16px; border-bottom: 1px solid #241f1b;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; background: #7dc98f; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg></span>
+            <span style="flex: 1; display: inline-flex; align-items: center; gap: 8px;"><span style="font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Morning Routine</span><span style="display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 999px; background: #2a2113; border: 1px solid #4a3a14; box-shadow: 0 0 12px rgba(255,192,20,0.2);"><svg width="9" height="9" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.08em; color: #ffc014;">GOLD</span></span></span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #ffc014;">45</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">45</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 16px; border-bottom: 1px solid #241f1b;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; background: #7dc98f; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg></span>
+            <span style="flex: 1; display: inline-flex; align-items: center; gap: 8px;"><span style="font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Night Routine</span><span style="display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 999px; background: #2a2113; border: 1px solid #4a3a14; box-shadow: 0 0 12px rgba(255,192,20,0.2);"><svg width="9" height="9" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.08em; color: #ffc014;">GOLD</span></span></span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #ffc014;">32</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">40</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 16px; border-bottom: 1px solid #241f1b;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; box-sizing: border-box; border: 1.5px solid #3f382f; flex-shrink: 0;"></span>
+            <span style="flex: 1; font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Wind-Down &amp; Prep</span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#9a9184" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #e8e2d9;">21</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">28</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #6b6459;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 16px; border-bottom: 1px solid #241f1b;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; background: #7dc98f; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg></span>
+            <span style="flex: 1; font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Deep Work 90m</span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#9a9184" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #e8e2d9;">17</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">21</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 16px; border-bottom: 1px solid #241f1b;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; background: #7dc98f; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg></span>
+            <span style="flex: 1; display: inline-flex; align-items: center; gap: 8px;"><span style="font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Read 25 pages</span><span style="display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 999px; background: #2a2113; border: 1px solid #4a3a14; box-shadow: 0 0 12px rgba(255,192,20,0.2);"><svg width="9" height="9" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.08em; color: #ffc014;">GOLD</span></span></span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #ffc014;">21</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">30</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 16px; border-bottom: 1px solid #241f1b;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; background: #7dc98f; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg></span>
+            <span style="flex: 1; display: inline-flex; align-items: center; gap: 8px;"><span style="font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Water 48 oz</span><span style="padding: 1px 7px; border-radius: 5px; background: #2a251f; font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.06em; color: #6b6459;">QUANTIZED</span></span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#9a9184" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #e8e2d9;">26</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">31</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 16px; border-bottom: 1px solid #241f1b; background: #292420;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; box-sizing: border-box; border: 1.5px solid #6b6459; background: #221e1a; flex-shrink: 0;"></span>
+            <span style="flex: 1; font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Protein 105 g</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 7px; border: 1px solid #3f382f; color: #9a9184;"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5.5 3.5v9M10.5 3.5v9"></path></svg><span style="font-size: 11px; font-weight: 500;">Pause</span></span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#9a9184" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #e8e2d9;">14</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">22</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #6fa8dc;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #6b6459;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 14px; border-bottom: 1px solid #241f1b; background: #241d19; box-shadow: inset 2px 0 0 #e0654f;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; box-sizing: border-box; border: 1.5px dashed #e0654f; box-shadow: 0 0 12px rgba(224,101,79,0.25); flex-shrink: 0;"></span>
+            <span style="flex: 1; display: inline-flex; align-items: center; gap: 8px;"><span style="font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Family QT 15m</span><span style="display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 999px; background: #2a2113; border: 1px solid #4a3a14;"><svg width="9" height="9" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.08em; color: #ffc014;">GOLD</span></span><span style="padding: 1px 7px; border-radius: 999px; background: #5e2a22; font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.08em; color: #f0917d;">AT RISK</span></span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #ffc014;">169</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">169</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #e0654f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 16px; border-bottom: 1px solid #241f1b;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; box-sizing: border-box; border: 1.5px solid #3f382f; flex-shrink: 0;"></span>
+            <span style="flex: 1; font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Sleep by 11:30</span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#9a9184" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #e8e2d9;">10</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">19</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #6b6459;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 0 18px 0 16px;">
+            <span style="width: 26px; height: 26px; border-radius: 999px; background: #7dc98f; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg></span>
+            <span style="flex: 1; display: inline-flex; align-items: center; gap: 8px;"><span style="font-size: 13.5px; font-weight: 500; color: #e8e2d9;">Manor Logging</span><span style="display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 999px; background: #2a2113; border: 1px solid #4a3a14; box-shadow: 0 0 12px rgba(255,192,20,0.2);"><svg width="9" height="9" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.08em; color: #ffc014;">GOLD</span></span></span>
+            <span style="width: 72px; display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="#ffc014" stroke="none"><path d="M8 1.5c1.8 2.3 4 4.3 4 7.2a4 4 0 1 1-8 0c0-1.7.8-3 1.9-4.5.6 1 1.2 1.6 2 1.9C7.6 4.6 7.5 3 8 1.5z"></path></svg><span style="font-family: 'Geist Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: #ffc014;">62</span></span>
+            <span style="width: 58px; font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #6b6459;">62</span>
+            <span style="width: 128px; display: inline-flex; gap: 6px;"><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; background: #7dc98f;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span><span style="width: 9px; height: 9px; border-radius: 2.5px; box-sizing: border-box; border: 1px solid #312b24;"></span></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="width: 372px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px;">
+
+        <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; border-radius: 12px; background: #1b1815; border: 1px solid #4a3a14; box-shadow: 0 0 18px rgba(255,192,20,0.12);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: #9a9184;">FAMILY QT 15M &middot; AUGUST</span>
+            <span style="flex: 1;"></span>
+            <span style="padding: 1px 7px; border-radius: 999px; background: #5e2a22; font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.08em; color: #f0917d;">AT RISK</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 8px;">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 34px; font-weight: 500; font-variant-numeric: tabular-nums; color: #ffc014; text-shadow: 0 0 18px rgba(255,192,20,0.35);">169</span>
+            <span style="font-size: 13px; color: #9a9184;">days &mdash; the longest streak you have ever held.</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+            <span style="height: 16px;"></span><span style="height: 16px;"></span><span style="height: 16px;"></span><span style="height: 16px;"></span>
+            <span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span>
+            <span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span>
+            <span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span>
+            <span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; background: #ffc014; opacity: 0.75;"></span><span style="height: 16px; border-radius: 4px; box-sizing: border-box; border: 1.5px dashed #e0654f; box-shadow: 0 0 10px rgba(224,101,79,0.3);"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span>
+            <span style="height: 16px; border-radius: 4px; background: #221e1a;"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span><span style="height: 16px; border-radius: 4px; background: #221e1a;"></span>
+          </div>
+          <div style="font-size: 12.5px; line-height: 1.5; color: #e8e2d9;">15 quiet minutes tonight keeps it alive. A freeze would save the number &mdash; not the gold.</div>
+        </div>
+
+        <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: 12px; background: #1b1815; border: 1px solid #312b24;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: #9a9184;">FREEZE POOL</span>
+            <span style="flex: 1;"></span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; font-variant-numeric: tabular-nums; color: #6fa8dc;">7/10 AUG</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 7px;">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#6fa8dc" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#6fa8dc" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#6fa8dc" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#6fa8dc" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#6fa8dc" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#6fa8dc" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#6fa8dc" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#3f382f" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#3f382f" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#3f382f" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+          </div>
+          <div style="font-size: 12px; line-height: 1.5; color: #9a9184;">Earned only by perfect days &mdash; every active habit done. Freezes auto-apply at midnight to whichever habit missed.</div>
+          <div style="display: flex; gap: 8px; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; background: #141210; border: 1px solid #312b24;">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: #6b6459; flex-shrink: 0; padding-top: 1px;">EARN-BACK</span>
+            <span style="font-size: 11.5px; line-height: 1.45; color: #9a9184;">Streak broke with an empty pool? Two clean days within 48 h restore it. Once per habit, per month.</span>
+          </div>
+        </div>
+
+        <div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: 12px; background: #1b1815; border: 1px solid #312b24;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: #9a9184;">WATER 48 OZ &middot; TODAY</span>
+            <span style="flex: 1;"></span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; font-variant-numeric: tabular-nums; color: #7dc98f;">100</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <span style="flex: 1; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid #312b24; font-family: 'Geist Mono', monospace; font-size: 11px; font-variant-numeric: tabular-nums; color: #6b6459;">0</span>
+            <span style="flex: 1; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid #312b24; font-family: 'Geist Mono', monospace; font-size: 11px; font-variant-numeric: tabular-nums; color: #6b6459;">25</span>
+            <span style="flex: 1; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid #312b24; font-family: 'Geist Mono', monospace; font-size: 11px; font-variant-numeric: tabular-nums; color: #6b6459;">50</span>
+            <span style="flex: 1; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid #312b24; font-family: 'Geist Mono', monospace; font-size: 11px; font-variant-numeric: tabular-nums; color: #6b6459;">75</span>
+            <span style="flex: 1; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 30px; border-radius: 8px; background: #7dc98f; font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; color: #141210;"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg><span>100</span></span>
+          </div>
+          <div style="font-size: 11.5px; color: #6b6459;">Five stops, nothing finer &mdash; quantized on purpose. 48 oz down.</div>
+        </div>
+
+        <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: 12px; background: #1b1815; border: 1px solid #312b24;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: #9a9184;">PERFECT DAYS &middot; AUGUST</span>
+            <span style="flex: 1;"></span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 12px; font-variant-numeric: tabular-nums; color: #e8e2d9;">7/19</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffc014; box-shadow: 0 0 8px rgba(255,192,20,0.35);"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffc014; box-shadow: 0 0 8px rgba(255,192,20,0.35);"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffc014; box-shadow: 0 0 8px rgba(255,192,20,0.35);"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffc014; box-shadow: 0 0 8px rgba(255,192,20,0.35);"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffc014; box-shadow: 0 0 8px rgba(255,192,20,0.35);"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffc014; box-shadow: 0 0 8px rgba(255,192,20,0.35);"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; background: #ffc014; box-shadow: 0 0 8px rgba(255,192,20,0.35);"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 999px; box-sizing: border-box; border: 1px solid #3f382f;"></span>
+          </div>
+          <div style="font-size: 12px; line-height: 1.5; color: #9a9184;">Every perfect day banks a freeze. Four habits left tonight would make it eight.</div>
+          <div style="flex: 1;"></div>
+          <div style="display: flex; align-items: center; gap: 8px; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; background: #141210; border: 1px solid #312b24;">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#6fa8dc" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v12M2.8 5l10.4 6M13.2 5L2.8 11"></path></svg>
+            <span style="font-size: 11.5px; color: #9a9184;">3 freezes spent this month &mdash; Protein twice, Sleep once.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

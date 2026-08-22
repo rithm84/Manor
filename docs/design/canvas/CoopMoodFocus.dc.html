@@ -1,0 +1,269 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'Nunito', sans-serif; color: #17130e; }
+    a { color: #cc3f02; } a:hover { color: #a83302; }
+  </style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; overflow: hidden; display: flex; background: #ededed; font-size: 15px; font-weight: 600;">
+
+  <!-- Sidebar -->
+  <div style="width: 216px; flex-shrink: 0; box-sizing: border-box; background: #f3f3f3; border-right: 2px solid #e4e4e4; display: flex; flex-direction: column; gap: 20px; padding: 20px 12px 16px 12px;">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 10px;">
+      <svg width="22" height="22" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 C8.5 4.2 12.4 5.9 12.4 9.4 C12.4 12.1 10.4 14 8 14 C5.6 14 3.6 12.1 3.6 9.4 C3.6 7.1 5.2 5.7 6.2 4 C6.7 4.9 7.1 5.6 7.3 6.6 C7.8 5.2 7.9 3.6 8 1.6 Z" fill="#ff9600"></path><path d="M8 7.4 C8.9 8.7 10.1 9.4 10.1 10.9 C10.1 12.2 9.2 13.1 8 13.1 C6.8 13.1 5.9 12.2 5.9 10.9 C5.9 9.5 7.1 8.8 8 7.4 Z" fill="#ffc800"></path></svg>
+      <div style="font-size: 21px; font-weight: 900; letter-spacing: -0.02em;">Manor</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 3px;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5 L8 2.8 L13.5 7.5"></path><path d="M4.3 6.8 V13.2 H11.7 V6.8"></path></svg>
+        <span>Home</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="10" rx="2"></rect><path d="M2.5 6.8 H13.5"></path><path d="M5.5 2 V4.5"></path><path d="M10.5 2 V4.5"></path></svg>
+        <span>Calendar</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 C8.4 4.4 12 6 12 9.3 C12 11.9 10.2 13.7 8 13.7 C5.8 13.7 4 11.9 4 9.3 C4 7.2 5.4 5.9 6.3 4.3 C6.8 5.1 7.2 5.8 7.4 6.7 C7.8 5.4 7.9 3.9 8 2 Z"></path></svg>
+        <span>Habits</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 5 V11"></path><path d="M10.5 5 V11"></path><path d="M3 6.2 V9.8"></path><path d="M13 6.2 V9.8"></path><path d="M5.5 8 H10.5"></path></svg>
+        <span>Fitness</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; background: #fff7df; border: 2px solid #ffd95e; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #17130e;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.8"></circle><path d="M5.8 9.3 C6.4 10.3 7.1 10.8 8 10.8 C8.9 10.8 9.6 10.3 10.2 9.3"></path><path d="M6.1 6.3 H6.12"></path><path d="M9.9 6.3 H9.92"></path></svg>
+        <span>Mood &amp; Focus</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 L2.5 8 L5.5 11.5"></path><path d="M10.5 4.5 L13.5 8 L10.5 11.5"></path></svg>
+        <span>LeetCode</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="11" height="8.5" rx="2"></rect><path d="M5.8 5 V3.8 A1.3 1.3 0 0 1 7.1 2.5 H8.9 A1.3 1.3 0 0 1 10.2 3.8 V5"></path></svg>
+        <span>Jobs</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5 H9.5 L12.5 5.5 V13.5 H4 Z"></path><path d="M9.5 2.5 V5.5 H12.5"></path><path d="M6.2 8.8 H10.3"></path><path d="M6.2 11 H10.3"></path></svg>
+        <span>Notes</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 H11.5 V13.5 L8 10.8 L4.5 13.5 Z"></path></svg>
+        <span>Bookmarks</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="6.5" rx="1.8"></rect><path d="M5.5 7 V5 A2.5 2.5 0 0 1 10.5 5 V7"></path></svg>
+        <span>Journal</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 3px; border-top: 2px solid #e4e4e4; padding-top: 10px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.8"></circle><path d="M8 5 V8 L10.2 9.5"></path></svg>
+          <span>Alfred audit</span>
+        </div>
+        <span style="background: #ffc014; color: #17130e; font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; font-weight: 500; border-radius: 999px; padding: 1px 6px;">2</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"></circle><path d="M8 1.8 V3.6"></path><path d="M8 12.4 V14.2"></path><path d="M1.8 8 H3.6"></path><path d="M12.4 8 H14.2"></path><path d="M3.7 3.7 L5 5"></path><path d="M11 11 L12.3 12.3"></path><path d="M12.3 3.7 L11 5"></path><path d="M5 11 L3.7 12.3"></path></svg>
+        <span>Settings</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 20px 22px;">
+
+    <!-- Header -->
+    <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.02em; line-height: 1;">Mood &amp; Focus</div>
+        <div style="font-size: 13px; font-weight: 700; color: #8a8375;">Nothing logged yet today. One tap each — or just tell Alfred how it went.</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 7px; background: #fff7df; border: 2px solid #ffd95e; border-radius: 999px; padding: 6px 13px; font-size: 12px; font-weight: 800; color: #9c7400;">
+          <span style="width: 8px; height: 8px; border-radius: 99px; background: #ffc014;"></span>
+          <span>today · not logged</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 7px; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 2px 0 #e5e5e5; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 800; color: #57503f;">
+          <span>one entry each per day · edits till midnight</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="flex: 1; display: flex; gap: 16px; min-height: 0;">
+
+      <!-- Left: selectors -->
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+
+        <!-- Mood -->
+        <div style="flex: 1.15; box-sizing: border-box; background: #fff; border-radius: 20px; padding: 18px 22px; display: flex; flex-direction: column; justify-content: center; gap: 18px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 12px; font-weight: 900; letter-spacing: 0.05em;">MOOD · HOW WAS TODAY?</span>
+            <span style="font-size: 11px; font-weight: 700; color: #a29a8c;">tap one</span>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <div style="flex: 1; box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 18px; padding: 18px 0 15px 0; display: flex; flex-direction: column; align-items: center; gap: 9px;">
+              <svg width="58" height="58" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" fill="#58cc02"></circle><circle cx="17" cy="20" r="2.8" fill="#17130e"></circle><circle cx="31" cy="20" r="2.8" fill="#17130e"></circle><path d="M14 27 C17 34 31 34 34 27" stroke="#17130e" stroke-width="3.2" stroke-linecap="round" fill="none"></path></svg>
+              <span style="font-size: 12px; font-weight: 800;">Great</span>
+            </div>
+            <div style="flex: 1; box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 18px; padding: 18px 0 15px 0; display: flex; flex-direction: column; align-items: center; gap: 9px;">
+              <svg width="58" height="58" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" fill="#8ed94e"></circle><circle cx="17" cy="20" r="2.8" fill="#17130e"></circle><circle cx="31" cy="20" r="2.8" fill="#17130e"></circle><path d="M16 28.5 C19 32.5 29 32.5 32 28.5" stroke="#17130e" stroke-width="3.2" stroke-linecap="round" fill="none"></path></svg>
+              <span style="font-size: 12px; font-weight: 800;">Good</span>
+            </div>
+            <div style="flex: 1; box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 18px; padding: 18px 0 15px 0; display: flex; flex-direction: column; align-items: center; gap: 9px;">
+              <svg width="58" height="58" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" fill="#ffc800"></circle><circle cx="17" cy="20" r="2.8" fill="#17130e"></circle><circle cx="31" cy="20" r="2.8" fill="#17130e"></circle><path d="M16 30.5 H32" stroke="#17130e" stroke-width="3.2" stroke-linecap="round"></path></svg>
+              <span style="font-size: 12px; font-weight: 800;">Neutral</span>
+            </div>
+            <div style="flex: 1; box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 18px; padding: 18px 0 15px 0; display: flex; flex-direction: column; align-items: center; gap: 9px;">
+              <svg width="58" height="58" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" fill="#ff9600"></circle><circle cx="17" cy="20" r="2.8" fill="#17130e"></circle><circle cx="31" cy="20" r="2.8" fill="#17130e"></circle><path d="M16 32.5 C19 28.5 29 28.5 32 32.5" stroke="#17130e" stroke-width="3.2" stroke-linecap="round" fill="none"></path></svg>
+              <span style="font-size: 12px; font-weight: 800;">Bad</span>
+            </div>
+            <div style="flex: 1; box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 18px; padding: 18px 0 15px 0; display: flex; flex-direction: column; align-items: center; gap: 9px;">
+              <svg width="58" height="58" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="21" fill="#ff4b4b"></circle><path d="M13 15.5 L20 18.5" stroke="#17130e" stroke-width="2.6" stroke-linecap="round"></path><path d="M35 15.5 L28 18.5" stroke="#17130e" stroke-width="2.6" stroke-linecap="round"></path><circle cx="17" cy="22" r="2.8" fill="#17130e"></circle><circle cx="31" cy="22" r="2.8" fill="#17130e"></circle><path d="M15 33.5 C18 28.5 30 28.5 33 33.5" stroke="#17130e" stroke-width="3.2" stroke-linecap="round" fill="none"></path></svg>
+              <span style="font-size: 12px; font-weight: 800;">Awful</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Focus -->
+        <div style="flex: 1; box-sizing: border-box; background: #fff; border-radius: 20px; padding: 18px 22px; display: flex; flex-direction: column; justify-content: center; gap: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 12px; font-weight: 900; letter-spacing: 0.05em;">FOCUS · WHERE WAS YOUR HEAD?</span>
+            <span style="font-size: 11px; font-weight: 700; color: #a29a8c;">tap one</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+            <div style="box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+              <span style="width: 13px; height: 13px; border-radius: 99px; background: #ce82ff;"></span>
+              <span style="font-size: 12.5px; font-weight: 800;">Locked In</span>
+            </div>
+            <div style="box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+              <span style="width: 13px; height: 13px; border-radius: 99px; background: #1cb0f6;"></span>
+              <span style="font-size: 12.5px; font-weight: 800;">High</span>
+            </div>
+            <div style="box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+              <span style="width: 13px; height: 13px; border-radius: 99px; background: #58cc02;"></span>
+              <span style="font-size: 12.5px; font-weight: 800;">Medium</span>
+            </div>
+            <div style="box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+              <span style="width: 13px; height: 13px; border-radius: 99px; background: #ffc800;"></span>
+              <span style="font-size: 12.5px; font-weight: 800;">Low</span>
+            </div>
+            <div style="box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+              <span style="width: 13px; height: 13px; border-radius: 99px; background: #ff4b4b;"></span>
+              <span style="font-size: 12.5px; font-weight: 800;">Locked Out</span>
+            </div>
+            <div style="box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 4px 0 #e5e5e5; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+              <span style="width: 13px; height: 13px; border-radius: 99px; background: #b3ab9e;"></span>
+              <span style="font-size: 12.5px; font-weight: 800;">Resting</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Debrief path -->
+        <div style="height: 118px; flex-shrink: 0; box-sizing: border-box; background: #17130e; border-radius: 20px; padding: 16px 22px; display: flex; align-items: center; gap: 16px;">
+          <div style="width: 44px; height: 44px; border-radius: 999px; background: #ffc014; display: flex; align-items: center; justify-content: center;">
+            <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="#17130e" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="4" height="7.5" rx="2"></rect><path d="M3.8 7.5 A4.2 4.2 0 0 0 12.2 7.5"></path><path d="M8 11.7 V14"></path></svg>
+          </div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 14.5px; font-weight: 900; color: #f3ead9; letter-spacing: -0.01em;">…or debrief with Alfred</span>
+            <span style="font-size: 12px; font-weight: 700; color: #8d8271;">Two minutes of talking. He files mood, focus, and a summary note — you never touch a form.</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 7px; background: #ffc014; color: #17130e; box-shadow: 0 4px 0 #d99e00; border-radius: 12px; padding: 9px 16px; font-size: 12.5px; font-weight: 900;">
+            <span>Start debrief</span>
+            <span style="font-family: 'Geist Mono', monospace; font-size: 10px; background: rgba(23,19,14,0.12); border-radius: 6px; padding: 1px 6px;">&#8997;&#8288;Space</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: history -->
+      <div style="width: 428px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; min-height: 0;">
+
+        <!-- 14-day twin strips -->
+        <div style="box-sizing: border-box; background: #fff; border-radius: 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 12px; font-weight: 900; letter-spacing: 0.05em;">LAST 14 DAYS</span>
+            <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #b3ab9e;">AUG 7 – 20</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 44px; font-size: 9.5px; font-weight: 900; letter-spacing: 0.05em; color: #857d6f;">MOOD</span>
+            <div style="flex: 1; display: flex; gap: 4px;">
+              <span style="flex: 1; height: 22px; border-radius: 6px; background: #8ed94e;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #58cc02;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #ffc800;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #8ed94e;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #ff9600;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #8ed94e;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #58cc02;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #8ed94e;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #ffc800;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #8ed94e;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #58cc02;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #8ed94e;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #8ed94e;"></span><span style="flex: 1; height: 22px; box-sizing: border-box; border-radius: 6px; background: #fff; border: 2px dashed #cbc4b8;"></span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 44px; font-size: 9.5px; font-weight: 900; letter-spacing: 0.05em; color: #857d6f;">FOCUS</span>
+            <div style="flex: 1; display: flex; gap: 4px;">
+              <span style="flex: 1; height: 22px; border-radius: 6px; background: #1cb0f6;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #ce82ff;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #58cc02;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #1cb0f6;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #ffc800;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #58cc02;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #1cb0f6;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #1cb0f6;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #58cc02;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #ce82ff;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #1cb0f6;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #58cc02;"></span><span style="flex: 1; height: 22px; border-radius: 6px; background: #1cb0f6;"></span><span style="flex: 1; height: 22px; box-sizing: border-box; border-radius: 6px; background: #fff; border: 2px dashed #cbc4b8;"></span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 44px;"></span>
+            <div style="flex: 1; display: flex; justify-content: space-between;">
+              <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9px; color: #b3ab9e;">7</span>
+              <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9px; color: #b3ab9e;">10</span>
+              <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9px; color: #b3ab9e;">14</span>
+              <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9px; color: #b3ab9e;">17</span>
+              <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9px; font-weight: 500; color: #17130e;">today</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 11px; border-top: 2px solid #f3f3f3; padding-top: 9px;">
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 3px; background: #58cc02;"></span><span style="font-size: 9px; font-weight: 700; color: #a29a8c;">great</span></span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 3px; background: #8ed94e;"></span><span style="font-size: 9px; font-weight: 700; color: #a29a8c;">good</span></span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 3px; background: #ffc800;"></span><span style="font-size: 9px; font-weight: 700; color: #a29a8c;">neutral / low</span></span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 3px; background: #ce82ff;"></span><span style="font-size: 9px; font-weight: 700; color: #a29a8c;">locked in</span></span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 3px; background: #1cb0f6;"></span><span style="font-size: 9px; font-weight: 700; color: #a29a8c;">high</span></span>
+          </div>
+        </div>
+
+        <!-- Monthly texture -->
+        <div style="box-sizing: border-box; background: #fff; border-radius: 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 12px; font-weight: 900; letter-spacing: 0.05em;">AUGUST · MOOD TEXTURE</span>
+            <span style="font-size: 10.5px; font-weight: 700; color: #a29a8c;">mostly good weeks</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+            <span style="height: 14px;"></span><span style="height: 14px;"></span><span style="height: 14px;"></span><span style="height: 14px;"></span>
+            <span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span><span style="height: 14px; border-radius: 4px; background: #58cc02;"></span><span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span>
+            <span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span><span style="height: 14px; border-radius: 4px; background: #ffc800;"></span><span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span><span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span><span style="height: 14px; border-radius: 4px; background: #58cc02;"></span><span style="height: 14px; border-radius: 4px; background: #ffc800;"></span><span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span>
+            <span style="height: 14px; border-radius: 4px; background: #ff9600;"></span><span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span><span style="height: 14px; border-radius: 4px; background: #58cc02;"></span><span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span><span style="height: 14px; border-radius: 4px; background: #ffc800;"></span><span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span><span style="height: 14px; border-radius: 4px; background: #58cc02;"></span>
+            <span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span><span style="height: 14px; border-radius: 4px; background: #8ed94e;"></span><span style="height: 14px; box-sizing: border-box; border-radius: 4px; background: #fff; border: 2px dashed #cbc4b8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span>
+            <span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span><span style="height: 14px; border-radius: 4px; background: #f0ede8;"></span>
+          </div>
+        </div>
+
+        <!-- Debrief snippet -->
+        <div style="flex: 1; box-sizing: border-box; background: #f3f3f3; border-radius: 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 9px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 12px; font-weight: 900; letter-spacing: 0.05em;">LAST DEBRIEF · TUE AUG 19</span>
+            <span style="display: flex; gap: 5px;">
+              <span style="background: #eaf8dd; color: #43a302; font-size: 9.5px; font-weight: 900; border-radius: 999px; padding: 2px 8px;">GOOD</span>
+              <span style="background: #e0f3fe; color: #0d8fce; font-size: 9.5px; font-weight: 900; border-radius: 999px; padding: 2px 8px;">HIGH</span>
+            </span>
+          </div>
+          <div style="box-sizing: border-box; background: #fff; border-radius: 14px; padding: 12px 14px; font-size: 12.5px; font-weight: 700; line-height: 1.5; color: #57503f;">&#8220;Long Calc grind after the gym, but steady. Focus held High most of the day — dipped only after 10 PM. Slept later than planned.&#8221;</div>
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 9.5px; color: #a29a8c;">terra summary &#183; AI-visible by design</span>
+            <span style="font-size: 10.5px; font-weight: 800; color: #857d6f;">unlike the Journal — that one&#39;s sealed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
