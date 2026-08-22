@@ -4,7 +4,7 @@ _Last updated: 2026-08-21_
 
 The Electron shell for Manor: UI only, mock data, no backend, no network
 calls at runtime. Design charter: `docs/DESIGN.md` at the repo root. Product
-truth: `../docs/BRAINSTORM.md`.
+truth: `../docs/PRD.md`.
 
 ## Run
 
