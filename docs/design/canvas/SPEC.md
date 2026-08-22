@@ -7,7 +7,7 @@ You are building HI-FI static mockup artboards for Manor, a personal productivit
 Read before building:
 1. This file, fully.
 2. `/Users/user/Projects/my-notion-replacement/.agents/skills/emilkowalski-design/emil-design-eng/SKILL.md` — the polish/craft bar.
-3. `/Users/user/Projects/my-notion-replacement/docs/BRAINSTORM.md` §5–§7 (product truths).
+3. `/Users/user/Projects/my-notion-replacement/docs/PRD.md` §5–§7 (product truths).
 
 ## A. File format (violations break the canvas — follow exactly)
 
