@@ -1,0 +1,289 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'Geist', 'Helvetica Neue', sans-serif; font-size: 13.5px; color: #e8e2d9; background: #141210; -webkit-font-smoothing: antialiased; }
+    a { color: #6fa8dc; text-decoration: none; } a:hover { color: #9cc4e8; }
+  </style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; overflow: hidden; display: flex; background: #141210;">
+
+  <div style="width: 188px; flex-shrink: 0; box-sizing: border-box; background: #1b1815; border-right: 1px solid #312b24; display: flex; flex-direction: column; gap: 18px; padding: 18px 10px 14px;">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 8px;">
+      <div style="width: 8px; height: 8px; border-radius: 2px; background: #ffc014; box-shadow: 0 0 10px rgba(255,192,20,0.4);"></div>
+      <div style="font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.18em; color: #e8e2d9;">MANOR</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5L8 3l5 4.5V13H9.8v-3H6.2v3H3z"></path></svg><span>Home</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #e8e2d9; background: #292420; box-shadow: inset 2px 0 0 #ffc014;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="10" rx="2"></rect><path d="M2.5 6.5h11M5.5 2v2.5M10.5 2v2.5"></path></svg><span>Calendar</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5c1.6 2 3.5 3.9 3.5 6.4a3.5 3.5 0 1 1-7 0c0-1.5.7-2.7 1.7-4 .5.9 1 1.4 1.7 1.7C7.7 5.2 7.6 3.9 8 2.5z"></path></svg><span>Habits</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5h2.6L6.4 4l3.2 8 1.8-3.5H14"></path></svg><span>Fitness</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"></circle><path d="M5.9 9.6c.6.8 1.3 1.2 2.1 1.2s1.5-.4 2.1-1.2"></path><path d="M6.1 6.4h.01M9.9 6.4h.01"></path></svg><span>Mood &amp; Focus</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4.5L2.5 8 6 11.5M10 4.5L13.5 8 10 11.5"></path></svg><span>LeetCode</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="11" height="8" rx="2"></rect><path d="M5.5 5V4A1.5 1.5 0 0 1 7 2.5h2A1.5 1.5 0 0 1 10.5 4v1"></path></svg><span>Jobs</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5h5.5l2.5 2.5v8.5H4z"></path><path d="M9.5 2.5V5H12"></path></svg><span>Notes</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5h7v11L8 10.8l-3.5 2.7z"></path></svg><span>Bookmarks</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"></rect><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"></path></svg><span>Journal</span></div>
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.2L9.1 6.9 13.8 8 9.1 9.1 8 13.8 6.9 9.1 2.2 8 6.9 6.9z"></path></svg><span>Alfred audit</span></div>
+      <div style="display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-size: 13px; color: #9a9184;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h11M2.5 10.5h11"></path><circle cx="10" cy="5.5" r="1.7" fill="#1b1815"></circle><circle cx="6" cy="10.5" r="1.7" fill="#1b1815"></circle></svg><span>Settings</span></div>
+    </div>
+  </div>
+
+  <div style="width: 232px; flex-shrink: 0; box-sizing: border-box; background: #181512; border-right: 1px solid #312b24; display: flex; flex-direction: column; gap: 20px; padding: 16px 14px 14px;">
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 6px; padding: 0 2px;">
+        <span style="font-family: 'Geist Mono', monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em; color: #9a9184;">AUG 2026</span>
+        <span style="flex: 1;"></span>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#6b6459" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5L5 8l4.5 4.5"></path></svg>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#6b6459" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5L11 8l-4.5 4.5"></path></svg>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 3px;">
+        <span style="text-align: center; font-family: 'Geist Mono', monospace; font-size: 9px; color: #6b6459;">M</span>
+        <span style="text-align: center; font-family: 'Geist Mono', monospace; font-size: 9px; color: #6b6459;">T</span>
+        <span style="text-align: center; font-family: 'Geist Mono', monospace; font-size: 9px; color: #6b6459;">W</span>
+        <span style="text-align: center; font-family: 'Geist Mono', monospace; font-size: 9px; color: #6b6459;">T</span>
+        <span style="text-align: center; font-family: 'Geist Mono', monospace; font-size: 9px; color: #6b6459;">F</span>
+        <span style="text-align: center; font-family: 'Geist Mono', monospace; font-size: 9px; color: #6b6459;">S</span>
+        <span style="text-align: center; font-family: 'Geist Mono', monospace; font-size: 9px; color: #6b6459;">S</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #4a4238;">28</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #4a4238;">29</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #4a4238;">30</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #4a4238;">31</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">1</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">2</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">3</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">4</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">5</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">6</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">7</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">8</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">9</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">10</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">11</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">12</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">13</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">14</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">15</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">16</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #e8e2d9; background: #221e1a; border-radius: 5px 0 0 5px;">17</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #e8e2d9; background: #221e1a;">18</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #e8e2d9; background: #221e1a;">19</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500; font-variant-numeric: tabular-nums; color: #141210; background: #ffc014; box-shadow: 0 0 12px rgba(255,192,20,0.35);">20</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #e8e2d9; background: #221e1a;">21</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #e8e2d9; background: #221e1a;">22</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #e8e2d9; background: #221e1a; border-radius: 0 5px 5px 0;">23</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">24</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">25</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">26</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">27</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">28</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">29</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">30</span>
+        <span style="text-align: center; padding: 3px 0; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums; color: #9a9184;">31</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: #6b6459;">CALENDARS</span>
+      <div style="display: flex; align-items: center; gap: 9px;">
+        <span style="width: 13px; height: 13px; border-radius: 4px; background: #7dc98f; display: inline-flex; align-items: center; justify-content: center;"><svg width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg></span>
+        <span style="font-size: 12.5px; color: #e8e2d9;">Google personal</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 9px;">
+        <span style="width: 13px; height: 13px; border-radius: 4px; background: #6fa8dc; display: inline-flex; align-items: center; justify-content: center;"><svg width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg></span>
+        <span style="font-size: 12.5px; color: #e8e2d9;">UCLA</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 9px;">
+        <span style="width: 13px; height: 13px; border-radius: 4px; box-sizing: border-box; border: 1.5px dashed #9a9184; display: inline-flex; align-items: center; justify-content: center;"><svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="#9a9184" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg></span>
+        <span style="font-size: 12.5px; color: #e8e2d9;">Manor scratch blocks</span>
+        <span style="padding: 1px 6px; border-radius: 4px; background: #221e1a; border: 1px solid #312b24; font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.05em; color: #6b6459;">LOCAL</span>
+      </div>
+    </div>
+
+    <div style="flex: 1;"></div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="box-sizing: border-box; padding: 2px 6px; border-radius: 5px; border: 1px solid #3f382f; background: #221e1a; font-family: 'Geist Mono', monospace; font-size: 10px; color: #9a9184;">&#8984;K</span>
+      <span style="font-size: 11.5px; color: #6b6459;">jump anywhere</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; color: #9a9184;">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 3.5v9M3.5 8h9"></path></svg>
+      <span style="font-size: 12.5px;">add account</span>
+    </div>
+  </div>
+
+  <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column;">
+    <div style="height: 48px; flex-shrink: 0; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid #312b24;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#9a9184" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3" width="11" height="10" rx="2"></rect><path d="M6.5 3v10"></path></svg>
+      <span style="box-sizing: border-box; padding: 4px 12px; border-radius: 8px; border: 1px solid #3f382f; background: #221e1a; font-size: 12.5px; font-weight: 500; color: #e8e2d9;">Today</span>
+      <span style="display: inline-flex; align-items: center; gap: 2px;">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#9a9184" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5L5 8l4.5 4.5"></path></svg>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#9a9184" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5L11 8l-4.5 4.5"></path></svg>
+      </span>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: #e8e2d9;">August 2026</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; color: #6b6459;">GMT-8</span>
+      <span style="flex: 1;"></span>
+      <span style="display: inline-flex; align-items: center; gap: 2px; box-sizing: border-box; padding: 2px; border-radius: 8px; background: #221e1a; border: 1px solid #312b24;">
+        <span style="padding: 3px 10px; border-radius: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #9a9184;">D</span>
+        <span style="padding: 3px 10px; border-radius: 6px; background: #e8e2d9; font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 500; color: #141210;">W</span>
+        <span style="padding: 3px 10px; border-radius: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #9a9184;">M</span>
+      </span>
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#9a9184" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.4 10.4L14 14"></path></svg>
+    </div>
+
+    <div style="height: 44px; flex-shrink: 0; box-sizing: border-box; display: flex; border-bottom: 1px solid #241f1b;">
+      <div style="width: 46px; flex-shrink: 0;"></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;"><span style="font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: #6b6459;">MON</span><span style="font-family: 'Geist Mono', monospace; font-size: 14px; font-variant-numeric: tabular-nums; color: #9a9184;">18</span></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;"><span style="font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: #6b6459;">TUE</span><span style="font-family: 'Geist Mono', monospace; font-size: 14px; font-variant-numeric: tabular-nums; color: #9a9184;">19</span></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;"><span style="font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: #ffc014;">WED</span><span style="min-width: 24px; text-align: center; border-radius: 6px; background: #ffc014; box-shadow: 0 0 12px rgba(255,192,20,0.3); font-family: 'Geist Mono', monospace; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; color: #141210;">20</span></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;"><span style="font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: #6b6459;">THU</span><span style="font-family: 'Geist Mono', monospace; font-size: 14px; font-variant-numeric: tabular-nums; color: #9a9184;">21</span></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;"><span style="font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: #6b6459;">FRI</span><span style="font-family: 'Geist Mono', monospace; font-size: 14px; font-variant-numeric: tabular-nums; color: #9a9184;">22</span></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;"><span style="font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: #6b6459;">SAT</span><span style="font-family: 'Geist Mono', monospace; font-size: 14px; font-variant-numeric: tabular-nums; color: #9a9184;">23</span></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;"><span style="font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: #6b6459;">SUN</span><span style="font-family: 'Geist Mono', monospace; font-size: 14px; font-variant-numeric: tabular-nums; color: #9a9184;">24</span></div>
+    </div>
+
+    <div style="height: 26px; flex-shrink: 0; box-sizing: border-box; display: flex; border-bottom: 1px solid #241f1b;">
+      <div style="width: 46px; flex-shrink: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px;"><span style="font-family: 'Geist Mono', monospace; font-size: 8.5px; color: #4a4238;">ALL</span></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b;"></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b;"></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; background: rgba(255,192,20,0.025);"></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b;"></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; display: flex; align-items: center; padding: 0 3px;"><span style="flex: 1; box-sizing: border-box; padding: 1px 6px; border-radius: 5px; background: #4a3a14; font-family: 'Geist Mono', monospace; font-size: 9px; color: #ffc014; overflow: hidden; white-space: nowrap;">Databricks OA due</span></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b;"></div>
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b;"></div>
+    </div>
+
+    <div style="flex: 1; box-sizing: border-box; display: flex; position: relative;">
+      <div style="width: 46px; flex-shrink: 0; position: relative;">
+        <span style="position: absolute; top: -5px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">8:00</span>
+        <span style="position: absolute; top: 65px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">9:00</span>
+        <span style="position: absolute; top: 135px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">10:00</span>
+        <span style="position: absolute; top: 205px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">11:00</span>
+        <span style="position: absolute; top: 275px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">12:00</span>
+        <span style="position: absolute; top: 345px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">13:00</span>
+        <span style="position: absolute; top: 415px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">14:00</span>
+        <span style="position: absolute; top: 485px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">15:00</span>
+        <span style="position: absolute; top: 555px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">16:00</span>
+        <span style="position: absolute; top: 625px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">17:00</span>
+        <span style="position: absolute; top: 695px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">18:00</span>
+        <span style="position: absolute; top: 765px; right: 6px; font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">19:00</span>
+      </div>
+      <div style="position: absolute; left: 46px; right: 0; top: 70px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 140px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 210px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 280px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 350px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 420px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 490px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 560px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 630px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 700px; height: 1px; background: #241f1b;"></div>
+      <div style="position: absolute; left: 46px; right: 0; top: 770px; height: 1px; background: #241f1b;"></div>
+
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; position: relative;">
+        <div style="position: absolute; left: 2px; right: 3px; top: 140px; height: 87px; box-sizing: border-box; border-radius: 6px; background: #2f4a36; border-left: 3px solid #7dc98f; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #cfe8d5;">Calc III lecture</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8fb99a;">10:00 &ndash; 11:15</span></div>
+        <div style="position: absolute; left: 2px; right: 3px; top: 490px; height: 70px; box-sizing: border-box; border-radius: 6px; border: 1.5px dashed #4a4238; background: rgba(255,192,20,0.02); opacity: 0.45; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #9a9184;">Resume pass &frac12;</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #6b6459;">15:00 &ndash; 16:00 &middot; fading</span></div>
+      </div>
+
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; position: relative;">
+        <div style="position: absolute; left: 2px; right: 3px; top: 350px; height: 58px; box-sizing: border-box; border-radius: 6px; background: #24384d; border-left: 3px solid #6fa8dc; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #cfe2f4;">CS 225 discussion</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8fb3d4;">13:00 &ndash; 13:50</span></div>
+        <div style="position: absolute; left: 2px; right: 3px; top: 595px; height: 70px; box-sizing: border-box; border-radius: 6px; background: #2f4a36; border-left: 3px solid #7dc98f; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #cfe8d5;">Gym</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8fb99a;">16:30 &ndash; 17:30</span></div>
+      </div>
+
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; position: relative; background: rgba(255,192,20,0.025);">
+        <div style="position: absolute; left: 2px; right: 3px; top: 140px; height: 87px; box-sizing: border-box; border-radius: 6px; background: #2f4a36; border-left: 3px solid #7dc98f; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #cfe8d5;">Calc III lecture</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8fb99a;">10:00 &ndash; 11:15</span></div>
+        <div style="position: absolute; left: 2px; right: 3px; top: 420px; height: 70px; box-sizing: border-box; border-radius: 6px; border: 1.5px dashed #ffc014; background: rgba(255,192,20,0.07); box-shadow: 0 0 18px rgba(255,192,20,0.25); display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden; z-index: 2;"><span style="font-size: 11px; font-weight: 600; color: #e8e2d9;">Neetcode &mdash; Two Pointers &frac12;</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #9a9184;">14:00 &ndash; 15:00</span></div>
+        <div style="position: absolute; left: 2px; right: 3px; top: 595px; height: 70px; box-sizing: border-box; border-radius: 6px; background: #2f4a36; border-left: 3px solid #7dc98f; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #cfe8d5;">Gym</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8fb99a;">16:30 &ndash; 17:30</span></div>
+        <div style="position: absolute; left: 0; right: 0; top: 349px; display: flex; align-items: center; z-index: 3;"><span style="width: 7px; height: 7px; border-radius: 999px; background: #e0654f; margin-left: -3px; flex-shrink: 0;"></span><span style="flex: 1; height: 1.5px; background: #e0654f;"></span></div>
+      </div>
+
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; position: relative;">
+        <div style="position: absolute; left: 2px; right: 3px; top: 140px; height: 87px; box-sizing: border-box; border-radius: 6px; background: #2f4a36; border-left: 3px solid #7dc98f; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #cfe8d5;">Calc III lecture</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8fb99a;">10:00 &ndash; 11:15</span></div>
+        <div style="position: absolute; left: 2px; right: 52%; top: 455px; height: 70px; box-sizing: border-box; border-radius: 6px; background: #24384d; border-left: 3px solid #6fa8dc; display: flex; flex-direction: column; gap: 1px; padding: 4px 6px; overflow: hidden;"><span style="font-size: 10.5px; font-weight: 600; color: #cfe2f4;">CS 225 office hrs</span><span style="font-family: 'Geist Mono', monospace; font-size: 8.5px; font-variant-numeric: tabular-nums; color: #8fb3d4;">14:30</span></div>
+        <div style="position: absolute; left: 50%; right: 3px; top: 490px; height: 70px; box-sizing: border-box; border-radius: 6px; background: #2f4a36; border-left: 3px solid #7dc98f; display: flex; flex-direction: column; gap: 1px; padding: 4px 6px; overflow: hidden; z-index: 2;"><span style="font-size: 10.5px; font-weight: 600; color: #cfe8d5;">Linear &mdash; Int 1</span><span style="font-family: 'Geist Mono', monospace; font-size: 8.5px; font-variant-numeric: tabular-nums; color: #8fb99a;">15:00</span></div>
+      </div>
+
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; position: relative;">
+        <div style="position: absolute; left: 2px; right: 3px; top: 140px; height: 87px; box-sizing: border-box; border-radius: 6px; background: #2f4a36; border-left: 3px solid #7dc98f; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #cfe8d5;">Calc III lecture</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8fb99a;">10:00 &ndash; 11:15</span></div>
+        <div style="position: absolute; left: 2px; right: 3px; top: 420px; height: 105px; box-sizing: border-box; border-radius: 6px; border: 1.5px dashed #6b6459; background: rgba(255,192,20,0.03); display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #e8e2d9;">Neetcode &mdash; rest</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #9a9184;">14:00 &ndash; 15:30</span></div>
+      </div>
+
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; position: relative;">
+        <div style="position: absolute; left: 2px; right: 3px; top: 210px; height: 70px; box-sizing: border-box; border-radius: 6px; background: #2f4a36; border-left: 3px solid #7dc98f; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #cfe8d5;">Gym</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8fb99a;">11:00 &ndash; 12:00</span></div>
+      </div>
+
+      <div style="flex: 1; box-sizing: border-box; border-left: 1px solid #241f1b; position: relative;">
+        <div style="position: absolute; left: 2px; right: 3px; top: 665px; height: 103px; box-sizing: border-box; border-radius: 6px; background: #2f4a36; border-left: 3px solid #7dc98f; display: flex; flex-direction: column; gap: 1px; padding: 4px 7px; overflow: hidden;"><span style="font-size: 11px; font-weight: 600; color: #cfe8d5;">Family dinner</span><span style="font-family: 'Geist Mono', monospace; font-size: 9px; font-variant-numeric: tabular-nums; color: #8fb99a;">17:30 &ndash; 19:00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="width: 292px; flex-shrink: 0; box-sizing: border-box; background: #1b1815; border-left: 1px solid #312b24; display: flex; flex-direction: column; gap: 18px; padding: 20px 18px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: #6b6459;">SCRATCH BLOCK</span>
+      <span style="flex: 1;"></span>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#6b6459" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"></path></svg>
+    </div>
+    <div style="font-size: 19px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; color: #e8e2d9;">Neetcode &mdash; Two Pointers</div>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 9px;">
+        <span style="width: 12px; height: 12px; border-radius: 4px; box-sizing: border-box; border: 1.5px dashed #9a9184; flex-shrink: 0;"></span>
+        <span style="font-size: 12.5px; color: #e8e2d9;">Manor &middot; scratch</span>
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#6b6459" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6L8 10.5 12.5 6"></path></svg>
+        <span style="flex: 1;"></span>
+        <span style="padding: 1px 6px; border-radius: 4px; background: #221e1a; border: 1px solid #312b24; font-family: 'Geist Mono', monospace; font-size: 8.5px; letter-spacing: 0.05em; color: #6b6459;">LOCAL</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 9px;">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#9a9184" stroke-width="1.5" stroke-linecap="round" style="flex-shrink: 0;"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3.2l2.2 1.3"></path></svg>
+        <span style="font-size: 12.5px; font-variant-numeric: tabular-nums; color: #e8e2d9;">Wed, Aug 20</span>
+        <span style="font-family: 'Geist Mono', monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #9a9184;">14:00 &ndash; 15:00</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 9px;">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#9a9184" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 6.5A5 5 0 0 1 12 5.2M13 9.5A5 5 0 0 1 4 10.8"></path><path d="M12 2.5v2.7h-2.7M4 13.5v-2.7h2.7"></path></svg>
+        <span style="font-size: 12.5px; color: #9a9184;">Does not repeat</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: #6b6459;">LINKED TASK</span>
+      <div style="display: flex; flex-direction: column; gap: 7px; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; background: #221e1a; border: 1px solid #312b24;">
+        <div style="font-size: 12.5px; font-weight: 500; color: #e8e2d9;">Neetcode &mdash; Two Pointers <span style="color: #9a9184;">(&frac12;)</span></div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="padding: 2px 8px; border-radius: 999px; background: #3f2d55; color: #c9a8ef; font-family: 'Geist Mono', monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.05em;">THIS WEEK</span>
+          <span style="padding: 2px 7px; border-radius: 5px; background: #24352a; color: #7dc98f; font-family: 'Geist Mono', monospace; font-size: 10px;">In Progress</span>
+          <span style="padding: 2px 7px; border-radius: 5px; background: #2a251f; color: #9a9184; font-family: 'Geist Mono', monospace; font-size: 10px; font-variant-numeric: tabular-nums;">due Fri</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 10px; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; background: #141210; border: 1px solid #312b24; border-left: 3px solid #ffc014;">
+      <span style="font-size: 12px; line-height: 1.5; color: #9a9184;">This block fades 48 h after it ends. The task stays &mdash; blocks are a scratchpad, not a ledger.</span>
+    </div>
+
+    <div style="flex: 1;"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 7px; height: 36px; border-radius: 9px; background: #e8e2d9;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#141210" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"></path></svg><span style="font-size: 13px; font-weight: 600; color: #141210;">Mark task done</span></div>
+      <div style="box-sizing: border-box; display: flex; align-items: center; justify-content: center; height: 34px; border-radius: 9px; border: 1px solid #3a2a24;"><span style="font-size: 12.5px; font-weight: 500; color: #e0654f;">Delete block</span></div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

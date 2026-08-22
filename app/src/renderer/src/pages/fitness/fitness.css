@@ -1,0 +1,253 @@
+/* Fitness page: read-only dashboard. Tokens only. */
+
+.fitness {
+  padding-bottom: var(--space-6);
+}
+
+.fitness-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.fitness-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-chip);
+  background: var(--surface-card);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.fitness-section {
+  margin-bottom: var(--space-4);
+}
+
+.fitness-section-title {
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: var(--space-2);
+}
+
+/* --- Stat tiles ------------------------------------------------------------ */
+
+.fitness-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.fitness-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+}
+
+.fitness-tile-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.fitness-tile.is-in .fitness-tile-label svg {
+  color: var(--amber);
+}
+
+.fitness-tile.is-out .fitness-tile-label svg {
+  color: var(--coral);
+}
+
+.fitness-tile.is-deficit .fitness-tile-label svg {
+  color: var(--success);
+}
+
+.fitness-tile-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.fitness-tile.is-deficit .fitness-tile-value {
+  color: #3d8a52;
+}
+
+/* --- Layout ---------------------------------------------------------------- */
+
+.fitness-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+.fitness-panel {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  display: flex;
+  flex-direction: column;
+}
+
+.fitness-panel .fitness-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.fitness-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.fitness-panel-sub {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+/* --- Calorie bars ---------------------------------------------------------- */
+
+.fitness-bars-plot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  flex: 1;
+  min-height: 172px;
+}
+
+.fitness-bars-col {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+}
+
+.fitness-bars-col .ui-tooltip-anchor {
+  width: 100%;
+  height: 100%;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.fitness-bars-bar {
+  width: 100%;
+  max-width: 64px;
+  border-radius: 5px 5px 2px 2px;
+  background: var(--surface-strong);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.fitness-bars-bar:hover {
+  background: #ddd2be;
+}
+
+.fitness-bars-bar.is-yesterday {
+  background: var(--coral);
+}
+
+.fitness-bars-bar.is-yesterday:hover {
+  background: var(--coral-hover);
+}
+
+.fitness-bars-avg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--ink-muted);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.fitness-bars-avg-label {
+  position: absolute;
+  right: 0;
+  top: -18px;
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.fitness-bars-axis {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.fitness-bars-day {
+  flex: 1;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* --- Muscle groups --------------------------------------------------------- */
+
+.fitness-muscle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 34px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.fitness-muscle:last-child {
+  border-bottom: none;
+}
+
+.fitness-muscle-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--surface-strong);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.fitness-muscle.is-hit .fitness-muscle-mark {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.fitness-muscle-name {
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.fitness-muscle:not(.is-hit) .fitness-muscle-name {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.fitness-muscle-trace {
+  display: inline-flex;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.fitness-muscle-dot {
+  display: inline-flex;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--surface-strong);
+}
+
+.fitness-muscle-dot.is-hit {
+  background: var(--success);
+  border-color: var(--success);
+}

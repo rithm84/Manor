@@ -1,0 +1,311 @@
+/* Mood & Focus page: calm twin selectors, single-hue history ramps. Tokens only.
+   Mood history = amber ramp (lighter is rougher); focus = teal ramp; Resting hollow. */
+
+.mf {
+  padding-bottom: var(--space-6);
+}
+
+.mf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.mf-date {
+  font-size: var(--text-body);
+  color: var(--ink-muted);
+}
+
+/* --- Ramps ------------------------------------------------------------------ */
+
+.mf-mood-1 {
+  background: rgba(232, 165, 90, 0.16);
+}
+
+.mf-mood-2 {
+  background: rgba(232, 165, 90, 0.32);
+}
+
+.mf-mood-3 {
+  background: rgba(232, 165, 90, 0.5);
+}
+
+.mf-mood-4 {
+  background: rgba(232, 165, 90, 0.7);
+}
+
+.mf-mood-5 {
+  background: rgba(232, 165, 90, 0.92);
+}
+
+.mf-focus-1 {
+  background: rgba(93, 184, 166, 0.16);
+}
+
+.mf-focus-2 {
+  background: rgba(93, 184, 166, 0.32);
+}
+
+.mf-focus-3 {
+  background: rgba(93, 184, 166, 0.5);
+}
+
+.mf-focus-4 {
+  background: rgba(93, 184, 166, 0.7);
+}
+
+.mf-focus-5 {
+  background: rgba(93, 184, 166, 0.92);
+}
+
+/* --- Layout ------------------------------------------------------------------ */
+
+.mf-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+/* --- Today card -------------------------------------------------------------- */
+
+.mf-today {
+  padding: var(--space-4) var(--space-5);
+}
+
+.mf-today-pickers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mf-picker-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mf-picker-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.mf-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 92px;
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  color: var(--ink-muted);
+  transition:
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    opacity var(--duration-fast) ease,
+    transform var(--duration-press) var(--ease-out);
+}
+
+.mf-option:hover {
+  border-color: var(--surface-strong);
+  background: var(--surface-canvas);
+  color: var(--ink-body);
+}
+
+.mf-option:active {
+  transform: scale(0.97);
+}
+
+.mf-option.is-selected {
+  border-color: var(--ink-muted);
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.mf-option.is-dimmed {
+  opacity: 0.55;
+}
+
+.mf-option-label {
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--ink-body);
+}
+
+.mf-option.is-selected .mf-option-label {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.mf-today-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.mf-logged {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: #3d8a52;
+}
+
+.mf-nudge {
+  font-size: var(--text-body);
+  color: var(--ink-muted);
+}
+
+/* --- History ----------------------------------------------------------------- */
+
+.mf-panel {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.mf-panel-title {
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: var(--space-3);
+}
+
+.mf-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.mf-strip-label {
+  width: 40px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+
+.mf-strip-cells {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.mf-strip-cells .ui-tooltip-anchor {
+  flex: 1;
+}
+
+.mf-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 18px;
+  border-radius: 4px;
+  transition: filter var(--duration-fast) ease;
+}
+
+.mf-cell:hover {
+  filter: brightness(0.96);
+}
+
+.mf-cell--rest {
+  border: 1px solid var(--hairline);
+  color: var(--ink-muted);
+}
+
+.mf-axis-day {
+  flex: 1;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* --- Legend -------------------------------------------------------------------- */
+
+.mf-legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: var(--space-3);
+}
+
+.mf-legend-end {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.mf-legend-swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.mf-legend-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--hairline);
+  margin: 0 var(--space-2);
+}
+
+.mf-legend-rest {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* --- Month texture ------------------------------------------------------------ */
+
+.mf-month {
+  margin-top: var(--space-4);
+}
+
+.mf-month-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.mf-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 16px);
+  gap: 4px;
+}
+
+.mf-month-cell {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.mf-month-cell.is-blank {
+  border: 1px solid var(--hairline);
+}
+
+.mf-month-cell.is-today {
+  border: 1.5px dashed var(--coral);
+}
+
+.mf-month-cell.is-future {
+  background: var(--surface-soft);
+  opacity: 0.5;
+}

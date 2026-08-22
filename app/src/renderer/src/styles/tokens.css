@@ -1,0 +1,103 @@
+/* Manor design tokens — Atelier v2 (see app/DESIGN.md). Single source of truth. */
+
+:root {
+  /* Surfaces */
+  --surface-canvas: #faf9f5;
+  --surface-soft: #f5f0e8;
+  --surface-card: #ffffff;
+  --surface-card-warm: #efe9de;
+  --surface-strong: #e8e0d2;
+
+  /* Ink */
+  --ink: #141413;
+  --ink-body: #3d3d3a;
+  --ink-muted: #6c6a64;
+
+  /* Hairline borders are the elevation system */
+  --hairline: #e6dfd8;
+  --shadow-overlay: 0 4px 16px rgba(20, 20, 19, 0.1);
+  --shadow-hover: 0 1px 3px rgba(20, 20, 19, 0.08);
+
+  /* Primary — coral */
+  --coral: #cc785c;
+  --coral-hover: #b8674e;
+  --coral-active: #a9583e;
+  --coral-soft: rgba(204, 120, 92, 0.1);
+
+  /* Grounding — forest */
+  --forest: #2f4127;
+  --forest-soft: rgba(47, 65, 39, 0.08);
+
+  /* Accents */
+  --teal: #5db8a6;
+  --amber: #e8a55a;
+  --gold: #b8860b;
+  --gold-soft: rgba(184, 134, 11, 0.12);
+
+  /* Semantic */
+  --success: #5db872;
+  --success-soft: rgba(93, 184, 114, 0.12);
+  --warning: #d4a017;
+  --warning-soft: rgba(212, 160, 23, 0.12);
+  --error: #c64545;
+  --error-soft: rgba(198, 69, 69, 0.1);
+
+  /* Kanban group pills (the signature): filled chip, cream text */
+  --pill-overdue: #c64545;
+  --pill-overdue-tint: rgba(198, 69, 69, 0.045);
+  --pill-today: #e8a55a;
+  --pill-today-tint: rgba(232, 165, 90, 0.055);
+  --pill-tomorrow: #d4a017;
+  --pill-tomorrow-tint: rgba(212, 160, 23, 0.05);
+  --pill-week: #8c6a9e;
+  --pill-week-tint: rgba(140, 106, 158, 0.05);
+  --pill-text: #fdf9f3;
+
+  /* Typography */
+  --font-ui: 'Inter', -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font-display: 'EB Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-body: 13px;
+  --text-md: 14px;
+  --text-emphasis: 15px;
+  --text-lg: 16px;
+  --display-md: 28px;
+  --display-lg: 34px;
+  --display-xl: 40px;
+
+  /* Spacing — 4px base scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radii */
+  --radius-chip: 6px;
+  --radius-control: 8px;
+  --radius-card: 10px;
+  --radius-card-lg: 12px;
+
+  /* Focus ring: coral at 15% alpha, 3px */
+  --focus-ring: 0 0 0 3px rgba(204, 120, 92, 0.15);
+
+  /* Motion — spring-feel, interruptible (emil bar) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-press: 140ms;
+  --duration-fast: 160ms;
+  --duration-base: 200ms;
+  --duration-panel: 240ms;
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --titlebar-height: 52px;
+}

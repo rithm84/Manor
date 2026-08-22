@@ -1,0 +1,261 @@
+/* First-run welcome flow (frameless: no sidebar, draggable canvas). */
+
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--surface-canvas);
+  position: relative;
+}
+
+.welcome-wordmark {
+  position: absolute;
+  top: var(--space-5);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.2px;
+  color: var(--ink-muted);
+}
+
+.welcome-stage {
+  width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  -webkit-app-region: no-drag;
+}
+
+.welcome-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.welcome-headline {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--display-md);
+  letter-spacing: -0.4px;
+  color: var(--ink);
+}
+
+.welcome-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: var(--space-2);
+  font-size: var(--text-md);
+  color: var(--ink-muted);
+}
+
+.welcome-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.welcome-actions .ui-button {
+  min-width: 180px;
+  height: 36px;
+}
+
+.welcome-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 300px;
+  margin-top: var(--space-6);
+}
+
+.welcome-form .ui-button {
+  width: 100%;
+  height: 36px;
+}
+
+.welcome-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-2) 0;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.welcome-divider::before,
+.welcome-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--hairline);
+}
+
+/* Connect-calendar card */
+
+.welcome-connect {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 340px;
+  margin-top: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  text-align: left;
+  transition: border-color var(--duration-fast) ease;
+}
+
+.welcome-connect.is-connected {
+  border-color: color-mix(in srgb, var(--success) 45%, var(--hairline));
+}
+
+.welcome-connect-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-control);
+  background: var(--surface-soft);
+  color: var(--ink-body);
+  flex-shrink: 0;
+}
+
+.welcome-connect-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.welcome-connect-name {
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.welcome-connect-note {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.welcome-connect-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--success-soft);
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.welcome-skip {
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--ink-muted);
+  transition: color var(--duration-fast) ease;
+}
+
+.welcome-skip:hover {
+  color: var(--ink-body);
+}
+
+/* Habit chip multi-select */
+
+.welcome-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+}
+
+.welcome-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--hairline);
+  border-radius: 15px;
+  background: var(--surface-card);
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--ink-body);
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-press) var(--ease-out);
+}
+
+.welcome-chip:hover {
+  border-color: var(--surface-strong);
+  background: var(--surface-soft);
+}
+
+.welcome-chip:active {
+  transform: scale(0.96);
+}
+
+.welcome-chip.is-on {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--surface-canvas);
+}
+
+/* Orb cameo */
+
+.welcome-orb {
+  margin-bottom: var(--space-4);
+}
+
+/* Stepper */
+
+.welcome-stepper {
+  position: absolute;
+  bottom: var(--space-8);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  -webkit-app-region: no-drag;
+}
+
+.welcome-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--surface-strong);
+  transition:
+    width var(--duration-base) var(--ease-out),
+    background-color var(--duration-fast) ease;
+}
+
+.welcome-dot:hover {
+  background: var(--ink-muted);
+}
+
+.welcome-dot.is-active {
+  width: 20px;
+  background: var(--coral);
+}

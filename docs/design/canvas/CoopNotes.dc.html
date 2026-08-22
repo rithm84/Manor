@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'Nunito', sans-serif; color: #17130e; }
+    a { color: #cc3f02; } a:hover { color: #a83302; }
+  </style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; overflow: hidden; display: flex; background: #ededed; font-size: 15px; font-weight: 600;">
+
+  <!-- Sidebar -->
+  <div style="width: 216px; flex-shrink: 0; box-sizing: border-box; background: #f3f3f3; border-right: 2px solid #e4e4e4; display: flex; flex-direction: column; gap: 20px; padding: 20px 12px 16px 12px;">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 10px;">
+      <svg width="22" height="22" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 C8.5 4.2 12.4 5.9 12.4 9.4 C12.4 12.1 10.4 14 8 14 C5.6 14 3.6 12.1 3.6 9.4 C3.6 7.1 5.2 5.7 6.2 4 C6.7 4.9 7.1 5.6 7.3 6.6 C7.8 5.2 7.9 3.6 8 1.6 Z" fill="#ff9600"></path><path d="M8 7.4 C8.9 8.7 10.1 9.4 10.1 10.9 C10.1 12.2 9.2 13.1 8 13.1 C6.8 13.1 5.9 12.2 5.9 10.9 C5.9 9.5 7.1 8.8 8 7.4 Z" fill="#ffc800"></path></svg>
+      <div style="font-size: 21px; font-weight: 900; letter-spacing: -0.02em;">Manor</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 3px;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5 L8 2.8 L13.5 7.5"></path><path d="M4.3 6.8 V13.2 H11.7 V6.8"></path></svg>
+        <span>Home</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="10" rx="2"></rect><path d="M2.5 6.8 H13.5"></path><path d="M5.5 2 V4.5"></path><path d="M10.5 2 V4.5"></path></svg>
+        <span>Calendar</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 C8.4 4.4 12 6 12 9.3 C12 11.9 10.2 13.7 8 13.7 C5.8 13.7 4 11.9 4 9.3 C4 7.2 5.4 5.9 6.3 4.3 C6.8 5.1 7.2 5.8 7.4 6.7 C7.8 5.4 7.9 3.9 8 2 Z"></path></svg>
+        <span>Habits</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 5 V11"></path><path d="M10.5 5 V11"></path><path d="M3 6.2 V9.8"></path><path d="M13 6.2 V9.8"></path><path d="M5.5 8 H10.5"></path></svg>
+        <span>Fitness</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.8"></circle><path d="M5.8 9.3 C6.4 10.3 7.1 10.8 8 10.8 C8.9 10.8 9.6 10.3 10.2 9.3"></path><path d="M6.1 6.3 H6.12"></path><path d="M9.9 6.3 H9.92"></path></svg>
+        <span>Mood &amp; Focus</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5 L2.5 8 L5.5 11.5"></path><path d="M10.5 4.5 L13.5 8 L10.5 11.5"></path></svg>
+        <span>LeetCode</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="11" height="8.5" rx="2"></rect><path d="M5.8 5 V3.8 A1.3 1.3 0 0 1 7.1 2.5 H8.9 A1.3 1.3 0 0 1 10.2 3.8 V5"></path></svg>
+        <span>Jobs</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; background: #fff7df; border: 2px solid #ffd95e; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #17130e;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5 H9.5 L12.5 5.5 V13.5 H4 Z"></path><path d="M9.5 2.5 V5.5 H12.5"></path><path d="M6.2 8.8 H10.3"></path><path d="M6.2 11 H10.3"></path></svg>
+        <span>Notes</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 H11.5 V13.5 L8 10.8 L4.5 13.5 Z"></path></svg>
+        <span>Bookmarks</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="6.5" rx="1.8"></rect><path d="M5.5 7 V5 A2.5 2.5 0 0 1 10.5 5 V7"></path></svg>
+        <span>Journal</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 3px; border-top: 2px solid #e4e4e4; padding-top: 10px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.8"></circle><path d="M8 5 V8 L10.2 9.5"></path></svg>
+          <span>Alfred audit</span>
+        </div>
+        <span style="background: #ffc014; color: #17130e; font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; font-weight: 500; border-radius: 999px; padding: 1px 6px;">2</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #857d6f;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"></circle><path d="M8 1.8 V3.6"></path><path d="M8 12.4 V14.2"></path><path d="M1.8 8 H3.6"></path><path d="M12.4 8 H14.2"></path><path d="M3.7 3.7 L5 5"></path><path d="M11 11 L12.3 12.3"></path><path d="M12.3 3.7 L11 5"></path><path d="M5 11 L3.7 12.3"></path></svg>
+        <span>Settings</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Folder tree -->
+  <div style="width: 224px; flex-shrink: 0; box-sizing: border-box; background: #f3f3f3; border-right: 2px solid #e4e4e4; display: flex; flex-direction: column; gap: 12px; padding: 18px 12px 14px 12px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 6px;">
+      <span style="font-size: 12px; font-weight: 900; letter-spacing: 0.05em;">FOLDERS</span>
+      <span style="width: 24px; height: 24px; box-sizing: border-box; background: #fff; border: 2px solid #e5e5e5; box-shadow: 0 2px 0 #e5e5e5; border-radius: 8px; display: flex; align-items: center; justify-content: center;"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#57503f" stroke-width="2.2" stroke-linecap="round"><path d="M8 3 V13"></path><path d="M3 8 H13"></path></svg></span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; background: #fff7df; border: 2px solid #ffd95e; border-radius: 10px; padding: 6px 9px;">
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#b8860b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5 V12.5 H14 V6.8 L8.2 6.8 L6.8 4 H2 Z"></path><path d="M2 8 L14 8"></path></svg>
+          <span style="font-size: 12.5px; font-weight: 800;">Calc III</span>
+        </span>
+        <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #b8860b;">6</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; border: 2px solid transparent; border-radius: 10px; padding: 6px 9px;">
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#857d6f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4 H6.8 L8.2 6 H14 V12.5 H2 Z"></path></svg>
+          <span style="font-size: 12.5px; font-weight: 800; color: #57503f;">CS 225</span>
+        </span>
+        <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #b3ab9e;">9</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; border: 2px solid transparent; border-radius: 10px; padding: 6px 9px;">
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#857d6f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4 H6.8 L8.2 6 H14 V12.5 H2 Z"></path></svg>
+          <span style="font-size: 12.5px; font-weight: 800; color: #57503f;">Manor</span>
+        </span>
+        <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #b3ab9e;">4</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; border: 2px solid transparent; border-radius: 10px; padding: 6px 9px;">
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#857d6f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4 H6.8 L8.2 6 H14 V12.5 H2 Z"></path></svg>
+          <span style="font-size: 12.5px; font-weight: 800; color: #57503f;">Misc</span>
+        </span>
+        <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #b3ab9e;">3</span>
+      </div>
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="box-sizing: border-box; background: #ededed; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px;">
+      <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 7px; height: 7px; border-radius: 99px; background: #58cc02;"></span><span style="font-size: 10.5px; font-weight: 800; color: #57503f;">offline queue clear</span></span>
+      <span style="font-size: 9.5px; font-weight: 700; color: #a29a8c; line-height: 1.35;">lecture-hall wifi dies, your notes don&#39;t — writes queue locally.</span>
+    </div>
+  </div>
+
+  <!-- Doc list -->
+  <div style="width: 264px; flex-shrink: 0; box-sizing: border-box; background: #f7f6f3; border-right: 2px solid #e8e6e1; display: flex; flex-direction: column; gap: 8px; padding: 18px 12px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 6px;">
+      <span style="font-size: 12px; font-weight: 900; letter-spacing: 0.05em;">CALC III</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 9.5px; color: #b3ab9e;">by edited</span>
+    </div>
+    <div style="box-sizing: border-box; background: #fff; border: 2px solid #ffd95e; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12.5px; font-weight: 800;">Calc III — Ch 14 review</span>
+      <span style="font-size: 10.5px; font-weight: 700; color: #a29a8c; line-height: 1.35; overflow: hidden;">Gradient, directional derivatives, the exam checklist…</span>
+      <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9.5px; color: #b3ab9e;">today &#183; 13:04</span>
+    </div>
+    <div style="box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12.5px; font-weight: 800; color: #57503f;">Ch 13 — Green&#39;s Theorem</span>
+      <span style="font-size: 10.5px; font-weight: 700; color: #a29a8c; line-height: 1.35;">Line integrals, orientation, the two forms…</span>
+      <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9.5px; color: #b3ab9e;">Aug 14</span>
+    </div>
+    <div style="box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12.5px; font-weight: 800; color: #57503f;">Ch 12 — Vectors recap</span>
+      <span style="font-size: 10.5px; font-weight: 700; color: #a29a8c; line-height: 1.35;">Cross products, projections, planes…</span>
+      <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9.5px; color: #b3ab9e;">Aug 2</span>
+    </div>
+    <div style="box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12.5px; font-weight: 800; color: #57503f;">Midterm 2 topics</span>
+      <span style="font-size: 10.5px; font-weight: 700; color: #a29a8c; line-height: 1.35;">What&#39;s fair game, what the TA hinted…</span>
+      <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9.5px; color: #b3ab9e;">Jul 28</span>
+    </div>
+    <div style="box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12.5px; font-weight: 800; color: #57503f;">Office hours questions</span>
+      <span style="font-size: 10.5px; font-weight: 700; color: #a29a8c; line-height: 1.35;">Running list for Thursday…</span>
+      <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9.5px; color: #b3ab9e;">Jul 21</span>
+    </div>
+    <div style="box-sizing: border-box; border: 2px solid transparent; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: 12.5px; font-weight: 800; color: #57503f;">Series formulas dump</span>
+      <span style="font-size: 10.5px; font-weight: 700; color: #a29a8c; line-height: 1.35;">Everything memorizable in one place…</span>
+      <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 9.5px; color: #b3ab9e;">Jul 12</span>
+    </div>
+  </div>
+
+  <!-- Editor -->
+  <div style="flex: 1; min-width: 0; box-sizing: border-box; background: #fff; display: flex; flex-direction: column;">
+    <div style="height: 46px; flex-shrink: 0; box-sizing: border-box; border-bottom: 2px solid #f0efec; display: flex; align-items: center; justify-content: space-between; padding: 0 26px;">
+      <span style="display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 800; color: #a29a8c;">
+        <span>Calc III</span>
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#c9c2b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4 L10 8 L6.5 12"></path></svg>
+        <span style="color: #57503f;">Ch 14 review</span>
+      </span>
+      <span style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-family: 'Geist Mono', monospace; font-size: 9.5px; color: #b3ab9e;">saved &#183; just now</span>
+        <span style="display: flex; align-items: center; gap: 5px; background: #eaf8dd; color: #43a302; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 3px 9px;"><span style="width: 6px; height: 6px; border-radius: 99px; background: #58cc02;"></span><span>synced</span></span>
+      </span>
+    </div>
+    <div style="flex: 1; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; padding: 30px 64px 20px 64px; overflow: hidden;">
+      <div style="font-size: 30px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1;">Calc III — Ch 14 review</div>
+      <div style="font-size: 14px; font-weight: 600; color: #3d3a34; line-height: 1.65; max-width: 640px;">The gradient &#8711;f points in the direction of steepest ascent, and its magnitude is the slope in that direction. For the exam: the directional derivative D<span style="font-size: 10px;">u</span>f = &#8711;f &#183; u only works when u is a unit vector — normalize first, every time. Level curves are perpendicular to &#8711;f, which is the fastest sanity check when a sketch looks wrong.</div>
+      <div style="box-sizing: border-box; background: #17130e; border-radius: 14px; padding: 14px 18px; max-width: 640px; display: flex; flex-direction: column; gap: 3px; font-family: 'Geist Mono', monospace; font-size: 12px; line-height: 1.6; white-space: pre;">
+        <span style="color: #8d8271;"># numeric gradient — quick check for 14.6 answers</span>
+        <span><span style="color: #ce82ff;">def</span> <span style="color: #1cb0f6;">grad</span><span style="color: #f3ead9;">(f, p, h):</span></span>
+        <span style="color: #f3ead9;">    <span style="color: #ce82ff;">return</span> [(f(p + h*e) - f(p - h*e)) / (<span style="color: #ffc014;">2</span>*h)</span>
+        <span style="color: #f3ead9;">            <span style="color: #ce82ff;">for</span> e <span style="color: #ce82ff;">in</span> <span style="color: #1cb0f6;">basis</span>(<span style="color: #1cb0f6;">len</span>(p))]</span>
+      </div>
+      <div style="box-sizing: border-box; border: 2px dashed #ddd6ca; background: #fbfaf8; border-radius: 14px; max-width: 640px; height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;">
+        <svg width="26" height="26" viewBox="0 0 16 16" fill="none" stroke="#b3ab9e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="2"></rect><circle cx="5.8" cy="6.4" r="1.2"></circle><path d="M2 11 L6 7.8 L9 10.2 L11.5 8.2 L14 10.2"></path></svg>
+        <span style="font-family: 'Geist Mono', monospace; font-size: 10.5px; color: #a29a8c;">gradient-field-sketch.png &#183; 1.2 MB</span>
+        <span style="font-size: 10.5px; font-weight: 700; color: #b3ab9e;">drawn in lecture — tap to open</span>
+      </div>
+      <div style="flex: 1;"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; border-top: 2px solid #f0efec; padding-top: 12px;">
+        <span style="display: flex; align-items: center; gap: 6px; background: #f3f3f3; border-radius: 999px; padding: 4px 12px;">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#857d6f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5 L14 14"></path></svg>
+          <span style="font-size: 10px; font-weight: 800; color: #857d6f;">agent-readable &#183; embedded for retrieval</span>
+        </span>
+        <span style="font-family: 'Geist Mono', monospace; font-variant-numeric: tabular-nums; font-size: 10px; color: #b3ab9e;">412 words &#183; markdown</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
