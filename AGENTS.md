@@ -1,5 +1,7 @@
 # AGENTS
 
+_Last updated: 2026-08-21_
+
 Operational guide for coding agents working on Manor.
 
 ## Project Overview
@@ -25,9 +27,9 @@ Do not start an ARCHITECTURE doc unprompted.
 my-legacy-replacement/
 ├── docs/
 │   ├── PRD.md                # The product decision record — the source of truth
+│   ├── DESIGN.md             # Binding design charter: Atelier tokens, type roles, copy voice
 │   └── design/canvas/        # Design-canvas working files (SPEC.md §B mirrors the mock canon)
 ├── app/                      # The Electron shell (electron-vite + React 19 + TS)
-│   ├── DESIGN.md             # Binding design charter: Atelier tokens, type roles, copy voice
 │   └── src/renderer/src/     # data/mock.ts = single mock-data source; pages/; components/ui/
 ├── .agents/skills/
 │   ├── emilkowalski-design/  # Vendored design/animation skills (7)
@@ -57,7 +59,7 @@ work:
 
 1. `docs/PRD.md` — every product decision; treat as binding.
 
-Before any UI/UX work, additionally read `app/DESIGN.md` (the design
+Before any UI/UX work, additionally read `docs/DESIGN.md` (the design
 charter).
 
 ## Decisions Discipline
@@ -140,4 +142,8 @@ Cron Calendar, Obvious).
   parallel data; extend mock.ts additively instead.
 - **Docs:** one source of truth per fact — abridge and point rather than
   duplicate across docs. New long-form research goes in `docs/`.
+- **Last-updated stamps:** every doc (this file, `docs/*.md`,
+  `app/README.md`, `docs/design/canvas/SPEC.md`) carries a
+  `_Last updated: YYYY-MM-DD_` line under its title. Whenever you edit a
+  doc, update its stamp in the same change.
 - **Deletions of user work and destructive git operations: ask first.**

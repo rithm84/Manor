@@ -112,7 +112,7 @@ E2E encrypted, Touch ID/password locked. Random master key in Keychain; one-time
 
 ## 9. Design System
 
-Direction: **Atelier** — light, warm-canvas, editorial (tokens, typography roles, and copy voice live in `app/DESIGN.md`, the binding design charter). Dark mode was evaluated in hi-fi and **rejected**: harder element distinction, worse for productive work. Gamified-colorful (Duolingo-forward) was likewise rejected as too much for a life OS; Duolingo survives in mechanics, not in pixels. The design anti-patterns in `AGENTS.md` are hard rules. The interface uses grouped boards, contextual properties, and a dockable sidebar.
+Direction: **Atelier** — light, warm-canvas, editorial (tokens, typography roles, and copy voice live in `DESIGN.md`, the binding design charter). Dark mode was evaluated in hi-fi and **rejected**: harder element distinction, worse for productive work. Gamified-colorful (Duolingo-forward) was likewise rejected as too much for a life OS; Duolingo survives in mechanics, not in pixels. The design anti-patterns in `AGENTS.md` are hard rules. The interface uses grouped boards, contextual properties, and a dockable sidebar.
 
 ## 10. Verified Technical Constraints
 
