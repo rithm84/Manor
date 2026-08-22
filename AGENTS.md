@@ -24,7 +24,7 @@ Do not start an ARCHITECTURE doc unprompted.
 ## Repository Layout
 
 ```
-my-legacy-replacement/
+manor/
 ├── docs/
 │   ├── PRD.md                # The product decision record — the source of truth
 │   ├── DESIGN.md             # Binding design charter: Atelier tokens, type roles, copy voice
