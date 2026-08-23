@@ -1,104 +1,65 @@
 import { Plus } from 'lucide-react'
-import { useState } from 'react'
-import type { KeyboardEvent, ReactNode } from 'react'
+import { useDroppable } from '@dnd-kit/core'
+import type { ReactNode } from 'react'
 
-import { Button, Input, Pill, Select } from '../../components/ui'
-import type { Task, TaskBucketMeta, TaskContext, TaskDifficulty, TaskPriority } from '../../data/mock'
+import { Pill } from '../../components/ui'
+import type { QuickActionPoint } from '../../components/ui'
+import type { ContextDefinition, Task, TaskBucketMeta } from '../../data/mock'
 import { TaskCard } from './TaskCard'
-import { CONTEXT_OPTIONS, DIFFICULTY_OPTIONS, PRIORITY_OPTIONS } from './taskModel'
-
-/** Values collected by the inline composer before a task exists. */
-export interface DraftTask {
-  title: string
-  context: TaskContext
-  difficulty: TaskDifficulty | null
-  priority: TaskPriority | null
-}
+import { canCreateTaskInBucket } from './taskModel'
 
 export interface KanbanColumnProps {
   meta: TaskBucketMeta
   tasks: readonly Task[]
+  contexts: readonly ContextDefinition[]
+  today: string
   completingIds: ReadonlySet<string>
-  composerOpen: boolean
-  onOpenComposer: () => void
-  onCloseComposer: () => void
-  onCreate: (draft: DraftTask) => void
+  onOpenComposer: (trigger: HTMLElement) => void
   onOpenTask: (taskId: string) => void
+  onQuickActions: (taskId: string, point: QuickActionPoint) => void
   onToggleComplete: (taskId: string) => void
-}
-
-interface ComposerState {
-  title: string
-  context: TaskContext
-  difficulty: TaskDifficulty | null
-  priority: TaskPriority | null
-}
-
-const EMPTY_COMPOSER: ComposerState = {
-  title: '',
-  context: 'Personal',
-  difficulty: null,
-  priority: null
 }
 
 /**
  * One board column: filled group pill + muted count (the Notion signature),
- * faint colorway tint, cards, and a "+ New" ghost row that becomes an inline
- * card composer with quick property chips.
+ * faint colorway tint, cards, and a "+ New" entry point for the shared
+ * creation dialog.
  */
 export function KanbanColumn({
   meta,
   tasks,
+  contexts,
+  today,
   completingIds,
-  composerOpen,
   onOpenComposer,
-  onCloseComposer,
-  onCreate,
   onOpenTask,
+  onQuickActions,
   onToggleComplete
 }: KanbanColumnProps): ReactNode {
-  const [draft, setDraft] = useState<ComposerState>(EMPTY_COMPOSER)
-
-  const submit = (): void => {
-    const title = draft.title.trim()
-    if (title === '') {
-      return
-    }
-    onCreate({
-      title,
-      context: draft.context,
-      difficulty: draft.difficulty,
-      priority: draft.priority
-    })
-    setDraft(EMPTY_COMPOSER)
-  }
-
-  const cancel = (): void => {
-    setDraft(EMPTY_COMPOSER)
-    onCloseComposer()
-  }
-
-  const onComposerKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-    if (event.key === 'Enter') {
-      submit()
-    }
-    if (event.key === 'Escape') {
-      cancel()
-    }
-  }
+  const creatable = canCreateTaskInBucket(meta.bucket)
+  const { setNodeRef, isOver } = useDroppable({
+    id: `bucket:${meta.bucket}`,
+    data: { type: 'bucket', targetBucket: meta.bucket }
+  })
 
   return (
-    <section className={`kanban-col is-${meta.colorway}`} aria-label={meta.label}>
+    <section
+      ref={setNodeRef}
+      className={`kanban-col is-${meta.colorway}${isOver ? ' is-drag-over' : ''}`}
+      aria-label={meta.label}
+    >
       <header className="kanban-col-head">
         <Pill variant="group" colorway={meta.colorway} label={meta.label} count={tasks.length} />
-        <button
-          type="button"
-          className="kanban-col-add"
-          onClick={onOpenComposer}
-          aria-label={`New task in ${meta.label}`}
-        >
-          <Plus size={14} />
-        </button>
+        {creatable ? (
+          <button
+            type="button"
+            className="kanban-col-add"
+            onClick={(event) => onOpenComposer(event.currentTarget)}
+            aria-label={`New task in ${meta.label}`}
+          >
+            <Plus size={14} />
+          </button>
+        ) : null}
       </header>
 
       <div className="kanban-cards">
@@ -106,60 +67,23 @@ export function KanbanColumn({
           <TaskCard
             key={task.id}
             task={task}
+            contexts={contexts}
+            bucket={meta.bucket}
+            today={today}
             completing={completingIds.has(task.id)}
             onOpen={onOpenTask}
+            onQuickActions={onQuickActions}
             onToggleComplete={onToggleComplete}
           />
         ))}
-
-        {composerOpen ? (
-          <div className="task-composer" onKeyDown={onComposerKeyDown}>
-            <Input
-              value={draft.title}
-              onChange={(title) => setDraft({ ...draft, title })}
-              placeholder="Task name"
-              ariaLabel={`New task in ${meta.label}`}
-              autoFocus
-            />
-            <div className="task-composer-props">
-              <Select
-                value={draft.context}
-                options={CONTEXT_OPTIONS}
-                onChange={(value) => setDraft({ ...draft, context: value as TaskContext })}
-                placeholder="Context"
-                ariaLabel="Context"
-              />
-              <Select
-                value={draft.difficulty}
-                options={DIFFICULTY_OPTIONS}
-                onChange={(value) => setDraft({ ...draft, difficulty: value as TaskDifficulty })}
-                placeholder="Time"
-                ariaLabel="Difficulty"
-              />
-              <Select
-                value={draft.priority}
-                options={PRIORITY_OPTIONS}
-                onChange={(value) => setDraft({ ...draft, priority: value as TaskPriority })}
-                placeholder="Priority"
-                ariaLabel="Priority"
-              />
-            </div>
-            <div className="task-composer-actions">
-              <Button variant="primary" onClick={submit} disabled={draft.title.trim() === ''}>
-                Add
-              </Button>
-              <Button variant="subtle" onClick={cancel}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <button type="button" className="kanban-new" onClick={onOpenComposer}>
-            <Plus size={14} />
-            New
-          </button>
-        )}
       </div>
+
+      {creatable ? (
+        <button type="button" className="kanban-new" onClick={(event) => onOpenComposer(event.currentTarget)}>
+          <Plus size={14} />
+          New
+        </button>
+      ) : null}
     </section>
   )
 }

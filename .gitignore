@@ -1,4 +1,5 @@
 .env.local
+/output/
 
 # Regenerable seeded design-canvas artifact (rebuild with the /design helper from canvas/ files)
 docs/design/canvas/manor-shell-explorations.html

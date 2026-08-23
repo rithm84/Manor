@@ -1,22 +1,32 @@
-import { useState } from 'react'
-import type { DragEvent, ReactNode } from 'react'
+import { useDroppable } from '@dnd-kit/core'
+import type { ReactNode } from 'react'
 
-import { NOW_TIME, TODAY_ISO, TODAY_LABEL, calendars, events } from '../../data/mock'
-import type { CalendarEvent } from '../../data/mock'
-import { TASK_DRAG_TYPE, findFreeStart, formatClock, timeToMinutes } from './taskModel'
-import type { DroppedBlock } from './taskModel'
+import { calendars, events } from '../../data/mock'
+import type { CalendarEvent, ScratchBlock, Task } from '../../data/mock'
+import { formatClock, timeToMinutes } from './taskModel'
+
+export type ScheduleDay = 'today' | 'tomorrow'
+
+export type TimelineDropPreview =
+  | { start: string; end: string; title: string; error: null }
+  | { start: null; end: null; title: string; error: string }
 
 export interface TodayPanelProps {
-  droppedBlocks: readonly DroppedBlock[]
-  onDropTask: (taskId: string) => void
+  tasks: readonly Task[]
+  scratchBlocks: readonly ScratchBlock[]
+  date: string
+  dateLabel: string
+  day: ScheduleDay
+  nowTime: string
+  dropPreview: TimelineDropPreview | null
+  onDayChange: (day: ScheduleDay) => void
   onOpenTask: (taskId: string) => void
+  onOpenScratchBlock: (blockId: string) => void
 }
 
-/** Axis window: 8:00 to 22:00 keeps the canon day dense, no dead hours. */
-const AXIS_START_MIN = 8 * 60
-const AXIS_END_MIN = 22 * 60
-const HOUR_PX = 44
-const HINT_MINUTES = 60
+export const AXIS_START_MIN = 6 * 60
+export const AXIS_END_MIN = 24 * 60
+export const HOUR_PX = 44
 
 interface TimelineBlock {
   id: string
@@ -24,151 +34,89 @@ interface TimelineBlock {
   start: string
   end: string
   scratch: boolean
-  faded: boolean
   taskId: string | null
   color: string
 }
 
 function calendarColor(calendarId: string): string {
   const source = calendars.find((calendar) => calendar.id === calendarId)
-  return source !== undefined ? source.color : '#6c6a64'
+  if (source === undefined) throw new Error(`Calendar event references missing calendar ${calendarId}`)
+  return source.color
 }
 
 function blockFromEvent(event: CalendarEvent): TimelineBlock {
-  return {
-    id: event.id,
-    title: event.title,
-    start: event.start,
-    end: event.end,
-    scratch: event.scratch,
-    faded: event.faded,
-    taskId: event.taskId,
-    color: calendarColor(event.calendarId)
-  }
+  return { id: event.id, title: event.title, start: event.start, end: event.end, scratch: false, taskId: null, color: calendarColor(event.calendarId) }
 }
 
-function blockFromDrop(dropped: DroppedBlock): TimelineBlock {
-  return {
-    id: dropped.id,
-    title: dropped.title,
-    start: dropped.start,
-    end: dropped.end,
-    scratch: true,
-    faded: false,
-    taskId: dropped.taskId,
-    color: '#cc785c'
-  }
+function blockFromScratch(block: ScratchBlock, tasks: readonly Task[]): TimelineBlock {
+  const task = tasks.find((candidate) => candidate.id === block.taskId)
+  if (task === undefined) throw new Error(`Scratch block ${block.id} references missing task ${block.taskId}`)
+  return { id: block.id, title: task.title, start: block.start, end: block.end, scratch: true, taskId: task.id, color: '#416883' }
 }
 
-function topFor(minutes: number): number {
+export function timelineTop(minutes: number): number {
   return ((minutes - AXIS_START_MIN) / 60) * HOUR_PX
 }
 
 function formatHour(hour: number): string {
+  if (hour === 24) return '12 AM'
   const meridiem = hour >= 12 ? 'PM' : 'AM'
   const display = hour % 12 === 0 ? 12 : hour % 12
   return `${display} ${meridiem}`
 }
 
-/**
- * The day as an hour-axis timeline: mono hour gutter, faint hourlines,
- * events and scratch blocks positioned and sized by their times, a coral
- * now line, and a free-slot hint that accepts dragged board cards.
- */
-export function TodayPanel({ droppedBlocks, onDropTask, onOpenTask }: TodayPanelProps): ReactNode {
-  const [dragOver, setDragOver] = useState(false)
-
+export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime, dropPreview, onDayChange, onOpenTask, onOpenScratchBlock }: TodayPanelProps): ReactNode {
+  const { setNodeRef, isOver } = useDroppable({ id: `timeline:${date}`, data: { type: 'timeline', date } })
+  const dayScratchBlocks = scratchBlocks.filter((block) => block.date === date)
   const blocks: readonly TimelineBlock[] = [
-    ...events.filter((event) => event.date === TODAY_ISO).map(blockFromEvent),
-    ...droppedBlocks.map(blockFromDrop)
+    ...events.filter((event) => event.date === date && !event.scratch).map(blockFromEvent),
+    ...dayScratchBlocks.map((block) => blockFromScratch(block, tasks))
   ]
-
-  const hours: number[] = []
-  for (let hour = AXIS_START_MIN / 60; hour <= AXIS_END_MIN / 60; hour += 1) {
-    hours.push(hour)
-  }
-
-  const nowTop = topFor(timeToMinutes(NOW_TIME))
-  const hintStart = findFreeStart(HINT_MINUTES, droppedBlocks)
-  const hintTop = topFor(timeToMinutes(hintStart))
-  const axisHeight = topFor(AXIS_END_MIN)
-
-  const onDragOver = (event: DragEvent<HTMLDivElement>): void => {
-    if (event.dataTransfer.types.includes(TASK_DRAG_TYPE)) {
-      event.preventDefault()
-      event.dataTransfer.dropEffect = 'copy'
-      setDragOver(true)
-    }
-  }
-
-  const onDrop = (event: DragEvent<HTMLDivElement>): void => {
-    event.preventDefault()
-    setDragOver(false)
-    const taskId = event.dataTransfer.getData(TASK_DRAG_TYPE)
-    if (taskId !== '') {
-      onDropTask(taskId)
-    }
-  }
+  const hours = Array.from({ length: AXIS_END_MIN / 60 - AXIS_START_MIN / 60 + 1 }, (_, index) => AXIS_START_MIN / 60 + index)
+  const nowMinutes = timeToMinutes(nowTime)
+  const axisHeight = timelineTop(AXIS_END_MIN)
 
   return (
-    <aside className="today-panel" aria-label="Today">
+    <aside className="today-panel" aria-label={`${day === 'today' ? 'Today' : 'Tomorrow'} schedule`}>
       <header className="today-head">
-        <span className="today-title">Today</span>
-        <span className="today-date">{TODAY_LABEL}</span>
+        <div className="today-day-toggle" role="group" aria-label="Schedule day">
+          <button type="button" className={day === 'today' ? 'is-active' : ''} aria-pressed={day === 'today'} onClick={() => onDayChange('today')}>Today</button>
+          <button type="button" className={day === 'tomorrow' ? 'is-active' : ''} aria-pressed={day === 'tomorrow'} onClick={() => onDayChange('tomorrow')}>Tomorrow</button>
+        </div>
+        <span className="today-date">{dateLabel}</span>
       </header>
 
-      <div
-        className="today-timeline"
-        style={{ height: axisHeight }}
-        onDragOver={onDragOver}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={onDrop}
-      >
-        {hours.map((hour) => (
-          <div key={hour} className="today-hour" style={{ top: topFor(hour * 60) }}>
-            <span className="today-hour-label">{formatHour(hour)}</span>
-            <span className="today-hour-line" />
-          </div>
-        ))}
-
-        {blocks.map((block) => {
-          const startMin = timeToMinutes(block.start)
-          const endMin = timeToMinutes(block.end)
-          const height = topFor(endMin) - topFor(startMin)
-          return (
-            <div
-              key={block.id}
-              className={`today-block${block.scratch ? ' is-scratch' : ''}${
-                block.faded ? ' is-faded' : ''
-              }${block.taskId !== null ? ' is-linked' : ''}${height < 34 ? ' is-slim' : ''}`}
-              style={{ top: topFor(startMin), height, ['--entry-color' as string]: block.color }}
-              title={`${block.title}, ${formatClock(block.start)} to ${formatClock(block.end)}`}
-              role={block.taskId !== null ? 'button' : undefined}
-              tabIndex={block.taskId !== null ? 0 : undefined}
-              onClick={() => {
-                if (block.taskId !== null) {
-                  onOpenTask(block.taskId)
-                }
-              }}
-            >
-              <span className="today-block-title">{block.title}</span>
-              <span className="today-block-time tnum">
-                {formatClock(block.start)} to {formatClock(block.end)}
-              </span>
+      <div className="today-timeline-scroll">
+        <div ref={setNodeRef} className={`today-timeline${isOver ? ' is-drag-over' : ''}`} style={{ height: axisHeight }}>
+          {hours.map((hour) => (
+            <div key={hour} className="today-hour" style={{ top: timelineTop(hour * 60) }}>
+              <span className="today-hour-label">{formatHour(hour)}</span><span className="today-hour-line" />
             </div>
-          )
-        })}
+          ))}
 
-        <div
-          className={`today-hint${dragOver ? ' is-over' : ''}`}
-          style={{ top: hintTop, height: (HINT_MINUTES / 60) * HOUR_PX }}
-        >
-          Drag a task here to block time
-        </div>
+          {blocks.map((block) => {
+            const height = timelineTop(timeToMinutes(block.end)) - timelineTop(timeToMinutes(block.start))
+            return (
+              <button key={block.id} type="button" className={`today-block${block.scratch ? ' is-scratch is-linked' : ''}${height < 34 ? ' is-slim' : ''}`}
+                style={{ top: timelineTop(timeToMinutes(block.start)), height, ['--entry-color' as string]: block.color }}
+                title={`${block.title}, ${formatClock(block.start)} to ${formatClock(block.end)}`}
+                onClick={() => { if (block.scratch) onOpenScratchBlock(block.id); else if (block.taskId !== null) onOpenTask(block.taskId) }}>
+                <span className="today-block-title">{block.title}</span>
+                <span className="today-block-time tnum">{formatClock(block.start)} to {formatClock(block.end)}</span>
+              </button>
+            )
+          })}
 
-        <div className="today-now" style={{ top: nowTop }} aria-label={`Now, ${formatClock(NOW_TIME)}`}>
-          <span className="today-now-dot" />
-          <span className="today-now-line" />
+          {isOver && dropPreview?.error === null ? (
+            <div className="today-drop-preview" style={{ top: timelineTop(timeToMinutes(dropPreview.start)), height: timelineTop(timeToMinutes(dropPreview.end)) - timelineTop(timeToMinutes(dropPreview.start)) }}>
+              <span>{dropPreview.title}</span><span className="tnum">{formatClock(dropPreview.start)} to {formatClock(dropPreview.end)}</span>
+            </div>
+          ) : null}
+          {isOver && dropPreview?.error !== null && dropPreview !== null ? <div className="today-drop-error" role="status">{dropPreview.error}</div> : null}
+
+          {day === 'today' && nowMinutes >= AXIS_START_MIN && nowMinutes <= AXIS_END_MIN ? (
+            <div className="today-now" style={{ top: timelineTop(nowMinutes) }} aria-label={`Now, ${formatClock(nowTime)}`}><span className="today-now-dot" /><span className="today-now-line" /></div>
+          ) : null}
         </div>
       </div>
     </aside>

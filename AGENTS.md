@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-08-21_
+_Last updated: 2026-08-22_
 
 Operational guide for coding agents working on Manor.
 
@@ -19,7 +19,7 @@ proper-product bar (sign-in, onboarding, settings, empty states).
 **Current phase: hi-fi UI shell shipped; component drill-downs next.** The
 Electron app in `app/` is a clickable UI-only shell (mock data, no backend).
 The next design phase drills into individual components (colors, charts,
-freeze-management UI, fitness plotting) — likely via the design canvas.
+freeze-management UI) — likely via the design canvas.
 Do not start an ARCHITECTURE doc unprompted.
 
 ## Repository Layout
@@ -132,6 +132,9 @@ Notion, Cron Calendar, Obvious).
   feeds, logs) are compact lists/tables, never big card grids.
 - **No padded-card page framing.** Content runs edge-to-edge;
   "page inside a page" layouts are failures.
+- **Object details are centered dialogs.** Never use side peeks, drawers,
+  sheets, right-edge panels, or detail rails. Primary page layouts, the app
+  sidebar, inline popovers, menus, and tooltips are not object details.
 - **Show states through design, not labels.** Gold/at-risk/status read from
   color, weight, and emphasis — not from explanatory text chips.
 - **Design the workflows, not just the layouts.** Every surface ships its

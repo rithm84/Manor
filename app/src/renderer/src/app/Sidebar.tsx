@@ -3,7 +3,6 @@ import {
   Bookmark,
   Briefcase,
   Code2,
-  Dumbbell,
   FileText,
   Flame,
   House,
@@ -27,7 +26,6 @@ interface NavEntry {
 const NAV_ITEMS: readonly NavEntry[] = [
   { to: '/home', label: 'Home', icon: <House size={16} /> },
   { to: '/habits', label: 'Habits', icon: <Flame size={16} /> },
-  { to: '/fitness', label: 'Fitness', icon: <Dumbbell size={16} /> },
   { to: '/mood-focus', label: 'Mood & Focus', icon: <Smile size={16} /> },
   { to: '/leetcode', label: 'LeetCode', icon: <Code2 size={16} /> },
   { to: '/jobs', label: 'Jobs', icon: <Briefcase size={16} /> },

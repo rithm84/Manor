@@ -38,11 +38,11 @@ const REMINDER_TIMES = [
 ] as const
 
 const ACCENTS = [
-  { id: 'coral', color: '#cc785c' },
+  { id: 'aubergine', color: '#6a4e6c' },
   { id: 'forest', color: '#2f4127' },
-  { id: 'teal', color: '#5db8a6' },
-  { id: 'amber', color: '#e8a55a' },
-  { id: 'plum', color: '#8c6a9e' }
+  { id: 'info', color: '#416883' },
+  { id: 'today', color: '#825d16' },
+  { id: 'plum', color: '#6b5375' }
 ] as const
 
 /** Sectioned settings: nav of sections on the left, one section at a time. */
@@ -65,7 +65,7 @@ export function SettingsPage(): ReactNode {
   const [taskReminders, setTaskReminders] = useState(true)
 
   // Appearance
-  const [accent, setAccent] = useState('coral')
+  const [accent, setAccent] = useState('aubergine')
   const [sidebarDocked, setSidebarDocked] = useState(
     () => window.localStorage.getItem(SIDEBAR_DOCKED_KEY) !== '0'
   )
@@ -114,7 +114,7 @@ export function SettingsPage(): ReactNode {
               <div className="set-card">
                 <SettingsRow
                   label="Google Calendar"
-                  description="Events flow straight into the calendar."
+                  description="Show Google Calendar events in Manor."
                 >
                   {calendarConnected ? (
                     <div className="set-connected">
@@ -129,7 +129,7 @@ export function SettingsPage(): ReactNode {
                     </Button>
                   )}
                 </SettingsRow>
-                <SettingsRow label="X" description="New bookmarks arrive each morning, sorted and summarized.">
+                <SettingsRow label="X" description="Show X bookmarks in Manor.">
                   {xConnected ? (
                     <div className="set-connected">
                       <Pill variant="tag" colorway="success" label="Connected" />
@@ -143,7 +143,7 @@ export function SettingsPage(): ReactNode {
                     </Button>
                   )}
                 </SettingsRow>
-                <SettingsRow label="LeetCode" description="Solves count toward the streak on their own.">
+                <SettingsRow label="LeetCode" description="Count completed problems toward your LeetCode streak.">
                   <div className="set-input">
                     <Input
                       value={leetcodeUsername}
@@ -153,7 +153,7 @@ export function SettingsPage(): ReactNode {
                     />
                   </div>
                 </SettingsRow>
-                <SettingsRow label="Job feed" description="Fresh internship roles land in Jobs every day.">
+                <SettingsRow label="Job feed" description="Add new internship roles to Jobs daily.">
                   <SettingsToggle checked={jobFeed} onChange={setJobFeed} ariaLabel="Job feed" />
                 </SettingsRow>
               </div>
@@ -164,7 +164,7 @@ export function SettingsPage(): ReactNode {
             <section className="set-section">
               <h2 className="set-section-title">Alfred</h2>
               <div className="set-card">
-                <SettingsRow label="Summon" description="Works anywhere, even with Manor closed.">
+                <SettingsRow label="Summon" description="Open Alfred from any app while Manor is running.">
                   {capturingHotkey ? (
                     <button
                       type="button"
@@ -182,10 +182,10 @@ export function SettingsPage(): ReactNode {
                     </div>
                   )}
                 </SettingsRow>
-                <SettingsRow label="Voice" description="Hear Alfred out loud. Off keeps replies on screen.">
+                <SettingsRow label="Voice" description="Play Alfred's replies aloud.">
                   <SettingsToggle checked={voice} onChange={setVoice} ariaLabel="Voice" />
                 </SettingsRow>
-                <SettingsRow label="Morning briefing" description="Ready before you are.">
+                <SettingsRow label="Morning briefing" description="Prepare the briefing by this time.">
                   <Select
                     value={briefingTime}
                     options={[...BRIEFING_TIMES]}
@@ -202,7 +202,7 @@ export function SettingsPage(): ReactNode {
             <section className="set-section">
               <h2 className="set-section-title">Notifications</h2>
               <div className="set-card">
-                <SettingsRow label="Evening reminder" description="A quiet nudge to log the day.">
+                <SettingsRow label="Evening reminder" description="Remind me to log the day at this time.">
                   <Select
                     value={reminderTime}
                     options={[...REMINDER_TIMES]}
@@ -211,7 +211,7 @@ export function SettingsPage(): ReactNode {
                     ariaLabel="Evening reminder time"
                   />
                 </SettingsRow>
-                <SettingsRow label="Task reminders" description="A heads up before something is due.">
+                <SettingsRow label="Task reminders" description="Notify me before tasks are due.">
                   <SettingsToggle
                     checked={taskReminders}
                     onChange={setTaskReminders}
@@ -226,7 +226,7 @@ export function SettingsPage(): ReactNode {
             <section className="set-section">
               <h2 className="set-section-title">Appearance</h2>
               <div className="set-card">
-                <SettingsRow label="Accent" description="The color Manor reaches for first.">
+                <SettingsRow label="Accent" description="Primary action color.">
                   <div className="set-swatches" role="radiogroup" aria-label="Accent color">
                     {ACCENTS.map((option) => (
                       <button
@@ -242,7 +242,7 @@ export function SettingsPage(): ReactNode {
                     ))}
                   </div>
                 </SettingsRow>
-                <SettingsRow label="Sidebar" description="How Manor opens.">
+                <SettingsRow label="Sidebar" description="Default sidebar state.">
                   <div className="set-segment" role="radiogroup" aria-label="Sidebar behavior">
                     <button
                       type="button"
@@ -272,7 +272,7 @@ export function SettingsPage(): ReactNode {
             <section className="set-section">
               <h2 className="set-section-title">About</h2>
               <div className="set-card">
-                <SettingsRow label="Manor" description="Made for one.">
+                <SettingsRow label="Manor" description="Version">
                   <span className="set-version tnum">0.1.0</span>
                 </SettingsRow>
               </div>

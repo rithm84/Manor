@@ -1,11 +1,5 @@
 /* Alfred activity: the audit trail as a compact table. */
 
-.aa-lede {
-  font-size: var(--text-body);
-  color: var(--ink-muted);
-  margin: calc(-1 * var(--space-4)) 0 var(--space-5);
-}
-
 .aa-table {
   max-width: 720px;
   border: 1px solid var(--hairline);

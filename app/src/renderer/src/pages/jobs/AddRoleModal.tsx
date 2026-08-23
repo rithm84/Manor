@@ -1,70 +1,53 @@
 import { useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 
-import { Button, Input, Modal, Select } from '../../components/ui'
-import type { JobColumn } from './jobsModel'
-
-export type AddRoleDestination = 'toapply' | JobColumn
-
-export interface RoleDraft {
-  company: string
-  role: string
-  link: string
-  destination: AddRoleDestination
-}
+import type { JobRoleFields, JobStage } from '../../../../shared/jobs'
+import { Button, DatePicker, Input, Modal, Select } from '../../components/ui'
+import { emptyJobRoleFields, jobStageOptions } from './jobsModel'
 
 export interface AddRoleModalProps {
   open: boolean
   onClose: () => void
-  onAdd: (draft: RoleDraft) => void
+  onAdd: (fields: JobRoleFields) => void
 }
 
-const destinationOptions = [
-  { value: 'toapply', label: 'To apply' },
-  { value: 'applied', label: 'Applied' },
-  { value: 'oa', label: 'OA' },
-  { value: 'interview', label: 'Interviews' }
-] as const
-
-function isDestination(value: string): value is AddRoleDestination {
-  return destinationOptions.some((option) => option.value === value)
+function isJobStage(value: string): value is JobStage {
+  return jobStageOptions.some((option) => option.value === value)
 }
 
-/** Manual add-a-role flow: company, role, link, stage. */
 export function AddRoleModal({ open, onClose, onAdd }: AddRoleModalProps): ReactNode {
-  const [company, setCompany] = useState('')
-  const [role, setRole] = useState('')
-  const [link, setLink] = useState('')
-  const [destination, setDestination] = useState<AddRoleDestination>('toapply')
+  const [fields, setFields] = useState<JobRoleFields>(() => emptyJobRoleFields('to_apply'))
 
   useEffect(() => {
     if (open) {
-      setCompany('')
-      setRole('')
-      setLink('')
-      setDestination('toapply')
+      setFields(emptyJobRoleFields('to_apply'))
     }
   }, [open])
 
-  const ready = company.trim() !== '' && role.trim() !== ''
+  const ready = fields.company.trim() !== '' && fields.role.trim() !== ''
 
-  const submit = (): void => {
-    if (!ready) {
-      return
-    }
-    onAdd({ company: company.trim(), role: role.trim(), link: link.trim(), destination })
+  const submit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault()
+    if (!ready) return
+    onAdd({
+      ...fields,
+      company: fields.company.trim(),
+      role: fields.role.trim(),
+      location: fields.location.trim(),
+      postingLink: fields.postingLink.trim()
+    })
   }
 
   return (
-    <Modal open={open} onClose={onClose} width={420} ariaLabel="Add a role">
-      <div className="addrole">
+    <Modal open={open} onClose={onClose} width={520} ariaLabel="Add a role">
+      <form className="addrole" onSubmit={submit}>
         <div className="addrole-title">Add a role</div>
         <div className="addrole-fields">
           <label className="addrole-field">
             <span className="addrole-label">Company</span>
             <Input
-              value={company}
-              onChange={setCompany}
+              value={fields.company}
+              onChange={(company) => setFields((current) => ({ ...current, company }))}
               placeholder="Anthropic"
               ariaLabel="Company"
               autoFocus
@@ -72,41 +55,66 @@ export function AddRoleModal({ open, onClose, onAdd }: AddRoleModalProps): React
           </label>
           <label className="addrole-field">
             <span className="addrole-label">Role</span>
-            <Input value={role} onChange={setRole} placeholder="SWE Intern" ariaLabel="Role" />
+            <Input
+              value={fields.role}
+              onChange={(role) => setFields((current) => ({ ...current, role }))}
+              placeholder="SWE Intern"
+              ariaLabel="Role"
+            />
           </label>
           <label className="addrole-field">
-            <span className="addrole-label">Link</span>
+            <span className="addrole-label">Location</span>
             <Input
-              value={link}
-              onChange={setLink}
-              placeholder="Paste the posting"
+              value={fields.location}
+              onChange={(location) => setFields((current) => ({ ...current, location }))}
+              placeholder="San Francisco, CA"
+              ariaLabel="Location"
+            />
+          </label>
+          <label className="addrole-field">
+            <span className="addrole-label">Posting link</span>
+            <Input
+              value={fields.postingLink}
+              onChange={(postingLink) => setFields((current) => ({ ...current, postingLink }))}
+              placeholder="https://"
               ariaLabel="Posting link"
             />
           </label>
           <div className="addrole-field">
-            <span className="addrole-label">Stage</span>
+            <span className="addrole-label">Date posted</span>
+            <DatePicker
+              value={fields.datePosted}
+              ariaLabel="Date posted"
+              min={null}
+              max={null}
+              onChange={(datePosted) => setFields((current) => ({
+                ...current,
+                datePosted
+              }))}
+            />
+          </div>
+          <div className="addrole-field">
+            <span className="addrole-label">Initial stage</span>
             <Select
-              value={destination}
-              options={destinationOptions}
+              value={fields.stage}
+              options={jobStageOptions}
               onChange={(value) => {
-                if (isDestination(value)) {
-                  setDestination(value)
+                if (isJobStage(value)) {
+                  setFields((current) => ({ ...current, stage: value }))
                 }
               }}
               placeholder="Pick a stage"
-              ariaLabel="Stage"
+              ariaLabel="Initial stage"
             />
           </div>
         </div>
         <div className="addrole-actions">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" disabled={!ready} onClick={submit}>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <button className="ui-button ui-button--primary" type="submit" disabled={!ready}>
             Add role
-          </Button>
+          </button>
         </div>
-      </div>
+      </form>
     </Modal>
   )
 }

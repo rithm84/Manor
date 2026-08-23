@@ -9,7 +9,7 @@ const MAX_CHIPS = 3
 
 const calendarColor = (id: CalendarEvent['calendarId']): string => {
   const source = calendars.find((calendar) => calendar.id === id)
-  return source !== undefined ? source.color : '#6c6a64'
+  return source !== undefined ? source.color : '#6a6669'
 }
 
 export interface MonthGridProps {

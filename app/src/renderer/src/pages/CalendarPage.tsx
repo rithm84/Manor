@@ -3,15 +3,15 @@ import { useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { Button } from '../components/ui'
-import { TODAY_ISO, events as mockEvents, pipeline } from '../data/mock'
+import { TODAY_ISO, events as mockEvents, jobRoles } from '../data/mock'
 import type { CalendarEvent, CalendarId } from '../data/mock'
 import { CalendarList } from './calendar/CalendarList'
-import { EventPanel } from './calendar/EventPanel'
+import { EventDetailDialog } from './calendar/EventDetailDialog'
 import { MiniMonth } from './calendar/MiniMonth'
 import { MonthGrid } from './calendar/MonthGrid'
 import { WeekGrid } from './calendar/WeekGrid'
 import type { AllDayItem } from './calendar/WeekGrid'
-import type { CalendarSelection } from './calendar/EventPanel'
+import type { CalendarSelection } from './calendar/EventDetailDialog'
 import { addDays, addMonths, monthTitle, weekDays } from './calendar/calendarModel'
 import { PageShell } from './PageShell'
 import './calendar/calendar.css'
@@ -25,16 +25,16 @@ const VIEWS: readonly { view: CalendarView; label: string }[] = [
 ]
 
 /** OA deadlines surface in the all-day row. */
-const allDayItems: readonly AllDayItem[] = pipeline.flatMap((entry) =>
-  entry.dueDate !== null
-    ? [{ id: entry.id, date: entry.dueDate, label: `${entry.company} OA` }]
+const allDayItems: readonly AllDayItem[] = jobRoles.flatMap((role) =>
+  role.oaDueDate !== null
+    ? [{ id: role.id, date: role.oaDueDate, label: `${role.company} OA` }]
     : []
 )
 
 /**
  * The calendar workspace (Notion Calendar anatomy): internal sidebar with
  * mini month and account-grouped calendar lists, slim top bar, and a week
- * grid that owns every remaining pixel. The details panel is closed until
+ * grid that owns every remaining pixel. The details dialog is closed until
  * an event or block is clicked. Everything is local state over the mock
  * story; the canon week is Mon Aug 18 to Sun Aug 24.
  */
@@ -179,15 +179,13 @@ export function CalendarPage(): ReactNode {
           )}
         </div>
 
-        {selection !== null ? (
-          <EventPanel
-            selection={selection}
-            events={localEvents}
-            onClose={() => setSelection(null)}
-            onRename={renameEvent}
-            onRemove={removeEvent}
-          />
-        ) : null}
+        <EventDetailDialog
+          selection={selection}
+          events={localEvents}
+          onClose={() => setSelection(null)}
+          onRename={renameEvent}
+          onRemove={removeEvent}
+        />
       </div>
     </PageShell>
   )

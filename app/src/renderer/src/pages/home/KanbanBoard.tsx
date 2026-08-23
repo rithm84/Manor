@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import type { Task, TaskBucket } from '../../data/mock'
+import type { QuickActionPoint } from '../../components/ui'
+import type { ContextDefinition, Task, TaskBucket } from '../../data/mock'
 import { taskBuckets } from '../../data/mock'
 import { KanbanColumn } from './KanbanColumn'
-import type { DraftTask } from './KanbanColumn'
+import { bucketForDue, compareWeeklyTasks } from './taskModel'
 
 export interface KanbanBoardProps {
   tasks: readonly Task[]
+  contexts: readonly ContextDefinition[]
+  today: string
   completingIds: ReadonlySet<string>
-  composerBucket: TaskBucket | null
-  onSetComposerBucket: (bucket: TaskBucket | null) => void
-  onCreate: (bucket: TaskBucket, draft: DraftTask) => void
+  onOpenComposer: (bucket: TaskBucket, trigger: HTMLElement) => void
   onOpenTask: (taskId: string) => void
+  onQuickActions: (taskId: string, point: QuickActionPoint) => void
   onToggleComplete: (taskId: string) => void
 }
 
@@ -24,11 +26,12 @@ export interface KanbanBoardProps {
  */
 export function KanbanBoard({
   tasks,
+  contexts,
+  today,
   completingIds,
-  composerBucket,
-  onSetComposerBucket,
-  onCreate,
+  onOpenComposer,
   onOpenTask,
+  onQuickActions,
   onToggleComplete
 }: KanbanBoardProps): ReactNode {
   const scrollerRef = useRef<HTMLDivElement | null>(null)
@@ -60,7 +63,7 @@ export function KanbanBoard({
 
   useEffect(() => {
     updateEdges()
-  }, [tasks, composerBucket, updateEdges])
+  }, [tasks, updateEdges])
 
   return (
     <div className="home-board">
@@ -69,13 +72,15 @@ export function KanbanBoard({
           <KanbanColumn
             key={meta.bucket}
             meta={meta}
-            tasks={tasks.filter((task) => task.bucket === meta.bucket)}
+            tasks={tasks
+              .filter((task) => bucketForDue(task.due, today) === meta.bucket)
+              .sort(compareWeeklyTasks)}
+            contexts={contexts}
+            today={today}
             completingIds={completingIds}
-            composerOpen={composerBucket === meta.bucket}
-            onOpenComposer={() => onSetComposerBucket(meta.bucket)}
-            onCloseComposer={() => onSetComposerBucket(null)}
-            onCreate={(draft) => onCreate(meta.bucket, draft)}
+            onOpenComposer={(trigger) => onOpenComposer(meta.bucket, trigger)}
             onOpenTask={onOpenTask}
+            onQuickActions={onQuickActions}
             onToggleComplete={onToggleComplete}
           />
         ))}

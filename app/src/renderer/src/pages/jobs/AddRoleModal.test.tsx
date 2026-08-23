@@ -1,0 +1,22 @@
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it } from 'vitest'
+
+import { AddRoleModal } from './AddRoleModal'
+
+describe('AddRoleModal', () => {
+  it('includes the complete creation fields without defaulting date posted', () => {
+    const markup = renderToStaticMarkup(
+      <AddRoleModal open onClose={() => undefined} onAdd={() => undefined} />
+    )
+    expect(markup).toContain('aria-label="Company"')
+    expect(markup).toContain('aria-label="Role"')
+    expect(markup).toContain('aria-label="Location"')
+    expect(markup).toContain('aria-label="Posting link"')
+    expect(markup).toContain('aria-label="Date posted"')
+    expect(markup).toContain('aria-label="Initial stage: To apply"')
+    expect(markup).toContain('class="ui-datepicker-trigger"')
+    expect(markup).toContain('Not set')
+    expect(markup).not.toContain('type="date"')
+    expect(markup).not.toContain('Notes')
+  })
+})

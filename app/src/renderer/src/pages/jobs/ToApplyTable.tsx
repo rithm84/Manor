@@ -1,33 +1,35 @@
 import type { ReactNode } from 'react'
 
+import type { JobRole } from '../../../../shared/jobs'
 import { Button } from '../../components/ui'
-import type { LocalPosting } from './jobsModel'
-import { ageLabel } from './jobsModel'
+import { postedLabel } from './jobsModel'
 
 export interface ToApplyTableProps {
-  postings: readonly LocalPosting[]
+  roles: readonly JobRole[]
+  today: string
   /** Rows currently animating out after "Mark applied". */
   leavingIds: ReadonlySet<string>
-  onMarkApplied: (postingId: string) => void
-  onOpenPosting: (postingId: string) => void
+  onMarkApplied: (roleId: string) => void
+  onOpenRole: (roleId: string) => void
   /** Rows can also be dragged straight into the Applied column. */
-  onDragStartPosting: (postingId: string) => void
+  onDragStartRole: (roleId: string) => void
   onDragEnd: () => void
 }
 
 /** Compact Notion-table-style rows for roles waiting on an application. */
 export function ToApplyTable({
-  postings,
+  roles,
+  today,
   leavingIds,
   onMarkApplied,
-  onOpenPosting,
-  onDragStartPosting,
+  onOpenRole,
+  onDragStartRole,
   onDragEnd
 }: ToApplyTableProps): ReactNode {
-  if (postings.length === 0) {
+  if (roles.length === 0) {
     return (
       <div className="toapply">
-        <div className="toapply-empty">Nothing waiting. New roles land here each morning.</div>
+        <div className="toapply-empty">No roles to apply to.</div>
       </div>
     )
   }
@@ -41,32 +43,32 @@ export function ToApplyTable({
         <span>Posted</span>
         <span />
       </div>
-      {postings.map((posting) => (
+      {roles.map((role) => (
         <div
-          key={posting.id}
-          className={`toapply-item toapply-row${leavingIds.has(posting.id) ? ' is-leaving' : ''}`}
+          key={role.id}
+          className={`toapply-item toapply-row${leavingIds.has(role.id) ? ' is-leaving' : ''}`}
           role="row"
           draggable
-          onClick={() => onOpenPosting(posting.id)}
+          onClick={() => onOpenRole(role.id)}
           onDragStart={(event) => {
-            event.dataTransfer.setData('text/plain', posting.id)
+            event.dataTransfer.setData('text/plain', role.id)
             event.dataTransfer.effectAllowed = 'move'
-            onDragStartPosting(posting.id)
+            onDragStartRole(role.id)
           }}
           onDragEnd={onDragEnd}
         >
           <span className="toapply-company">
             <span
-              className={`toapply-dot${posting.ageDays === 0 ? '' : ' toapply-dot--spacer'}`}
-              title={posting.ageDays === 0 ? 'New today' : undefined}
+              className={`toapply-dot${role.datePosted === today ? '' : ' toapply-dot--spacer'}`}
+              title={role.datePosted === today ? 'New today' : undefined}
             />
-            {posting.company}
+            {role.company}
           </span>
-          <span className="toapply-role">{posting.role}</span>
-          <span className="toapply-loc">{posting.location}</span>
-          <span className="toapply-age">{ageLabel(posting.ageDays)}</span>
+          <span className="toapply-role">{role.role}</span>
+          <span className="toapply-loc">{role.location === '' ? 'Not set' : role.location}</span>
+          <span className="toapply-age">{postedLabel(role.datePosted, today)}</span>
           <span className="toapply-action" onClick={(event) => event.stopPropagation()}>
-            <Button variant="ghost" onClick={() => onMarkApplied(posting.id)}>
+            <Button variant="ghost" onClick={() => onMarkApplied(role.id)}>
               Mark applied
             </Button>
           </span>

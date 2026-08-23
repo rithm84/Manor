@@ -2,9 +2,10 @@ import { ArrowRight, MoreHorizontal, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { DragEvent, ReactNode } from 'react'
 
+import type { JobStage } from '../../../../shared/jobs'
 import { Pill } from '../../components/ui'
 import type { BoardCard, DragPayload, JobColumn } from './jobsModel'
-import { jobColumns } from './jobsModel'
+import { jobColumns, jobStageOptions } from './jobsModel'
 
 export interface PipelineBoardProps {
   cards: readonly BoardCard[]
@@ -16,13 +17,13 @@ export interface PipelineBoardProps {
   onDragEnd: () => void
   onDropOnColumn: (column: JobColumn) => void
   onOpenCard: (cardId: string) => void
-  onMoveCard: (cardId: string, column: JobColumn) => void
+  onMoveCard: (cardId: string, stage: JobStage) => void
   onRemoveCard: (cardId: string) => void
 }
 
 interface CardMenuProps {
   card: BoardCard
-  onMove: (column: JobColumn) => void
+  onMove: (stage: JobStage) => void
   onRemove: () => void
 }
 
@@ -61,30 +62,30 @@ function CardMenu({ card, onMove, onRemove }: CardMenuProps): ReactNode {
       <button
         type="button"
         className="pipeline-card-menu-btn"
-        aria-label={`Options for ${card.company}`}
+        aria-label={`Options for ${card.role.company}`}
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
         <MoreHorizontal size={14} />
       </button>
       {open ? (
-        <div className="pipeline-menu" role="menu" aria-label={`Move ${card.company}`}>
+        <div className="pipeline-menu" role="menu" aria-label={`Move ${card.role.company}`}>
           <div className="pipeline-menu-label">Move to</div>
-          {jobColumns
-            .filter((meta) => meta.column !== card.column)
-            .map((meta) => (
+          {jobStageOptions
+            .filter((option) => option.value !== 'to_apply' && option.value !== card.role.stage)
+            .map((option) => (
               <button
-                key={meta.column}
+                key={option.value}
                 type="button"
                 role="menuitem"
                 className="pipeline-menu-item"
                 onClick={() => {
                   setOpen(false)
-                  onMove(meta.column)
+                  onMove(option.value)
                 }}
               >
                 <ArrowRight size={14} />
-                {meta.label}
+                {option.label}
               </button>
             ))}
           <button
@@ -105,16 +106,6 @@ function CardMenu({ card, onMove, onRemove }: CardMenuProps): ReactNode {
   )
 }
 
-function detailClass(card: BoardCard): string {
-  if (card.outcome === 'rejected') {
-    return 'pipeline-card-detail is-rejected'
-  }
-  if (card.dueSoon) {
-    return 'pipeline-card-detail is-due'
-  }
-  return 'pipeline-card-detail'
-}
-
 /** Whether the active drag may land on this column. */
 function accepts(
   dragging: DragPayload | null,
@@ -124,10 +115,10 @@ function accepts(
   if (dragging === null) {
     return false
   }
-  if (dragging.kind === 'posting') {
+  if (dragging.kind === 'to_apply') {
     return column === 'applied'
   }
-  const card = cards.find((candidate) => candidate.id === dragging.id)
+  const card = cards.find((candidate) => candidate.role.id === dragging.id)
   return card !== undefined && card.column !== column
 }
 
@@ -207,28 +198,32 @@ export function PipelineBoard({
               ) : (
                 columnCards.map((card) => (
                   <div
-                    key={card.id}
-                    className={`pipeline-card${arrivedIds.has(card.id) ? ' is-arrived' : ''}${
-                      dragging !== null && dragging.kind === 'card' && dragging.id === card.id
+                    key={card.role.id}
+                    className={`pipeline-card${arrivedIds.has(card.role.id) ? ' is-arrived' : ''}${
+                      dragging !== null && dragging.kind === 'pipeline' && dragging.id === card.role.id
                         ? ' is-dragging'
                         : ''
                     }`}
                     draggable
-                    onClick={() => onOpenCard(card.id)}
+                    onClick={() => onOpenCard(card.role.id)}
                     onDragStart={(event) => {
-                      event.dataTransfer.setData('text/plain', card.id)
+                      event.dataTransfer.setData('text/plain', card.role.id)
                       event.dataTransfer.effectAllowed = 'move'
-                      onDragStartCard(card.id)
+                      onDragStartCard(card.role.id)
                     }}
                     onDragEnd={onDragEnd}
                   >
-                    <div className="pipeline-card-company">{card.company}</div>
-                    <div className="pipeline-card-role">{card.role}</div>
-                    <div className={detailClass(card)}>{card.detail}</div>
+                    <div className="pipeline-card-company">{card.role.company}</div>
+                    <div className="pipeline-card-role">{card.role.role}</div>
+                    <div className="pipeline-card-detail">
+                      {card.detailTone === null ? card.detail : (
+                        <Pill variant="tag" colorway={card.detailTone} label={card.detail} />
+                      )}
+                    </div>
                     <CardMenu
                       card={card}
-                      onMove={(column) => onMoveCard(card.id, column)}
-                      onRemove={() => onRemoveCard(card.id)}
+                      onMove={(stage) => onMoveCard(card.role.id, stage)}
+                      onRemove={() => onRemoveCard(card.role.id)}
                     />
                   </div>
                 ))

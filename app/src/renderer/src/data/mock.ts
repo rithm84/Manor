@@ -7,6 +7,26 @@
  * time. Times are 24h "HH:MM".
  */
 
+import type { ContextDefinition, Task } from '../../../shared/home'
+import type { JobRole, JobStage, JobStageTransition } from '../../../shared/jobs'
+import type { MoodFocusEntry } from '../../../shared/moodFocus'
+export type {
+  ContextColor,
+  ContextDefinition,
+  ContextDraft,
+  ContextIcon,
+  ScratchBlock,
+  Task,
+  TaskEstimateMinutes,
+  TaskPriority,
+  TaskStatus
+} from '../../../shared/home'
+export {
+  FOCUS_SCALE,
+  MOOD_SCALE
+} from '../../../shared/moodFocus'
+export type { Focus, Mood, MoodFocusEntry } from '../../../shared/moodFocus'
+
 // ---------------------------------------------------------------------------
 // Core
 // ---------------------------------------------------------------------------
@@ -255,168 +275,136 @@ export const familyQtHeatmap: HabitHeatmap = {
 // ---------------------------------------------------------------------------
 
 export type TaskBucket = 'overdue' | 'today' | 'tomorrow' | 'week'
-export type TaskContext = 'Uni' | 'Personal' | 'Leetcode' | 'Apps' | 'Hackathons'
-export type TaskDifficulty = '<30min' | '<2hrs' | '<3hrs' | '>4hrs'
-export type TaskPriority = 'High' | 'Medium' | 'Low'
-export type TaskStatus = 'Not started' | 'In Progress' | 'Done'
 
-export interface TaskTimeBlock {
-  /** ISO date of the block. */
-  date: string
-  start: string
-  end: string
-  /** Which part of the task this block covers, e.g. "first half". */
-  portion: string
-}
-
-export interface Task {
-  id: string
-  title: string
-  bucket: TaskBucket
-  context: TaskContext
-  difficulty: TaskDifficulty | null
-  priority: TaskPriority | null
-  status: TaskStatus
-  /** ISO due date; null for bucket-only placement. */
-  due: string | null
-  /** e.g. "Exam". */
-  tags: readonly string[]
-  /** Days past due (overdue bucket only). */
-  daysLate: number
-  /** e.g. "Every Sunday"; null when not recurring. */
-  recurrence: string | null
-  timeBlocks: readonly TaskTimeBlock[]
-}
+export const taskContexts: readonly ContextDefinition[] = [
+  { name: 'Uni', color: 'info', icon: 'book-open' },
+  { name: 'Personal', color: 'success', icon: 'house' },
+  { name: 'Leetcode', color: 'gold', icon: 'code' },
+  { name: 'Apps', color: 'forest', icon: 'briefcase' },
+  { name: 'Hackathons', color: 'plum', icon: 'sparkles' }
+]
 
 export const tasks: readonly Task[] = [
   {
     id: 'task-hackathon-form',
     title: 'Hackathon team form',
-    bucket: 'overdue',
     context: 'Hackathons',
-    difficulty: '<30min',
+    estimateMinutes: 30,
     priority: null,
     status: 'Not started',
     due: '2026-08-19',
     tags: [],
-    daysLate: 1,
-    recurrence: null,
-    timeBlocks: []
+    recurrence: null
   },
   {
     id: 'task-mymathlab',
     title: 'MyMathLab 14.2',
-    bucket: 'today',
     context: 'Uni',
-    difficulty: '<2hrs',
+    estimateMinutes: 120,
     priority: 'High',
     status: 'Not started',
     due: '2026-08-20',
     tags: [],
-    daysLate: 0,
-    recurrence: null,
-    timeBlocks: []
+    recurrence: null
   },
   {
     id: 'task-transcript',
     title: 'Send CS 225 transcript to UCLA',
-    bucket: 'today',
     context: 'Personal',
-    difficulty: '<30min',
+    estimateMinutes: 30,
     priority: null,
     status: 'Not started',
     due: '2026-08-20',
     tags: [],
-    daysLate: 0,
-    recurrence: null,
-    timeBlocks: []
+    recurrence: null
   },
   {
     id: 'task-practice-exam',
     title: 'Chapter 14 Practice Exam',
-    bucket: 'tomorrow',
     context: 'Uni',
-    difficulty: '>4hrs',
+    estimateMinutes: 240,
     priority: null,
     status: 'Not started',
     due: '2026-08-21',
     tags: ['Exam'],
-    daysLate: 0,
-    recurrence: null,
-    timeBlocks: []
+    recurrence: null
   },
   {
     id: 'task-skin-doc',
     title: 'Book skin doc appt',
-    bucket: 'tomorrow',
     context: 'Personal',
-    difficulty: null,
+    estimateMinutes: null,
     priority: null,
     status: 'Not started',
     due: '2026-08-21',
     tags: [],
-    daysLate: 0,
-    recurrence: null,
-    timeBlocks: []
+    recurrence: null
   },
   {
     id: 'task-neetcode-two-pointers',
     title: 'Neetcode: Two Pointers',
-    bucket: 'week',
     context: 'Leetcode',
-    difficulty: '<3hrs',
+    estimateMinutes: 180,
     priority: null,
     status: 'In Progress',
     due: '2026-08-22',
     tags: [],
-    daysLate: 0,
-    recurrence: null,
-    timeBlocks: [
-      { date: '2026-08-20', start: '14:00', end: '15:00', portion: 'first half' },
-      { date: '2026-08-22', start: '14:00', end: '15:30', portion: 'rest' }
-    ]
+    recurrence: null
   },
   {
     id: 'task-weekly-review',
     title: 'Weekly review + plan',
-    bucket: 'week',
     context: 'Personal',
-    difficulty: null,
+    estimateMinutes: 60,
     priority: null,
     status: 'Not started',
     due: '2026-08-24',
     tags: [],
-    daysLate: 0,
-    recurrence: 'Every Sunday',
-    timeBlocks: []
+    recurrence: 'Every Sunday'
   },
   {
     id: 'task-resume',
     title: 'Update resume for fall apps',
-    bucket: 'week',
     context: 'Apps',
-    difficulty: '<3hrs',
+    estimateMinutes: 180,
     priority: null,
     status: 'Not started',
     due: '2026-08-23',
     tags: [],
-    daysLate: 0,
-    recurrence: null,
-    timeBlocks: []
+    recurrence: null
   },
   {
     id: 'task-airtel',
     title: 'Load Airtel account',
-    bucket: 'week',
     context: 'Personal',
-    difficulty: '<30min',
+    estimateMinutes: 15,
     priority: null,
     status: 'Not started',
     due: '2026-08-23',
     tags: [],
-    daysLate: 0,
-    recurrence: null,
-    timeBlocks: []
+    recurrence: null
+  },
+  {
+    id: 'task-portfolio-case-study',
+    title: 'Polish portfolio case study',
+    context: 'Apps',
+    estimateMinutes: 120,
+    priority: 'Medium',
+    status: 'Not started',
+    due: '2026-09-02',
+    tags: [],
+    recurrence: null
+  },
+  {
+    id: 'task-dentist-cleaning',
+    title: 'Schedule fall dental cleaning',
+    context: 'Personal',
+    estimateMinutes: 15,
+    priority: 'Low',
+    status: 'Not started',
+    due: '2026-09-18',
+    tags: [],
+    recurrence: null
   }
 ]
 
@@ -452,7 +440,7 @@ export interface CalendarSource {
 export const calendars: readonly CalendarSource[] = [
   { id: 'google-personal', name: 'Personal', color: '#5db872', scratch: false, enabled: true },
   { id: 'ucla', name: 'UCLA', color: '#6f9fd8', scratch: false, enabled: true },
-  { id: 'manor-scratch', name: 'Scratch blocks', color: '#cc785c', scratch: true, enabled: true }
+  { id: 'manor-scratch', name: 'Scratch blocks', color: '#416883', scratch: true, enabled: true }
 ]
 
 export interface CalendarEvent {
@@ -558,7 +546,7 @@ export const events: readonly CalendarEvent[] = [
     scratch: true,
     faded: false,
     taskId: 'task-neetcode-two-pointers',
-    note: 'Blocks tidy themselves up two days after they end. The task stays.'
+    note: 'This block is removed two days after it ends. The task is unchanged.'
   },
   {
     id: 'evt-gym-wed',
@@ -641,46 +629,73 @@ export const events: readonly CalendarEvent[] = [
 // Mood & Focus
 // ---------------------------------------------------------------------------
 
-export const MOOD_SCALE = ['Great', 'Good', 'Neutral', 'Bad', 'Awful'] as const
-export type Mood = (typeof MOOD_SCALE)[number]
+type MoodFocusStoryEntry = Pick<
+  MoodFocusEntry,
+  'date' | 'mood' | 'focus' | 'note' | 'noteSource'
+>
 
-export const FOCUS_SCALE = ['Locked In', 'High', 'Medium', 'Low', 'Locked Out', 'Resting'] as const
-export type Focus = (typeof FOCUS_SCALE)[number]
-
-export interface MoodFocusEntry {
-  date: string
-  mood: Mood
-  focus: Focus
-}
-
-/** One entry per day; today (Aug 20) is intentionally absent: not logged yet. */
-export const moodFocusHistory: readonly MoodFocusEntry[] = [
-  { date: '2026-08-06', mood: 'Good', focus: 'Medium' },
-  { date: '2026-08-07', mood: 'Great', focus: 'High' },
-  { date: '2026-08-08', mood: 'Good', focus: 'Resting' },
-  { date: '2026-08-09', mood: 'Neutral', focus: 'Low' },
-  { date: '2026-08-10', mood: 'Good', focus: 'High' },
-  { date: '2026-08-11', mood: 'Great', focus: 'Locked In' },
-  { date: '2026-08-12', mood: 'Good', focus: 'High' },
-  { date: '2026-08-13', mood: 'Bad', focus: 'Locked Out' },
-  { date: '2026-08-14', mood: 'Neutral', focus: 'Medium' },
-  { date: '2026-08-15', mood: 'Good', focus: 'Resting' },
-  { date: '2026-08-16', mood: 'Good', focus: 'High' },
-  { date: '2026-08-17', mood: 'Great', focus: 'Locked In' },
-  { date: '2026-08-18', mood: 'Good', focus: 'High' },
-  { date: '2026-08-19', mood: 'Neutral', focus: 'Medium' }
+const moodFocusStory: readonly MoodFocusStoryEntry[] = [
+  { date: '2026-05-26', mood: 'Good', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-05-28', mood: 'Neutral', focus: 'Low', note: null, noteSource: null },
+  { date: '2026-05-30', mood: 'Great', focus: 'High', note: null, noteSource: null },
+  { date: '2026-05-31', mood: 'Good', focus: 'Resting', note: null, noteSource: null },
+  { date: '2026-06-02', mood: 'Good', focus: 'High', note: null, noteSource: null },
+  { date: '2026-06-04', mood: 'Neutral', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-06-06', mood: 'Good', focus: 'Resting', note: null, noteSource: null },
+  { date: '2026-06-08', mood: 'Bad', focus: 'Low', note: null, noteSource: null },
+  { date: '2026-06-10', mood: 'Neutral', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-06-12', mood: 'Great', focus: 'Locked In', note: null, noteSource: null },
+  { date: '2026-06-15', mood: 'Good', focus: 'High', note: null, noteSource: null },
+  { date: '2026-06-18', mood: 'Good', focus: null, note: null, noteSource: null },
+  { date: '2026-06-20', mood: 'Neutral', focus: 'Resting', note: null, noteSource: null },
+  { date: '2026-06-23', mood: 'Good', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-06-26', mood: 'Great', focus: 'High', note: null, noteSource: null },
+  { date: '2026-06-29', mood: 'Good', focus: 'Locked In', note: null, noteSource: null },
+  { date: '2026-07-01', mood: 'Neutral', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-07-03', mood: 'Good', focus: 'High', note: null, noteSource: null },
+  { date: '2026-07-04', mood: 'Great', focus: 'Resting', note: null, noteSource: null },
+  { date: '2026-07-07', mood: 'Good', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-07-09', mood: 'Bad', focus: 'Locked Out', note: null, noteSource: null },
+  { date: '2026-07-11', mood: 'Neutral', focus: 'Low', note: null, noteSource: null },
+  { date: '2026-07-13', mood: 'Good', focus: 'High', note: null, noteSource: null },
+  { date: '2026-07-16', mood: 'Great', focus: 'Locked In', note: null, noteSource: null },
+  { date: '2026-07-18', mood: 'Good', focus: 'Resting', note: null, noteSource: null },
+  { date: '2026-07-21', mood: 'Neutral', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-07-24', mood: 'Good', focus: 'High', note: null, noteSource: null },
+  { date: '2026-07-27', mood: 'Awful', focus: 'Locked Out', note: null, noteSource: null },
+  { date: '2026-07-29', mood: 'Neutral', focus: 'Low', note: null, noteSource: null },
+  { date: '2026-07-31', mood: 'Good', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-08-02', mood: 'Good', focus: 'Resting', note: null, noteSource: null },
+  { date: '2026-08-04', mood: null, focus: 'High', note: null, noteSource: null },
+  { date: '2026-08-05', mood: 'Good', focus: null, note: null, noteSource: null },
+  { date: '2026-08-06', mood: 'Good', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-08-07', mood: 'Great', focus: 'High', note: null, noteSource: null },
+  { date: '2026-08-08', mood: 'Good', focus: 'Resting', note: 'Long walk after lunch.', noteSource: 'manual' },
+  { date: '2026-08-09', mood: 'Neutral', focus: 'Low', note: null, noteSource: null },
+  { date: '2026-08-10', mood: 'Good', focus: 'High', note: null, noteSource: null },
+  { date: '2026-08-11', mood: 'Great', focus: 'Locked In', note: null, noteSource: null },
+  { date: '2026-08-12', mood: 'Good', focus: 'High', note: null, noteSource: null },
+  { date: '2026-08-13', mood: 'Bad', focus: 'Locked Out', note: 'Practice set ran long.', noteSource: 'manual' },
+  { date: '2026-08-14', mood: 'Neutral', focus: 'Medium', note: null, noteSource: null },
+  { date: '2026-08-15', mood: 'Good', focus: 'Resting', note: null, noteSource: null },
+  { date: '2026-08-16', mood: 'Good', focus: 'High', note: null, noteSource: null },
+  { date: '2026-08-17', mood: 'Great', focus: 'Locked In', note: null, noteSource: null },
+  { date: '2026-08-18', mood: 'Good', focus: 'High', note: null, noteSource: null },
+  {
+    date: '2026-08-19',
+    mood: 'Neutral',
+    focus: 'Medium',
+    note: 'Steady day. Deep work landed before noon, then energy dipped after the practice set.',
+    noteSource: 'alfred'
+  }
 ]
 
-export interface DebriefSummary {
-  date: string
-  summary: string
-}
-
-export const latestDebrief: DebriefSummary = {
-  date: '2026-08-19',
-  summary:
-    'Steady day. Deep work landed before noon, energy dipped after the practice set. Slept later than planned and felt it by evening.'
-}
+/** Today (Aug 20) is intentionally absent so the first capture persists through the real store. */
+export const moodFocusHistory: readonly MoodFocusEntry[] = moodFocusStory.map((entry) => ({
+  ...entry,
+  createdAt: `${entry.date}T21:00:00.000Z`,
+  updatedAt: `${entry.date}T21:00:00.000Z`
+}))
 
 // ---------------------------------------------------------------------------
 // Fitness
@@ -759,18 +774,17 @@ export interface LeetCodeTopic {
   name: string
   done: number
   total: number
-  current: boolean
 }
 
 export const leetcodeTopics: readonly LeetCodeTopic[] = [
-  { name: 'Arrays & Hashing', done: 9, total: 9, current: false },
-  { name: 'Two Pointers', done: 3, total: 5, current: true },
-  { name: 'Sliding Window', done: 4, total: 6, current: false },
-  { name: 'Stack', done: 5, total: 7, current: false },
-  { name: 'Binary Search', done: 4, total: 7, current: false },
-  { name: 'Linked List', done: 6, total: 11, current: false },
-  { name: 'Trees', done: 8, total: 15, current: false },
-  { name: 'Everything after', done: 3, total: 90, current: false }
+  { name: 'Arrays & Hashing', done: 9, total: 9 },
+  { name: 'Two Pointers', done: 3, total: 5 },
+  { name: 'Sliding Window', done: 4, total: 6 },
+  { name: 'Stack', done: 5, total: 7 },
+  { name: 'Binary Search', done: 4, total: 7 },
+  { name: 'Linked List', done: 6, total: 11 },
+  { name: 'Trees', done: 8, total: 15 },
+  { name: 'Everything after', done: 3, total: 90 }
 ]
 
 export interface LeetCodeStats {
@@ -920,61 +934,84 @@ export const neetcodeProblems: readonly NeetcodeTopicProblems[] = [
 // Jobs
 // ---------------------------------------------------------------------------
 
-export interface JobPosting {
-  id: string
-  company: string
-  role: string
-  location: string
-  /** Days since it appeared in to-apply; 0 = new today. */
-  ageDays: number
+function jobRole(
+  id: string,
+  company: string,
+  role: string,
+  location: string,
+  postingLink: string,
+  datePosted: string | null,
+  stage: JobStage,
+  appliedDate: string | null,
+  oaDueDate: string | null,
+  interview1Date: string | null,
+  interview2Date: string | null,
+  interview3Date: string | null,
+  decisionDate: string | null
+): JobRole {
+  const createdDate = datePosted ?? TODAY_ISO
+  const updatedDate = decisionDate ?? interview3Date ?? interview2Date ?? interview1Date ?? appliedDate ?? createdDate
+  return {
+    id,
+    company,
+    role,
+    location,
+    postingLink,
+    datePosted,
+    stage,
+    appliedDate,
+    oaDueDate,
+    interview1Date,
+    interview2Date,
+    interview3Date,
+    decisionDate,
+    createdAt: `${createdDate}T16:00:00.000Z`,
+    updatedAt: `${updatedDate}T16:00:00.000Z`
+  }
 }
 
-export const toApply: readonly JobPosting[] = [
-  { id: 'job-anthropic', company: 'Anthropic', role: 'SWE Intern, Agents', location: 'SF', ageDays: 0 },
-  { id: 'job-figma', company: 'Figma', role: 'Product Eng Intern', location: 'SF / NYC', ageDays: 0 },
-  { id: 'job-scale', company: 'Scale AI', role: 'SWE Intern, ML Infra', location: 'SF', ageDays: 0 },
-  { id: 'job-ramp', company: 'Ramp', role: 'SWE Intern', location: 'NYC', ageDays: 0 },
-  { id: 'job-modal', company: 'Modal', role: 'SWE Intern', location: 'NYC', ageDays: 2 },
-  { id: 'job-perplexity', company: 'Perplexity', role: 'SWE Intern', location: 'SF', ageDays: 3 }
+export const jobRoles: readonly JobRole[] = [
+  jobRole('job-anthropic', 'Anthropic', 'SWE Intern, Agents', 'San Francisco, CA', 'https://www.anthropic.com/careers', '2026-08-20', 'to_apply', null, null, null, null, null, null),
+  jobRole('job-figma', 'Figma', 'Product Eng Intern', 'San Francisco / New York', 'https://www.figma.com/careers', '2026-08-20', 'to_apply', null, null, null, null, null, null),
+  jobRole('job-scale', 'Scale AI', 'SWE Intern, ML Infra', 'San Francisco, CA', 'https://scale.com/careers', '2026-08-20', 'to_apply', null, null, null, null, null, null),
+  jobRole('job-ramp', 'Ramp', 'SWE Intern', 'New York, NY', 'https://ramp.com/careers', '2026-08-20', 'to_apply', null, null, null, null, null, null),
+  jobRole('job-modal', 'Modal', 'SWE Intern', 'New York, NY', 'https://modal.com/careers', '2026-08-18', 'to_apply', null, null, null, null, null, null),
+  jobRole('job-perplexity', 'Perplexity', 'SWE Intern', 'San Francisco, CA', 'https://www.perplexity.ai/careers', '2026-08-17', 'to_apply', null, null, null, null, null, null),
+  jobRole('pl-openai', 'OpenAI', 'SWE Intern', 'San Francisco, CA', 'https://openai.com/careers', '2026-08-12', 'applied', '2026-08-19', null, null, null, null, null),
+  jobRole('pl-palantir', 'Palantir', 'Forward Deployed SWE Intern', 'New York, NY', '', '2026-08-10', 'applied', '2026-08-18', null, null, null, null, null),
+  jobRole('pl-cohere', 'Cohere', 'ML Intern', 'San Francisco, CA', '', '2026-08-09', 'applied', '2026-08-17', null, null, null, null, null),
+  jobRole('pl-airbnb', 'Airbnb', 'SWE Intern', 'San Francisco, CA', '', '2026-08-07', 'applied', '2026-08-15', null, null, null, null, null),
+  jobRole('pl-datadog', 'Datadog', 'SWE Intern', 'New York, NY', '', '2026-08-06', 'applied', '2026-08-14', null, null, null, null, null),
+  jobRole('pl-plaid', 'Plaid', 'SWE Intern', 'San Francisco, CA', '', '2026-08-04', 'applied', '2026-08-12', null, null, null, null, null),
+  jobRole('pl-retool', 'Retool', 'SWE Intern', 'San Francisco, CA', '', '2026-08-03', 'applied', '2026-08-11', null, null, null, null, null),
+  jobRole('pl-databricks', 'Databricks', 'SWE Intern', 'San Francisco, CA', 'https://www.databricks.com/company/careers', '2026-08-04', 'oa', '2026-08-13', '2026-08-22', null, null, null, null),
+  jobRole('pl-stripe', 'Stripe', 'SWE Intern', 'Seattle, WA', '', '2026-08-05', 'oa', '2026-08-14', '2026-08-24', null, null, null, null),
+  jobRole('pl-vercel', 'Vercel', 'SWE Intern', 'Remote', 'https://vercel.com/careers', '2026-07-30', 'interview_2', '2026-08-05', '2026-08-12', '2026-08-18', '2026-08-24', null, null),
+  jobRole('pl-notion', 'Notion', 'SWE Intern', 'San Francisco, CA', '', '2026-08-01', 'interview_1', '2026-08-07', '2026-08-14', null, null, null, null),
+  jobRole('pl-linear', 'Linear', 'SWE Intern', 'San Francisco, CA', '', '2026-08-01', 'interview_1', '2026-08-08', '2026-08-15', '2026-08-21', null, null, null),
+  jobRole('pl-meta', 'Meta', 'SWE Intern', 'Menlo Park, CA', '', '2026-07-25', 'rejected', '2026-08-01', '2026-08-08', null, null, null, '2026-08-18')
 ]
 
-export type PipelineStage = 'applied' | 'oa' | 'interview' | 'rejected'
-
-export interface PipelineEntry {
-  id: string
-  company: string
-  role: string
-  stage: PipelineStage
-  /** Stage detail in product voice, e.g. "Applied Aug 19" or "Round 2, Mon 11:00". */
-  detail: string
-  /** ISO deadline for OAs; null otherwise. */
-  dueDate: string | null
+function transitionPath(role: JobRole): readonly JobStage[] {
+  const path: JobStage[] = ['to_apply']
+  if (role.stage !== 'to_apply') path.push('applied')
+  if (role.stage === 'oa' || role.oaDueDate !== null) path.push('oa')
+  if (role.stage === 'interview_1' || role.interview1Date !== null) path.push('interview_1')
+  if (role.stage === 'interview_2' || role.interview2Date !== null) path.push('interview_2')
+  if (role.stage === 'interview_3' || role.interview3Date !== null) path.push('interview_3')
+  if (role.stage === 'offer' || role.stage === 'rejected') path.push(role.stage)
+  return path
 }
 
-export const pipeline: readonly PipelineEntry[] = [
-  { id: 'pl-openai', company: 'OpenAI', role: 'SWE Intern', stage: 'applied', detail: 'Applied Aug 19', dueDate: null },
-  { id: 'pl-palantir', company: 'Palantir', role: 'Forward Deployed SWE Intern', stage: 'applied', detail: 'Applied Aug 18', dueDate: null },
-  { id: 'pl-cohere', company: 'Cohere', role: 'ML Intern', stage: 'applied', detail: 'Applied Aug 17', dueDate: null },
-  { id: 'pl-airbnb', company: 'Airbnb', role: 'SWE Intern', stage: 'applied', detail: 'Applied Aug 15', dueDate: null },
-  { id: 'pl-datadog', company: 'Datadog', role: 'SWE Intern', stage: 'applied', detail: 'Applied Aug 14', dueDate: null },
-  { id: 'pl-plaid', company: 'Plaid', role: 'SWE Intern', stage: 'applied', detail: 'Applied Aug 12', dueDate: null },
-  { id: 'pl-retool', company: 'Retool', role: 'SWE Intern', stage: 'applied', detail: 'Applied Aug 11', dueDate: null },
-  { id: 'pl-databricks', company: 'Databricks', role: 'SWE Intern', stage: 'oa', detail: 'OA due Friday', dueDate: '2026-08-22' },
-  { id: 'pl-stripe', company: 'Stripe', role: 'SWE Intern', stage: 'oa', detail: 'OA due Sunday', dueDate: '2026-08-24' },
-  { id: 'pl-vercel', company: 'Vercel', role: 'SWE Intern', stage: 'interview', detail: 'Round 2, Mon 11:00', dueDate: null },
-  { id: 'pl-notion', company: 'Notion', role: 'SWE Intern', stage: 'interview', detail: 'Round 1, scheduling', dueDate: null },
-  { id: 'pl-linear', company: 'Linear', role: 'SWE Intern', stage: 'interview', detail: 'Round 1, Thu 15:00', dueDate: null },
-  { id: 'pl-meta', company: 'Meta', role: 'SWE Intern', stage: 'rejected', detail: 'After the OA', dueDate: null }
-]
-
-export interface JobsFunnel {
-  applied: number
-  oa: number
-  interview: number
-  offer: number
-}
-
-export const jobsFunnel: JobsFunnel = { applied: 34, oa: 10, interview: 5, offer: 1 }
+export const jobTransitions: readonly JobStageTransition[] = jobRoles.flatMap((role) =>
+  transitionPath(role).map((stage, index, path) => ({
+    id: `${role.id}-transition-${stage}`,
+    roleId: role.id,
+    fromStage: index === 0 ? null : path[index - 1] ?? null,
+    toStage: stage,
+    changedAt: role.updatedAt
+  }))
+)
 
 // ---------------------------------------------------------------------------
 // Bookmarks

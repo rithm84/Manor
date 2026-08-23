@@ -2,14 +2,15 @@ import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { TODAY_ISO } from '../../data/mock'
-import { addDays, formatDayLabel, parseIso, toIso } from './taskModel'
+import { addDays, formatDayLabel, localTodayIso, parseIso, toIso } from './taskModel'
 
 export interface DueDatePickerProps {
   /** ISO date, or null when unset. */
   value: string | null
   onChange: (iso: string) => void
   ariaLabel: string
+  min: string | null
+  max: string | null
 }
 
 const MONTH_LABELS = [
@@ -55,10 +56,17 @@ function monthCells(cursor: MonthCursor): readonly (string | null)[] {
  * Notion-style date property: trigger reads the current date, popover shows
  * Today/Tomorrow presets over a navigable month grid.
  */
-export function DueDatePicker({ value, onChange, ariaLabel }: DueDatePickerProps): ReactNode {
+export function DueDatePicker({ value, onChange, ariaLabel, min, max }: DueDatePickerProps): ReactNode {
+  const today = localTodayIso(new Date())
   const [open, setOpen] = useState(false)
-  const [cursor, setCursor] = useState<MonthCursor>(cursorFor(value ?? TODAY_ISO))
+  const [cursor, setCursor] = useState<MonthCursor>(cursorFor(value ?? today))
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+
+  const closeAndFocus = (): void => {
+    setOpen(false)
+    window.requestAnimationFrame(() => triggerRef.current?.focus())
+  }
 
   useEffect(() => {
     if (!open) {
@@ -71,7 +79,7 @@ export function DueDatePicker({ value, onChange, ariaLabel }: DueDatePickerProps
     }
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
-        setOpen(false)
+        closeAndFocus()
       }
     }
     window.addEventListener('pointerdown', onPointerDown)
@@ -83,14 +91,18 @@ export function DueDatePicker({ value, onChange, ariaLabel }: DueDatePickerProps
   }, [open])
 
   const pick = (iso: string): void => {
+    if ((min !== null && iso < min) || (max !== null && iso > max)) return
     onChange(iso)
     setCursor(cursorFor(iso))
-    setOpen(false)
+    closeAndFocus()
   }
+
+  const isAllowed = (iso: string): boolean =>
+    (min === null || iso >= min) && (max === null || iso <= max)
 
   const toggle = (): void => {
     if (!open) {
-      setCursor(cursorFor(value ?? TODAY_ISO))
+      setCursor(cursorFor(value ?? today))
     }
     setOpen(!open)
   }
@@ -98,9 +110,10 @@ export function DueDatePicker({ value, onChange, ariaLabel }: DueDatePickerProps
   return (
     <div className="datepicker" ref={rootRef}>
       <button
+        ref={triggerRef}
         type="button"
         className="datepicker-trigger"
-        aria-label={ariaLabel}
+        aria-label={value === null ? ariaLabel : `${ariaLabel}: ${formatDayLabel(value)}`}
         aria-expanded={open}
         onClick={toggle}
       >
@@ -115,13 +128,14 @@ export function DueDatePicker({ value, onChange, ariaLabel }: DueDatePickerProps
       {open ? (
         <div className="datepicker-menu" role="dialog" aria-label={ariaLabel}>
           <div className="datepicker-presets">
-            <button type="button" className="datepicker-preset" onClick={() => pick(TODAY_ISO)}>
+            <button type="button" className="datepicker-preset" disabled={!isAllowed(today)} onClick={() => pick(today)}>
               Today
             </button>
             <button
               type="button"
               className="datepicker-preset"
-              onClick={() => pick(addDays(TODAY_ISO, 1))}
+              disabled={!isAllowed(addDays(today, 1))}
+              onClick={() => pick(addDays(today, 1))}
             >
               Tomorrow
             </button>
@@ -163,8 +177,9 @@ export function DueDatePicker({ value, onChange, ariaLabel }: DueDatePickerProps
                   key={iso}
                   type="button"
                   className={`datepicker-day${iso === value ? ' is-selected' : ''}${
-                    iso === TODAY_ISO ? ' is-today' : ''
+                    iso === today ? ' is-today' : ''
                   }`}
+                  disabled={!isAllowed(iso)}
                   onClick={() => pick(iso)}
                 >
                   {parseIso(iso).getDate()}

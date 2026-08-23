@@ -8,9 +8,9 @@ import { habits } from '../../data/mock'
 export function WelcomeIntro({ onContinue }: { onContinue: () => void }): ReactNode {
   return (
     <div className="welcome-step">
-      <h1 className="welcome-headline">Your day, under one roof.</h1>
+      <h1 className="welcome-headline">Welcome to Manor</h1>
       <p className="welcome-sub">
-        Habits, tasks, and the calendar, kept together and kept quiet.
+        Track tasks, habits, and calendar events in one place.
       </p>
       <div className="welcome-actions">
         <Button variant="primary" onClick={onContinue}>
@@ -31,7 +31,6 @@ export function SignInStep({ email, onEmailChange, onContinue }: SignInStepProps
   return (
     <div className="welcome-step">
       <h1 className="welcome-headline">Sign in</h1>
-      <p className="welcome-sub">One account, one Mac. Everything stays yours.</p>
       <div className="welcome-form">
         <Input
           value={email}
@@ -72,8 +71,8 @@ export function ConnectCalendarStep({
 }: ConnectCalendarStepProps): ReactNode {
   return (
     <div className="welcome-step">
-      <h1 className="welcome-headline">Bring your calendar</h1>
-      <p className="welcome-sub">Your events fill in on their own.</p>
+      <h1 className="welcome-headline">Connect calendar</h1>
+      <p className="welcome-sub">Connect Google Calendar to show events in Manor.</p>
       <div className={`welcome-connect${connected ? ' is-connected' : ''}`}>
         <span className="welcome-connect-icon">
           <CalendarDays size={18} />
@@ -81,7 +80,7 @@ export function ConnectCalendarStep({
         <div className="welcome-connect-copy">
           <span className="welcome-connect-name">Google Calendar</span>
           <span className="welcome-connect-note">
-            {connected ? 'Connected' : 'Events, invites, the lot'}
+            {connected ? 'Connected' : 'Not connected'}
           </span>
         </div>
         {connected ? (
@@ -118,7 +117,7 @@ export interface PickHabitsStepProps {
 export function PickHabitsStep({ selected, onToggle, onContinue }: PickHabitsStepProps): ReactNode {
   return (
     <div className="welcome-step">
-      <h1 className="welcome-headline">Where do we start?</h1>
+      <h1 className="welcome-headline">Choose habits</h1>
       <p className="welcome-sub">Pick a few habits to track. You can change these anytime.</p>
       <div className="welcome-chips" role="group" aria-label="Starting habits">
         {habits.map((habit) => {
@@ -154,7 +153,7 @@ export function HotkeyStep({ onFinish }: { onFinish: () => void }): ReactNode {
       </div>
       <h1 className="welcome-headline">Meet Alfred</h1>
       <p className="welcome-sub">
-        Press <Kbd keys={['⌥', 'Space']} /> anywhere and say the word.
+        Press <Kbd keys={['⌥', 'Space']} /> from any app, then speak.
       </p>
       <div className="welcome-actions">
         <Button variant="primary" onClick={onFinish}>

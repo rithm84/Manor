@@ -15,12 +15,21 @@
   top: var(--space-5);
   left: 0;
   right: 0;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 17px;
   letter-spacing: -0.2px;
   color: var(--ink-muted);
+}
+
+.welcome-brand-mark {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 auto;
 }
 
 .welcome-stage {
@@ -257,5 +266,5 @@
 
 .welcome-dot.is-active {
   width: 20px;
-  background: var(--coral);
+  background: var(--primary);
 }

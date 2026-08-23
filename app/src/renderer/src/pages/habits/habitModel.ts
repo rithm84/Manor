@@ -1,74 +1,253 @@
-import { familyQtHeatmap } from '../../data/mock'
-import type { Habit, HabitDayMark } from '../../data/mock'
+import {
+  addDays,
+  daysBetween,
+  markForDate,
+  metricsForHabit,
+  statusOn
+} from '../../../../shared/habits'
+import type {
+  HabitDayMark,
+  HabitDefinition,
+  HabitDraft,
+  HabitEntry,
+  HabitLifecycleStatus,
+  HabitMetrics,
+  HabitsState
+} from '../../../../shared/habits'
 
-/** How the habit is logged; 'steps' habits fill up through the day. */
-export type HabitKind = 'check' | 'steps'
+export type { HabitDraft }
 
-export type HabitCadence = 'Every day' | 'Weekdays' | 'Weekends'
-
-/** Local view model over the mock habit: page state only, no persistence. */
-export interface HabitVM extends Habit {
-  paused: boolean
-  cadence: HabitCadence
-}
-
-export interface HabitDraft {
-  name: string
-  cadence: HabitCadence
-  kind: HabitKind
-  targetLabel: string
-}
-
-export interface MonthCell {
-  day: number
+export interface HabitWeekDay {
+  date: string
+  letter: string
   mark: HabitDayMark
+  selected: boolean
 }
 
-export const MONTH_LABEL = 'August 2026'
-export const MONTH_DAY_COUNT = 31
-export const MONTH_LOGGED_THROUGH = 20
-/** Aug 1, 2026 falls on a Friday: four leading blanks in a Mon-first grid. */
-export const MONTH_LEAD_BLANKS = 4
-
-const WEEK_DAY_OF_MONTH: readonly number[] = [18, 19, 20]
-
-/**
- * August cells for one habit. Family QT uses the canonical heatmap; other
- * habits derive their month from streak history so nothing contradicts the
- * week strip (Aug 18..20 always comes straight from `week`).
- */
-export function monthCellsFor(habit: HabitVM): readonly MonthCell[] {
-  if (habit.id === familyQtHeatmap.habitId) {
-    return familyQtHeatmap.days
-  }
-  const weekMarks = new Map<number, HabitDayMark>(
-    WEEK_DAY_OF_MONTH.map((day, index) => [day, habit.week[index] as HabitDayMark])
-  )
-  const brandNew = habit.streak === 0 && habit.bestStreak === 0
-  const runStart = habit.doneToday ? 0 : 1
-  const cells: MonthCell[] = []
-  for (let day = 1; day <= MONTH_LOGGED_THROUGH; day += 1) {
-    const weekMark = weekMarks.get(day)
-    if (weekMark !== undefined) {
-      cells.push({ day, mark: weekMark })
-      continue
-    }
-    if (brandNew) {
-      cells.push({ day, mark: 'future' })
-      continue
-    }
-    const offset = MONTH_LOGGED_THROUGH - day
-    cells.push({ day, mark: offset === runStart + habit.streak ? 'missed' : 'done' })
-  }
-  return cells
+export interface HabitViewModel {
+  definition: HabitDefinition
+  status: HabitLifecycleStatus
+  selectedStatus: HabitLifecycleStatus | null
+  entry: HabitEntry | null
+  metrics: HabitMetrics
+  week: readonly HabitWeekDay[]
+  selectedDateMark: HabitDayMark
+  canDelete: boolean
 }
 
-/** "52 / 105 g" style label for a steps habit at `value` percent of its target. */
+export interface HabitMonthRow {
+  habit: HabitDefinition
+  status: HabitLifecycleStatus | null
+  days: readonly HabitDayMark[]
+  completedDays: number
+  partialDays: number
+  frozenDays: number
+  trackedDays: number
+  completionRate: number
+}
+
+export interface HabitMonthSummary {
+  month: string
+  label: string
+  rows: readonly HabitMonthRow[]
+  perfectDays: number
+  frozenDays: number
+  completionRate: number
+}
+
+export interface HabitTrendMonth {
+  month: string
+  shortLabel: string
+  completionRate: number
+  perfectDays: number
+}
+
+const WEEK_LETTERS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const
+
+function utcDate(date: string): Date {
+  return new Date(`${date}T00:00:00.000Z`)
+}
+
+function startOfWeek(date: string): string {
+  const weekday = utcDate(date).getUTCDay()
+  const offset = weekday === 0 ? -6 : 1 - weekday
+  return addDays(date, offset)
+}
+
+export function dateLabel(date: string, today: string): string {
+  if (date === today) {
+    return 'Today'
+  }
+  if (date === addDays(today, -1)) {
+    return 'Yesterday'
+  }
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC'
+  }).format(utcDate(date))
+}
+
+export function fullDateLabel(date: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC'
+  }).format(utcDate(date))
+}
+
+export function monthLabel(month: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC'
+  }).format(utcDate(`${month}-01`))
+}
+
+export function monthShift(month: string, amount: number): string {
+  const date = utcDate(`${month}-01`)
+  date.setUTCMonth(date.getUTCMonth() + amount)
+  return date.toISOString().slice(0, 7)
+}
+
+export function historyMonthAfterNavigation(
+  month: string,
+  amount: -1 | 1,
+  today: string
+): string {
+  const candidate = monthShift(month, amount)
+  return candidate > today.slice(0, 7) ? month : candidate
+}
+
+export function daysInMonth(month: string): number {
+  const date = utcDate(`${month}-01`)
+  date.setUTCMonth(date.getUTCMonth() + 1)
+  date.setUTCDate(0)
+  return date.getUTCDate()
+}
+
+export function selectedEntry(
+  state: HabitsState,
+  habitId: string,
+  date: string
+): HabitEntry | null {
+  return state.entries.find((entry) => entry.habitId === habitId && entry.date === date) ?? null
+}
+
+export function habitViewModel(
+  state: HabitsState,
+  habit: HabitDefinition,
+  selectedDate: string
+): HabitViewModel {
+  const weekStart = startOfWeek(selectedDate)
+  const status = statusOn(habit.id, state.today, state.lifecycle) ?? 'retired'
+  const selectedStatus = statusOn(habit.id, selectedDate, state.lifecycle)
+  const hasHistory =
+    state.entries.some((entry) => entry.habitId === habit.id) ||
+    state.freezes.some((freeze) => freeze.habitId === habit.id)
+  return {
+    definition: habit,
+    status,
+    selectedStatus,
+    entry: selectedEntry(state, habit.id, selectedDate),
+    metrics: metricsForHabit(state, habit),
+    week: WEEK_LETTERS.map((letter, index) => {
+      const date = addDays(weekStart, index)
+      return { date, letter, mark: markForDate(state, habit, date), selected: date === selectedDate }
+    }),
+    selectedDateMark: markForDate(state, habit, selectedDate),
+    canDelete: !hasHistory && habit.createdOn === state.today
+  }
+}
+
+export function activeOnDate(state: HabitsState, date: string): readonly HabitDefinition[] {
+  return state.habits.filter((habit) => statusOn(habit.id, date, state.lifecycle) === 'active')
+}
+
+export function draftForHabit(habit: HabitDefinition): HabitDraft {
+  return {
+    name: habit.name,
+    kind: habit.kind,
+    targetLabel: habit.targetLabel
+  }
+}
+
 export function stepAmountLabel(targetLabel: string, value: number): string {
   const target = Number.parseFloat(targetLabel)
   if (Number.isNaN(target)) {
     return `${value}%`
   }
+  const suffix = targetLabel.replace(String(target), '').trim()
   const amount = Math.round((target * value) / 100)
-  return `${amount} / ${targetLabel}`
+  return `${amount}${suffix === '' ? '' : ` ${suffix}`} / ${targetLabel}`
+}
+
+export function monthSummary(state: HabitsState, month: string): HabitMonthSummary {
+  const dayCount = daysInMonth(month)
+  const dates = Array.from(
+    { length: dayCount },
+    (_, index) => `${month}-${String(index + 1).padStart(2, '0')}`
+  )
+  const lastDate = dates.at(-1)
+  if (lastDate === undefined) {
+    throw new Error(`Month ${month} has no dates`)
+  }
+  const rows = state.habits
+    .filter((habit) => habit.createdOn <= lastDate)
+    .map((habit): HabitMonthRow => {
+      const days = dates.map((date) => markForDate(state, habit, date))
+      const trackedDays = days.filter(
+        (mark) => !['future', 'paused', 'inactive'].includes(mark)
+      ).length
+      const completedDays = days.filter((mark) => mark === 'complete').length
+      return {
+        habit,
+        status: statusOn(habit.id, lastDate, state.lifecycle),
+        days,
+        completedDays,
+        partialDays: days.filter((mark) => mark === 'partial').length,
+        frozenDays: days.filter((mark) => mark === 'frozen').length,
+        trackedDays,
+        completionRate:
+          trackedDays === 0 ? 0 : Math.round((completedDays / trackedDays) * 100)
+      }
+    })
+  const pastDates = dates.filter((date) => date < state.today)
+  const perfectDays = pastDates.filter((date) => {
+    const active = activeOnDate(state, date)
+    return active.length > 0 && active.every((habit) => markForDate(state, habit, date) === 'complete')
+  }).length
+  const trackedMarks = rows
+    .flatMap((row) => row.days)
+    .filter((mark) => !['future', 'paused', 'inactive', 'pending'].includes(mark))
+  const completeMarks = trackedMarks.filter((mark) => mark === 'complete')
+  return {
+    month,
+    label: monthLabel(month),
+    rows,
+    perfectDays,
+    frozenDays: rows.reduce((total, row) => total + row.frozenDays, 0),
+    completionRate:
+      trackedMarks.length === 0 ? 0 : Math.round((completeMarks.length / trackedMarks.length) * 100)
+  }
+}
+
+export function twelveMonthTrend(state: HabitsState, endingMonth: string): readonly HabitTrendMonth[] {
+  return Array.from({ length: 12 }, (_, index) => {
+    const month = monthShift(endingMonth, index - 11)
+    const summary = monthSummary(state, month)
+    return {
+      month,
+      shortLabel: new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'UTC' }).format(
+        utcDate(`${month}-01`)
+      ),
+      completionRate: summary.completionRate,
+      perfectDays: summary.perfectDays
+    }
+  })
+}
+
+export function daysSinceCreated(habit: HabitDefinition, today: string): number {
+  return Math.max(1, daysBetween(habit.createdOn, today) + 1)
 }

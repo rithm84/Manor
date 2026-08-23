@@ -49,12 +49,11 @@ export function AlfredActivityPage(): ReactNode {
 
   return (
     <PageShell title="Alfred activity" fullBleed={false}>
-      <p className="aa-lede">Everything Alfred does on your behalf, on the record.</p>
       {rows.length === 0 ? (
         <EmptyState
           icon={<Activity size={20} />}
-          title="A clean slate"
-          message="Everything Alfred does for you is recorded here."
+          title="No activity yet"
+          message="Alfred's actions will appear here."
         />
       ) : (
         <div className="aa-table" role="table" aria-label="Alfred activity">

@@ -1,65 +1,152 @@
-import { Check, Mic, Smile } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronLeft, ChevronRight, History, SlidersHorizontal } from 'lucide-react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { Button, EmptyState } from '../components/ui'
-import { TODAY_LABEL, moodFocusHistory } from '../data/mock'
-import type { Focus, Mood } from '../data/mock'
-import { HistoryPanel } from './moodfocus/HistoryPanel'
-import { ScalePicker } from './moodfocus/ScalePicker'
-import { focusOptions, moodOptions } from './moodfocus/scales'
+import { moodFocusPreviousDate } from '../../../shared/moodFocus'
+import type { Focus, Mood, MoodFocusState } from '../../../shared/moodFocus'
+import { DailyCapture } from './moodfocus/DailyCapture'
+import { createMoodFocusSeed } from './moodfocus/moodFocusSeed'
+import { dayLabel, fullDateLabel, monthKey } from './moodfocus/moodFocusModel'
 import './moodfocus/moodfocus.css'
 
+type MoodFocusView = 'daily' | 'history'
+
+const MOOD_FOCUS_SEED = createMoodFocusSeed()
+const HistoryPanel = lazy(async () => {
+  const module = await import('./moodfocus/HistoryPanel')
+  return { default: module.HistoryPanel }
+})
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'An unknown mood and focus persistence error occurred'
+}
+
 export function MoodFocusPage(): ReactNode {
-  const [mood, setMood] = useState<Mood | null>(null)
-  const [focus, setFocus] = useState<Focus | null>(null)
-  const logged = mood !== null && focus !== null
+  const [state, setState] = useState<MoodFocusState | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [persistError, setPersistError] = useState<string | null>(null)
+  const [view, setView] = useState<MoodFocusView>('daily')
+  const [selectedDate, setSelectedDate] = useState(MOOD_FOCUS_SEED.today)
+  const [historyMonth, setHistoryMonth] = useState(monthKey(MOOD_FOCUS_SEED.today))
+
+  useEffect(() => {
+    let cancelled = false
+    void window.manor.moodFocus
+      .load(MOOD_FOCUS_SEED)
+      .then((loaded) => {
+        if (cancelled) {
+          return
+        }
+        setState(loaded)
+        setSelectedDate(loaded.today)
+        setHistoryMonth(monthKey(loaded.today))
+        setLoading(false)
+      })
+      .catch((error: unknown) => {
+        console.error('Mood and focus persistence load failed', { error })
+        if (!cancelled) {
+          setPersistError(errorMessage(error))
+          setLoading(false)
+        }
+      })
+    return (): void => {
+      cancelled = true
+    }
+  }, [])
+
+  const persist = async (
+    operation: string,
+    mutation: () => Promise<MoodFocusState>
+  ): Promise<void> => {
+    setSaving(true)
+    try {
+      const next = await mutation()
+      setState(next)
+      setPersistError(null)
+    } catch (error) {
+      console.error('Mood and focus persistence operation failed', { operation, error })
+      setPersistError(`${operation}: ${errorMessage(error)}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mf">
+        <header className="mf-header"><h1 className="page-title">Mood &amp; Focus</h1></header>
+        <div className="mf-loading">Loading check-ins…</div>
+      </div>
+    )
+  }
+
+  if (state === null) {
+    return (
+      <div className="mf">
+        <header className="mf-header"><h1 className="page-title">Mood &amp; Focus</h1></header>
+        <div className="mf-error" role="alert">{persistError ?? 'Mood and focus data could not be loaded.'}</div>
+      </div>
+    )
+  }
+
+  const yesterday = moodFocusPreviousDate(state.today)
+  const entry = state.entries.find((item) => item.date === selectedDate) ?? null
 
   return (
     <div className="mf">
       <header className="mf-header">
         <h1 className="page-title">Mood &amp; Focus</h1>
-        <span className="mf-date">{TODAY_LABEL}</span>
+        <div className="mf-viewtabs" role="tablist" aria-label="Mood and focus view">
+          <button type="button" role="tab" aria-selected={view === 'daily'} className={view === 'daily' ? 'is-selected' : ''} onClick={() => setView('daily')}>
+            <SlidersHorizontal size={14} /> Daily
+          </button>
+          <button type="button" role="tab" aria-selected={view === 'history'} className={view === 'history' ? 'is-selected' : ''} onClick={() => setView('history')}>
+            <History size={14} /> History
+          </button>
+        </div>
       </header>
 
-      <div className="mf-main">
-        <section className="mf-today ui-card">
-          <div className="mf-today-pickers">
-            <ScalePicker label="How was today?" options={moodOptions} value={mood} onChange={setMood} />
-            <ScalePicker
-              label="How was the focus?"
-              options={focusOptions}
-              value={focus}
-              onChange={setFocus}
-            />
-          </div>
-          <div className="mf-today-footer">
-            {logged ? (
-              <span className="mf-logged">
-                <Check size={14} /> Logged for today.
-              </span>
-            ) : (
-              <span className="mf-nudge">One tap each, once a day.</span>
-            )}
-            <Button variant="ghost" icon={<Mic size={14} />}>
-              Talk it through with Alfred
-            </Button>
-          </div>
-        </section>
+      {persistError !== null ? <div className="mf-error" role="alert">{persistError}</div> : null}
 
-        <section className="mf-panel ui-card">
-          <h2 className="mf-panel-title">The last two weeks</h2>
-          {moodFocusHistory.length === 0 ? (
-            <EmptyState
-              icon={<Smile size={20} />}
-              title="Nothing here yet"
-              message="Your first two weeks will draw themselves in as you log."
-            />
-          ) : (
-            <HistoryPanel todayMood={mood} todayFocus={focus} />
-          )}
-        </section>
-      </div>
+      {view === 'history' ? (
+        <Suspense fallback={<div className="mf-loading">Loading history…</div>}>
+          <HistoryPanel
+            state={state}
+            month={historyMonth}
+            onMonthChange={setHistoryMonth}
+            onEditDate={(date) => {
+              setSelectedDate(date)
+              setView('daily')
+            }}
+          />
+        </Suspense>
+      ) : (
+        <>
+          <div className="mf-daybar">
+            <div>
+              <span className="mf-daybar-title">{dayLabel(selectedDate, state.today)}</span>
+              <span className="mf-daybar-date">{fullDateLabel(selectedDate)}</span>
+            </div>
+            <span className="mf-daynav">
+              <button type="button" aria-label="Previous day" disabled={selectedDate === yesterday} title={selectedDate === yesterday ? 'Backfill is limited to one day' : undefined} onClick={() => setSelectedDate(yesterday)}>
+                <ChevronLeft size={15} />
+              </button>
+              <button type="button" aria-label="Next day" disabled={selectedDate === state.today} onClick={() => setSelectedDate(state.today)}>
+                <ChevronRight size={15} />
+              </button>
+            </span>
+          </div>
+          <DailyCapture
+            dateLabel={dayLabel(selectedDate, state.today)}
+            entry={entry}
+            saving={saving}
+            onMoodChange={(mood: Mood) => void persist('Could not save mood', () => window.manor.moodFocus.setMood({ date: selectedDate, mood }))}
+            onFocusChange={(focus: Focus) => void persist('Could not save focus', () => window.manor.moodFocus.setFocus({ date: selectedDate, focus }))}
+            onDebrief={() => window.dispatchEvent(new CustomEvent('manor:open-alfred'))}
+          />
+        </>
+      )}
     </div>
   )
 }

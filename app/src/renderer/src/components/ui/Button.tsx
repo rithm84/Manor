@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 
 export type ButtonVariant = 'primary' | 'ghost' | 'subtle'
 
 export interface ButtonProps {
   variant: ButtonVariant
   children: ReactNode
-  onClick?: () => void
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void
   disabled?: boolean
   /** Leading icon (16px lucide). */
   icon?: ReactNode

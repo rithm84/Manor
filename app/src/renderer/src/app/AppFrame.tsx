@@ -71,8 +71,11 @@ export function AppFrame(): ReactNode {
       }
     }
     window.addEventListener('keydown', onKeyDown)
+    const onOpenAlfred = (): void => setAlfredOpen(true)
+    window.addEventListener('manor:open-alfred', onOpenAlfred)
     return (): void => {
       window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('manor:open-alfred', onOpenAlfred)
     }
   }, [])
 

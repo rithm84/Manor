@@ -1,6 +1,6 @@
 # Manor PRD
 
-_Last updated: 2026-08-21_
+_Last updated: 2026-08-22_
 
 ## 1. Product Thesis
 
@@ -76,22 +76,23 @@ One persona, voice-only (the user never types to Alfred), three mechanisms:
 Daily check-off and streak home (check-off lives here, not on Home). Full-fidelity views: per-habit month grid, week strips, best/current streaks, freeze pool as a first-class object. Add/pause/retire flows. Freeze-management mechanics UI is still an open design area.
 
 ### 7.2 Mood & Focus (reference config-defined trackers)
-One entry each per day, logged any time: Mood (Great/Good/Neutral/Bad/Awful) and Focus (Locked In/High/Medium/Low/Locked Out/Resting). Loggable solo in one tap, or via a single combined **voice debrief** with Alfred that fills both and attaches a terra-summarized note. Debrief content is AI-visible by design (deliberate contrast with the Journal).
+One date-keyed record per day with two independently loggable signals: Mood (Great/Good/Neutral/Bad/Awful) and Focus (Locked In/High/Medium/Low/Locked Out/Resting). Either signal saves in one tap; a missing signal remains distinct from `Resting`. Typed context is not available on this page. Context can be attached only as a terra summary from a combined **voice debrief** with Alfred. Historical typed notes remain readable with their original provenance, but no new manual context can be written. Today and yesterday are directly editable; older records remain read-only. History supports navigable months, a compact daily record, and a shared longer-range view of how Mood and Focus move together. Debrief content is AI-visible by design (deliberate contrast with the Journal).
 
 ### 7.3 Tasks and Calendar
-- **One merged task system** (the legacy Notion system's academic/personal split is dead) with contexts (Uni, Personal, Leetcode, Apps, Hackathons). Fields: status, due, context, difficulty (time-estimate), priority, recurrence with full rule granularity (specific weekdays, intervals, end dates).
+- **One merged task system** (the legacy Notion system's academic/personal split is dead) with contexts (Uni, Personal, Leetcode, Apps, Hackathons). Contexts carry a user-chosen icon and semantic color that persist anywhere the context is shown. Fields: status, due, context, difficulty (time-estimate), priority, recurrence with full rule granularity (specific weekdays, intervals, end dates).
 - **Due buckets are computed** (Overdue/Today/Tomorrow/This Week) — never a hand-maintained select. The Home kanban groups by bucket, Notion-board DNA.
+- **Weekly and Master task views.** Weekly is the computed due-bucket board, ordered by exact due date and then High → Medium → Low priority. Master is the longer-horizon task table with title search, a fixed due-first ordering, and an additive property-filter builder for Context, Status, Priority, and Due date. Applied filters clear in one action without deleting saved views; filter sets can be named and saved as reusable views. Overdue has no creation path; Today and Tomorrow create on their exact date; This Week requires an exact date within the remaining seven-day board horizon before creation. New-task Context begins unset and must be selected or created. Dragging between exact-date buckets changes the due date; dropping onto This Week opens the due-date editor because a range is not a date. Single click opens centered task detail with one directly editable title; double-click, right-click, or Shift+F10 opens a compact task action menu with detail, completion, and deletion actions.
 - **Calendar is a workspace**, not a sidebar tab: a top-bar toggle switches Workspace ↔ Calendar (Notion ↔ Notion Calendar model). Full Cron/Notion-Calendar anatomy, edge-to-edge.
-- **Scratch blocks:** tasks (or halves of tasks) drag onto the day as Manor-only time blocks — never written to Google. No auto-capture of progress (plans are scratch); blocks self-delete 24–48h after their scheduled end; the task is untouched.
+- **Scratch blocks:** tasks (or parts of tasks) drag onto the Today or Tomorrow schedule as Manor-only time blocks — never written to Google. The visible scheduling range is 6 AM through midnight. Placement snaps to 15 minutes; the task estimate supplies the initial duration (one hour when unset), then date, start, duration, and the portion label can be edited independently. No auto-capture of progress (plans are scratch); blocks self-delete 48 hours after their scheduled end; the task is untouched.
 
 ### 7.4 Fitness
-Fed nightly by a deliberately low-tech pipeline: the user screen-records the Bevel iPhone app (10–20s) and Manor runs a terra **ingestion + normalization job** (schemas to be locked before build). Minimum outputs: calories in/out/deficit and the 9 muscle groups worked. The page is a read-only dashboard; nothing is hand-logged. Sleep remains a manual habit until the iOS app unlocks HealthKit relay.
+Fed nightly by a deliberately low-tech pipeline: the user screen-records the Bevel iPhone app (10–20s) and Manor runs a terra **ingestion + normalization job** (schemas to be locked before build). Minimum outputs: calories in/out/deficit and the 9 muscle groups worked. There is no standalone Fitness page; the normalized data remains available to the system. Sleep remains a manual habit until the iOS app unlocks HealthKit relay.
 
 ### 7.5 LeetCode
-Manual logging against the Neetcode 150 curriculum: topic progress with real problem lists, own streak and pool (§6), daily solve intensity. Plotting/chart treatment is still an open design area.
+Manual logging against the Neetcode 150 curriculum: topic progress with real problem lists, own streak and pool (§6), daily solve intensity. A curriculum problem is a stable record, separate from its attempt history. Every solve or review appends a durable attempt with an editable date and the exact pasted solution source; repeating a problem never overwrites an earlier attempt or creates a duplicate problem. Distinct-solved progress counts each problem once, while attempt totals and daily intensity count every solve/review. Any attempt logged that day satisfies the LeetCode streak day. Plotting/chart treatment is still an open design area.
 
 ### 7.6 Jobs
-Two lists: **To apply** (parsed daily from the SimplifyJobs `listings.json` on the `dev` branch via an ETag-polled Edge Function; filter `active && is_visible`; applied/seen auto-hide) and the **Pipeline** (Applied → OA → Interview 1–3 → Offer/Rejected) with drag-and-drop stage moves, a per-role detail peek (stage, dates, link, notes — the Excel workflow, absorbed), and the Sankey-style funnel. No push notifications. Manual add for non-Simplify roles; other scraped sources are a later expansion.
+Two lists: **To apply** (parsed daily from the SimplifyJobs `listings.json` on the `dev` branch via an ETag-polled Edge Function; filter `active && is_visible`; applied/seen auto-hide) and the **Pipeline** (Applied → OA → Interview 1 → Interview 2 → Interview 3 → Offer/Rejected). Every role uses one property schema at every stage: company, role, location, posting link, date posted, stage, applied date, OA due date, three interview dates, and decision date; unset values remain blank. The generic Notes field is removed. Manual add collects company, role, posting link, location, a user-selected date posted, and an initial stage. Role details open in a centered modal and every date is directly editable. Roles and append-only stage transitions persist locally through typed SQLite/IPC. Board cards show only the current meaningful update. The Pipeline toggles between a drag-and-drop board and a responsive Sankey flow derived from persisted transition history. The flow begins at Applied, omits the To apply queue, and exposes its values to assistive technology without a separate visible transition table. No push notifications. Non-Simplify roles can be added manually; other scraped sources are a later expansion.
 
 ### 7.7 Notes
 Second-class but real: markdown with first-class code blocks, image/diagram attachments, folders; agent-readable and embedded for retrieval; local write-queue for offline capture. The long-term editor bar is Notion-level blocks — **AFFiNE (OSS) is the flagged reference/basis** for that future round; the current shell editor is explicitly interim.
@@ -108,11 +109,12 @@ E2E encrypted, Touch ID/password locked. Random master key in Keychain; one-time
 - **Sidebar:** Notion-exact model. Docked by default; one toggle (no pin concept); collapsed mode reveals a floating overlay on left-edge hover and dismisses on leave; clicking the toggle docks it; choice persists.
 - **Proper-product surfaces:** sign-in + first-run onboarding (welcome, sign-in, calendar connect, habit picker, hotkey intro), Settings (account, connections, Alfred, notifications, appearance), designed empty states on every module.
 - **Global summon panel** (§5) with the locked completion glance.
+- **Object details:** every object/detail view opens in an appropriately sized centered modal. Side peeks, drawers, sheets, right-edge detail panels, and detail rails are prohibited. This does not change primary page layouts, the sidebar, inline popovers, menus, or tooltips.
 - **iOS (later, native):** capture-first app, lock/home widgets (static timeline snapshots by OS design), HealthKit relay unlocking sleep auto-capture and richer fitness.
 
 ## 9. Design System
 
-Direction: **Atelier** — light, warm-canvas, editorial (tokens, typography roles, and copy voice live in `DESIGN.md`, the binding design charter). Dark mode was evaluated in hi-fi and **rejected**: harder element distinction, worse for productive work. Gamified-colorful (Duolingo-forward) was likewise rejected as too much for a life OS; Duolingo survives in mechanics, not in pixels. The design anti-patterns in `AGENTS.md` are hard rules. Structural reference apps: Notion (boards, side peeks, sidebar), Notion Calendar/Cron, Obvious (agent-beside-artifacts workspace) — pulled as real flows via the Mobbin MCP.
+Direction: **Atelier** — light, warm-canvas, editorial (tokens, typography roles, and copy voice live in `DESIGN.md`, the binding design charter). Dark mode was evaluated in hi-fi and **rejected**: harder element distinction, worse for productive work. Gamified-colorful (Duolingo-forward) was likewise rejected as too much for a life OS; Duolingo survives in mechanics, not in pixels. The design anti-patterns in `AGENTS.md` are hard rules. Structural reference apps: Notion (boards, property editing, sidebar), Notion Calendar/Cron, Obvious (agent-beside-artifacts workspace) — pulled as real flows via the Mobbin MCP.
 
 ## 10. Verified Technical Constraints
 
@@ -133,7 +135,7 @@ Direction: **Atelier** — light, warm-canvas, editorial (tokens, typography rol
 
 **Non-goals:** multi-user collaboration, teams, sharing; a general-purpose Notion competitor; typed chat with Alfred; mascots/characters; OS desktop widgets; dark mode as the primary theme.
 
-**Deferred, explicitly:** finance module (genuinely wanted, later); media tracking (cut); additional job sources; `events.watch` real-time calendar push; iCloud CalDAV; wake-word summoning; GPT-Live migration when its API ships; AFFiNE-class notes editor; freeze-management UI mechanics; per-component design drill-downs (colors, charts, fitness plotting) — the declared next phase.
+**Deferred, explicitly:** finance module (genuinely wanted, later); media tracking (cut); additional job sources; `events.watch` real-time calendar push; iCloud CalDAV; wake-word summoning; GPT-Live migration when its API ships; AFFiNE-class notes editor; freeze-management UI mechanics; per-component design drill-downs (colors and chart language) — the declared next phase.
 
 ## 12. Decision Log
 
@@ -147,11 +149,19 @@ Direction: **Atelier** — light, warm-canvas, editorial (tokens, typography rol
 | 2026-08-21 | Agent character (Rive/Archie) killed → **thinking orb**; persona is voice-only |
 | 2026-08-21 | Home reduced to kanban + Today timeline; habits logging moved to Habits; **Calendar became a workspace toggle**; sidebar = Notion-exact docked-default model |
 | 2026-08-21 | Hi-fi Electron shell (`app/`) shipped: all v1 surfaces clickable on mock data |
+| 2026-08-22 | Home task workspace semantics locked: Weekly + Master views; Master property filters can be saved and the visible sort control is omitted; Overdue is non-creatable, Today/Tomorrow creation uses exact dates, This Week creation requires an exact date, and new-task Context begins unset; task double-click opens reusable quick actions; exact-date bucket drops update due dates while This Week routes to the date editor; Today/Tomorrow scratch blocks schedule from 6 AM to midnight, snap to 15 minutes, inherit task estimate initially, remain independent from task progress, and delete 48h after scheduled end |
+| 2026-08-22 | Home task presentation refined: contexts persist a chosen icon/color, difficulty uses semantic tones, Weekly ordering is due then priority, Master filters clear without affecting saved views, and task detail is centered with one editable title |
+| 2026-08-22 | Standalone Fitness page removed; normalized fitness data remains available without a sidebar module surface |
+| 2026-08-22 | Mood & Focus context is Alfred-only: the Daily page has no typed note path, new context mutations accept Alfred provenance only, and historical manual notes remain readable without destructive migration |
+| 2026-08-22 | LeetCode problem identity separated from attempt history: repeat solves/reviews append dated, source-preserving attempts; distinct-solved progress counts problems once, while attempt totals, intensity, and streak days count every logged attempt |
+| 2026-08-22 | Object and detail views are centered modal dialogs app-wide; side peeks, drawers, sheets, right-edge detail panels, and detail rails are prohibited |
+| 2026-08-22 | Jobs moved from mock-only state to typed local SQLite/IPC persistence with one consistent editable role schema, append-only stage-transition history, current-update-only board labels, and Board/Flow views; generic role Notes were removed |
+| 2026-08-22 | Jobs refinement: custom clearable date controls replace native pickers, Stage sits with editable role properties, Flow begins at Applied with a hidden accessible summary, and the board owns its column scrolling |
 
 ## 13. Open Questions
 
 - Summon panel contents beyond the locked glance (quick log? orb?).
-- Freeze-management mechanics UI; fitness plotting; chart language; per-component color system.
+- Freeze-management mechanics UI; chart language; per-component color system.
 - Config-defined tracker field-type catalog; jobs standing filters; task-reminder semantics.
 - Bevel-clip ingestion schemas (to be locked before build).
 - iOS app scope and stack (decided when the Mac app is finished).

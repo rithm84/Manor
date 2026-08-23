@@ -1,225 +1,444 @@
-import { Flame, Info, Plus, Snowflake } from 'lucide-react'
-import { useState } from 'react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  History,
+  Info,
+  ListChecks,
+  Plus,
+  Snowflake
+} from 'lucide-react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { Button, EmptyState } from '../components/ui'
-import { habits as mockHabits, habitsSummary } from '../data/mock'
-import type { Habit } from '../data/mock'
-import { AddHabitModal } from './habits/AddHabitModal'
-import { HabitDetailCard } from './habits/HabitDetailCard'
+import { addDays, monthKey, statusOn } from '../../../shared/habits'
+import type { HabitDraft, HabitsState } from '../../../shared/habits'
+import { Button, EmptyState, Modal } from '../components/ui'
+import { TODAY_ISO } from '../data/mock'
+import { HabitEditorModal } from './habits/AddHabitModal'
+import { HabitDetailDialog } from './habits/HabitDetailDialog'
 import { HabitRow } from './habits/HabitRow'
-import type { HabitDraft, HabitVM } from './habits/habitModel'
+import { createHabitSeed } from './habits/habitSeed'
+import {
+  activeOnDate,
+  dateLabel,
+  draftForHabit,
+  fullDateLabel,
+  habitViewModel
+} from './habits/habitModel'
 import './habits/habits.css'
 
-const DEFAULT_SELECTED_ID = 'habit-family'
+type HabitsView = 'daily' | 'history'
+type ConfirmAction = { kind: 'retire' | 'delete'; habitId: string }
 
-function initialItems(): readonly HabitVM[] {
-  return mockHabits.map((habit) => ({ ...habit, paused: false, cadence: 'Every day' }))
-}
+const HabitHistory = lazy(async () => {
+  const module = await import('./habits/HabitHistory')
+  return { default: module.HabitHistory }
+})
 
-function withDone(habit: HabitVM, nowDone: boolean): HabitVM {
-  const week: Habit['week'] = [
-    habit.week[0],
-    habit.week[1],
-    nowDone ? 'done' : 'pending',
-    habit.week[3],
-    habit.week[4],
-    habit.week[5],
-    habit.week[6]
-  ]
-  const streak = Math.max(0, habit.streak + (nowDone ? 1 : -1))
-  return {
-    ...habit,
-    doneToday: nowDone,
-    streak,
-    bestStreak: Math.max(habit.bestStreak, streak),
-    week
-  }
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'An unknown habit persistence error occurred'
 }
 
 export function HabitsPage(): ReactNode {
-  const [items, setItems] = useState<readonly HabitVM[]>(initialItems)
-  const [selectedId, setSelectedId] = useState<string>(DEFAULT_SELECTED_ID)
-  const [adding, setAdding] = useState(false)
+  const [state, setState] = useState<HabitsState | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [persistError, setPersistError] = useState<string | null>(null)
+  const [view, setView] = useState<HabitsView>('daily')
+  const [selectedDate, setSelectedDate] = useState(TODAY_ISO)
+  const [historyMonth, setHistoryMonth] = useState(monthKey(TODAY_ISO))
+  const [detailMonth, setDetailMonth] = useState(monthKey(TODAY_ISO))
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [peekOpen, setPeekOpen] = useState(false)
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editTargetId, setEditTargetId] = useState<string | null>(null)
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
 
-  const active = items.filter((habit) => !habit.paused)
-  const paused = items.filter((habit) => habit.paused)
-  const doneCount = active.filter((habit) => habit.doneToday).length
-  const remaining = active.length - doneCount
-  const perfect = active.length > 0 && remaining === 0
-  const selected = items.find((habit) => habit.id === selectedId) ?? active[0] ?? null
-
-  const update = (id: string, change: (habit: HabitVM) => HabitVM): void => {
-    setItems((previous) => previous.map((habit) => (habit.id === id ? change(habit) : habit)))
-  }
-
-  const toggle = (id: string): void => {
-    update(id, (habit) => {
-      const nowDone = !habit.doneToday
-      const next = withDone(habit, nowDone)
-      if (next.quantized === null) {
-        return next
-      }
-      return { ...next, quantized: { ...next.quantized, value: nowDone ? 100 : 0 } }
-    })
-  }
-
-  const step = (id: string, value: number): void => {
-    update(id, (habit) => {
-      if (habit.quantized === null) {
-        return habit
-      }
-      const nowDone = value === 100
-      const base = nowDone !== habit.doneToday ? withDone(habit, nowDone) : habit
-      return { ...base, quantized: { ...habit.quantized, value } }
-    })
-  }
-
-  const addHabit = (draft: HabitDraft): void => {
-    const habit: HabitVM = {
-      id: `habit-local-${Date.now()}`,
-      name: draft.name,
-      doneToday: false,
-      streak: 0,
-      bestStreak: 0,
-      gold: false,
-      atRiskTonight: false,
-      week: ['future', 'future', 'pending', 'future', 'future', 'future', 'future'],
-      quantized:
-        draft.kind === 'steps'
-          ? { steps: [0, 25, 50, 75, 100], value: 0, targetLabel: draft.targetLabel }
-          : null,
-      paused: false,
-      cadence: draft.cadence
+  useEffect(() => {
+    let cancelled = false
+    void window.manor.habits
+      .load(createHabitSeed())
+      .then((loaded) => {
+        if (cancelled) {
+          return
+        }
+        setState(loaded)
+        setSelectedDate(loaded.today)
+        setHistoryMonth(monthKey(loaded.today))
+        setDetailMonth(monthKey(loaded.today))
+        setLoading(false)
+      })
+      .catch((error: unknown) => {
+        console.error('Habit persistence load failed', { error })
+        if (!cancelled) {
+          setPersistError(errorMessage(error))
+          setLoading(false)
+        }
+      })
+    return (): void => {
+      cancelled = true
     }
-    setItems((previous) => [...previous, habit])
-    setAdding(false)
+  }, [])
+
+  const persist = async (
+    operation: string,
+    mutation: () => Promise<HabitsState>
+  ): Promise<HabitsState | null> => {
+    try {
+      const next = await mutation()
+      setState(next)
+      setPersistError(null)
+      return next
+    } catch (error) {
+      console.error('Habit persistence operation failed', { operation, error })
+      setPersistError(`${operation}: ${errorMessage(error)}`)
+      return null
+    }
   }
 
-  const rowHandlers = {
-    onToggle: toggle,
-    onStep: step,
-    onSelect: setSelectedId,
-    onPause: (id: string): void => update(id, (h) => ({ ...h, paused: true })),
-    onResume: (id: string): void => update(id, (h) => ({ ...h, paused: false }))
+  if (loading) {
+    return (
+      <div className="habits">
+        <header className="habits-header">
+          <h1 className="page-title">Habits</h1>
+        </header>
+        <div className="habits-loading">Loading habits…</div>
+      </div>
+    )
   }
+
+  if (state === null) {
+    return (
+      <div className="habits">
+        <header className="habits-header">
+          <h1 className="page-title">Habits</h1>
+        </header>
+        <div className="habits-error" role="alert">{persistError ?? 'Habit data could not be loaded.'}</div>
+      </div>
+    )
+  }
+
+  const today = state.today
+  const yesterday = addDays(today, -1)
+  const active = activeOnDate(state, selectedDate)
+  const paused =
+    selectedDate === today
+      ? state.habits.filter((habit) => statusOn(habit.id, today, state.lifecycle) === 'paused')
+      : []
+  const activeModels = active.map((habit) => habitViewModel(state, habit, selectedDate))
+  const pausedModels = paused.map((habit) => habitViewModel(state, habit, selectedDate))
+  const completed = activeModels.filter((habit) => habit.entry?.value === 100).length
+  const remaining = active.length - completed
+  const perfect = active.length > 0 && remaining === 0
+  const selectedDefinition = state.habits.find((habit) => habit.id === selectedId) ?? null
+  const selected =
+    selectedDefinition === null ? null : habitViewModel(state, selectedDefinition, selectedDate)
+  const currentPool = state.pools.find((pool) => pool.month === monthKey(today)) ?? null
+  const editingDefinition = state.habits.find((habit) => habit.id === editTargetId) ?? null
+
+  const openHabit = (habitId: string): void => {
+    setSelectedId(habitId)
+    setDetailMonth(view === 'history' ? historyMonth : monthKey(selectedDate))
+    setPeekOpen(true)
+  }
+
+  const saveHabit = async (draft: HabitDraft): Promise<void> => {
+    const result =
+      editTargetId === null
+        ? await persist('Could not create habit', () => window.manor.habits.createHabit(draft))
+        : await persist('Could not update habit', () =>
+            window.manor.habits.updateHabit(editTargetId, draft)
+          )
+    if (result !== null) {
+      setEditorOpen(false)
+      setEditTargetId(null)
+      if (editTargetId === null) {
+        const created = result.habits.at(-1)
+        if (created !== undefined) {
+          openHabit(created.id)
+        }
+      }
+    }
+  }
+
+  const setLifecycle = async (habitId: string, status: 'active' | 'paused' | 'retired'): Promise<void> => {
+    const result = await persist(`Could not ${status === 'active' ? 'resume' : status} habit`, () =>
+      window.manor.habits.setStatus({ habitId, date: today, status })
+    )
+    if (result !== null && status === 'retired') {
+      setPeekOpen(false)
+      setView('history')
+    }
+  }
+
+  const confirm = async (): Promise<void> => {
+    if (confirmAction === null) {
+      return
+    }
+    if (confirmAction.kind === 'retire') {
+      await setLifecycle(confirmAction.habitId, 'retired')
+    } else {
+      const result = await persist('Could not delete habit', () =>
+        window.manor.habits.deleteHabit(confirmAction.habitId)
+      )
+      if (result !== null) {
+        setPeekOpen(false)
+      }
+    }
+    setConfirmAction(null)
+  }
+
+  const confirmHabit =
+    confirmAction === null
+      ? null
+      : state.habits.find((habit) => habit.id === confirmAction.habitId) ?? null
 
   return (
     <div className="habits">
       <header className="habits-header">
         <h1 className="page-title">Habits</h1>
-        <Button variant="primary" icon={<Plus size={15} />} onClick={() => setAdding(true)}>
-          New habit
-        </Button>
+        <div className="habits-header-actions">
+          <div className="habits-viewtabs" role="tablist" aria-label="Habits view">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'daily'}
+              className={view === 'daily' ? 'is-selected' : ''}
+              onClick={() => setView('daily')}
+            >
+              <ListChecks size={14} /> Daily
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === 'history'}
+              className={view === 'history' ? 'is-selected' : ''}
+              onClick={() => setView('history')}
+            >
+              <History size={14} /> History
+            </button>
+          </div>
+          <Button
+            variant="primary"
+            icon={<Plus size={15} />}
+            onClick={() => {
+              setEditTargetId(null)
+              setEditorOpen(true)
+            }}
+          >
+            New habit
+          </Button>
+        </div>
       </header>
 
-      {items.length === 0 ? (
+      {persistError !== null ? <div className="habits-error" role="alert">{persistError}</div> : null}
+
+      {state.habits.length === 0 ? (
         <EmptyState
           icon={<Flame size={20} />}
           title="No habits yet"
-          message="Start small. One habit tonight is enough."
+          message="Add a habit to start daily tracking."
           action={
-            <Button variant="primary" icon={<Plus size={15} />} onClick={() => setAdding(true)}>
+            <Button
+              variant="primary"
+              icon={<Plus size={15} />}
+              onClick={() => setEditorOpen(true)}
+            >
               New habit
             </Button>
           }
         />
+      ) : view === 'history' ? (
+        <Suspense fallback={<div className="habits-loading">Loading history…</div>}>
+          <HabitHistory
+            state={state}
+            month={historyMonth}
+            onMonthChange={setHistoryMonth}
+            onOpenHabit={openHabit}
+          />
+        </Suspense>
       ) : (
-        <div className="habits-main">
-          <div className="habits-left">
-            <section className="habits-list ui-card">
-              {active.map((habit) => (
-                <HabitRow
-                  key={habit.id}
-                  habit={habit}
-                  selected={selected !== null && selected.id === habit.id}
-                  {...rowHandlers}
-                />
-              ))}
-            </section>
-
-            {paused.length > 0 ? (
-              <section className="habits-paused">
-                <span className="habits-paused-label">Resting</span>
-                <div className="habits-list ui-card">
-                  {paused.map((habit) => (
-                    <HabitRow
-                      key={habit.id}
-                      habit={habit}
-                      selected={selected !== null && selected.id === habit.id}
-                      {...rowHandlers}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
+        <>
+          <div className="habits-daybar">
+            <div>
+              <span className="habits-daybar-title">{dateLabel(selectedDate, today)}</span>
+              <span className="habits-daybar-date">{fullDateLabel(selectedDate)}</span>
+            </div>
+            <span className="habits-daynav">
+              <button
+                type="button"
+                aria-label="Previous day"
+                title={selectedDate === yesterday ? 'Backfill is limited to one day' : undefined}
+                disabled={selectedDate === yesterday}
+                onClick={() => setSelectedDate(yesterday)}
+              >
+                <ChevronLeft size={15} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next day"
+                disabled={selectedDate === today}
+                onClick={() => setSelectedDate(today)}
+              >
+                <ChevronRight size={15} />
+              </button>
+            </span>
           </div>
 
-          <aside className="habits-rail">
-            <div className="habits-status ui-card">
-              <div className="habits-progress">
-                <span className="habits-card-label">Today</span>
-                <div className="habits-progress-line">
-                  <span className="habits-progress-value tnum">
-                    {doneCount}
-                    <span className="habits-progress-total"> of {active.length}</span>
-                  </span>
-                  {perfect ? (
-                    <span className="habits-progress-perfect display">A perfect day.</span>
-                  ) : (
-                    <span className="habits-progress-note">
-                      {remaining === 1 ? 'One left. The evening is yours.' : `${remaining} left tonight.`}
-                    </span>
-                  )}
-                </div>
-                <div className={`habits-progress-bar${perfect ? ' is-perfect' : ''}`}>
-                  <div
-                    className="habits-progress-fill"
-                    style={{ width: `${active.length === 0 ? 0 : (doneCount / active.length) * 100}%` }}
+          <div className="habits-main">
+            <div className="habits-left">
+              <section className="habits-list ui-card">
+                {activeModels.map((habit) => (
+                  <HabitRow
+                    key={habit.definition.id}
+                    habit={habit}
+                    isToday={selectedDate === today}
+                    onLog={(habitId, value) => {
+                      void persist('Could not save habit entry', () =>
+                        window.manor.habits.setEntry({ habitId, date: selectedDate, value })
+                      )
+                    }}
+                    onOpen={openHabit}
+                    onResume={(habitId) => void setLifecycle(habitId, 'active')}
                   />
-                </div>
-              </div>
+                ))}
+              </section>
 
-              <div className="habits-status-divider" />
-
-              <div className="habits-freeze">
-                <div className="habits-freeze-head">
-                  <span className="habits-card-label">
-                    <Snowflake size={13} /> Streak freezes
-                  </span>
-                  <span className="habits-freeze-hint">
-                    <button type="button" className="habit-row-iconbtn" aria-label="About streaks">
-                      <Info size={13} />
-                    </button>
-                    <span className="habits-freeze-pop">
-                      <span>{habitsSummary.goldRule}</span>
-                      <span>{habitsSummary.earnBackRule}</span>
-                    </span>
-                  </span>
-                </div>
-                <div className="habits-freeze-line">
-                  <span className="habits-freeze-value tnum">{habitsSummary.freezesLeft}</span>
-                  <span className="habits-freeze-note">
-                    of {habitsSummary.freezesPerMonth} left in {habitsSummary.freezeMonthLabel}
-                  </span>
-                </div>
-                <div className="habits-freeze-dots" aria-hidden="true">
-                  {Array.from({ length: habitsSummary.freezesPerMonth }, (_, index) => (
-                    <span
-                      key={index}
-                      className={`habits-freeze-dot${index < habitsSummary.freezesLeft ? ' is-left' : ''}`}
-                    />
-                  ))}
-                </div>
-              </div>
+              {pausedModels.length > 0 ? (
+                <section className="habits-paused">
+                  <span className="habits-paused-label">Paused</span>
+                  <div className="habits-list ui-card">
+                    {pausedModels.map((habit) => (
+                      <HabitRow
+                        key={habit.definition.id}
+                        habit={habit}
+                        isToday
+                        onLog={() => undefined}
+                        onOpen={openHabit}
+                        onResume={(habitId) => void setLifecycle(habitId, 'active')}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ) : null}
             </div>
 
-            {selected !== null ? <HabitDetailCard habit={selected} /> : null}
-          </aside>
-        </div>
+            <aside className="habits-rail">
+              <div className="habits-status ui-card">
+                <div className="habits-progress">
+                  <span className="habits-card-label">{dateLabel(selectedDate, today)}</span>
+                  <div className="habits-progress-line">
+                    <span className="habits-progress-value tnum">
+                      {completed}
+                      <span className="habits-progress-total"> of {active.length}</span>
+                    </span>
+                    {perfect ? (
+                      <span className="habits-progress-perfect display">A perfect day.</span>
+                    ) : (
+                      <span className="habits-progress-note">
+                        {remaining} left.
+                      </span>
+                    )}
+                  </div>
+                  <div className={`habits-progress-bar${perfect ? ' is-perfect' : ''}`}>
+                    <div
+                      className="habits-progress-fill"
+                      style={{ width: `${active.length === 0 ? 0 : (completed / active.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="habits-status-divider" />
+
+                <div className="habits-freeze">
+                  <div className="habits-freeze-head">
+                    <span className="habits-card-label">
+                      <Snowflake size={13} /> Freeze pool
+                    </span>
+                    <span className="habits-freeze-hint">
+                      <button type="button" className="habit-row-iconbtn" aria-label="About streak freezes">
+                        <Info size={13} />
+                      </button>
+                      <span className="habits-freeze-pop">
+                        <span>Perfect days earn freezes until the pool is full.</span>
+                        <span>Misses spend them automatically, one per habit each day.</span>
+                      </span>
+                    </span>
+                  </div>
+                  <div className="habits-freeze-line">
+                    <span className="habits-freeze-value tnum">{currentPool?.balance ?? 0}</span>
+                    <span className="habits-freeze-note">
+                      of {currentPool?.capacity ?? 0} available this month
+                    </span>
+                  </div>
+                  <div className="habits-freeze-dots" aria-hidden="true">
+                    {Array.from({ length: currentPool?.capacity ?? 0 }, (_, index) => (
+                      <span
+                        key={index}
+                        className={`habits-freeze-dot${index < (currentPool?.balance ?? 0) ? ' is-left' : ''}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+            </aside>
+          </div>
+        </>
       )}
 
-      <AddHabitModal open={adding} onClose={() => setAdding(false)} onAdd={addHabit} />
+      {selected !== null ? (
+        <HabitDetailDialog
+          open={peekOpen}
+          onClose={() => setPeekOpen(false)}
+          state={state}
+          habit={selected}
+          month={detailMonth}
+          onMonthChange={setDetailMonth}
+          onEdit={() => {
+            setEditTargetId(selected.definition.id)
+            setEditorOpen(true)
+          }}
+          onPause={() => void setLifecycle(selected.definition.id, 'paused')}
+          onResume={() => void setLifecycle(selected.definition.id, 'active')}
+          onRetire={() => setConfirmAction({ kind: 'retire', habitId: selected.definition.id })}
+          onDelete={() => setConfirmAction({ kind: 'delete', habitId: selected.definition.id })}
+        />
+      ) : null}
+
+      <HabitEditorModal
+        open={editorOpen}
+        initialDraft={editingDefinition === null ? null : draftForHabit(editingDefinition)}
+        onClose={() => {
+          setEditorOpen(false)
+          setEditTargetId(null)
+        }}
+        onSave={(draft) => void saveHabit(draft)}
+      />
+
+      <Modal
+        open={confirmAction !== null && confirmHabit !== null}
+        onClose={() => setConfirmAction(null)}
+        width={420}
+        ariaLabel={confirmAction?.kind === 'delete' ? 'Delete habit' : 'Retire habit'}
+      >
+        <div className="habit-confirm">
+          <h2>{confirmAction?.kind === 'delete' ? 'Delete this habit?' : 'Retire this habit?'}</h2>
+          <p>
+            {confirmAction?.kind === 'delete'
+              ? `${confirmHabit?.name ?? 'This habit'} has no history yet. Permanent deletion cannot be undone.`
+              : `${confirmHabit?.name ?? 'This habit'} leaves daily logging, while its entries and streak history stay intact.`}
+          </p>
+          <div className="habit-add-footer">
+            <Button variant="ghost" onClick={() => setConfirmAction(null)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={() => void confirm()}>
+              {confirmAction?.kind === 'delete' ? 'Delete permanently' : 'Retire habit'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

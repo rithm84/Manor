@@ -1,0 +1,24 @@
+.secondary-module-surface {
+  width: 100%;
+  margin-inline: auto;
+  padding: clamp(8px, 1.4vw, 20px) clamp(4px, 1.4vw, 20px) clamp(40px, 6vw, 72px);
+}
+
+.secondary-module-surface.is-focused {
+  max-width: 1120px;
+}
+
+.secondary-module-surface.is-wide {
+  max-width: 1264px;
+}
+
+.secondary-module-surface > * {
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  .secondary-module-surface {
+    padding-top: var(--space-1);
+    padding-inline: 0;
+  }
+}
