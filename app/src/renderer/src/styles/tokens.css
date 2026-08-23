@@ -1,57 +1,84 @@
-/* Manor design tokens — Atelier v2 (see app/DESIGN.md). Single source of truth. */
+/* Manor design tokens — Aubergine Editorial. Single source of truth. */
 
 :root {
   /* Surfaces */
-  --surface-canvas: #faf9f5;
-  --surface-soft: #f5f0e8;
+  --surface-canvas: #faf8f3;
+  --surface-soft: #f5efe9;
   --surface-card: #ffffff;
-  --surface-card-warm: #efe9de;
-  --surface-strong: #e8e0d2;
+  --surface-card-warm: #f5efe9;
+  --surface-strong: #e9e0d9;
 
   /* Ink */
-  --ink: #141413;
-  --ink-body: #3d3d3a;
-  --ink-muted: #6c6a64;
+  --ink: #191719;
+  --ink-body: #403b40;
+  --ink-muted: #6a6669;
 
   /* Hairline borders are the elevation system */
-  --hairline: #e6dfd8;
-  --shadow-overlay: 0 4px 16px rgba(20, 20, 19, 0.1);
-  --shadow-hover: 0 1px 3px rgba(20, 20, 19, 0.08);
+  --hairline: #e4dcd5;
+  --shadow-overlay: 0 4px 16px rgba(25, 23, 25, 0.1);
+  --shadow-hover: 0 1px 3px rgba(25, 23, 25, 0.08);
 
-  /* Primary — coral */
-  --coral: #cc785c;
-  --coral-hover: #b8674e;
-  --coral-active: #a9583e;
-  --coral-soft: rgba(204, 120, 92, 0.1);
+  /* Primary actions only */
+  --primary: #6a4e6c;
+  --primary-hover: #5b415d;
+  --primary-active: #4c354e;
+  --primary-tint: #f0e8f0;
 
   /* Grounding — forest */
   --forest: #2f4127;
-  --forest-soft: rgba(47, 65, 39, 0.08);
+  --forest-soft: var(--completion-tint);
 
-  /* Accents */
-  --teal: #5db8a6;
-  --amber: #e8a55a;
-  --gold: #b8860b;
-  --gold-soft: rgba(184, 134, 11, 0.12);
+  /* Semantic strong/tint pairs */
+  --completion: #3b684b;
+  --completion-tint: #e7f1e9;
+  --today-warning: #825d16;
+  --today-warning-tint: #f7ecd2;
+  --tomorrow-gold: #6d6422;
+  --tomorrow-gold-tint: #efecd8;
+  --overdue-error: #a33f46;
+  --overdue-error-tint: #f8e4e5;
+  --frozen-info: #416883;
+  --frozen-info-tint: #e5eef4;
+  --this-week-plum: #6b5375;
+  --this-week-plum-tint: #eee8f1;
 
-  /* Semantic */
-  --success: #5db872;
-  --success-soft: rgba(93, 184, 114, 0.12);
-  --warning: #d4a017;
-  --warning-soft: rgba(212, 160, 23, 0.12);
-  --error: #c64545;
-  --error-soft: rgba(198, 69, 69, 0.1);
+  /* Compatibility aliases for established module roles */
+  --teal: var(--frozen-info);
+  --amber: var(--today-warning);
+  --gold: var(--tomorrow-gold);
+  --gold-soft: var(--tomorrow-gold-tint);
+  --success: var(--completion);
+  --success-soft: var(--completion-tint);
+  --warning: var(--today-warning);
+  --warning-soft: var(--today-warning-tint);
+  --error: var(--overdue-error);
+  --error-soft: var(--overdue-error-tint);
 
-  /* Kanban group pills (the signature): filled chip, cream text */
-  --pill-overdue: #c64545;
-  --pill-overdue-tint: rgba(198, 69, 69, 0.045);
-  --pill-today: #e8a55a;
-  --pill-today-tint: rgba(232, 165, 90, 0.055);
-  --pill-tomorrow: #d4a017;
-  --pill-tomorrow-tint: rgba(212, 160, 23, 0.05);
-  --pill-week: #8c6a9e;
-  --pill-week-tint: rgba(140, 106, 158, 0.05);
-  --pill-text: #fdf9f3;
+  /* Interaction and Home timeline roles */
+  --link: var(--frozen-info);
+  --link-hover: var(--ink);
+  --focus-border: var(--frozen-info);
+  --selection: var(--frozen-info-tint);
+  --scratch: var(--frozen-info);
+  --scratch-tint: var(--frozen-info-tint);
+  --timeline-now: var(--overdue-error);
+
+  /* Kanban group pills (the signature): dark fill, white text */
+  --pill-overdue: var(--overdue-error);
+  --pill-overdue-tint: var(--overdue-error-tint);
+  --pill-today: var(--today-warning);
+  --pill-today-tint: var(--today-warning-tint);
+  --pill-tomorrow: var(--tomorrow-gold);
+  --pill-tomorrow-tint: var(--tomorrow-gold-tint);
+  --pill-week: var(--this-week-plum);
+  --pill-week-tint: var(--this-week-plum-tint);
+  --pill-text: #ffffff;
+
+  /* Sidebar is intentionally near-neutral, separate from brand */
+  --sidebar-background: #f2efea;
+  --sidebar-border: #e4dcd5;
+  --sidebar-hover: #ece8e4;
+  --sidebar-selected: #e8e4e2;
 
   /* Typography */
   --font-ui: 'Inter', -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
@@ -85,8 +112,8 @@
   --radius-card: 10px;
   --radius-card-lg: 12px;
 
-  /* Focus ring: coral at 15% alpha, 3px */
-  --focus-ring: 0 0 0 3px rgba(204, 120, 92, 0.15);
+  /* Focus uses the information role, not the brand primary */
+  --focus-ring: 0 0 0 3px var(--frozen-info-tint);
 
   /* Motion — spring-feel, interruptible (emil bar) */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);

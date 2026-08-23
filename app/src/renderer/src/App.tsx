@@ -5,7 +5,6 @@ import { AppFrame } from './app/AppFrame'
 import { AlfredActivityPage } from './pages/AlfredActivityPage'
 import { BookmarksPage } from './pages/BookmarksPage'
 import { CalendarPage } from './pages/CalendarPage'
-import { FitnessPage } from './pages/FitnessPage'
 import { HabitsPage } from './pages/HabitsPage'
 import { HomePage } from './pages/HomePage'
 import { JobsPage } from './pages/JobsPage'
@@ -13,6 +12,7 @@ import { JournalPage } from './pages/JournalPage'
 import { LeetCodePage } from './pages/LeetCodePage'
 import { MoodFocusPage } from './pages/MoodFocusPage'
 import { NotesPage } from './pages/NotesPage'
+import { SecondaryModuleSurface } from './pages/SecondaryModuleSurface'
 import { SettingsPage } from './pages/SettingsPage'
 import { WelcomePage } from './pages/WelcomePage'
 
@@ -24,13 +24,40 @@ export function App(): ReactNode {
         <Route element={<AppFrame />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/habits" element={<HabitsPage />} />
-          <Route path="/fitness" element={<FitnessPage />} />
-          <Route path="/mood-focus" element={<MoodFocusPage />} />
-          <Route path="/leetcode" element={<LeetCodePage />} />
+          <Route
+            path="/habits"
+            element={
+              <SecondaryModuleSurface width="wide">
+                <HabitsPage />
+              </SecondaryModuleSurface>
+            }
+          />
+          <Route
+            path="/mood-focus"
+            element={
+              <SecondaryModuleSurface width="wide">
+                <MoodFocusPage />
+              </SecondaryModuleSurface>
+            }
+          />
+          <Route
+            path="/leetcode"
+            element={
+              <SecondaryModuleSurface width="wide">
+                <LeetCodePage />
+              </SecondaryModuleSurface>
+            }
+          />
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/notes" element={<NotesPage />} />
-          <Route path="/bookmarks" element={<BookmarksPage />} />
+          <Route
+            path="/bookmarks"
+            element={
+              <SecondaryModuleSurface width="wide">
+                <BookmarksPage />
+              </SecondaryModuleSurface>
+            }
+          />
           <Route path="/journal" element={<JournalPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/alfred-activity" element={<AlfredActivityPage />} />

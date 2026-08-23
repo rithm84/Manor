@@ -51,7 +51,7 @@
   justify-content: center;
   gap: var(--space-3);
   text-align: center;
-  background: linear-gradient(180deg, rgba(250, 249, 245, 0.4), rgba(250, 249, 245, 0.85));
+  background: linear-gradient(180deg, rgba(250, 248, 243, 0.4), rgba(250, 248, 243, 0.85));
 }
 
 .jlock-glyph {

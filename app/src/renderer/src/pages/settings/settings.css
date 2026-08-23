@@ -173,7 +173,7 @@
 }
 
 .set-toggle.is-on {
-  background: var(--coral);
+  background: var(--primary);
 }
 
 .set-toggle-knob {
@@ -197,10 +197,10 @@
 .set-hotkey-capture {
   height: 30px;
   padding: 0 var(--space-3);
-  border: 1.5px dashed var(--coral);
+  border: 1.5px dashed var(--focus-border);
   border-radius: var(--radius-control);
-  background: var(--coral-soft);
-  color: var(--coral-active);
+  background: var(--frozen-info-tint);
+  color: var(--frozen-info);
   font-size: var(--text-sm);
   font-weight: 500;
 }

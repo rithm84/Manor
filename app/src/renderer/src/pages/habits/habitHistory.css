@@ -1,0 +1,284 @@
+.habit-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.habit-history-topline,
+.habit-history-sectionhead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.habit-history-topline h2 {
+  font-size: 20px;
+}
+
+.habit-history-topline p,
+.habit-history-sectionhead p {
+  margin-top: 3px;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.habit-history-monthnav {
+  display: grid;
+  grid-template-columns: 30px minmax(124px, auto) 30px;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+}
+
+.habit-history-monthlabel {
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: center;
+}
+
+.habit-history-summary {
+  display: grid;
+  grid-template-columns: 1.35fr repeat(3, 1fr);
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.habit-history-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--space-4) var(--space-5);
+  border-right: 1px solid var(--hairline);
+}
+
+.habit-history-summary > div:first-child {
+  padding-left: 0;
+}
+
+.habit-history-summary > div:last-child {
+  border-right: none;
+}
+
+.habit-history-summaryvalue {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.habit-history-summary-primary .habit-history-summaryvalue {
+  color: var(--completion);
+  font-size: 28px;
+}
+
+.habit-history-summarylabel {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.habit-history-trend,
+.habit-history-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.habit-history-sectionhead h3 {
+  color: var(--ink);
+  font-size: var(--text-md);
+}
+
+.habit-history-trendstat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  color: var(--ink-muted);
+  font-size: 10px;
+}
+
+.habit-history-trendstat > span:first-child {
+  color: var(--ink-body);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.habit-history-chart {
+  width: 100%;
+  height: 214px;
+  padding-top: var(--space-2);
+}
+
+.habit-history-chart .recharts-surface:focus-visible {
+  outline: 2px solid var(--frozen-info);
+  outline-offset: 2px;
+}
+
+.habit-history-ranking {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--hairline);
+  list-style: none;
+}
+
+.habit-history-rankrow {
+  display: grid;
+  grid-template-columns: 24px minmax(180px, 1fr) 52px 18px;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 62px;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-body);
+  text-align: left;
+  transition: background-color var(--duration-fast) ease;
+}
+
+.habit-history-rank {
+  color: var(--ink-muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.habit-history-rankidentity,
+.habit-history-ranktitle,
+.habit-history-rankmeta {
+  min-width: 0;
+}
+
+.habit-history-rankidentity {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.habit-history-ranktitle,
+.habit-history-rankmeta {
+  display: flex;
+  align-items: center;
+}
+
+.habit-history-ranktitle {
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.habit-history-ranktitle > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-history-lifecycle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.habit-history-rankmeta {
+  gap: var(--space-2);
+  color: var(--ink-muted);
+  font-size: 10px;
+}
+
+.habit-history-rankmeta > span + span::before {
+  margin-right: var(--space-2);
+  color: var(--surface-strong);
+  content: '·';
+}
+
+.habit-history-freezecount {
+  display: inline-flex;
+  align-items: center;
+  color: var(--frozen-info);
+}
+
+.habit-history-donutlegend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 12px;
+  color: var(--ink-muted);
+  font-size: 10px;
+}
+
+.habit-history-donutlegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.habit-history-legenddot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--surface-strong);
+}
+
+.habit-history-legenddot.is-complete {
+  background: var(--completion);
+}
+
+.habit-history-legenddot.is-partial {
+  background: var(--today-warning);
+}
+
+.habit-history-legenddot.is-frozen {
+  background: var(--frozen-info);
+}
+
+.habit-history-legenddot.is-missed {
+  background: var(--overdue-error);
+}
+
+.habit-history-rankdonut {
+  position: relative;
+  display: block;
+  width: 52px;
+  height: 52px;
+}
+
+.habit-history-seamless-ring {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.habit-history-rankrate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-body);
+  font-size: 9px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.habit-history-rankchevron {
+  color: var(--ink-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .habit-history-rankrow:hover {
+    background: var(--surface-soft);
+  }
+}
+
+@media (max-width: 1080px) {
+  .habit-history-rankrow {
+    grid-template-columns: 20px minmax(160px, 1fr) 52px 16px;
+  }
+}

@@ -1,48 +1,76 @@
 import { Briefcase, Plus } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
+import type { JobRoleFields, JobsState, JobStage } from '../../../shared/jobs'
 import { Button, EmptyState } from '../components/ui'
-import { jobsFunnel, pipeline, toApply } from '../data/mock'
 import { AddRoleModal } from './jobs/AddRoleModal'
-import type { RoleDraft } from './jobs/AddRoleModal'
-import { Funnel } from './jobs/Funnel'
-import { JobPeek } from './jobs/JobPeek'
-import type { PeekData, StageValue } from './jobs/JobPeek'
+import { JobDetailModal } from './jobs/JobDetailModal'
 import { PipelineBoard } from './jobs/PipelineBoard'
 import { ToApplyTable } from './jobs/ToApplyTable'
-import type { BoardCard, DragPayload, JobColumn, LocalPosting } from './jobs/jobsModel'
-import { detailForMove, toBoardCard, toLocalPosting } from './jobs/jobsModel'
+import { createJobsSeed } from './jobs/jobsSeed'
+import type { DragPayload, JobColumn } from './jobs/jobsModel'
+import {
+  fieldsForStageChange,
+  stageForColumn,
+  toBoardCard
+} from './jobs/jobsModel'
 import './jobs/jobs.css'
 
+type JobsView = 'board' | 'flow'
+
+const JOBS_SEED = createJobsSeed()
+const JobsFlow = lazy(async () => {
+  const module = await import('./jobs/JobsFlow')
+  return { default: module.JobsFlow }
+})
 const ROW_LEAVE_MS = 220
 const ARRIVE_FLASH_MS = 1200
 const CLICK_SUPPRESS_MS = 150
 
-type PeekSubject = { kind: 'card'; id: string } | { kind: 'posting'; id: string }
-
-function freshRolesNote(postings: readonly LocalPosting[]): string | null {
-  const fresh = postings.filter((posting) => posting.ageDays === 0).length
-  if (fresh === 0) {
-    return null
-  }
-  const words = ['One', 'Two', 'Three', 'Four', 'Five', 'Six']
-  const word = fresh <= words.length ? words[fresh - 1] : `${fresh}`
-  return fresh === 1 ? 'One arrived this morning.' : `${word} arrived this morning.`
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'An unknown Jobs persistence error occurred'
 }
 
-/** Jobs: the to-apply queue on top, the live pipeline underneath. */
+function freshRolesNote(state: JobsState): string | null {
+  const fresh = state.roles.filter(
+    (role) => role.stage === 'to_apply' && role.datePosted === state.today
+  ).length
+  return fresh === 0 ? null : `${fresh} new today`
+}
+
 export function JobsPage(): ReactNode {
-  const [postings, setPostings] = useState<readonly LocalPosting[]>(toApply.map(toLocalPosting))
-  const [cards, setCards] = useState<readonly BoardCard[]>(pipeline.map(toBoardCard))
+  const [state, setState] = useState<JobsState | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [persistError, setPersistError] = useState<string | null>(null)
   const [leavingIds, setLeavingIds] = useState<ReadonlySet<string>>(new Set())
   const [arrivedIds, setArrivedIds] = useState<ReadonlySet<string>>(new Set())
   const [addOpen, setAddOpen] = useState(false)
   const [dragging, setDragging] = useState<DragPayload | null>(null)
-  const [peekSubject, setPeekSubject] = useState<PeekSubject | null>(null)
-  const [peekOpen, setPeekOpen] = useState(false)
+  const [detailRoleId, setDetailRoleId] = useState<string | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [view, setView] = useState<JobsView>('board')
   const timers = useRef<Set<number>>(new Set())
   const suppressClick = useRef(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void window.manor.jobs.load(JOBS_SEED).then((loaded) => {
+      if (!cancelled) {
+        setState(loaded)
+        setLoading(false)
+      }
+    }).catch((error: unknown) => {
+      console.error('Jobs persistence load failed', { error })
+      if (!cancelled) {
+        setPersistError(errorMessage(error))
+        setLoading(false)
+      }
+    })
+    return (): void => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     const pending = timers.current
@@ -52,15 +80,28 @@ export function JobsPage(): ReactNode {
     }
   }, [])
 
-  const later = (fn: () => void, ms: number): void => {
+  const persist = async (
+    operation: string,
+    mutation: () => Promise<JobsState>
+  ): Promise<void> => {
+    try {
+      const next = await mutation()
+      setState(next)
+      setPersistError(null)
+    } catch (error) {
+      console.error('Jobs persistence operation failed', { operation, error })
+      setPersistError(`${operation}: ${errorMessage(error)}`)
+    }
+  }
+
+  const later = (operation: () => void, milliseconds: number): void => {
     const timer = window.setTimeout(() => {
       timers.current.delete(timer)
-      fn()
-    }, ms)
+      operation()
+    }, milliseconds)
     timers.current.add(timer)
   }
 
-  /** A finished drag swallows the click the browser may still deliver. */
   const endDrag = (): void => {
     setDragging(null)
     suppressClick.current = true
@@ -69,193 +110,72 @@ export function JobsPage(): ReactNode {
     }, CLICK_SUPPRESS_MS)
   }
 
-  const flashArrival = (cardId: string): void => {
-    setArrivedIds((current) => new Set(current).add(cardId))
+  const flashArrival = (roleId: string): void => {
+    setArrivedIds((current) => new Set(current).add(roleId))
     later(() => {
       setArrivedIds((current) => {
         const next = new Set(current)
-        next.delete(cardId)
+        next.delete(roleId)
         return next
       })
     }, ARRIVE_FLASH_MS)
   }
 
-  const cardFromPosting = (posting: LocalPosting, column: JobColumn): BoardCard => ({
-    id: `card-${posting.id}`,
-    company: posting.company,
-    role: posting.role,
-    column,
-    detail: detailForMove(column),
-    dueSoon: false,
-    oaDueDate: null,
-    outcome: null,
-    link: posting.link,
-    notes: posting.notes
-  })
-
-  /** Shared conversion: posting leaves the queue, a card lands and flashes. */
-  const convertPosting = (postingId: string, column: JobColumn): BoardCard | null => {
-    const posting = postings.find((candidate) => candidate.id === postingId)
-    if (posting === undefined) {
-      return null
-    }
-    setPostings((current) => current.filter((candidate) => candidate.id !== postingId))
-    const card = cardFromPosting(posting, column)
-    setCards((current) => [card, ...current])
-    flashArrival(card.id)
-    return card
+  if (loading) {
+    return <div className="jobs-loading">Loading roles…</div>
   }
 
-  const markApplied = (postingId: string): void => {
-    if (leavingIds.has(postingId)) {
-      return
-    }
-    setLeavingIds((current) => new Set(current).add(postingId))
+  if (state === null) {
+    return <div className="jobs-error" role="alert">{persistError ?? 'Jobs data could not be loaded.'}</div>
+  }
+
+  const toApplyRoles = state.roles.filter((role) => role.stage === 'to_apply')
+  const cards = state.roles
+    .filter((role) => role.stage !== 'to_apply')
+    .map((role) => toBoardCard(role, state.today))
+  const detailRole = detailRoleId === null
+    ? null
+    : state.roles.find((role) => role.id === detailRoleId) ?? null
+  const empty = state.roles.length === 0
+  const note = freshRolesNote(state)
+
+  const updateStage = (roleId: string, stage: JobStage): void => {
+    const role = state.roles.find((candidate) => candidate.id === roleId)
+    if (role === undefined || role.stage === stage) return
+    void persist('Could not change stage', () => window.manor.jobs.updateRole({
+      id: roleId,
+      fields: fieldsForStageChange(role, stage, state.today)
+    }))
+    if (stage !== 'to_apply') flashArrival(roleId)
+  }
+
+  const markApplied = (roleId: string): void => {
+    if (leavingIds.has(roleId)) return
+    setLeavingIds((current) => new Set(current).add(roleId))
     later(() => {
       setLeavingIds((current) => {
         const next = new Set(current)
-        next.delete(postingId)
+        next.delete(roleId)
         return next
       })
-      convertPosting(postingId, 'applied')
+      updateStage(roleId, 'applied')
     }, ROW_LEAVE_MS)
   }
 
   const dropOnColumn = (column: JobColumn): void => {
-    if (dragging === null) {
-      return
-    }
-    if (dragging.kind === 'card') {
-      moveCard(dragging.id, column)
-    } else if (column === 'applied') {
-      convertPosting(dragging.id, 'applied')
+    if (dragging === null) return
+    const role = state.roles.find((candidate) => candidate.id === dragging.id)
+    if (role !== undefined) {
+      updateStage(role.id, stageForColumn(column, role.stage))
     }
     setDragging(null)
   }
 
-  const moveCard = (cardId: string, column: JobColumn): void => {
-    setCards((current) =>
-      current.map((card) =>
-        card.id === cardId
-          ? {
-              ...card,
-              column,
-              detail: detailForMove(column),
-              dueSoon: false,
-              oaDueDate: null,
-              outcome: column === 'decided' ? card.outcome : null
-            }
-          : card
-      )
-    )
+  const openDetail = (roleId: string): void => {
+    if (suppressClick.current) return
+    setDetailRoleId(roleId)
+    setDetailOpen(true)
   }
-
-  const removeCard = (cardId: string): void => {
-    if (peekSubject !== null && peekSubject.kind === 'card' && peekSubject.id === cardId) {
-      setPeekOpen(false)
-    }
-    setCards((current) => current.filter((card) => card.id !== cardId))
-  }
-
-  const addRole = (draft: RoleDraft): void => {
-    setAddOpen(false)
-    if (draft.destination === 'toapply') {
-      const posting: LocalPosting = {
-        id: `job-local-${Date.now()}`,
-        company: draft.company,
-        role: draft.role,
-        location: '',
-        ageDays: 0,
-        link: draft.link,
-        notes: ''
-      }
-      setPostings((current) => [posting, ...current])
-      return
-    }
-    const card: BoardCard = {
-      id: `card-local-${Date.now()}`,
-      company: draft.company,
-      role: draft.role,
-      column: draft.destination,
-      detail: detailForMove(draft.destination),
-      dueSoon: false,
-      oaDueDate: null,
-      outcome: null,
-      link: draft.link,
-      notes: ''
-    }
-    setCards((current) => [card, ...current])
-    flashArrival(card.id)
-  }
-
-  // --- Side peek -----------------------------------------------------------
-
-  const openPeek = (subject: PeekSubject): void => {
-    if (suppressClick.current) {
-      return
-    }
-    setPeekSubject(subject)
-    setPeekOpen(true)
-  }
-
-  const peekData: PeekData | null = (() => {
-    if (peekSubject === null) {
-      return null
-    }
-    if (peekSubject.kind === 'card') {
-      const card = cards.find((candidate) => candidate.id === peekSubject.id)
-      return card !== undefined ? { kind: 'card', card } : null
-    }
-    const posting = postings.find((candidate) => candidate.id === peekSubject.id)
-    return posting !== undefined ? { kind: 'posting', posting } : null
-  })()
-
-  const peekChangeStage = (stage: StageValue): void => {
-    if (peekSubject === null || stage === 'toapply') {
-      return
-    }
-    if (peekSubject.kind === 'card') {
-      moveCard(peekSubject.id, stage)
-      return
-    }
-    const card = convertPosting(peekSubject.id, stage)
-    if (card !== null) {
-      setPeekSubject({ kind: 'card', id: card.id })
-    }
-  }
-
-  const peekEditLink = (link: string): void => {
-    if (peekSubject === null) {
-      return
-    }
-    if (peekSubject.kind === 'card') {
-      setCards((current) =>
-        current.map((card) => (card.id === peekSubject.id ? { ...card, link } : card))
-      )
-      return
-    }
-    setPostings((current) =>
-      current.map((posting) => (posting.id === peekSubject.id ? { ...posting, link } : posting))
-    )
-  }
-
-  const peekEditNotes = (notes: string): void => {
-    if (peekSubject === null) {
-      return
-    }
-    if (peekSubject.kind === 'card') {
-      setCards((current) =>
-        current.map((card) => (card.id === peekSubject.id ? { ...card, notes } : card))
-      )
-      return
-    }
-    setPostings((current) =>
-      current.map((posting) => (posting.id === peekSubject.id ? { ...posting, notes } : posting))
-    )
-  }
-
-  const empty = postings.length === 0 && cards.length === 0
-  const note = freshRolesNote(postings)
 
   return (
     <div className="jobs">
@@ -263,7 +183,7 @@ export function JobsPage(): ReactNode {
         <div>
           <h1 className="jobs-title display">Jobs</h1>
           <span className="jobs-meta tnum">
-            {postings.length} to apply · {cards.length} in the pipeline
+            {toApplyRoles.length} to apply · {cards.length} in the pipeline
           </span>
         </div>
         <Button variant="primary" icon={<Plus size={16} />} onClick={() => setAddOpen(true)}>
@@ -271,11 +191,13 @@ export function JobsPage(): ReactNode {
         </Button>
       </header>
 
+      {persistError !== null ? <div className="jobs-error" role="alert">{persistError}</div> : null}
+
       {empty ? (
         <EmptyState
           icon={<Briefcase size={20} />}
-          title="The season starts here"
-          message="Add the first role you want and the pipeline builds itself around it."
+          title="No roles yet"
+          message="Add a role to start your pipeline."
           action={
             <Button variant="primary" icon={<Plus size={16} />} onClick={() => setAddOpen(true)}>
               Add role
@@ -284,57 +206,78 @@ export function JobsPage(): ReactNode {
         />
       ) : (
         <>
-          <section className="jobs-section">
+          <section className="jobs-section jobs-toapply-section">
             <div className="jobs-section-head">
               <span className="jobs-section-title">
                 To apply
-                <span className="jobs-section-count">{postings.length}</span>
+                <span className="jobs-section-count">{toApplyRoles.length}</span>
               </span>
               {note !== null ? <span className="jobs-section-note">{note}</span> : null}
             </div>
             <ToApplyTable
-              postings={postings}
+              roles={toApplyRoles}
+              today={state.today}
               leavingIds={leavingIds}
               onMarkApplied={markApplied}
-              onOpenPosting={(postingId) => openPeek({ kind: 'posting', id: postingId })}
-              onDragStartPosting={(postingId) => setDragging({ kind: 'posting', id: postingId })}
+              onOpenRole={openDetail}
+              onDragStartRole={(roleId) => setDragging({ kind: 'to_apply', id: roleId })}
               onDragEnd={endDrag}
             />
           </section>
 
-          <section className="jobs-section">
-            <div className="jobs-section-head">
+          <section className="jobs-section jobs-pipeline-section">
+            <div className="jobs-section-head jobs-pipeline-head">
               <span className="jobs-section-title">
                 Pipeline
                 <span className="jobs-section-count">{cards.length}</span>
               </span>
-              <Funnel funnel={jobsFunnel} />
+              <div className="jobs-viewtabs" role="tablist" aria-label="Pipeline view">
+                <button type="button" role="tab" aria-selected={view === 'board'} className={view === 'board' ? 'is-selected' : ''} onClick={() => setView('board')}>Board</button>
+                <button type="button" role="tab" aria-selected={view === 'flow'} className={view === 'flow' ? 'is-selected' : ''} onClick={() => setView('flow')}>Flow</button>
+              </div>
             </div>
-            <PipelineBoard
-              cards={cards}
-              arrivedIds={arrivedIds}
-              dragging={dragging}
-              onDragStartCard={(cardId) => setDragging({ kind: 'card', id: cardId })}
-              onDragEnd={endDrag}
-              onDropOnColumn={dropOnColumn}
-              onOpenCard={(cardId) => openPeek({ kind: 'card', id: cardId })}
-              onMoveCard={moveCard}
-              onRemoveCard={removeCard}
-            />
+            {view === 'board' ? (
+              <PipelineBoard
+                cards={cards}
+                arrivedIds={arrivedIds}
+                dragging={dragging}
+                onDragStartCard={(roleId) => setDragging({ kind: 'pipeline', id: roleId })}
+                onDragEnd={endDrag}
+                onDropOnColumn={dropOnColumn}
+                onOpenCard={openDetail}
+                onMoveCard={updateStage}
+                onRemoveCard={(roleId) => {
+                  if (detailRoleId === roleId) setDetailOpen(false)
+                  void persist('Could not remove role', () => window.manor.jobs.deleteRole(roleId))
+                }}
+              />
+            ) : (
+              <Suspense fallback={<div className="jobs-loading">Loading flow…</div>}>
+                <JobsFlow transitions={state.transitions} />
+              </Suspense>
+            )}
           </section>
         </>
       )}
 
-      <JobPeek
-        data={peekData}
-        open={peekOpen}
-        onClose={() => setPeekOpen(false)}
-        onChangeStage={peekChangeStage}
-        onEditLink={peekEditLink}
-        onEditNotes={peekEditNotes}
+      <JobDetailModal
+        role={detailRole}
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        onSave={(roleId, fields) => {
+          setDetailOpen(false)
+          void persist('Could not save role', () => window.manor.jobs.updateRole({ id: roleId, fields }))
+        }}
       />
 
-      <AddRoleModal open={addOpen} onClose={() => setAddOpen(false)} onAdd={addRole} />
+      <AddRoleModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdd={(fields: JobRoleFields) => {
+          setAddOpen(false)
+          void persist('Could not add role', () => window.manor.jobs.createRole(fields))
+        }}
+      />
     </div>
   )
 }

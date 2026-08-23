@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { EmptyState, Input } from '../components/ui'
-import { bookmarkThemes, bookmarks, bookmarksIngestedOvernight } from '../data/mock'
+import { bookmarkThemes, bookmarks } from '../data/mock'
 import type { Bookmark } from '../data/mock'
 import { BookmarkRow } from './bookmarks/BookmarkRow'
 import './bookmarks/bookmarks.css'
@@ -72,7 +72,7 @@ export function BookmarksPage(): ReactNode {
         <EmptyState
           icon={<BookmarkIcon size={20} />}
           title="Nothing saved yet"
-          message="Posts you bookmark on X gather here, articles and all."
+          message="Your X bookmarks will appear here."
         />
       </div>
     )
@@ -83,7 +83,7 @@ export function BookmarksPage(): ReactNode {
       <header className="bm-header">
         <div>
           <h1 className="bm-title display">Bookmarks</h1>
-          <span className="bm-meta tnum">{bookmarksIngestedOvernight} came in overnight.</span>
+          <span className="bm-meta tnum">{bookmarks.length} saved</span>
         </div>
       </header>
 
@@ -97,7 +97,7 @@ export function BookmarksPage(): ReactNode {
             ariaLabel="Search bookmarks"
           />
         </div>
-        <div className="bm-filter-row">
+        <div className="bm-filter-row" aria-label="Bookmark filters">
           <div className="bm-chips">
             <span className="bm-chips-label">Themes</span>
             {bookmarkThemes.map((theme) => (

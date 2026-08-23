@@ -48,7 +48,7 @@ export function AlfredModal({ open, onClose }: AlfredModalProps): ReactNode {
           type="button"
           className="alfred-orb"
           onClick={() => setOrbState(NEXT_STATE[orbState])}
-          aria-label={`Alfred is ${STATE_LINE[orbState].toLowerCase()}. Click to change state.`}
+          aria-label={`Change Alfred state. Current: ${STATE_LINE[orbState]}.`}
         >
           <ThinkingOrb size={96} state={orbState} />
         </button>

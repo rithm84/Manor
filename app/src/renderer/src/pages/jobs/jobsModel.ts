@@ -1,175 +1,313 @@
-import { TODAY_ISO } from '../../data/mock'
-import type { JobPosting, PipelineEntry, PipelineStage } from '../../data/mock'
+import type { JobRole, JobRoleFields, JobStage, JobStageTransition } from '../../../../shared/jobs'
 
-/** Board columns. Rejections and offers both land in Decided. */
 export type JobColumn = 'applied' | 'oa' | 'interview' | 'decided'
 
-/** What is currently being dragged: a pipeline card, or a to-apply row. */
 export type DragPayload =
-  | { kind: 'card'; id: string }
-  | { kind: 'posting'; id: string }
+  | { kind: 'pipeline'; id: string }
+  | { kind: 'to_apply'; id: string }
 
 export interface BoardCard {
-  id: string
-  company: string
-  role: string
+  role: JobRole
   column: JobColumn
-  /** Stage detail in product voice, e.g. "OA due Friday". */
   detail: string
-  /** OA cards with a deadline get the amber detail treatment. */
-  dueSoon: boolean
-  /** ISO deadline for OA cards; null otherwise. */
-  oaDueDate: string | null
-  /** Non-null when the process ended. */
-  outcome: 'rejected' | null
-  /** Posting URL; empty until set. */
-  link: string
-  /** Free-form notes; empty until written. */
-  notes: string
-}
-
-/** A to-apply row with the editable extras the peek exposes. */
-export interface LocalPosting extends JobPosting {
-  link: string
-  notes: string
+  detailTone: 'today' | 'plum' | 'success' | 'overdue' | null
 }
 
 export interface ColumnMeta {
   column: JobColumn
   label: string
-  pillColorway: 'forest' | 'today' | 'coral' | 'neutral'
+  pillColorway: 'forest' | 'today' | 'plum' | 'neutral'
+}
+
+export interface StageOption {
+  value: JobStage
+  label: string
+  tone: 'neutral' | 'forest' | 'today' | 'plum' | 'success' | 'overdue'
+}
+
+export interface JobFlowNode {
+  name: string
+  stage: JobStage
+}
+
+export interface JobFlowLink {
+  source: number
+  target: number
+  value: number
+  sourceStage: JobStage
+  targetStage: JobStage
+}
+
+export interface JobFlowData {
+  nodes: readonly JobFlowNode[]
+  links: readonly JobFlowLink[]
 }
 
 export const jobColumns: readonly ColumnMeta[] = [
   { column: 'applied', label: 'Applied', pillColorway: 'forest' },
   { column: 'oa', label: 'OA', pillColorway: 'today' },
-  { column: 'interview', label: 'Interviews', pillColorway: 'coral' },
+  { column: 'interview', label: 'Interviews', pillColorway: 'plum' },
   { column: 'decided', label: 'Decided', pillColorway: 'neutral' }
 ]
 
-function columnFor(stage: PipelineStage): JobColumn {
-  if (stage === 'rejected') {
-    return 'decided'
+export const jobStageOptions: readonly StageOption[] = [
+  { value: 'to_apply', label: 'To apply', tone: 'neutral' },
+  { value: 'applied', label: 'Applied', tone: 'forest' },
+  { value: 'oa', label: 'OA', tone: 'today' },
+  { value: 'interview_1', label: 'Interview 1', tone: 'plum' },
+  { value: 'interview_2', label: 'Interview 2', tone: 'plum' },
+  { value: 'interview_3', label: 'Interview 3', tone: 'plum' },
+  { value: 'offer', label: 'Offer', tone: 'success' },
+  { value: 'rejected', label: 'Rejected', tone: 'overdue' }
+]
+
+const STAGE_ORDER: Readonly<Record<JobStage, number>> = {
+  to_apply: 0,
+  applied: 1,
+  oa: 2,
+  interview_1: 3,
+  interview_2: 4,
+  interview_3: 5,
+  offer: 6,
+  rejected: 6
+}
+
+function dateFromIso(date: string): Date {
+  return new Date(`${date}T12:00:00.000Z`)
+}
+
+function dayDifference(date: string, today: string): number {
+  return Math.round((dateFromIso(date).getTime() - dateFromIso(today).getTime()) / 86_400_000)
+}
+
+function shortDate(date: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC'
+  }).format(dateFromIso(date))
+}
+
+function weekday(date: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'UTC',
+    weekday: 'long'
+  }).format(dateFromIso(date))
+}
+
+function upcomingDate(date: string, today: string): string {
+  const difference = dayDifference(date, today)
+  if (difference === 0) return 'today'
+  if (difference === 1) return 'tomorrow'
+  if (difference > 1 && difference <= 6) return weekday(date)
+  return shortDate(date)
+}
+
+export function stageLabel(stage: JobStage): string {
+  const option = jobStageOptions.find((candidate) => candidate.value === stage)
+  if (option === undefined) {
+    throw new Error(`Jobs stage ${stage} has no display label`)
   }
-  return stage
+  return option.label
 }
 
-/** Link and notes seeds for a few pipeline companies; the rest start empty. */
-const seededExtras: Readonly<Record<string, { link: string; notes: string }>> = {
-  'pl-openai': {
-    link: 'https://openai.com/careers/swe-intern',
-    notes: 'Referred by Arjun. Nudge him if nothing lands by Labor Day.'
-  },
-  'pl-databricks': {
-    link: 'https://databricks.com/company/careers/swe-intern',
-    notes: 'OA is 90 minutes, two problems. Run one timed set before Friday.'
-  },
-  'pl-vercel': {
-    link: 'https://vercel.com/careers',
-    notes: 'Round 1 stayed light on systems. Round 2 is the platform team, so review edge caching.'
+export function columnForStage(stage: JobStage): JobColumn | null {
+  switch (stage) {
+    case 'to_apply':
+      return null
+    case 'applied':
+      return 'applied'
+    case 'oa':
+      return 'oa'
+    case 'interview_1':
+    case 'interview_2':
+    case 'interview_3':
+      return 'interview'
+    case 'offer':
+    case 'rejected':
+      return 'decided'
   }
 }
 
-export function toBoardCard(entry: PipelineEntry): BoardCard {
-  const extras = seededExtras[entry.id] ?? { link: '', notes: '' }
-  return {
-    id: entry.id,
-    company: entry.company,
-    role: entry.role,
-    column: columnFor(entry.stage),
-    detail: entry.detail,
-    dueSoon: entry.stage === 'oa' && entry.dueDate !== null,
-    oaDueDate: entry.stage === 'oa' ? entry.dueDate : null,
-    outcome: entry.stage === 'rejected' ? 'rejected' : null,
-    link: extras.link,
-    notes: extras.notes
-  }
-}
-
-export function toLocalPosting(posting: JobPosting): LocalPosting {
-  return { ...posting, link: '', notes: '' }
-}
-
-/** Detail line a card gets when it is moved into a column by hand. */
-export function detailForMove(column: JobColumn): string {
+export function stageForColumn(column: JobColumn, currentStage: JobStage): JobStage {
   switch (column) {
     case 'applied':
-      return 'Applied today'
+      return 'applied'
     case 'oa':
-      return 'OA waiting'
+      return 'oa'
     case 'interview':
-      return 'Scheduling'
+      return currentStage === 'interview_2' || currentStage === 'interview_3'
+        ? currentStage
+        : 'interview_1'
     case 'decided':
-      return 'Closed'
+      return currentStage === 'offer' ? 'offer' : 'rejected'
   }
 }
 
-export function ageLabel(ageDays: number): string {
-  if (ageDays === 0) {
-    return 'Today'
-  }
-  return `${ageDays}d ago`
-}
-
-const WEEKDAYS = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday'
-] as const
-
-/** Weekday index of the canonical today (Wednesday, per the mock story). */
-const TODAY_WEEKDAY = 3
-
-function dayNumber(iso: string): number {
-  const [year, month, day] = iso.split('-').map((part) => Number(part))
-  return Math.round(new Date(year, month - 1, day).getTime() / 86_400_000)
-}
-
-/**
- * "2026-08-22" -> "Friday, Aug 22". Weekdays follow the canonical story's
- * calendar (today is Wednesday, August 20), not the real 2026 calendar.
- */
-function formatIsoDay(iso: string): string {
-  const [, month, day] = iso.split('-').map((part) => Number(part))
-  const diff = dayNumber(iso) - dayNumber(TODAY_ISO)
-  const weekday = WEEKDAYS[((TODAY_WEEKDAY + diff) % 7 + 7) % 7]
-  const monthShort = new Date(2026, month - 1, 1).toLocaleDateString('en-US', { month: 'short' })
-  return `${weekday}, ${monthShort} ${day}`
-}
-
-export interface PeekDateRow {
-  label: string
-  value: string
-  /** Quiet placeholder styling for unset values. */
-  muted: boolean
-}
-
-/** The key dates a card's stage makes relevant, as read-only property rows. */
-export function dateRowsFor(card: BoardCard): readonly PeekDateRow[] {
-  switch (card.column) {
-    case 'applied': {
-      const value = card.detail.startsWith('Applied ') ? card.detail.slice(8) : 'Today'
-      return [{ label: 'Applied', value: value === 'today' ? 'Today' : value, muted: false }]
+export function currentUpdateLabel(role: JobRole, today: string): string {
+  switch (role.stage) {
+    case 'to_apply':
+      return role.datePosted === null ? 'Posted date not set' : `Posted ${shortDate(role.datePosted)}`
+    case 'applied':
+      return role.appliedDate === null ? 'Applied date not set' : `Applied ${shortDate(role.appliedDate)}`
+    case 'oa': {
+      if (role.oaDueDate === null) return 'OA due date not set'
+      const difference = dayDifference(role.oaDueDate, today)
+      return difference < 0
+        ? `OA overdue ${shortDate(role.oaDueDate)}`
+        : `OA due ${upcomingDate(role.oaDueDate, today)}`
     }
-    case 'oa':
-      return [
-        card.oaDueDate !== null
-          ? { label: 'OA due', value: formatIsoDay(card.oaDueDate), muted: false }
-          : { label: 'OA due', value: 'Not set', muted: true }
-      ]
-    case 'interview':
-      return [{ label: 'Interview', value: card.detail, muted: false }]
-    case 'decided':
-      return [
-        {
-          label: 'Outcome',
-          value: card.outcome === 'rejected' ? 'Rejected' : 'Closed',
-          muted: false
-        }
-      ]
+    case 'interview_1':
+      return role.interview1Date === null
+        ? 'Round 1 date not set'
+        : `Round 1 ${upcomingDate(role.interview1Date, today)}`
+    case 'interview_2':
+      return role.interview2Date === null
+        ? 'Round 2 date not set'
+        : `Round 2 ${upcomingDate(role.interview2Date, today)}`
+    case 'interview_3':
+      return role.interview3Date === null
+        ? 'Round 3 date not set'
+        : `Round 3 ${upcomingDate(role.interview3Date, today)}`
+    case 'offer':
+      return role.decisionDate === null ? 'Offer' : `Offer ${shortDate(role.decisionDate)}`
+    case 'rejected':
+      return role.decisionDate === null ? 'Rejected' : `Rejected ${shortDate(role.decisionDate)}`
+  }
+}
+
+export function toBoardCard(role: JobRole, today: string): BoardCard {
+  const column = columnForStage(role.stage)
+  if (column === null) {
+    throw new Error(`Cannot create a pipeline card for to-apply role ${role.id}`)
+  }
+  const detailTone: BoardCard['detailTone'] = (() => {
+    switch (role.stage) {
+      case 'oa':
+        return 'today'
+      case 'interview_1':
+      case 'interview_2':
+      case 'interview_3':
+        return 'plum'
+      case 'offer':
+        return 'success'
+      case 'rejected':
+        return 'overdue'
+      case 'applied':
+      case 'to_apply':
+        return null
+    }
+  })()
+  return {
+    role,
+    column,
+    detail: currentUpdateLabel(role, today),
+    detailTone
+  }
+}
+
+export function postedLabel(datePosted: string | null, today: string): string {
+  if (datePosted === null) return 'Not set'
+  const difference = dayDifference(datePosted, today)
+  if (difference === 0) return 'Today'
+  if (difference === -1) return 'Yesterday'
+  if (difference < -1 && difference >= -6) return `${Math.abs(difference)}d ago`
+  return shortDate(datePosted)
+}
+
+export function emptyJobRoleFields(stage: JobStage): JobRoleFields {
+  return {
+    company: '',
+    role: '',
+    location: '',
+    postingLink: '',
+    datePosted: null,
+    stage,
+    appliedDate: null,
+    oaDueDate: null,
+    interview1Date: null,
+    interview2Date: null,
+    interview3Date: null,
+    decisionDate: null
+  }
+}
+
+export function roleFields(role: JobRole): JobRoleFields {
+  return {
+    company: role.company,
+    role: role.role,
+    location: role.location,
+    postingLink: role.postingLink,
+    datePosted: role.datePosted,
+    stage: role.stage,
+    appliedDate: role.appliedDate,
+    oaDueDate: role.oaDueDate,
+    interview1Date: role.interview1Date,
+    interview2Date: role.interview2Date,
+    interview3Date: role.interview3Date,
+    decisionDate: role.decisionDate
+  }
+}
+
+export function fieldsForStageChange(
+  role: JobRole,
+  stage: JobStage,
+  today: string
+): JobRoleFields {
+  const fields = roleFields(role)
+  return {
+    ...fields,
+    stage,
+    appliedDate: stage === 'applied' && fields.appliedDate === null ? today : fields.appliedDate,
+    decisionDate:
+      (stage === 'offer' || stage === 'rejected') && fields.decisionDate === null
+        ? today
+        : fields.decisionDate
+  }
+}
+
+export function jobFlowData(transitions: readonly JobStageTransition[]): JobFlowData {
+  const counts = new Map<string, { source: JobStage; target: JobStage; value: number }>()
+  transitions.forEach((transition) => {
+    if (transition.fromStage === null) return
+    if (transition.fromStage === 'to_apply' || transition.toStage === 'to_apply') return
+    const forward = STAGE_ORDER[transition.toStage] > STAGE_ORDER[transition.fromStage]
+    if (!forward) return
+    const key = `${transition.fromStage}:${transition.toStage}`
+    const current = counts.get(key)
+    counts.set(key, {
+      source: transition.fromStage,
+      target: transition.toStage,
+      value: (current?.value ?? 0) + 1
+    })
+  })
+
+  const stageSet = new Set<JobStage>()
+  counts.forEach((link) => {
+    stageSet.add(link.source)
+    stageSet.add(link.target)
+  })
+  const stages = [...stageSet].sort((first, second) => {
+    const rankDifference = STAGE_ORDER[first] - STAGE_ORDER[second]
+    return rankDifference === 0 ? first.localeCompare(second) : rankDifference
+  })
+  const indexByStage = new Map(stages.map((stage, index) => [stage, index]))
+  const links = [...counts.values()].map((link): JobFlowLink => {
+    const source = indexByStage.get(link.source)
+    const target = indexByStage.get(link.target)
+    if (source === undefined || target === undefined) {
+      throw new Error(`Could not index jobs flow link ${link.source} to ${link.target}`)
+    }
+    return {
+      source,
+      target,
+      value: link.value,
+      sourceStage: link.source,
+      targetStage: link.target
+    }
+  })
+  return {
+    nodes: stages.map((stage) => ({ name: stageLabel(stage), stage })),
+    links
   }
 }

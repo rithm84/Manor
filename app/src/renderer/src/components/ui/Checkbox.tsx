@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 export interface CheckboxProps {
-  /** 'round' = habit-style (green fill). 'square' = task-style (coral fill). */
+  /** 'round' = habit-style. 'square' = task-style. Both use completion green. */
   shape: 'round' | 'square'
   checked: boolean
   onChange: (checked: boolean) => void

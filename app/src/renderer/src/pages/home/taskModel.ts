@@ -1,23 +1,14 @@
-/**
- * Home-page task helpers: date math on the mock calendar, bucket derivation,
- * chip colorways, and the option lists for the property editors.
- * Data source: ../../data/mock.ts (canonical; read-only).
- */
-
-import { NOW_TIME, TODAY_ISO, events } from '../../data/mock'
+import type { PillColorway } from '../../components/ui'
+import { events } from '../../data/mock'
 import type {
+  ContextDefinition,
+  ScratchBlock,
   Task,
   TaskBucket,
-  TaskContext,
-  TaskDifficulty,
+  TaskEstimateMinutes,
   TaskPriority,
   TaskStatus
 } from '../../data/mock'
-import type { PillColorway } from '../../components/ui'
-
-// ---------------------------------------------------------------------------
-// Dates (ISO "YYYY-MM-DD", local time; the story's today is 2026-08-20)
-// ---------------------------------------------------------------------------
 
 export function parseIso(iso: string): Date {
   const [year, month, day] = iso.split('-').map((part) => Number(part))
@@ -30,40 +21,51 @@ export function toIso(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`
 }
 
+export function localTodayIso(now: Date): string {
+  return toIso(now)
+}
+
+export function localTime(now: Date): string {
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+}
+
 export function addDays(iso: string, days: number): string {
   const date = parseIso(iso)
   date.setDate(date.getDate() + days)
   return toIso(date)
 }
 
-/** Whole days from `from` to `to` (positive when `to` is later). */
 export function daysBetween(from: string, to: string): number {
-  const ms = parseIso(to).getTime() - parseIso(from).getTime()
-  return Math.round(ms / 86_400_000)
+  return Math.round((parseIso(to).getTime() - parseIso(from).getTime()) / 86_400_000)
 }
 
 const MONTHS_SHORT = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ] as const
-
+const MONTHS_LONG = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+] as const
 const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+const WEEKDAYS_LONG = [
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+] as const
 
-/** "Wed, Aug 20" */
 export function formatDayLabel(iso: string): string {
   const date = parseIso(iso)
   return `${WEEKDAYS_SHORT[date.getDay()]}, ${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}`
 }
 
-/** "Aug 20" */
+export function formatLongDayLabel(iso: string): string {
+  const date = parseIso(iso)
+  return `${WEEKDAYS_LONG[date.getDay()]}, ${MONTHS_LONG[date.getMonth()]} ${date.getDate()}`
+}
+
 export function formatShortDate(iso: string): string {
   const date = parseIso(iso)
   return `${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}`
 }
-
-// ---------------------------------------------------------------------------
-// Times ("HH:MM" 24h)
-// ---------------------------------------------------------------------------
 
 export function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map((part) => Number(part))
@@ -71,138 +73,199 @@ export function timeToMinutes(time: string): number {
 }
 
 export function minutesToTime(total: number): string {
-  const hours = Math.floor(total / 60)
-  const minutes = total % 60
+  const normalized = Math.max(0, Math.min(24 * 60, total))
+  const hours = Math.floor(normalized / 60)
+  const minutes = normalized % 60
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 }
 
-/** "2:00 PM" (minutes dropped on the hour: "2 PM" reads too terse in a grid). */
 export function formatClock(time: string): string {
   const total = timeToMinutes(time)
-  const hours24 = Math.floor(total / 60)
+  const hours24 = Math.floor(total / 60) % 24
   const minutes = total % 60
   const meridiem = hours24 >= 12 ? 'PM' : 'AM'
   const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12
   return `${hours12}:${String(minutes).padStart(2, '0')} ${meridiem}`
 }
 
-// ---------------------------------------------------------------------------
-// Buckets
-// ---------------------------------------------------------------------------
-
-/** Where a due date lands on the board, relative to the story's today. */
-export function bucketForDue(due: string): TaskBucket {
-  const diff = daysBetween(TODAY_ISO, due)
-  if (diff < 0) {
-    return 'overdue'
-  }
-  if (diff === 0) {
-    return 'today'
-  }
-  if (diff === 1) {
-    return 'tomorrow'
-  }
-  return 'week'
+export function bucketForDue(due: string, today: string): TaskBucket | null {
+  const diff = daysBetween(today, due)
+  if (diff < 0) return 'overdue'
+  if (diff === 0) return 'today'
+  if (diff === 1) return 'tomorrow'
+  if (diff <= 7) return 'week'
+  return null
 }
 
-/** Reconcile bucket + daysLate after a due-date change. */
-export function withDue(task: Task, due: string): Task {
-  const bucket = bucketForDue(due)
-  return {
-    ...task,
-    due,
-    bucket,
-    daysLate: bucket === 'overdue' ? -daysBetween(TODAY_ISO, due) : 0
-  }
+export function dueForBucket(bucket: TaskBucket, today: string): string {
+  if (bucket === 'overdue') return addDays(today, -1)
+  if (bucket === 'today') return today
+  if (bucket === 'tomorrow') return addDays(today, 1)
+  return addDays(today, 2)
 }
 
-/** Default due date when a task is created straight into a column. */
-export function dueForBucket(bucket: TaskBucket): string {
-  if (bucket === 'overdue') {
-    return addDays(TODAY_ISO, -1)
-  }
-  if (bucket === 'today') {
-    return TODAY_ISO
-  }
+export interface TaskCreationDateRange {
+  min: string
+  max: string
+}
+
+export interface TaskCreationDefaults {
+  context: null
+  due: string | null
+}
+
+/** Values collected by the creation dialog before a task exists. */
+export interface DraftTask {
+  title: string
+  context: string | null
+  due: string | null
+  estimateMinutes: TaskEstimateMinutes | null
+  priority: TaskPriority | null
+}
+
+export function canCreateTaskInBucket(bucket: TaskBucket): boolean {
+  return bucket !== 'overdue'
+}
+
+export function taskCreationDateRange(
+  bucket: TaskBucket,
+  today: string
+): TaskCreationDateRange | null {
+  if (!canCreateTaskInBucket(bucket)) return null
+  if (bucket === 'today') return { min: today, max: today }
   if (bucket === 'tomorrow') {
-    return addDays(TODAY_ISO, 1)
+    const tomorrow = addDays(today, 1)
+    return { min: tomorrow, max: tomorrow }
   }
-  return addDays(TODAY_ISO, 3)
+  return { min: addDays(today, 2), max: addDays(today, 7) }
 }
 
-// ---------------------------------------------------------------------------
-// Chip colorways
-// ---------------------------------------------------------------------------
+export function taskCreationDefaults(bucket: TaskBucket, today: string): TaskCreationDefaults {
+  const range = taskCreationDateRange(bucket, today)
+  return {
+    context: null,
+    due: range !== null && range.min === range.max ? range.min : null
+  }
+}
 
-export const CONTEXT_COLORWAY: Record<TaskContext, PillColorway> = {
-  Uni: 'forest',
-  Personal: 'success',
-  Leetcode: 'gold',
-  Apps: 'coral',
-  Hackathons: 'week'
+export function dueForTaskCreation(
+  bucket: TaskBucket,
+  today: string,
+  selectedDue: string | null
+): string {
+  const range = taskCreationDateRange(bucket, today)
+  if (range === null) {
+    throw new RangeError('Overdue tasks cannot be created')
+  }
+  if (range.min === range.max) return range.min
+  if (selectedDue === null || selectedDue < range.min || selectedDue > range.max) {
+    throw new RangeError(
+      `This Week tasks require a due date from ${range.min} through ${range.max}`
+    )
+  }
+  return selectedDue
+}
+
+export function daysLate(task: Task, today: string): number {
+  return Math.max(0, -daysBetween(today, task.due))
+}
+
+export function contextDefinitionFor(
+  contextName: string,
+  contexts: readonly ContextDefinition[]
+): ContextDefinition {
+  const context = contexts.find((candidate) => candidate.name === contextName)
+  if (context === undefined) {
+    throw new Error(`Task context ${contextName} has no persisted presentation definition`)
+  }
+  return context
 }
 
 export const PRIORITY_COLORWAY: Record<TaskPriority, PillColorway> = {
-  High: 'overdue',
+  Low: 'neutral',
   Medium: 'today',
-  Low: 'neutral'
+  High: 'overdue'
 }
 
-// ---------------------------------------------------------------------------
-// Property options
-// ---------------------------------------------------------------------------
+export const STATUS_COLORWAY: Record<TaskStatus, PillColorway> = {
+  'Not started': 'neutral',
+  'In Progress': 'info',
+  Done: 'success'
+}
 
-export interface PropertyOption<T extends string> {
+export const ESTIMATE_COLORWAY: Record<TaskEstimateMinutes, PillColorway> = {
+  15: 'success',
+  30: 'forest',
+  60: 'info',
+  120: 'gold',
+  180: 'plum',
+  240: 'overdue'
+}
+
+export interface PropertyOption<T extends string | number> {
   value: T
   label: string
+  tone?: PillColorway
 }
 
 export const STATUS_OPTIONS: readonly PropertyOption<TaskStatus>[] = [
-  { value: 'Not started', label: 'Not started' },
-  { value: 'In Progress', label: 'In Progress' },
-  { value: 'Done', label: 'Done' }
+  { value: 'Not started', label: 'Not started', tone: STATUS_COLORWAY['Not started'] },
+  { value: 'In Progress', label: 'In progress', tone: STATUS_COLORWAY['In Progress'] },
+  { value: 'Done', label: 'Done', tone: STATUS_COLORWAY.Done }
 ]
 
-export const CONTEXT_OPTIONS: readonly PropertyOption<TaskContext>[] = [
-  { value: 'Uni', label: 'Uni' },
-  { value: 'Personal', label: 'Personal' },
-  { value: 'Leetcode', label: 'Leetcode' },
-  { value: 'Apps', label: 'Apps' },
-  { value: 'Hackathons', label: 'Hackathons' }
+export const ESTIMATE_OPTIONS: readonly PropertyOption<TaskEstimateMinutes>[] = [
+  { value: 15, label: '15 min' },
+  { value: 30, label: '30 min' },
+  { value: 60, label: '1 hour' },
+  { value: 120, label: '2 hours' },
+  { value: 180, label: '3 hours' },
+  { value: 240, label: '4+ hours' }
 ]
 
-export const DIFFICULTY_OPTIONS: readonly PropertyOption<TaskDifficulty>[] = [
-  { value: '<30min', label: '<30min' },
-  { value: '<2hrs', label: '<2hrs' },
-  { value: '<3hrs', label: '<3hrs' },
-  { value: '>4hrs', label: '>4hrs' }
-]
+export const ESTIMATE_SELECT_OPTIONS = ESTIMATE_OPTIONS.map((option) => ({
+  value: String(option.value),
+  label: option.label,
+  tone: ESTIMATE_COLORWAY[option.value]
+}))
 
 export const PRIORITY_OPTIONS: readonly PropertyOption<TaskPriority>[] = [
-  { value: 'High', label: 'High' },
-  { value: 'Medium', label: 'Medium' },
-  { value: 'Low', label: 'Low' }
+  { value: 'Low', label: 'Low', tone: PRIORITY_COLORWAY.Low },
+  { value: 'Medium', label: 'Medium', tone: PRIORITY_COLORWAY.Medium },
+  { value: 'High', label: 'High', tone: PRIORITY_COLORWAY.High }
 ]
 
-/** Minutes a dropped task should block on the Today panel. */
-export function blockMinutesFor(difficulty: TaskDifficulty | null): number {
-  if (difficulty === '<30min') {
-    return 30
-  }
-  if (difficulty === '<3hrs') {
-    return 90
-  }
-  if (difficulty === '>4hrs') {
-    return 120
-  }
-  return 60
+const PRIORITY_ORDER: Readonly<Record<TaskPriority, number>> = {
+  High: 0,
+  Medium: 1,
+  Low: 2
 }
 
-// ---------------------------------------------------------------------------
-// Provenance (mock: Alfred created the Neetcode task, per the audit log)
-// ---------------------------------------------------------------------------
+export function compareWeeklyTasks(left: Task, right: Task): number {
+  const dueOrder = left.due.localeCompare(right.due)
+  if (dueOrder !== 0) return dueOrder
+  const leftPriority = left.priority === null ? 3 : PRIORITY_ORDER[left.priority]
+  const rightPriority = right.priority === null ? 3 : PRIORITY_ORDER[right.priority]
+  return leftPriority - rightPriority || left.title.localeCompare(right.title)
+}
 
-const ALFRED_CREATED: Record<string, string> = {
+export function dueColorway(due: string, today: string): PillColorway {
+  return bucketForDue(due, today) ?? 'neutral'
+}
+
+export function estimateLabel(estimate: TaskEstimateMinutes): string {
+  const option = ESTIMATE_OPTIONS.find((candidate) => candidate.value === estimate)
+  if (option === undefined) {
+    throw new Error(`No label exists for the ${estimate}-minute estimate`)
+  }
+  return option.label
+}
+
+export function blockMinutesFor(estimate: TaskEstimateMinutes | null): number {
+  return estimate ?? 60
+}
+
+const ALFRED_CREATED: Readonly<Record<string, string>> = {
   'task-neetcode-two-pointers': 'Aug 18'
 }
 
@@ -213,54 +276,55 @@ export interface TaskProvenance {
 
 export function provenanceFor(task: Task): TaskProvenance {
   const alfredDate = ALFRED_CREATED[task.id]
-  if (alfredDate !== undefined) {
-    return { byAlfred: true, line: `Alfred created this · ${alfredDate}` }
-  }
-  return { byAlfred: false, line: 'You created this' }
+  return alfredDate !== undefined
+    ? { byAlfred: true, line: `Alfred created this · ${alfredDate}` }
+    : { byAlfred: false, line: 'You created this' }
 }
 
-/** Drag payload type for board card → Today panel. */
 export const TASK_DRAG_TYPE = 'application/x-manor-task'
-
-// ---------------------------------------------------------------------------
-// Today's free time (shared by the drop handler and the timeline hint slot)
-// ---------------------------------------------------------------------------
-
-/** A locally created time block on the Today timeline. */
-export interface DroppedBlock {
-  id: string
-  taskId: string
-  title: string
-  start: string
-  end: string
-}
 
 interface BusySpan {
   start: number
   end: number
 }
 
-/** First gap after now that fits `minutes`, skipping today's busy spans. */
-export function findFreeStart(minutes: number, dropped: readonly DroppedBlock[]): string {
+export function findFreeStart(
+  date: string,
+  minutes: number,
+  afterMinutes: number,
+  scratchBlocks: readonly ScratchBlock[]
+): string {
   const busy: BusySpan[] = [
     ...events
-      .filter((event) => event.date === TODAY_ISO)
+      .filter((event) => event.date === date && !event.scratch)
       .map((event) => ({ start: timeToMinutes(event.start), end: timeToMinutes(event.end) })),
-    ...dropped.map((block) => ({
-      start: timeToMinutes(block.start),
-      end: timeToMinutes(block.end)
-    }))
+    ...scratchBlocks
+      .filter((block) => block.date === date)
+      .map((block) => ({ start: timeToMinutes(block.start), end: timeToMinutes(block.end) }))
   ].sort((a, b) => a.start - b.start)
 
-  let candidate = Math.ceil(timeToMinutes(NOW_TIME) / 30) * 30
+  let candidate = Math.ceil(afterMinutes / 15) * 15
   for (const span of busy) {
-    if (span.end <= candidate) {
-      continue
-    }
-    if (candidate + minutes <= span.start) {
-      break
-    }
+    if (span.end <= candidate) continue
+    if (candidate + minutes <= span.start) break
     candidate = span.end
   }
+  if (candidate + minutes > 24 * 60) {
+    throw new RangeError('No free slot before midnight fits this task')
+  }
   return minutesToTime(candidate)
+}
+
+export function scratchExpiry(date: string, end: string): string {
+  const scheduledEnd = parseIso(date)
+  scheduledEnd.setMinutes(timeToMinutes(end))
+  scheduledEnd.setHours(scheduledEnd.getHours() + 48)
+  return scheduledEnd.toISOString()
+}
+
+export function defaultPortion(blockMinutes: number, estimateMinutes: number | null): string {
+  if (estimateMinutes === null || blockMinutes >= estimateMinutes) {
+    return 'full task'
+  }
+  return `first ${blockMinutes} min`
 }

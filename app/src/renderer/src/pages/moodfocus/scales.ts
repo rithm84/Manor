@@ -13,12 +13,17 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-import { FOCUS_SCALE, MOOD_SCALE } from '../../data/mock'
-import type { Focus, Mood } from '../../data/mock'
+import { FOCUS_SCALE, MOOD_SCALE } from '../../../../shared/moodFocus'
+import type { Focus, Mood } from '../../../../shared/moodFocus'
+import { focusLevel, moodLevel } from './moodFocusModel'
+import { focusTone, moodTone } from './scaleTones'
+import type { ScaleTone } from './scaleTones'
 
 export interface ScaleOption<T extends string> {
   value: T
   icon: LucideIcon
+  level: number
+  tone: ScaleTone
 }
 
 const MOOD_ICONS: Record<Mood, LucideIcon> = {
@@ -40,42 +45,14 @@ const FOCUS_ICONS: Record<Focus, LucideIcon> = {
 
 export const moodOptions: readonly ScaleOption<Mood>[] = MOOD_SCALE.map((mood) => ({
   value: mood,
-  icon: MOOD_ICONS[mood]
+  icon: MOOD_ICONS[mood],
+  level: moodLevel(mood),
+  tone: moodTone(mood)
 }))
 
 export const focusOptions: readonly ScaleOption<Focus>[] = FOCUS_SCALE.map((focus) => ({
   value: focus,
-  icon: FOCUS_ICONS[focus]
+  icon: FOCUS_ICONS[focus],
+  level: focusLevel(focus),
+  tone: focusTone(focus)
 }))
-
-const MOOD_LEVELS: Record<Mood, number> = {
-  Great: 5,
-  Good: 4,
-  Neutral: 3,
-  Bad: 2,
-  Awful: 1
-}
-
-const FOCUS_LEVELS: Record<Focus, number> = {
-  'Locked In': 5,
-  High: 4,
-  Medium: 3,
-  Low: 2,
-  'Locked Out': 1,
-  Resting: 0
-}
-
-/** 1 (rough day) .. 5 (great day) on the single amber ramp. */
-export function moodLevel(mood: Mood): number {
-  return MOOD_LEVELS[mood]
-}
-
-/** 1 (locked out) .. 5 (locked in) on the teal ramp; 0 = resting, drawn hollow. */
-export function focusLevel(focus: Focus): number {
-  return FOCUS_LEVELS[focus]
-}
-
-/** "2026-08-19" -> "Aug 19". */
-export function shortDate(iso: string): string {
-  return `Aug ${Number.parseInt(iso.slice(8), 10)}`
-}

@@ -1,53 +1,54 @@
-import { Check, GlassWater } from 'lucide-react'
-import { useState } from 'react'
+import { Check, Gauge } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { Button, Input, Modal, Select } from '../../components/ui'
-import type { HabitCadence, HabitDraft, HabitKind } from './habitModel'
+import { Button, Input, Modal } from '../../components/ui'
+import type { HabitDraft, HabitKind } from '../../../../shared/habits'
 
-export interface AddHabitModalProps {
+export interface HabitEditorModalProps {
   open: boolean
+  initialDraft: HabitDraft | null
   onClose: () => void
-  onAdd: (draft: HabitDraft) => void
+  onSave: (draft: HabitDraft) => void
 }
 
-const CADENCE_OPTIONS = [
-  { value: 'Every day', label: 'Every day' },
-  { value: 'Weekdays', label: 'Weekdays' },
-  { value: 'Weekends', label: 'Weekends' }
-] as const
+const EMPTY_DRAFT: HabitDraft = { name: '', kind: 'binary', targetLabel: null }
 
-/** New-habit flow: name, cadence, and how it gets logged. */
-export function AddHabitModal({ open, onClose, onAdd }: AddHabitModalProps): ReactNode {
+export function HabitEditorModal({
+  open,
+  initialDraft,
+  onClose,
+  onSave
+}: HabitEditorModalProps): ReactNode {
   const [name, setName] = useState('')
-  const [cadence, setCadence] = useState<HabitCadence>('Every day')
-  const [kind, setKind] = useState<HabitKind>('check')
+  const [kind, setKind] = useState<HabitKind>('binary')
   const [targetLabel, setTargetLabel] = useState('')
 
-  const reset = (): void => {
-    setName('')
-    setCadence('Every day')
-    setKind('check')
-    setTargetLabel('')
-  }
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+    const draft = initialDraft ?? EMPTY_DRAFT
+    setName(draft.name)
+    setKind(draft.kind)
+    setTargetLabel(draft.targetLabel ?? '')
+  }, [initialDraft, open])
 
   const submit = (): void => {
-    onAdd({ name: name.trim(), cadence, kind, targetLabel: targetLabel.trim() })
-    reset()
+    onSave({
+      name: name.trim(),
+      kind,
+      targetLabel: kind === 'quantized' ? targetLabel.trim() : null
+    })
   }
+  const valid = name.trim() !== '' && (kind === 'binary' || targetLabel.trim() !== '')
+  const editing = initialDraft !== null
+  const changingToBinary = initialDraft?.kind === 'quantized' && kind === 'binary'
 
   return (
-    <Modal
-      open={open}
-      onClose={() => {
-        reset()
-        onClose()
-      }}
-      width={460}
-      ariaLabel="New habit"
-    >
+    <Modal open={open} onClose={onClose} width={460} ariaLabel={editing ? 'Edit habit' : 'New habit'}>
       <div className="habit-add">
-        <h2 className="habit-add-title">New habit</h2>
+        <h2 className="habit-add-title">{editing ? 'Edit habit' : 'New habit'}</h2>
 
         <label className="habit-add-field">
           <span className="habit-add-label">Name</span>
@@ -61,45 +62,34 @@ export function AddHabitModal({ open, onClose, onAdd }: AddHabitModalProps): Rea
         </label>
 
         <div className="habit-add-field">
-          <span className="habit-add-label">Cadence</span>
-          <Select
-            value={cadence}
-            options={CADENCE_OPTIONS}
-            onChange={(value) => setCadence(value as HabitCadence)}
-            placeholder="Every day"
-            ariaLabel="Habit cadence"
-          />
-        </div>
-
-        <div className="habit-add-field">
           <span className="habit-add-label">How you log it</span>
           <div className="habit-add-kinds" role="radiogroup" aria-label="How you log it">
             <button
               type="button"
               role="radio"
-              aria-checked={kind === 'check'}
-              className={`habit-add-kind${kind === 'check' ? ' is-selected' : ''}`}
-              onClick={() => setKind('check')}
+              aria-checked={kind === 'binary'}
+              className={`habit-add-kind${kind === 'binary' ? ' is-selected' : ''}`}
+              onClick={() => setKind('binary')}
             >
               <Check size={16} />
               <span className="habit-add-kind-name">One tap</span>
-              <span className="habit-add-kind-sub">Done or not, checked in a tap</span>
+              <span className="habit-add-kind-sub">Complete or incomplete</span>
             </button>
             <button
               type="button"
               role="radio"
-              aria-checked={kind === 'steps'}
-              className={`habit-add-kind${kind === 'steps' ? ' is-selected' : ''}`}
-              onClick={() => setKind('steps')}
+              aria-checked={kind === 'quantized'}
+              className={`habit-add-kind${kind === 'quantized' ? ' is-selected' : ''}`}
+              onClick={() => setKind('quantized')}
             >
-              <GlassWater size={16} />
-              <span className="habit-add-kind-name">In steps</span>
-              <span className="habit-add-kind-sub">Fill it up through the day</span>
+              <Gauge size={16} />
+              <span className="habit-add-kind-name">In quarters</span>
+              <span className="habit-add-kind-sub">0, 25, 50, 75, or 100%</span>
             </button>
           </div>
         </div>
 
-        {kind === 'steps' ? (
+        {kind === 'quantized' ? (
           <label className="habit-add-field">
             <span className="habit-add-label">Daily target</span>
             <Input
@@ -111,18 +101,18 @@ export function AddHabitModal({ open, onClose, onAdd }: AddHabitModalProps): Rea
           </label>
         ) : null}
 
+        {changingToBinary ? (
+          <p className="habit-edit-note">
+            Past entries keep their recorded percentages. From today, this habit becomes one tap.
+          </p>
+        ) : null}
+
         <div className="habit-add-footer">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              reset()
-              onClose()
-            }}
-          >
+          <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={submit} disabled={name.trim() === ''}>
-            Add habit
+          <Button variant="primary" onClick={submit} disabled={!valid}>
+            {editing ? 'Save changes' : 'Add habit'}
           </Button>
         </div>
       </div>

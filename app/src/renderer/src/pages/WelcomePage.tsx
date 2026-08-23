@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
+import { BrandMark } from '../components/BrandMark'
 import {
   ConnectCalendarStep,
   HotkeyStep,
@@ -41,7 +42,10 @@ export function WelcomePage(): ReactNode {
 
   return (
     <div className="welcome titlebar-drag">
-      <span className="welcome-wordmark">Manor</span>
+      <span className="welcome-wordmark">
+        <BrandMark className="welcome-brand-mark" />
+        Manor
+      </span>
       <div className="welcome-stage" key={step}>
         {step === 0 ? <WelcomeIntro onContinue={next} /> : null}
         {step === 1 ? (

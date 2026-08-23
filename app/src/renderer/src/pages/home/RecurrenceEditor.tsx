@@ -147,6 +147,8 @@ export function RecurrenceEditor({ value, onChange }: RecurrenceEditorProps): Re
               value={rule.until}
               onChange={(until) => applyRule({ ...rule, until })}
               ariaLabel="Repeat until"
+              min={null}
+              max={null}
             />
           </div>
           <div className="recur-summary">{summarize(rule)}</div>
