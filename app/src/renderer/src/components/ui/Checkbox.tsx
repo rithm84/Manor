@@ -20,8 +20,12 @@ export function Checkbox({ shape, checked, onChange, label, ariaLabel }: Checkbo
       onClick={() => onChange(!checked)}
     >
       <span className="ui-checkbox-box" aria-hidden="true">
+        {/* Hand-drawn stroke: dips into the bowl, then flicks up past the corner. */}
         <svg width="12" height="12" viewBox="0 0 12 12">
-          <path className="ui-checkbox-check" d="M2 6.2 L4.8 9 L10 3.2" />
+          <path
+            className="ui-checkbox-check"
+            d="M2.1 6.8 C3.2 7.3 4.1 8.4 4.6 9.3 C5.5 7.2 7.6 4.3 10.3 2.4"
+          />
         </svg>
       </span>
       {label !== undefined ? <span className="ui-checkbox-label">{label}</span> : null}

@@ -43,19 +43,20 @@ describe('computed task buckets', () => {
     )
   })
 
-  it('uses exact dates for Today and Tomorrow creation', () => {
+  it('defaults Today and Tomorrow creation to the bucket day', () => {
     expect(dueForTaskCreation('today', '2026-08-22', null)).toBe('2026-08-22')
     expect(dueForTaskCreation('tomorrow', '2026-08-22', null)).toBe('2026-08-23')
   })
 
-  it('requires an exact date inside the remaining weekly horizon', () => {
+  it('lets a due date picked in the dialog win over the bucket default', () => {
+    expect(dueForTaskCreation('today', '2026-08-22', '2026-08-27')).toBe('2026-08-27')
+    expect(dueForTaskCreation('tomorrow', '2026-08-22', '2026-09-04')).toBe('2026-09-04')
     expect(dueForTaskCreation('week', '2026-08-22', '2026-08-24')).toBe('2026-08-24')
-    expect(dueForTaskCreation('week', '2026-08-22', '2026-08-29')).toBe('2026-08-29')
+  })
+
+  it('requires an explicit date for This Week creation', () => {
     expect(() => dueForTaskCreation('week', '2026-08-22', null)).toThrow(
-      'This Week tasks require a due date'
-    )
-    expect(() => dueForTaskCreation('week', '2026-08-22', '2026-08-30')).toThrow(
-      'This Week tasks require a due date'
+      'This Week tasks require an exact due date'
     )
   })
 

@@ -34,7 +34,7 @@
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 19px;
-  letter-spacing: -0.2px;
+  letter-spacing: 0;
   color: var(--ink);
 }
 
@@ -252,31 +252,6 @@
   padding: 0 var(--space-6);
 }
 
-.route-loading {
-  display: flex;
-  min-height: 100%;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  color: var(--ink-muted);
-  font-size: var(--text-sm);
-}
-
-.route-loading-mark {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--primary);
-}
-
-/* Calendar workspace mode: the page owns the whole window below the topbar. */
-.page--bare {
-  padding: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
 .pageshell {
   padding-bottom: var(--space-6);
 }
@@ -291,56 +266,12 @@
   overflow: hidden;
 }
 
-.page--bare .pageshell-fullbleed {
-  margin: 0;
-  flex: 1;
-}
-
 .page-title {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: var(--display-md);
-  letter-spacing: -0.4px;
+  letter-spacing: 0;
   color: var(--ink);
   margin: var(--space-2) 0 var(--space-4);
 }
 
-/* --- Workspace / Calendar toggle ------------------------------------------- */
-
-.ws-toggle {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: var(--surface-card);
-}
-
-.ws-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 24px;
-  border-radius: var(--radius-chip);
-  color: var(--ink-muted);
-  transition:
-    background-color var(--duration-fast) ease,
-    color var(--duration-fast) ease,
-    transform var(--duration-press) var(--ease-out);
-}
-
-.ws-toggle-btn:hover {
-  background: var(--surface-soft);
-  color: var(--ink-body);
-}
-
-.ws-toggle-btn:active {
-  transform: scale(0.94);
-}
-
-.ws-toggle-btn.is-active {
-  background: var(--primary-tint);
-  color: var(--primary);
-}

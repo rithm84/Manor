@@ -104,11 +104,6 @@ export function dueForBucket(bucket: TaskBucket, today: string): string {
   return addDays(today, 2)
 }
 
-export interface TaskCreationDateRange {
-  min: string
-  max: string
-}
-
 export interface TaskCreationDefaults {
   context: null
   due: string | null
@@ -127,43 +122,28 @@ export function canCreateTaskInBucket(bucket: TaskBucket): boolean {
   return bucket !== 'overdue'
 }
 
-export function taskCreationDateRange(
-  bucket: TaskBucket,
-  today: string
-): TaskCreationDateRange | null {
-  if (!canCreateTaskInBucket(bucket)) return null
-  if (bucket === 'today') return { min: today, max: today }
-  if (bucket === 'tomorrow') {
-    const tomorrow = addDays(today, 1)
-    return { min: tomorrow, max: tomorrow }
-  }
-  return { min: addDays(today, 2), max: addDays(today, 7) }
-}
-
+/** The bucket only seeds the dialog's due date; This Week starts unset. */
 export function taskCreationDefaults(bucket: TaskBucket, today: string): TaskCreationDefaults {
-  const range = taskCreationDateRange(bucket, today)
-  return {
-    context: null,
-    due: range !== null && range.min === range.max ? range.min : null
-  }
+  if (bucket === 'today') return { context: null, due: today }
+  if (bucket === 'tomorrow') return { context: null, due: addDays(today, 1) }
+  return { context: null, due: null }
 }
 
+/** An explicit due picked in the dialog always wins over the bucket default. */
 export function dueForTaskCreation(
   bucket: TaskBucket,
   today: string,
   selectedDue: string | null
 ): string {
-  const range = taskCreationDateRange(bucket, today)
-  if (range === null) {
+  if (!canCreateTaskInBucket(bucket)) {
     throw new RangeError('Overdue tasks cannot be created')
   }
-  if (range.min === range.max) return range.min
-  if (selectedDue === null || selectedDue < range.min || selectedDue > range.max) {
-    throw new RangeError(
-      `This Week tasks require a due date from ${range.min} through ${range.max}`
-    )
+  if (selectedDue !== null) return selectedDue
+  const fallback = taskCreationDefaults(bucket, today).due
+  if (fallback === null) {
+    throw new RangeError('This Week tasks require an exact due date')
   }
-  return selectedDue
+  return fallback
 }
 
 export function daysLate(task: Task, today: string): number {

@@ -295,7 +295,10 @@
 .note-block-editor [data-content-type='heading'] { color: var(--ink); }
 .note-block-editor [data-content-type='codeBlock'],
 .note-block-editor code { font-family: var(--font-mono); }
-.note-block-editor .bn-block-content[data-content-type='codeBlock'] { border: 1px solid var(--hairline); border-radius: var(--radius-control); color: var(--ink-body); background: var(--surface-soft); }
+.note-block-editor .bn-block-content[data-content-type='codeBlock'] { border: 1px solid var(--hairline); border-radius: var(--radius-control); color: var(--ink); background: var(--surface-soft); }
+/* Shiki emits dual-theme tokens as CSS variables without a color property;
+   map the light theme (github-light) or every token renders washed out. */
+.note-block-editor .bn-block-content[data-content-type='codeBlock'] span[style] { color: var(--shiki-light, var(--ink)); }
 .note-block-editor .bn-block-content[data-content-type='codeBlock'] > div > select { color: var(--ink-muted); }
 .note-block-editor [data-content-type='quote'] { color: var(--ink-body); border-left-color: var(--primary); }
 .note-block-editor [data-content-type='table'] { font-size: var(--text-sm); }
@@ -466,7 +469,7 @@
 .note-web-embed-head span { overflow: hidden; flex: 1; text-overflow: ellipsis; white-space: nowrap; }
 .note-web-embed iframe { display: block; width: 100%; height: 320px; border: 0; background: white; }
 
-.note-block-editor [data-content-type='mathBlock'] { overflow-x: auto; font-family: var(--font-mono); }
+.note-block-editor [data-content-type='mathBlock'] { overflow-x: auto; font-family: var(--font-ui); }
 .note-block-editor .katex { color: var(--ink); }
 
 .note-block-editor .bn-block-content[data-content-type='twoColumns'] { min-height: 0; padding: 0; }

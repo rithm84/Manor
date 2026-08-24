@@ -1,5 +1,4 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
 
 import { AppFrame } from './app/AppFrame'
@@ -17,11 +16,6 @@ import { SecondaryModuleSurface } from './pages/SecondaryModuleSurface'
 import { SettingsPage } from './pages/SettingsPage'
 import { WelcomePage } from './pages/WelcomePage'
 
-const CalendarPage = lazy(async () => {
-  const module = await import('./pages/CalendarPage')
-  return { default: module.CalendarPage }
-})
-
 export function App(): ReactNode {
   return (
     <HashRouter>
@@ -30,21 +24,6 @@ export function App(): ReactNode {
         <Route path="/alfred-panel" element={<AlfredPanelPage />} />
         <Route element={<AppFrame />}>
           <Route path="/home" element={<HomePage />} />
-          <Route
-            path="/calendar"
-            element={
-              <Suspense
-                fallback={
-                  <div className="route-loading" role="status" aria-label="Loading calendar">
-                    <span className="route-loading-mark" aria-hidden="true" />
-                    <span>Loading calendar</span>
-                  </div>
-                }
-              >
-                <CalendarPage />
-              </Suspense>
-            }
-          />
           <Route
             path="/habits"
             element={

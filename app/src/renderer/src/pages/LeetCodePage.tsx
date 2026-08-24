@@ -22,6 +22,17 @@ import {
 import { LEETCODE_SEED } from './leetcode/leetCodeSeed'
 import './leetcode/leetcode.css'
 
+const WEEK_ROW_DATE = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC'
+})
+
+function weekRowLabel(date: string, today: string): string {
+  return date === today ? 'Today' : WEEK_ROW_DATE.format(new Date(`${date}T00:00:00.000Z`))
+}
+
 function intensityDayLabel(date: string, today: string): string {
   return date === today ? 'Today' : formatAttemptDate(date).replace(/, \d{4}$/, '')
 }
@@ -65,10 +76,12 @@ export function LeetCodePage(): ReactNode {
     () => state === null ? null : buildLeetCodeView(state, leetcodeTopics),
     [state]
   )
-  const intensity = useMemo(
-    () => state === null ? [] : recentAttemptCounts(state.attempts, today, 14),
+  const week = useMemo(
+    () => state === null ? [] : recentAttemptCounts(state.attempts, today, 7),
     [state, today]
   )
+  const weekTotal = week.reduce((total, day) => total + day.count, 0)
+  const weekMax = week.reduce((max, day) => Math.max(max, day.count), 1)
 
   const toggleExpand = (name: string): void => {
     setExpanded((previous) => {
@@ -124,8 +137,6 @@ export function LeetCodePage(): ReactNode {
     )
   }
 
-  const maxAttempts = Math.max(1, ...intensity.map((day) => day.count))
-
   return (
     <div className="lc">
       <header className="lc-header">
@@ -173,29 +184,36 @@ export function LeetCodePage(): ReactNode {
           />
         </section>
 
-        <aside className="lc-panel lc-panel--intensity">
-          <h2 className="lc-panel-title">The last two weeks</h2>
-          <div className="lc-intensity">
-            {intensity.map((day) => (
+        <aside className="lc-panel lc-panel--week">
+          <h2 className="lc-panel-title">This week</h2>
+          <div className="lc-week" role="list" aria-label="Attempts in the last seven days">
+            {week.map((day) => (
               <Tooltip
                 key={day.date}
                 label={`${intensityDayLabel(day.date, today)} · ${day.count} ${day.count === 1 ? 'attempt' : 'attempts'}`}
                 side="top"
               >
-                <span className="lc-intensity-col">
-                  {day.count === 0 ? (
-                    <span className="lc-intensity-zero" />
-                  ) : (
-                    <span
-                      className="lc-intensity-bar"
-                      style={{ height: `${(day.count / maxAttempts) * 100}%` }}
-                    />
-                  )}
+                <span
+                  role="listitem"
+                  className={`lc-week-row${day.date === today ? ' is-today' : ''}${day.count === 0 ? ' is-zero' : ''}`}
+                >
+                  <span className="lc-week-label">{weekRowLabel(day.date, today)}</span>
+                  <span className="lc-week-track" aria-hidden="true">
+                    {day.count > 0 ? (
+                      <span
+                        className="lc-week-fill"
+                        style={{ width: `${Math.max((day.count / weekMax) * 100, 8)}%` }}
+                      />
+                    ) : null}
+                  </span>
+                  <span className="lc-week-count tnum">{day.count}</span>
                 </span>
               </Tooltip>
             ))}
           </div>
-          <span className="lc-intensity-caption">Solve and review attempts per day.</span>
+          <span className="lc-week-total">
+            <span className="tnum">{weekTotal}</span> {weekTotal === 1 ? 'attempt' : 'attempts'} this week
+          </span>
         </aside>
       </div>
 

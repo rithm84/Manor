@@ -45,7 +45,7 @@ export function HabitRow({ habit, isToday, onLog, onOpen, onResume }: HabitRowPr
             shape="round"
             checked={complete}
             onChange={() => onLog(definition.id, complete ? 0 : 100)}
-            ariaLabel={`${complete ? 'Clear' : 'Complete'} ${definition.name}${metrics.gold ? '. Gold streak' : ''}`}
+            ariaLabel={`${complete ? 'Clear' : 'Complete'} ${definition.name}${metrics.gold ? '. Violet streak' : ''}`}
           />
         ) : (
           <QuantizedHabitControl

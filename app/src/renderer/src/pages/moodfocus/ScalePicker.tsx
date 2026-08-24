@@ -5,9 +5,8 @@ import type { ScaleOption } from './scales'
 
 export interface ScalePickerProps<T extends string> {
   id: string
-  step: string
-  label: string
-  hint: string
+  /** Hand-face prompt line, e.g. "How was today?" */
+  prompt: string
   kind: 'mood' | 'focus'
   options: readonly ScaleOption<T>[]
   value: T | null
@@ -22,9 +21,7 @@ type ScaleOptionStyle = CSSProperties & {
 
 export function ScalePicker<T extends string>({
   id,
-  step,
-  label,
-  hint,
+  prompt,
   kind,
   options,
   value,
@@ -49,7 +46,7 @@ export function ScalePicker<T extends string>({
           : (index + (forward ? 1 : -1) + options.length) % options.length
     const next = options[nextIndex]
     if (next === undefined) {
-      throw new Error(`${label} scale is missing option ${nextIndex}`)
+      throw new Error(`${prompt} scale is missing option ${nextIndex}`)
     }
     onChange(next.value)
     optionRefs.current[nextIndex]?.focus()
@@ -57,13 +54,7 @@ export function ScalePicker<T extends string>({
 
   return (
     <fieldset className={`mf-picker is-${kind}`} disabled={disabled}>
-      <legend id={`${id}-label`} className="mf-picker-legend">
-        <span className="mf-picker-step" aria-hidden="true">{step}</span>
-        <span>
-          <span className="mf-picker-kicker">{label}</span>
-          <span className="mf-picker-hint">{hint}</span>
-        </span>
-      </legend>
+      <legend id={`${id}-label`} className="mf-prompt">{prompt}</legend>
       <div className="mf-picker-options" role="radiogroup" aria-labelledby={`${id}-label`}>
         {options.map((option, index) => {
           const Icon = option.icon
@@ -82,14 +73,18 @@ export function ScalePicker<T extends string>({
               role="radio"
               aria-checked={selected}
               tabIndex={selectedIndex === -1 ? (index === 0 ? 0 : -1) : selected ? 0 : -1}
-              className={`mf-option is-${kind} level-${option.level}${selected ? ' is-selected' : ''}`}
+              className={`mf-option is-${kind}${selected ? ' is-selected' : ''}`}
               data-testid={`${id}-${option.value.toLowerCase().replaceAll(' ', '-')}`}
               style={style}
               onClick={() => onChange(option.value)}
               onKeyDown={(event) => chooseFromKeyboard(event, index)}
             >
               <span className="mf-option-mark" aria-hidden="true">
-                <Icon size={19} strokeWidth={1.7} />
+                <Icon size={20} strokeWidth={1.7} />
+                {/* Sketched ink ring, drawn on when chosen. */}
+                <svg className="mf-option-ring" viewBox="0 0 60 60">
+                  <path d="M30 4 C45 3 56 13 56 29 C56 46 44 56 29 56 C14 56 4 45 4 30 C4 15 16 5 31 5 C44 5 53 14 53 27" />
+                </svg>
               </span>
               <span className="mf-option-label">{option.value}</span>
             </button>

@@ -1,9 +1,10 @@
 import { useDroppable } from '@dnd-kit/core'
-import type { ReactNode } from 'react'
+import { useRef, useState } from 'react'
+import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 
 import { calendars, events } from '../../data/mock'
 import type { CalendarEvent, ScratchBlock, Task } from '../../data/mock'
-import { formatClock, timeToMinutes } from './taskModel'
+import { formatClock, minutesToTime, timeToMinutes } from './taskModel'
 
 export type ScheduleDay = 'today' | 'tomorrow'
 
@@ -22,11 +23,14 @@ export interface TodayPanelProps {
   onDayChange: (day: ScheduleDay) => void
   onOpenTask: (taskId: string) => void
   onOpenScratchBlock: (blockId: string) => void
+  onMoveScratchBlock: (blockId: string, start: string, end: string) => void
+  onCreateScratch: (start: string, end: string) => void
 }
 
 export const AXIS_START_MIN = 6 * 60
 export const AXIS_END_MIN = 24 * 60
 export const HOUR_PX = 44
+const SNAP_MIN = 15
 
 interface TimelineBlock {
   id: string
@@ -37,6 +41,10 @@ interface TimelineBlock {
   taskId: string | null
   color: string
 }
+
+type TimelineDrag =
+  | { kind: 'move'; blockId: string; grabOffsetMin: number; durationMin: number; startMin: number; moved: boolean }
+  | { kind: 'create'; anchorMin: number; currentMin: number }
 
 function calendarColor(calendarId: string): string {
   const source = calendars.find((calendar) => calendar.id === calendarId)
@@ -49,6 +57,10 @@ function blockFromEvent(event: CalendarEvent): TimelineBlock {
 }
 
 function blockFromScratch(block: ScratchBlock, tasks: readonly Task[]): TimelineBlock {
+  if (block.taskId === null) {
+    const title = block.portion.trim() === '' ? 'Sticky note' : block.portion
+    return { id: block.id, title, start: block.start, end: block.end, scratch: true, taskId: null, color: '#48708e' }
+  }
   const task = tasks.find((candidate) => candidate.id === block.taskId)
   if (task === undefined) throw new Error(`Scratch block ${block.id} references missing task ${block.taskId}`)
   return { id: block.id, title: task.title, start: block.start, end: block.end, scratch: true, taskId: task.id, color: '#48708e' }
@@ -58,6 +70,14 @@ export function timelineTop(minutes: number): number {
   return ((minutes - AXIS_START_MIN) / 60) * HOUR_PX
 }
 
+function snapMinutes(minutes: number): number {
+  return Math.round(minutes / SNAP_MIN) * SNAP_MIN
+}
+
+function clampMinutes(minutes: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, minutes))
+}
+
 function formatHour(hour: number): string {
   if (hour === 24) return '12 AM'
   const meridiem = hour >= 12 ? 'PM' : 'AM'
@@ -65,8 +85,12 @@ function formatHour(hour: number): string {
   return `${display} ${meridiem}`
 }
 
-export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime, dropPreview, onDayChange, onOpenTask, onOpenScratchBlock }: TodayPanelProps): ReactNode {
+export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime, dropPreview, onDayChange, onOpenTask, onOpenScratchBlock, onMoveScratchBlock, onCreateScratch }: TodayPanelProps): ReactNode {
   const { setNodeRef, isOver } = useDroppable({ id: `timeline:${date}`, data: { type: 'timeline', date } })
+  const timelineRef = useRef<HTMLDivElement | null>(null)
+  const suppressClickRef = useRef(false)
+  const [drag, setDrag] = useState<TimelineDrag | null>(null)
+
   const dayScratchBlocks = scratchBlocks.filter((block) => block.date === date)
   const blocks: readonly TimelineBlock[] = [
     ...events.filter((event) => event.date === date && !event.scratch).map(blockFromEvent),
@@ -75,6 +99,85 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
   const hours = Array.from({ length: AXIS_END_MIN / 60 - AXIS_START_MIN / 60 + 1 }, (_, index) => AXIS_START_MIN / 60 + index)
   const nowMinutes = timeToMinutes(nowTime)
   const axisHeight = timelineTop(AXIS_END_MIN)
+
+  const minuteFromPointer = (event: ReactPointerEvent): number => {
+    const timeline = timelineRef.current
+    if (timeline === null) throw new Error('Timeline pointer event fired before the timeline mounted')
+    const rect = timeline.getBoundingClientRect()
+    const raw = AXIS_START_MIN + ((event.clientY - rect.top) / HOUR_PX) * 60
+    return clampMinutes(snapMinutes(raw), AXIS_START_MIN, AXIS_END_MIN)
+  }
+
+  const beginTimelinePointer = (event: ReactPointerEvent): void => {
+    if (event.button !== 0) return
+    const target = event.target instanceof HTMLElement ? event.target : null
+    const blockElement = target?.closest('.today-block') ?? null
+    if (blockElement !== null) {
+      const blockId = blockElement.getAttribute('data-block-id')
+      const scratch = dayScratchBlocks.find((candidate) => candidate.id === blockId)
+      if (scratch === undefined) return
+      const startMin = timeToMinutes(scratch.start)
+      const durationMin = timeToMinutes(scratch.end) - startMin
+      setDrag({ kind: 'move', blockId: scratch.id, grabOffsetMin: minuteFromPointer(event) - startMin, durationMin, startMin, moved: false })
+    } else {
+      const anchorMin = minuteFromPointer(event)
+      if (anchorMin >= AXIS_END_MIN) return
+      setDrag({ kind: 'create', anchorMin, currentMin: anchorMin })
+    }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const moveTimelinePointer = (event: ReactPointerEvent): void => {
+    if (drag === null) return
+    if (drag.kind === 'move') {
+      const nextStart = clampMinutes(
+        snapMinutes(minuteFromPointer(event) - drag.grabOffsetMin),
+        AXIS_START_MIN,
+        AXIS_END_MIN - drag.durationMin
+      )
+      if (nextStart !== drag.startMin || drag.moved) {
+        setDrag({ ...drag, startMin: nextStart, moved: true })
+      }
+    } else {
+      setDrag({ ...drag, currentMin: minuteFromPointer(event) })
+    }
+  }
+
+  const endTimelinePointer = (): void => {
+    if (drag === null) return
+    if (drag.kind === 'move') {
+      suppressClickRef.current = true
+      if (drag.moved) {
+        onMoveScratchBlock(drag.blockId, minutesToTime(drag.startMin), minutesToTime(drag.startMin + drag.durationMin))
+      } else {
+        onOpenScratchBlock(drag.blockId)
+      }
+    } else {
+      const start = Math.min(drag.anchorMin, drag.currentMin)
+      const end = Math.max(drag.anchorMin, drag.currentMin)
+      if (end - start >= SNAP_MIN) {
+        suppressClickRef.current = true
+        onCreateScratch(minutesToTime(start), minutesToTime(end))
+      }
+    }
+    setDrag(null)
+    /* Native click (if any) fires right after pointerup; clear the guard
+       on the next tick so it can never swallow an unrelated click. */
+    window.setTimeout(() => { suppressClickRef.current = false }, 0)
+  }
+
+  const openBlock = (block: TimelineBlock): void => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false
+      return
+    }
+    if (block.scratch) onOpenScratchBlock(block.id)
+    else if (block.taskId !== null) onOpenTask(block.taskId)
+  }
+
+  const createGhost = drag?.kind === 'create' && Math.abs(drag.currentMin - drag.anchorMin) >= SNAP_MIN
+    ? { start: Math.min(drag.anchorMin, drag.currentMin), end: Math.max(drag.anchorMin, drag.currentMin) }
+    : null
 
   return (
     <aside className="today-panel" aria-label={`${day === 'today' ? 'Today' : 'Tomorrow'} schedule`}>
@@ -87,7 +190,15 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
       </header>
 
       <div className="today-timeline-scroll">
-        <div ref={setNodeRef} className={`today-timeline${isOver ? ' is-drag-over' : ''}`} style={{ height: axisHeight }}>
+        <div
+          ref={(node) => { setNodeRef(node); timelineRef.current = node }}
+          className={`today-timeline${isOver ? ' is-drag-over' : ''}${drag !== null ? ' is-pointer-drag' : ''}`}
+          style={{ height: axisHeight }}
+          onPointerDown={beginTimelinePointer}
+          onPointerMove={moveTimelinePointer}
+          onPointerUp={endTimelinePointer}
+          onPointerCancel={() => setDrag(null)}
+        >
           {hours.map((hour) => (
             <div key={hour} className="today-hour" style={{ top: timelineTop(hour * 60) }}>
               <span className="today-hour-label">{formatHour(hour)}</span><span className="today-hour-line" />
@@ -95,17 +206,30 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
           ))}
 
           {blocks.map((block) => {
-            const height = timelineTop(timeToMinutes(block.end)) - timelineTop(timeToMinutes(block.start))
+            const dragging = drag?.kind === 'move' && drag.blockId === block.id
+            const startMin = dragging ? drag.startMin : timeToMinutes(block.start)
+            const endMin = dragging ? drag.startMin + drag.durationMin : timeToMinutes(block.end)
+            const height = timelineTop(endMin) - timelineTop(startMin)
+            const startLabel = dragging ? minutesToTime(startMin) : block.start
+            const endLabel = dragging ? minutesToTime(endMin) : block.end
             return (
-              <button key={block.id} type="button" className={`today-block${block.scratch ? ' is-scratch is-linked' : ''}${height < 34 ? ' is-slim' : ''}`}
-                style={{ top: timelineTop(timeToMinutes(block.start)), height, ['--entry-color' as string]: block.color }}
-                title={`${block.title}, ${formatClock(block.start)} to ${formatClock(block.end)}`}
-                onClick={() => { if (block.scratch) onOpenScratchBlock(block.id); else if (block.taskId !== null) onOpenTask(block.taskId) }}>
+              <button key={block.id} type="button" data-block-id={block.id}
+                className={`today-block${block.scratch ? ' is-scratch is-linked' : ''}${height < 34 ? ' is-slim' : ''}${dragging && drag.moved ? ' is-dragging' : ''}`}
+                style={{ top: timelineTop(startMin), height, ['--entry-color' as string]: block.color }}
+                title={`${block.title}, ${formatClock(startLabel)} to ${formatClock(endLabel)}`}
+                onClick={() => openBlock(block)}>
                 <span className="today-block-title">{block.title}</span>
-                <span className="today-block-time tnum">{formatClock(block.start)} to {formatClock(block.end)}</span>
+                <span className="today-block-time tnum">{formatClock(startLabel)} to {formatClock(endLabel)}</span>
               </button>
             )
           })}
+
+          {createGhost !== null ? (
+            <div className="today-block is-scratch today-create-ghost" style={{ top: timelineTop(createGhost.start), height: timelineTop(createGhost.end) - timelineTop(createGhost.start) }}>
+              <span className="today-block-title">Sticky note</span>
+              <span className="today-block-time tnum">{formatClock(minutesToTime(createGhost.start))} to {formatClock(minutesToTime(createGhost.end))}</span>
+            </div>
+          ) : null}
 
           {isOver && dropPreview?.error === null ? (
             <div className="today-drop-preview" style={{ top: timelineTop(timeToMinutes(dropPreview.start)), height: timelineTop(timeToMinutes(dropPreview.end)) - timelineTop(timeToMinutes(dropPreview.start)) }}>

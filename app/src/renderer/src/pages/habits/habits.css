@@ -223,7 +223,7 @@
 }
 
 .habit-detail-goldflame {
-  color: var(--gold);
+  color: var(--primary);
   fill: currentColor;
 }
 
@@ -249,12 +249,12 @@
 }
 
 .habit-row-completion.is-gold .ui-checkbox--round .ui-checkbox-box {
-  border-color: var(--gold);
+  border-color: var(--primary);
 }
 
 .habit-row-completion.is-gold .ui-checkbox--round.is-checked .ui-checkbox-box {
-  border-color: var(--gold);
-  background: var(--gold);
+  border-color: var(--primary);
+  background: var(--primary);
 }
 
 .habit-row-iconbtn {
@@ -287,7 +287,7 @@
 
 .habit-quantized-control {
   --habit-quarter-angle: 0deg;
-  --habit-quarter-color: var(--frozen-info);
+  --habit-quarter-color: var(--primary);
   --habit-quarter-track: var(--surface-soft);
   position: relative;
   display: inline-flex;
@@ -301,7 +301,7 @@
     var(--habit-quarter-color) var(--habit-quarter-angle),
     var(--habit-quarter-track) var(--habit-quarter-angle)
   );
-  color: var(--frozen-info);
+  color: var(--primary);
   transition: transform var(--duration-press) var(--ease-out);
 }
 
@@ -337,10 +337,10 @@
 }
 
 .habit-quantized-control.is-gold {
-  --habit-quarter-color: var(--gold);
-  --habit-quarter-track: var(--gold-soft);
-  border-color: var(--gold);
-  color: var(--gold);
+  --habit-quarter-color: var(--primary);
+  --habit-quarter-track: var(--primary-tint);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .habit-quantized-control-value {
@@ -401,8 +401,8 @@
 }
 
 .habit-week-segment.is-partial {
-  border-color: var(--frozen-info);
-  background: linear-gradient(90deg, var(--frozen-info) 50%, var(--frozen-info-tint) 50%);
+  border-color: var(--primary);
+  background: linear-gradient(90deg, var(--primary) 50%, var(--primary-tint) 50%);
 }
 
 .habit-week-segment.is-missed {
@@ -434,15 +434,15 @@
 }
 
 .habit-week-progress.is-atrisk .habit-week-day.is-selected .habit-week-label {
-  color: var(--today-warning);
+  color: var(--primary);
 }
 
 .habit-week-progress.is-atrisk .habit-week-day.is-selected .habit-week-segment {
-  border-color: var(--today-warning);
-  background: var(--today-warning);
+  border-color: var(--primary);
+  background: var(--primary);
   box-shadow:
     0 0 0 1px var(--surface-card),
-    0 0 0 2px var(--today-warning);
+    0 0 0 2px var(--primary);
 }
 
 .habit-week-streak,
@@ -461,7 +461,7 @@
 }
 
 .habit-week-progress.is-atrisk .habit-week-streak {
-  color: var(--today-warning);
+  color: var(--primary);
 }
 
 .habit-week-chevron {
@@ -533,7 +533,7 @@
 }
 
 .habits-progress-perfect {
-  color: var(--gold);
+  color: var(--primary);
   font-size: var(--text-lg);
 }
 
@@ -552,7 +552,7 @@
 }
 
 .habits-progress-bar.is-perfect .habits-progress-fill {
-  background: var(--gold);
+  background: var(--primary);
 }
 
 .habits-freeze-head {
@@ -669,7 +669,7 @@
 }
 
 .habit-detail-stat-value.is-gold {
-  color: var(--gold);
+  color: var(--primary);
 }
 
 .habit-detail-stat-label {
@@ -732,9 +732,9 @@
 }
 
 .habit-month-cell.is-partial {
-  border: 1px solid var(--frozen-info);
-  background: var(--frozen-info-tint);
-  color: var(--frozen-info);
+  border: 1px solid var(--primary);
+  background: var(--primary-tint);
+  color: var(--primary);
 }
 
 .habit-month-cell.is-missed {

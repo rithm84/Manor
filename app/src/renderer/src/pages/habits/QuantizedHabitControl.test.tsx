@@ -57,7 +57,7 @@ describe('quantized habit progress', () => {
       />
     )
 
-    expect(markup).toContain('Gold streak.')
+    expect(markup).toContain('Violet streak.')
     expect(markup).toContain('habit-quantized-control is-quarter-4 is-gold')
     expect(markup.match(/<button/g)).toHaveLength(1)
   })

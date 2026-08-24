@@ -25,16 +25,22 @@ describe('task creation dialog', () => {
     expect(markup).toContain('autofocus=""')
     expect(markup).toContain('aria-label="Context, required"')
     expect(markup).toContain('Choose or add Context')
-    expect(markup).toContain('Due Saturday, August 22')
-    expect(markup).toContain('Fixed for Today')
   })
 
-  it('requires an exact constrained date for This Week', () => {
+  it('seeds the due picker from the bucket but keeps it editable', () => {
+    const markup = renderToStaticMarkup(<TaskCreateDialog {...props} bucket="today" />)
+
+    expect(markup).toContain('aria-label="Due date: Sat, Aug 22"')
+    expect(markup).toContain('aria-expanded="false"')
+    expect(markup).not.toContain('task-create-locked-date')
+  })
+
+  it('starts This Week with an unset due date the user must pick', () => {
     const markup = renderToStaticMarkup(<TaskCreateDialog {...props} bucket="week" />)
 
     expect(markup).toContain('aria-label="New task for This Week"')
-    expect(markup).toContain('Choose an exact date from Monday, August 24 to Saturday, August 29')
-    expect(markup).toContain('aria-label="Exact due date for This Week task"')
+    expect(markup).toContain('aria-label="Due date"')
+    expect(markup).toContain('datepicker-empty')
     expect(markup).toContain('disabled=""')
   })
 })

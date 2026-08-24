@@ -231,7 +231,7 @@
 }
 
 .habit-history-legenddot.is-partial {
-  background: var(--today-warning);
+  background: var(--primary);
 }
 
 .habit-history-legenddot.is-frozen {

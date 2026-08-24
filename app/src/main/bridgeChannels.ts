@@ -1,18 +1,9 @@
 import { HomeStore } from './homeStore'
-import { CalendarStore } from './calendarStore'
 import { HabitStore } from './habitStore'
 import { JobStore } from './jobStore'
 import { LeetCodeStore } from './leetCodeStore'
 import { MoodFocusStore } from './moodFocusStore'
 import { NotesStore } from './notesStore'
-import {
-  parseCalendarDefinition,
-  parseCalendarEvent,
-  parseCalendarId,
-  parseCalendarOccurrenceMutation,
-  parseCalendarSeed,
-  parseCalendarSettings
-} from '../shared/calendar'
 import {
   parseContext,
   parseContextDefinition,
@@ -64,7 +55,6 @@ export type BridgeChannelHandler = (args: readonly unknown[]) => unknown
 
 export interface ManorStores {
   home: HomeStore
-  calendar: CalendarStore
   habits: HabitStore
   jobs: JobStore
   leetCode: LeetCodeStore
@@ -75,7 +65,6 @@ export interface ManorStores {
 export function createManorStores(databasePath: string, attachmentRoot: string): ManorStores {
   return {
     home: new HomeStore(databasePath),
-    calendar: new CalendarStore(databasePath),
     habits: new HabitStore(databasePath),
     jobs: new JobStore(databasePath),
     leetCode: new LeetCodeStore(databasePath),
@@ -91,7 +80,6 @@ export function closeManorStores(stores: ManorStores): void {
   stores.moodFocus.close()
   stores.habits.close()
   stores.home.close()
-  stores.calendar.close()
 }
 
 function parseHabitId(value: unknown): string {
@@ -115,18 +103,6 @@ export function createBridgeChannels(stores: ManorStores): Record<string, Bridge
     'home:delete-saved-task-view': ([viewId]) =>
       stores.home.deleteSavedTaskView(parseContext(viewId)),
 
-    'calendar:load': ([seed]) => stores.calendar.load(parseCalendarSeed(seed)),
-    'calendar:upsert-calendar': ([calendar]) =>
-      stores.calendar.upsertCalendar(parseCalendarDefinition(calendar)),
-    'calendar:delete-calendar': ([calendarId]) =>
-      stores.calendar.deleteCalendar(parseCalendarId(calendarId, 'calendar id')),
-    'calendar:upsert-event': ([event]) => stores.calendar.upsertEvent(parseCalendarEvent(event)),
-    'calendar:replace-occurrence': ([mutation]) =>
-      stores.calendar.replaceOccurrence(parseCalendarOccurrenceMutation(mutation)),
-    'calendar:delete-event': ([eventId]) =>
-      stores.calendar.deleteEvent(parseCalendarId(eventId, 'calendar event id')),
-    'calendar:update-settings': ([settings]) =>
-      stores.calendar.updateSettings(parseCalendarSettings(settings)),
 
     'habits:load': ([seed]) => stores.habits.load(parseHabitSeed(seed)),
     'habits:create': ([draft]) =>

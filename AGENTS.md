@@ -7,7 +7,7 @@ Operational guide for coding agents working on Manor.
 ## Project Overview
 
 Manor is a personal productivity OS: habit/mood/focus tracking with Duolingo-derived streak mechanics,
-a merged task system with a calendar workspace, fitness via nightly
+a merged task system, fitness via nightly
 Bevel-clip ingestion, jobs/internship and LeetCode tracking, markdown notes,
 an X bookmarks knowledge base, an encrypted journal, and Alfred — a
 voice-only agent (thinking-orb presence, no characters) that acts on the
@@ -19,8 +19,9 @@ proper-product bar (sign-in, onboarding, settings, empty states).
 continue.** The Electron app in `app/` is a clickable UI-only shell (mock
 data, no backend). The 2026-08-23 pass replaced the cream Atelier surfaces
 with the Paper system (white content, paper chrome, violet accent, 12px type
-floor) and rebuilt the calendar to calendar layout. Remaining design
-areas: charts language, freeze-management UI.
+floor). The calendar workspace was removed the same day (calendar management
+happens outside Manor; only the Home Today timeline shows day events).
+Remaining design areas: charts language, freeze-management UI.
 Do not start an ARCHITECTURE doc unprompted.
 
 ## Repository Layout
@@ -76,7 +77,9 @@ charter).
   accent (beige-heavy Atelier chrome retired 2026-08-23; dark mode rejected
   for productivity); journal gets zero AI access,
   architecturally; 1-day backfill everywhere; Home = kanban + Today
-  timeline only; calendar is a workspace toggle, not a sidebar tab.
+  timeline only; no calendar workspace (removed 2026-08-23; calendar management
+  the app covers calendaring, and day events surface only in the Home Today
+  timeline).
 - When user changes a decision mid-session, update PRD.md (including its
   decision log) in the same change.
 
@@ -118,10 +121,15 @@ Cron Calendar, Obvious).
   voice: concise labels and human sentences. Mechanics belong in Settings
   or a help surface, not scattered captions.
 - **No em-dashes in UI copy.** Rewrite the sentence instead.
-- **Fonts stay in their roles.** Display/serif faces never appear inside
-  data components (stats, chips, tables); don't mix faces within a
+- **Fonts stay in their roles.** The hand face (Shantell Sans, all display
+  roles) never appears inside data components (stats, chips, tables,
+  forms) and never carries body paragraphs; don't mix faces within a
   component. **Mono is for code only** — never times, dates, hour axes,
   IDs, or kbd hints (scattered mono reads as AI slop).
+- **Texture is felt, never seen first.** One shared grain overlay; no
+  per-surface noise, no rotation or paper props outside scratch-block
+  sticky notes; ink marks (rough strokes) only on rare celebration
+  moments.
 - **No UI text below 12px.** The one exception is dense time-grid gutters
   at 11px (`--text-gutter`).
 - **No left-edge accent bar/curve on selected sidebar items.** Selected

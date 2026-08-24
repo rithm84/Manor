@@ -1,5 +1,5 @@
-import { Bookmark, Filter, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Bookmark, Filter, Layers, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { Pill, Select, useClickIntent } from '../../components/ui'
@@ -21,6 +21,7 @@ import {
   ESTIMATE_COLORWAY,
   PRIORITY_COLORWAY,
   STATUS_COLORWAY,
+  contextDefinitionFor,
   dueColorway,
   estimateLabel,
   formatDayLabel
@@ -143,11 +144,13 @@ interface MasterTaskRowProps {
   task: Task
   contexts: readonly ContextDefinition[]
   today: string
+  /** False when the table groups by context and the column is redundant. */
+  showContext: boolean
   onOpenTask: (taskId: string) => void
   onQuickActions: (taskId: string, point: QuickActionPoint) => void
 }
 
-function MasterTaskRow({ task, contexts, today, onOpenTask, onQuickActions }: MasterTaskRowProps): ReactNode {
+function MasterTaskRow({ task, contexts, today, showContext, onOpenTask, onQuickActions }: MasterTaskRowProps): ReactNode {
   const clickIntent = useClickIntent<HTMLButtonElement>(
     () => onOpenTask(task.id),
     (point) => onQuickActions(task.id, point),
@@ -163,7 +166,7 @@ function MasterTaskRow({ task, contexts, today, onOpenTask, onQuickActions }: Ma
       onKeyDown={clickIntent.onKeyDown}
     >
       <span className="master-title" role="cell">{task.title}</span>
-      <span role="cell"><ContextPill name={task.context} contexts={contexts} /></span>
+      {showContext ? <span role="cell"><ContextPill name={task.context} contexts={contexts} /></span> : null}
       <span className="tnum" role="cell"><Pill variant="tag" colorway={dueColorway(task.due, today)} label={formatDayLabel(task.due)} /></span>
       <span role="cell">
         {task.estimateMinutes === null ? (
@@ -187,6 +190,7 @@ function MasterTaskRow({ task, contexts, today, onOpenTask, onQuickActions }: Ma
 export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask, onQuickActions, onSaveView, onDeleteView }: MasterTaskTableProps): ReactNode {
   const [query, setQuery] = useState('')
   const [rules, setRules] = useState<readonly MasterFilterRule[]>([])
+  const [groupByContext, setGroupByContext] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
   const [viewsOpen, setViewsOpen] = useState(false)
   const [viewName, setViewName] = useState('')
@@ -222,6 +226,17 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
       left.due.localeCompare(right.due) || left.title.localeCompare(right.title)
     )
   }, [query, rules, tasks])
+
+  const contextGroups = useMemo(() => {
+    if (!groupByContext) return null
+    const groups = new Map<string, Task[]>()
+    for (const task of visible) {
+      const group = groups.get(task.context)
+      if (group === undefined) groups.set(task.context, [task])
+      else group.push(task)
+    }
+    return [...groups.entries()].sort(([left], [right]) => left.localeCompare(right))
+  }, [groupByContext, visible])
 
   const addRule = (property: MasterFilterProperty): void => {
     const firstContext = contexts[0]?.name
@@ -280,6 +295,15 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
           ) : null}
         </div>
 
+        <button
+          type="button"
+          className={`master-tool-button${groupByContext ? ' is-active' : ''}`}
+          aria-pressed={groupByContext}
+          onClick={() => setGroupByContext((grouped) => !grouped)}
+        >
+          <Layers size={14} /> By context
+        </button>
+
         <div className="master-popover-anchor" ref={viewsRoot}>
           <button type="button" className={`master-tool-button${activeViewId !== null ? ' is-active' : ''}`} aria-expanded={viewsOpen} aria-haspopup="dialog" onClick={() => { setViewsOpen((open) => !open); setFilterOpen(false) }}><Bookmark size={14} /> Saved views</button>
           {viewsOpen ? (
@@ -305,18 +329,49 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
         <span className="master-count tnum">{visible.length}</span>
       </div>
 
-      <div className="master-table" role="table" aria-label="All tasks">
-        <div className="master-row master-row--head" role="row"><span role="columnheader">Task</span><span role="columnheader">Context</span><span role="columnheader">Due</span><span role="columnheader">Time</span><span role="columnheader">Priority</span><span role="columnheader">Status</span></div>
-        {visible.map((task) => (
-          <MasterTaskRow
-            key={task.id}
-            task={task}
-            contexts={contexts}
-            today={today}
-            onOpenTask={onOpenTask}
-            onQuickActions={onQuickActions}
-          />
-        ))}
+      <div className={`master-table${groupByContext ? ' is-grouped' : ''}`} role="table" aria-label="All tasks">
+        <div className="master-row master-row--head" role="row">
+          <span role="columnheader">Task</span>
+          {groupByContext ? null : <span role="columnheader">Context</span>}
+          <span role="columnheader">Due</span>
+          <span role="columnheader">Time</span>
+          <span role="columnheader">Priority</span>
+          <span role="columnheader">Status</span>
+        </div>
+        {contextGroups === null
+          ? visible.map((task) => (
+              <MasterTaskRow
+                key={task.id}
+                task={task}
+                contexts={contexts}
+                today={today}
+                showContext
+                onOpenTask={onOpenTask}
+                onQuickActions={onQuickActions}
+              />
+            ))
+          : contextGroups.map(([contextName, groupTasks]) => (
+              <Fragment key={contextName}>
+                <div className="master-group-head" role="row">
+                  <span className="master-group-cell" role="cell">
+                    <ContextGlyph icon={contextDefinitionFor(contextName, contexts).icon} size={13} />
+                    <span className="master-group-name">{contextName}</span>
+                    <span className="master-group-count tnum">{groupTasks.length}</span>
+                  </span>
+                </div>
+                {groupTasks.map((task) => (
+                  <MasterTaskRow
+                    key={task.id}
+                    task={task}
+                    contexts={contexts}
+                    today={today}
+                    showContext={false}
+                    onOpenTask={onOpenTask}
+                    onQuickActions={onQuickActions}
+                  />
+                ))}
+              </Fragment>
+            ))}
         {visible.length === 0 ? <div className="master-empty">No tasks match these filters.</div> : null}
       </div>
     </section>

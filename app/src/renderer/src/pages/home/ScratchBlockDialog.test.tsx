@@ -28,7 +28,7 @@ const BLOCK: ScratchBlock = {
 }
 
 describe('scratch block detail dialog', () => {
-  it('keeps every scheduling control in a centered accessible modal', () => {
+  it('keeps scheduling controls in a centered accessible modal without day or part fields', () => {
     const markup = renderToStaticMarkup(
       <ScratchBlockDialog
         block={BLOCK}
@@ -43,10 +43,29 @@ describe('scratch block detail dialog', () => {
     expect(markup).toContain('role="dialog"')
     expect(markup).toContain('aria-modal="true"')
     expect(markup).toContain('aria-label="Time block details for Draft report"')
-    expect(markup).toContain('aria-label="Block date: Sat, Aug 22"')
     expect(markup).toContain('aria-label="Block start time"')
-    expect(markup).toContain('aria-label="Part of task"')
+    expect(markup).toContain('aria-label="Block duration')
+    expect(markup).not.toContain('aria-label="Block date')
+    expect(markup).not.toContain('aria-label="Part of task"')
+    expect(markup).not.toContain('aria-label="Sticky note text"')
     expect(markup).toContain('Delete block')
     expect(markup).not.toContain('ui-sidepeek')
+  })
+
+  it('keeps the note field for freestanding stickies', () => {
+    const markup = renderToStaticMarkup(
+      <ScratchBlockDialog
+        block={{ ...BLOCK, taskId: null, portion: 'Walk the dog' }}
+        task={null}
+        open
+        onClose={() => undefined}
+        onUpdate={async () => undefined}
+        onDelete={async () => undefined}
+      />
+    )
+
+    expect(markup).toContain('aria-label="Sticky note text"')
+    expect(markup).toContain('What is this time for?')
+    expect(markup).not.toContain('aria-label="Block date')
   })
 })

@@ -2,7 +2,6 @@
 
 import type { HomeApi } from './shared/home'
 import type { AlfredApi } from './shared/alfred'
-import type { CalendarApi } from './shared/calendar'
 import type { HabitsApi } from './shared/habits'
 import type { JobsApi } from './shared/jobs'
 import type { LeetCodeApi } from './shared/leetcode'
@@ -13,7 +12,6 @@ declare global {
   interface Window {
     manor: {
       alfred: AlfredApi
-      calendar: CalendarApi
       home: HomeApi
       habits: HabitsApi
       jobs: JobsApi

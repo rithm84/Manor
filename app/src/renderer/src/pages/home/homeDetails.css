@@ -187,30 +187,6 @@
   text-align: right;
 }
 
-.task-create-locked-date {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 34px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: var(--surface-card);
-  color: var(--ink-body);
-  font-size: var(--text-body);
-}
-
-.task-create-locked-date svg {
-  flex-shrink: 0;
-  color: var(--ink-muted);
-}
-
-.task-create-locked-label {
-  margin-left: auto;
-  color: var(--ink-muted);
-  font-size: var(--text-xs);
-}
-
 .task-create-dialog .task-create-due .datepicker-menu {
   position: static;
   width: 100%;
@@ -356,6 +332,13 @@
   padding-top: var(--space-4);
 }
 
+.peek-actions-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.peek-duplicate,
 .peek-delete {
   display: inline-flex;
   align-items: center;
@@ -365,16 +348,29 @@
   border-radius: var(--radius-control);
   font-size: var(--text-body);
   font-weight: 500;
-  color: var(--error);
   transition:
     background-color var(--duration-fast) ease,
     transform var(--duration-press) var(--ease-out);
+}
+
+.peek-duplicate {
+  color: var(--ink-body);
+}
+
+.peek-duplicate:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.peek-delete {
+  color: var(--error);
 }
 
 .peek-delete:hover {
   background: var(--error-soft);
 }
 
+.peek-duplicate:active,
 .peek-delete:active {
   transform: scale(0.97);
 }
@@ -752,15 +748,6 @@
   gap: var(--space-5);
 }
 
-.block-peek-icon {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: var(--radius-control);
-  background: var(--scratch-tint);
-  color: var(--scratch);
-}
 
 .block-time-input,
 .block-portion input {
@@ -799,14 +786,6 @@
   flex: 1;
 }
 
-.block-note {
-  padding: var(--space-3);
-  border-radius: var(--radius-control);
-  background: var(--scratch-tint);
-  color: var(--ink-body);
-  font-size: var(--text-sm);
-  line-height: 1.5;
-}
 
 /* --- Date picker ------------------------------------------------------------ */
 

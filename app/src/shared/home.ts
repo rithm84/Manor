@@ -79,7 +79,8 @@ export interface Task {
 
 export interface ScratchBlock {
   id: string
-  taskId: string
+  /** null = a freestanding sticky note (not time-blocking any task) */
+  taskId: string | null
   date: string
   start: string
   end: string
@@ -129,6 +130,14 @@ function recordValue(value: unknown, label: string): Record<string, unknown> {
 function stringValue(value: unknown, label: string): string {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new TypeError(`${label} must be a non-empty string`)
+  }
+  return value.trim()
+}
+
+/** Empty is allowed: a freshly dragged sticky note has no text yet. */
+function portionValue(value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new TypeError('scratchBlock.portion must be a string')
   }
   return value.trim()
 }
@@ -229,11 +238,11 @@ export function parseScratchBlock(value: unknown): ScratchBlock {
   }
   return {
     id: stringValue(block.id, 'scratchBlock.id'),
-    taskId: stringValue(block.taskId, 'scratchBlock.taskId'),
+    taskId: block.taskId === null ? null : stringValue(block.taskId, 'scratchBlock.taskId'),
     date: isoDateValue(block.date, 'scratchBlock.date'),
     start,
     end,
-    portion: stringValue(block.portion, 'scratchBlock.portion'),
+    portion: portionValue(block.portion),
     createdAt: timestampValue(block.createdAt, 'scratchBlock.createdAt'),
     expiresAt: timestampValue(block.expiresAt, 'scratchBlock.expiresAt')
   }
