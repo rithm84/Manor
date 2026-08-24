@@ -121,12 +121,23 @@ h4 {
   color: var(--ink-muted);
 }
 
-/* Display face: page greetings and rare celebration lines only */
+/* The hand face: greetings, page titles, empty states, celebrations.
+   Never inside data components; never below 16px. */
 .display {
   font-family: var(--font-display);
   font-weight: 500;
   color: var(--ink);
-  letter-spacing: -0.4px;
+  letter-spacing: 0;
+}
+
+/* Paper stock: the PaperBackdrop shader canvas over the whole window
+   (see app/PaperBackdrop.tsx); a static composited layer. */
+.paper-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  opacity: var(--paper-texture-opacity);
+  pointer-events: none;
 }
 
 /* Electron chrome: draggable strip under hiddenInset title bar */

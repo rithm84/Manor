@@ -5,7 +5,7 @@ export interface PageShellProps {
   title: string
   /**
    * true: children render edge-to-edge with no padding and no title band
-   * (for pages that bring their own chrome: Notes, Journal, Calendar).
+   * (for pages that bring their own chrome: Notes, Journal).
    * false: standard padded page with the display title.
    */
   fullBleed: boolean

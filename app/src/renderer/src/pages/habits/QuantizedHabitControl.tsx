@@ -47,7 +47,7 @@ export function QuantizedHabitControl({
       type="button"
       role="checkbox"
       aria-checked={checkedState(value)}
-      aria-label={`${habitName}: ${value}% complete, ${currentAmount}.${gold ? ' Gold streak.' : ''} Activate to set ${nextValue}%.`}
+      aria-label={`${habitName}: ${value}% complete, ${currentAmount}.${gold ? ' Violet streak.' : ''} Activate to set ${nextValue}%.`}
       className={`habit-quantized-control is-quarter-${value / 25}${gold ? ' is-gold' : ''}`}
       data-testid={`habit-progress-${habitId}`}
       onClick={() => onChange(nextValue)}

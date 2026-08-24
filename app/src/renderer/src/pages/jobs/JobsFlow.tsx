@@ -163,6 +163,20 @@ export function JobsFlow({ transitions }: JobsFlowProps): ReactNode {
     ? 80
     : Math.min(104, Math.max(72, Math.round(size.width * 0.1)))
 
+  /* Size the chart from the data instead of stretching to the container:
+     a stage's roles get ~30px each, so ribbons stay ribbons, not slabs,
+     and everything always fits inside the box. */
+  const stageOutbound = new Map<string, number>()
+  const stageInbound = new Map<string, number>()
+  for (const link of flow.links) {
+    stageOutbound.set(link.sourceStage, (stageOutbound.get(link.sourceStage) ?? 0) + link.value)
+    stageInbound.set(link.targetStage, (stageInbound.get(link.targetStage) ?? 0) + link.value)
+  }
+  const maxStageTotal = Math.max(1, ...stageOutbound.values(), ...stageInbound.values())
+  const chartHeight = size === null
+    ? 220
+    : Math.max(170, Math.min(size.height, maxStageTotal * 22 + 96))
+
   return (
     <div className="jobs-flow">
       <div ref={chartRef} className="jobs-flow-chart" role="img" aria-label="Application stage flow" aria-describedby="jobs-flow-summary">
@@ -170,11 +184,11 @@ export function JobsFlow({ transitions }: JobsFlowProps): ReactNode {
           <Sankey
             accessibilityLayer
             width={size.width}
-            height={size.height}
+            height={chartHeight}
             data={chartData}
             node={(props) => <FlowNode {...props} chartWidth={size.width} />}
             link={FlowLink}
-            nodePadding={size.height < 300 ? 18 : 28}
+            nodePadding={chartHeight < 300 ? 18 : 28}
             nodeWidth={12}
             margin={{ top: 22, right: horizontalMargin, bottom: 22, left: horizontalMargin }}
           >

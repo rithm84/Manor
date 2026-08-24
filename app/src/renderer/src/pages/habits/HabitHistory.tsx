@@ -67,7 +67,7 @@ export function habitPerformanceSlices(row: HabitMonthRow): readonly HabitPerfor
       key: 'partial',
       label: 'Partial',
       value: row.partialDays,
-      fill: 'var(--today-warning)'
+      fill: 'var(--primary)'
     },
     {
       key: 'frozen',

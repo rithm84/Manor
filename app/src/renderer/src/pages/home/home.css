@@ -186,16 +186,20 @@
 }
 
 .kanban-col.is-overdue {
-  background: color-mix(in srgb, var(--pill-overdue-tint) 55%, var(--surface-canvas));
+  --board-wash: color-mix(in srgb, var(--pill-overdue-tint) 55%, var(--surface-canvas));
+  background: var(--board-wash);
 }
 .kanban-col.is-today {
-  background: color-mix(in srgb, var(--pill-today-tint) 55%, var(--surface-canvas));
+  --board-wash: color-mix(in srgb, var(--pill-today-tint) 55%, var(--surface-canvas));
+  background: var(--board-wash);
 }
 .kanban-col.is-tomorrow {
-  background: color-mix(in srgb, var(--pill-tomorrow-tint) 55%, var(--surface-canvas));
+  --board-wash: color-mix(in srgb, var(--pill-tomorrow-tint) 55%, var(--surface-canvas));
+  background: var(--board-wash);
 }
 .kanban-col.is-week {
-  background: color-mix(in srgb, var(--pill-week-tint) 55%, var(--surface-canvas));
+  --board-wash: color-mix(in srgb, var(--pill-week-tint) 55%, var(--surface-canvas));
+  background: var(--board-wash);
 }
 
 .kanban-col.is-drag-over {
@@ -247,12 +251,17 @@
 
 /* --- Task card -------------------------------------------------------------- */
 
+/* Task cards read as white sticky notes: squarer stock, a dog-ear fold
+   showing the column wash beneath, and a hair of hand-placed tilt. */
 .task-card {
+  --card-tilt: 0deg;
+  position: relative;
   background: var(--surface-card);
   border: 1px solid var(--hairline);
-  border-radius: var(--radius-card);
+  border-radius: 3px;
   padding: var(--space-2) var(--space-3) var(--space-3);
   cursor: pointer;
+  transform: rotate(var(--card-tilt));
   transition:
     border-color var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease,
@@ -261,8 +270,45 @@
 
   @starting-style {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(4px) rotate(var(--card-tilt));
   }
+}
+
+.kanban-cards .task-card:nth-child(odd) {
+  --card-tilt: -0.25deg;
+}
+
+.kanban-cards .task-card:nth-child(even) {
+  --card-tilt: 0.3deg;
+}
+
+/* The fold, two-tone: ::before cuts the corner away (column wash shows
+   through where the paper is gone); ::after is the folded-over flap, a
+   shade darker than the wash, with a crease shadow onto the card. */
+.task-card::before {
+  content: '';
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 14px 14px;
+  border-color: transparent transparent var(--board-wash, var(--surface-canvas)) transparent;
+}
+
+.task-card::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 14px 14px 0 0;
+  border-color: color-mix(in srgb, var(--ink) 8%, var(--board-wash, var(--surface-canvas)))
+    transparent transparent transparent;
+  filter: drop-shadow(-1px -1px 1px rgba(27, 25, 29, 0.09));
 }
 
 .task-card:hover {
@@ -271,7 +317,7 @@
 }
 
 .task-card:active {
-  transform: scale(0.99);
+  transform: rotate(var(--card-tilt)) scale(0.99);
 }
 
 .task-card.is-completing {
@@ -456,6 +502,7 @@
 }
 
 .today-timeline {
+  touch-action: none;
   position: relative;
 }
 
@@ -524,13 +571,65 @@
   background: var(--entry-color);
 }
 
+/* Scratch blocks are disposable paper: the one sanctioned full skeuomorph.
+   Sticky-note stock, faint grain, a hair of rotation, and a dog-ear fold. */
 .today-block.is-scratch {
-  background: var(--scratch-tint);
-  border: 1px dashed var(--scratch);
+  background: var(--sticky-note);
+  border: 1px solid var(--sticky-note-edge);
+  border-radius: 2px;
+  transform: rotate(-0.5deg);
+  box-shadow: var(--shadow-hover);
+  color: var(--tomorrow-gold);
+}
+
+.today-block.is-scratch:nth-child(even) {
+  transform: rotate(0.4deg);
+}
+
+/* A sticky note is written by hand */
+.today-block.is-scratch .today-block-title {
+  font-family: var(--font-hand);
+  font-weight: 500;
+}
+
+.today-block.is-scratch {
+  cursor: grab;
+}
+
+.today-block.is-dragging {
+  z-index: 6;
+  box-shadow: var(--shadow-overlay);
+  cursor: grabbing;
+  transform: rotate(-1deg) scale(1.02);
+}
+
+.today-create-ghost {
+  z-index: 5;
+  border-style: dashed;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.today-timeline.is-pointer-drag {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .today-block.is-scratch::before {
   display: none;
+}
+
+.today-block.is-scratch::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 10px 10px;
+  border-color: transparent transparent var(--surface-canvas) transparent;
+  filter: drop-shadow(-1px -1px 1px rgba(27, 25, 29, 0.08));
 }
 
 .today-block.is-faded {

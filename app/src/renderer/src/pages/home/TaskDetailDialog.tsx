@@ -1,4 +1,4 @@
-import { AudioLines, Check, Trash2, UserRound, X } from 'lucide-react'
+import { AudioLines, Check, Copy, Trash2, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 
@@ -32,6 +32,7 @@ export interface TaskDetailDialogProps {
   onUpdate: (task: Task) => Promise<void>
   onAddContext: (context: ContextDraft) => Promise<ContextDefinition>
   onComplete: (taskId: string) => Promise<void>
+  onDuplicate: (task: Task) => Promise<void>
   onDelete: (taskId: string) => Promise<void>
 }
 
@@ -48,6 +49,7 @@ export function TaskDetailDialog({
   onUpdate,
   onAddContext,
   onComplete,
+  onDuplicate,
   onDelete
 }: TaskDetailDialogProps): ReactNode {
   const [title, setTitle] = useState(task?.title ?? '')
@@ -194,14 +196,24 @@ export function TaskDetailDialog({
               >
                 Mark complete
               </Button>
-              <button
-                type="button"
-                className="peek-delete"
-                onClick={() => void onDelete(task.id)}
-              >
-                <Trash2 size={15} />
-                Delete
-              </button>
+              <div className="peek-actions-side">
+                <button
+                  type="button"
+                  className="peek-duplicate"
+                  onClick={() => void onDuplicate(task)}
+                >
+                  <Copy size={15} />
+                  Duplicate
+                </button>
+                <button
+                  type="button"
+                  className="peek-delete"
+                  onClick={() => void onDelete(task.id)}
+                >
+                  <Trash2 size={15} />
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>

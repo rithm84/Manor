@@ -46,9 +46,7 @@ export function DailyCapture({
       <div className="mf-capture-body">
         <ScalePicker
           id="mood"
-          step="01"
-          label="Mood"
-          hint="Overall feeling"
+          prompt="How was today?"
           kind="mood"
           options={moodOptions}
           value={entry?.mood ?? null}
@@ -57,9 +55,7 @@ export function DailyCapture({
         />
         <ScalePicker
           id="focus"
-          step="02"
-          label="Focus"
-          hint="Attention level"
+          prompt="How locked in were you?"
           kind="focus"
           options={focusOptions}
           value={entry?.focus ?? null}

@@ -42,4 +42,24 @@ describe('Master task property presentation', () => {
     expect(markup).toContain('ui-pill--tag is-overdue')
     expect(markup).toContain('ui-pill--tag is-info')
   })
+
+  it('offers the By context grouping toggle, off by default with a flat table', () => {
+    const markup = renderToStaticMarkup(
+      <MasterTaskTable
+        tasks={[TASK]}
+        contexts={CONTEXTS}
+        today="2026-08-22"
+        savedViews={[]}
+        onOpenTask={() => undefined}
+        onQuickActions={() => undefined}
+        onSaveView={async () => undefined}
+        onDeleteView={async () => undefined}
+      />
+    )
+
+    expect(markup).toContain('aria-pressed="false"')
+    expect(markup.match(/role="columnheader"/g)).toHaveLength(6)
+    expect(markup).not.toContain('master-group-head')
+    expect(markup).not.toContain('is-grouped')
+  })
 })

@@ -54,7 +54,7 @@ describe('habit performance donut data', () => {
   it('preserves every tracked state as a purposeful chart slice', () => {
     expect(habitPerformanceSlices(PERFORMANCE_ROW)).toEqual([
       { key: 'complete', label: 'Complete', value: 2, fill: 'var(--completion)' },
-      { key: 'partial', label: 'Partial', value: 1, fill: 'var(--today-warning)' },
+      { key: 'partial', label: 'Partial', value: 1, fill: 'var(--primary)' },
       { key: 'frozen', label: 'Frozen', value: 1, fill: 'var(--frozen-info)' },
       { key: 'missed', label: 'Missed', value: 1, fill: 'var(--overdue-error)' },
       { key: 'pending', label: 'Pending', value: 1, fill: 'var(--surface-strong)' }

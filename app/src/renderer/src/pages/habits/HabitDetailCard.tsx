@@ -65,7 +65,7 @@ export function HabitDetailCard({
       <div className="habit-detail-identity">
         <div className="habit-detail-titleline">
           <h2>{definition.name}</h2>
-          {metrics.gold ? <Flame size={17} className="habit-detail-goldflame" aria-label="Gold streak" /> : null}
+          {metrics.gold ? <Flame size={17} className="habit-detail-goldflame" aria-label="Violet streak" /> : null}
         </div>
         <span className="habit-detail-kind">
           {definition.kind === 'binary' ? 'One tap' : `In quarters to ${definition.targetLabel}`}
@@ -162,7 +162,7 @@ export function HabitDetailCard({
         </summary>
         <div className="habit-rules-body">
           <p>A freeze is spent automatically when this habit misses a day.</p>
-          <p>Seven completed days without a freeze turn the flame gold.</p>
+          <p>Seven completed days without a freeze turn the flame violet.</p>
           <p>After a break, two clean days within 48 hours can restore the streak once this month.</p>
           {metrics.earnBackUsedThisMonth ? <p>Earn-Back has been used this month.</p> : null}
         </div>

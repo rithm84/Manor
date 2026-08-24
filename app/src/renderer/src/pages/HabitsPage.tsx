@@ -14,7 +14,7 @@ import type { ReactNode } from 'react'
 import { addDays, monthKey, statusOn } from '../../../shared/habits'
 import { playCelebrationChime, playCompletionTick } from '../sound/sounds'
 import type { HabitDraft, HabitsState } from '../../../shared/habits'
-import { Button, EmptyState, Modal } from '../components/ui'
+import { Button, EmptyState, HandCircle, Modal } from '../components/ui'
 import { TODAY_ISO } from '../data/mock'
 import { HabitEditorModal } from './habits/AddHabitModal'
 import { HabitDetailDialog } from './habits/HabitDetailDialog'
@@ -335,10 +335,12 @@ export function HabitsPage(): ReactNode {
                 <div className="habits-progress">
                   <span className="habits-card-label">{dateLabel(selectedDate, today)}</span>
                   <div className="habits-progress-line">
-                    <span className="habits-progress-value tnum">
-                      {completed}
-                      <span className="habits-progress-total"> of {active.length}</span>
-                    </span>
+                    <HandCircle active={perfect && selectedDate === today}>
+                      <span className="habits-progress-value tnum">
+                        {completed}
+                        <span className="habits-progress-total"> of {active.length}</span>
+                      </span>
+                    </HandCircle>
                     {perfect ? (
                       <span className="habits-progress-perfect display">A perfect day.</span>
                     ) : (

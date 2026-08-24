@@ -1,33 +1,29 @@
-import { Calendar, PanelLeft, PanelsTopLeft } from 'lucide-react'
+import { PanelLeft } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 import type { AlfredRoute } from '../../../shared/alfred'
 import { Tooltip } from '../components/ui'
 import { AlfredModal } from './AlfredModal'
+import { PaperBackdrop } from './PaperBackdrop'
 import { Sidebar } from './Sidebar'
 
 const FLOAT_DISMISS_MS = 240
-const CALENDAR_PATH = '/calendar'
 /** localStorage key for the docked/collapsed choice ('1' docked, '0' collapsed). */
 export const SIDEBAR_DOCKED_KEY = 'manor.sidebar.docked'
 
 /**
  * The app shell: sidebar (docked column, or collapsed with an edge-summoned
- * floating overlay), draggable titlebar strip with the workspace/calendar
- * toggle, page outlet, and the Alfred modal on Option+Space.
+ * floating overlay), draggable titlebar strip, page outlet, and the Alfred
+ * modal on Option+Space.
  *
  * Sidebar model (Notion-like): docked by default; ONE topbar control toggles
  * docked <-> collapsed. While collapsed, hovering the left edge or the toggle
  * reveals the floating overlay (dismisses on mouse-leave); clicking the
  * toggle docks it back. The choice persists across restarts.
- *
- * Calendar is a workspace, not a sidebar tab: on /calendar the module
- * sidebar is hidden and the page renders full-window without frame padding.
  */
 export function AppFrame(): ReactNode {
-  const location = useLocation()
   const navigate = useNavigate()
   const [docked, setDocked] = useState<boolean>(
     () => window.localStorage.getItem(SIDEBAR_DOCKED_KEY) !== '0'
@@ -35,19 +31,10 @@ export function AppFrame(): ReactNode {
   const [floatOpen, setFloatOpen] = useState(false)
   const [alfredOpen, setAlfredOpen] = useState(false)
   const dismissTimer = useRef<number | null>(null)
-  const lastWorkspacePath = useRef('/home')
-
-  const inCalendar = location.pathname === CALENDAR_PATH
 
   useEffect(() => {
     window.localStorage.setItem(SIDEBAR_DOCKED_KEY, docked ? '1' : '0')
   }, [docked])
-
-  useEffect(() => {
-    if (location.pathname !== CALENDAR_PATH) {
-      lastWorkspacePath.current = location.pathname
-    }
-  }, [location.pathname])
 
   const cancelDismiss = useCallback((): void => {
     if (dismissTimer.current !== null) {
@@ -99,16 +86,13 @@ export function AppFrame(): ReactNode {
     setFloatOpen(true)
   }, [cancelDismiss])
 
-  const showSidebar = !inCalendar
-
   return (
     <div className="frame">
-      {showSidebar && docked ? (
+      {docked ? (
         <aside className="sidebar">
           <Sidebar mode="docked" />
         </aside>
-      ) : null}
-      {showSidebar && !docked ? (
+      ) : (
         <>
           <div className="sidebar-hoverstrip" onMouseEnter={revealFloat} />
           <aside
@@ -119,66 +103,31 @@ export function AppFrame(): ReactNode {
             <Sidebar mode="floating" />
           </aside>
         </>
-      ) : null}
+      )}
 
       <div className="content">
-        <header className={`topbar titlebar-drag${showSidebar && docked ? '' : ' is-unpinned'}`}>
-          {showSidebar ? (
-            <Tooltip label={docked ? 'Collapse sidebar' : 'Dock sidebar'} side="bottom">
-              <button
-                type="button"
-                className="topbar-btn"
-                onClick={toggleSidebar}
-                onMouseEnter={docked ? undefined : revealFloat}
-                onMouseLeave={docked ? undefined : scheduleDismiss}
-                aria-label={docked ? 'Collapse sidebar' : 'Dock sidebar'}
-                aria-pressed={docked}
-              >
-                <PanelLeft size={16} />
-              </button>
-            </Tooltip>
-          ) : null}
+        <header className={`topbar titlebar-drag${docked ? '' : ' is-unpinned'}`}>
+          <Tooltip label={docked ? 'Collapse sidebar' : 'Dock sidebar'} side="bottom">
+            <button
+              type="button"
+              className="topbar-btn"
+              onClick={toggleSidebar}
+              onMouseEnter={docked ? undefined : revealFloat}
+              onMouseLeave={docked ? undefined : scheduleDismiss}
+              aria-label={docked ? 'Collapse sidebar' : 'Dock sidebar'}
+              aria-pressed={docked}
+            >
+              <PanelLeft size={16} />
+            </button>
+          </Tooltip>
           <span className="topbar-spacer" />
-          <div className="ws-toggle" role="tablist" aria-label="Workspace or calendar">
-            <Tooltip label="Workspace" side="bottom">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={!inCalendar}
-                className={`ws-toggle-btn${!inCalendar ? ' is-active' : ''}`}
-                onClick={() => {
-                  if (inCalendar) {
-                    void navigate(lastWorkspacePath.current)
-                  }
-                }}
-                aria-label="Workspace"
-              >
-                <PanelsTopLeft size={15} />
-              </button>
-            </Tooltip>
-            <Tooltip label="Calendar" side="bottom">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={inCalendar}
-                className={`ws-toggle-btn${inCalendar ? ' is-active' : ''}`}
-                onClick={() => {
-                  if (!inCalendar) {
-                    void navigate(CALENDAR_PATH)
-                  }
-                }}
-                aria-label="Calendar"
-              >
-                <Calendar size={15} />
-              </button>
-            </Tooltip>
-          </div>
         </header>
-        <main className={`page${inCalendar ? ' page--bare' : ''}`}>
+        <main className="page">
           <Outlet />
         </main>
       </div>
 
+      <PaperBackdrop />
       <AlfredModal
         open={alfredOpen}
         onClose={() => setAlfredOpen(false)}

@@ -1,4 +1,3 @@
-import { CalendarDays } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 
@@ -15,8 +14,6 @@ import { DueDatePicker } from './DueDatePicker'
 import {
   ESTIMATE_SELECT_OPTIONS,
   PRIORITY_OPTIONS,
-  formatLongDayLabel,
-  taskCreationDateRange,
   taskCreationDefaults
 } from './taskModel'
 import type { DraftTask } from './taskModel'
@@ -60,7 +57,6 @@ export function TaskCreateDialog({
   const activeBucket = bucket ?? 'today'
   const [draft, setDraft] = useState<DraftTask>(() => emptyDraft(activeBucket, today))
   const [saving, setSaving] = useState(false)
-  const dateRange = taskCreationDateRange(activeBucket, today)
 
   useEffect(() => {
     if (bucket === null) return
@@ -80,7 +76,6 @@ export function TaskCreateDialog({
     }
   }
 
-  const exactDateRequired = activeBucket === 'week'
   const canSubmit =
     draft.title.trim() !== '' && draft.context !== null && draft.due !== null && !saving
 
@@ -149,30 +144,20 @@ export function TaskCreateDialog({
             </div>
           </div>
 
-          <div className={`task-create-field task-create-due${exactDateRequired ? ' is-exact' : ''}`}>
+          <div className={`task-create-field task-create-due${activeBucket === 'week' ? ' is-exact' : ''}`}>
             <div className="task-create-due-heading">
               <span className="task-create-label">Due date <span aria-hidden="true">*</span></span>
-              {exactDateRequired && dateRange !== null ? (
-                <span className="task-create-range">
-                  Choose an exact date from {formatLongDayLabel(dateRange.min)} to {formatLongDayLabel(dateRange.max)}
-                </span>
+              {activeBucket === 'week' ? (
+                <span className="task-create-range">Choose the exact day</span>
               ) : null}
             </div>
-            {exactDateRequired && dateRange !== null ? (
-              <DueDatePicker
-                value={draft.due}
-                onChange={(due) => setDraft({ ...draft, due })}
-                ariaLabel="Exact due date for This Week task"
-                min={dateRange.min}
-                max={dateRange.max}
-              />
-            ) : draft.due !== null ? (
-              <div className="task-create-locked-date" aria-label={`Due ${formatLongDayLabel(draft.due)}`}>
-                <CalendarDays size={15} />
-                <span>{formatLongDayLabel(draft.due)}</span>
-                <span className="task-create-locked-label">Fixed for {bucketName(activeBucket)}</span>
-              </div>
-            ) : null}
+            <DueDatePicker
+              value={draft.due}
+              onChange={(due) => setDraft({ ...draft, due })}
+              ariaLabel="Due date"
+              min={today}
+              max={null}
+            />
           </div>
         </div>
 

@@ -32,6 +32,7 @@ describe('centered task detail', () => {
         onUpdate={async () => undefined}
         onAddContext={async (context) => context}
         onComplete={async () => undefined}
+        onDuplicate={async () => undefined}
         onDelete={async () => undefined}
       />
     )
@@ -40,6 +41,7 @@ describe('centered task detail', () => {
     expect(markup).toContain('aria-label="Task details for Editable task title"')
     expect(markup.match(/aria-label="Task title"/g)).toHaveLength(1)
     expect(markup).toContain('autofocus=""')
+    expect(markup).toContain('peek-duplicate')
     expect(markup).not.toContain('ui-sidepeek')
     expect(markup).not.toContain('Time blocks')
   })

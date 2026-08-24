@@ -10,7 +10,7 @@ import {
 } from '@dnd-kit/core'
 import type { CollisionDetection, DragEndEvent, DragMoveEvent, DragStartEvent } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { CheckCircle2, LayoutGrid, List, PanelRightOpen, Plus, RotateCcw, Sunrise, Trash2 } from 'lucide-react'
+import { CheckCircle2, Copy, LayoutGrid, List, PanelRightOpen, Plus, RotateCcw, Sunrise, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
@@ -208,6 +208,23 @@ export function HomePage(): ReactNode {
       setPersistError(null)
     } catch (error) {
       reportPersistenceError('Could not create task', error)
+    }
+  }
+
+  const duplicateTask = async (source: Task): Promise<void> => {
+    const copy: Task = {
+      ...source,
+      id: crypto.randomUUID(),
+      title: `${source.title} copy`,
+      status: 'Not started',
+      tags: [...source.tags]
+    }
+    try {
+      const persisted = await window.manor.home.upsertTask(copy)
+      setTasks((current) => [...current, persisted])
+      setPersistError(null)
+    } catch (error) {
+      reportPersistenceError('Could not duplicate task', error)
     }
   }
 
@@ -478,6 +495,13 @@ export function HomePage(): ReactNode {
               onSelect: () => toggleComplete(quickTask.id)
             },
         {
+          id: 'duplicate',
+          label: 'Duplicate',
+          icon: <Copy size={15} />,
+          tone: 'default',
+          onSelect: () => void duplicateTask(quickTask)
+        },
+        {
           id: 'delete',
           label: 'Delete task',
           icon: <Trash2 size={15} />,
@@ -592,6 +616,27 @@ export function HomePage(): ReactNode {
               setBlockPeekId(blockId)
               setBlockPeekOpen(true)
             }}
+            onMoveScratchBlock={(blockId, start, end) => {
+              const block = scratchBlocks.find((candidate) => candidate.id === blockId)
+              if (block === undefined) throw new Error(`Cannot move missing scratch block ${blockId}`)
+              void upsertScratchBlock({ ...block, start, end, expiresAt: scratchExpiry(block.date, end) })
+            }}
+            onCreateScratch={(start, end) => {
+              const block: ScratchBlock = {
+                id: crypto.randomUUID(),
+                taskId: null,
+                date: scheduleDate,
+                start,
+                end,
+                portion: '',
+                createdAt: new Date().toISOString(),
+                expiresAt: scratchExpiry(scheduleDate, end)
+              }
+              void upsertScratchBlock(block).then(() => {
+                setBlockPeekId(block.id)
+                setBlockPeekOpen(true)
+              })
+            }}
           />
         </div>
 
@@ -613,6 +658,7 @@ export function HomePage(): ReactNode {
           onUpdate={updateTask}
           onAddContext={addContext}
           onComplete={completeTask}
+          onDuplicate={duplicateTask}
           onDelete={deleteTask}
         />
         <ScratchBlockDialog

@@ -1,14 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 import type { AlfredApi, AlfredRoute } from '../shared/alfred'
-import type {
-  CalendarApi,
-  CalendarDefinition,
-  CalendarEventRecord,
-  CalendarOccurrenceMutation,
-  CalendarSeed,
-  CalendarSettings
-} from '../shared/calendar'
 
 import type {
   ContextDraft,
@@ -83,21 +75,6 @@ const homeApi: HomeApi = {
     ipcRenderer.invoke('home:upsert-saved-task-view', view),
   deleteSavedTaskView: (viewId: string) =>
     ipcRenderer.invoke('home:delete-saved-task-view', viewId)
-}
-
-const calendarApi: CalendarApi = {
-  load: (seed: CalendarSeed) => ipcRenderer.invoke('calendar:load', seed),
-  upsertCalendar: (calendar: CalendarDefinition) =>
-    ipcRenderer.invoke('calendar:upsert-calendar', calendar),
-  deleteCalendar: (calendarId: string) =>
-    ipcRenderer.invoke('calendar:delete-calendar', calendarId),
-  upsertEvent: (event: CalendarEventRecord) =>
-    ipcRenderer.invoke('calendar:upsert-event', event),
-  replaceOccurrence: (mutation: CalendarOccurrenceMutation) =>
-    ipcRenderer.invoke('calendar:replace-occurrence', mutation),
-  deleteEvent: (eventId: string) => ipcRenderer.invoke('calendar:delete-event', eventId),
-  updateSettings: (settings: CalendarSettings) =>
-    ipcRenderer.invoke('calendar:update-settings', settings)
 }
 
 const habitsApi: HabitsApi = {
@@ -186,7 +163,6 @@ const alfredApi: AlfredApi = {
 
 contextBridge.exposeInMainWorld('manor', {
   alfred: alfredApi,
-  calendar: calendarApi,
   home: homeApi,
   habits: habitsApi,
   jobs: jobsApi,

@@ -1,6 +1,5 @@
 import { ALFRED_ACCELERATOR } from '../../../shared/alfred'
 import type { AlfredApi, AlfredMicrophonePermission } from '../../../shared/alfred'
-import type { CalendarApi, CalendarState } from '../../../shared/calendar'
 import { BROWSER_BRIDGE_ENDPOINT } from '../../../shared/devBridge'
 import type { HabitsApi, HabitsState } from '../../../shared/habits'
 import type {
@@ -87,17 +86,6 @@ const homeApi: HomeApi = {
   deleteSavedTaskView: (viewId) => invoke<void>('home:delete-saved-task-view', [viewId])
 }
 
-const calendarApi: CalendarApi = {
-  load: (seed) => invoke<CalendarState>('calendar:load', [seed]),
-  upsertCalendar: (calendar) => invoke<CalendarState>('calendar:upsert-calendar', [calendar]),
-  deleteCalendar: (calendarId) => invoke<CalendarState>('calendar:delete-calendar', [calendarId]),
-  upsertEvent: (event) => invoke<CalendarState>('calendar:upsert-event', [event]),
-  replaceOccurrence: (mutation) =>
-    invoke<CalendarState>('calendar:replace-occurrence', [mutation]),
-  deleteEvent: (eventId) => invoke<CalendarState>('calendar:delete-event', [eventId]),
-  updateSettings: (settings) => invoke<CalendarState>('calendar:update-settings', [settings])
-}
-
 const habitsApi: HabitsApi = {
   load: (seed) => invoke<HabitsState>('habits:load', [seed]),
   createHabit: (draft) => invoke<HabitsState>('habits:create', [draft]),
@@ -162,7 +150,6 @@ export function installBrowserBridgeIfMissing(): void {
   }
   window.manor = {
     alfred: createAlfredApi(),
-    calendar: calendarApi,
     home: homeApi,
     habits: habitsApi,
     jobs: jobsApi,

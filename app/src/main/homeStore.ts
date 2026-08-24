@@ -52,7 +52,7 @@ export class HomeStore {
       );
       CREATE TABLE IF NOT EXISTS scratch_blocks (
         id TEXT PRIMARY KEY,
-        task_id TEXT NOT NULL,
+        task_id TEXT,
         payload TEXT NOT NULL,
         expires_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
@@ -68,6 +68,33 @@ export class HomeStore {
     if (!contextColumns.some((column) => column.name === 'payload')) {
       this.database.exec('ALTER TABLE contexts ADD COLUMN payload TEXT')
     }
+    this.migrateScratchTaskIdNullable()
+  }
+
+  /** 2026-08-23: scratch blocks became freestanding sticky notes, so task_id
+      must accept NULL; SQLite requires a table rebuild to drop NOT NULL. */
+  private migrateScratchTaskIdNullable(): void {
+    const scratchColumns = this.database
+      .prepare('PRAGMA table_info(scratch_blocks)')
+      .all() as unknown as Array<{ name: string; notnull: number }>
+    const taskColumn = scratchColumns.find((column) => column.name === 'task_id')
+    if (taskColumn === undefined || taskColumn.notnull === 0) return
+    this.database.exec(`
+      BEGIN IMMEDIATE;
+      CREATE TABLE scratch_blocks_next (
+        id TEXT PRIMARY KEY,
+        task_id TEXT,
+        payload TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+      );
+      INSERT INTO scratch_blocks_next
+        SELECT id, task_id, payload, expires_at, updated_at FROM scratch_blocks;
+      DROP TABLE scratch_blocks;
+      ALTER TABLE scratch_blocks_next RENAME TO scratch_blocks;
+      COMMIT;
+    `)
   }
 
   close(): void {
