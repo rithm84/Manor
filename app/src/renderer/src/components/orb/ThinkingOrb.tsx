@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 
 export type OrbState = 'idle' | 'listening' | 'thinking'
 
@@ -7,6 +7,8 @@ export interface ThinkingOrbProps {
   /** Rendered square size in px. */
   size: number
   state: OrbState
+  /** Mutable normalized microphone energy, read directly by the canvas loop. */
+  audioLevelRef: RefObject<number>
 }
 
 interface OrbPoint {
@@ -45,8 +47,8 @@ const POINT_COUNT = 240
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
 /** Fixed axis tilt so the sphere reads as 3D, not a spinning disc. */
 const TILT = 0.42
-/** Warm ink dot color (DESIGN.md ink family). */
-const DOT_RGB = '61, 61, 58'
+/** Aubergine focus color from Atelier's selected primary. */
+const DOT_RGB = '106, 78, 108'
 
 const buildPoints = (): readonly OrbPoint[] => {
   const points: OrbPoint[] = []
@@ -72,14 +74,16 @@ const drawFrame = (
   dpr: number,
   angle: number,
   timeSec: number,
-  motion: OrbMotion
+  motion: OrbMotion,
+  audioLevel: number
 ): void => {
   const px = size * dpr
   ctx.clearRect(0, 0, px, px)
   const center = px / 2
   const pulse = 1 + motion.pulse * Math.sin(timeSec * motion.pulseHz * Math.PI * 2)
-  const radius = px * 0.38 * pulse
-  const dotBase = Math.max(0.9, px * 0.014)
+  const audioScale = 1 + audioLevel * 0.09
+  const radius = px * 0.38 * pulse * audioScale
+  const dotBase = Math.max(0.9, px * (0.014 + audioLevel * 0.003))
   const perspective = 3.2
   const cosA = Math.cos(angle)
   const sinA = Math.sin(angle)
@@ -111,13 +115,13 @@ const drawFrame = (
 }
 
 /**
- * The agent's visual presence: a particle-sphere of warm ink dots on a
+ * The agent's visual presence: a particle-sphere of aubergine dots on a
  * transparent ground (reference: orbs.jakubantalik.com). Canvas 2D, no
  * dependencies. Motion is continuous across state changes: speeds ease
  * toward the active state's targets instead of restarting.
  * With prefers-reduced-motion, renders a single static dotted sphere.
  */
-export function ThinkingOrb({ size, state }: ThinkingOrbProps): ReactNode {
+export function ThinkingOrb({ size, state, audioLevelRef }: ThinkingOrbProps): ReactNode {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const stateRef = useRef<OrbState>(state)
   stateRef.current = state
@@ -156,14 +160,15 @@ export function ThinkingOrb({ size, state }: ThinkingOrbProps): ReactNode {
       current.pulseHz += (target.pulseHz - current.pulseHz) * ease
       current.scatter += (target.scatter - current.scatter) * ease
       angle += current.spin * dt
-      drawFrame(ctx, points, size, dpr, angle, now / 1000, current)
+      const audioLevel = Math.max(0, Math.min(1, audioLevelRef.current))
+      drawFrame(ctx, points, size, dpr, angle, now / 1000, current, audioLevel)
       raf = window.requestAnimationFrame(tick)
     }
 
     const start = (): void => {
       if (reduceMotion.matches) {
         const still: OrbMotion = { spin: 0, shimmer: 0, shimmerHz: 0, pulse: 0, pulseHz: 0, scatter: 0 }
-        drawFrame(ctx, points, size, dpr, angle, 0, still)
+        drawFrame(ctx, points, size, dpr, angle, 0, still, 0)
         return
       }
       last = performance.now()
@@ -181,7 +186,7 @@ export function ThinkingOrb({ size, state }: ThinkingOrbProps): ReactNode {
       window.cancelAnimationFrame(raf)
       reduceMotion.removeEventListener('change', onMotionPreferenceChange)
     }
-  }, [size])
+  }, [audioLevelRef, size])
 
   return (
     <canvas

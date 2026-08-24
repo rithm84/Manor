@@ -42,6 +42,8 @@ export function Select({ value, options, onChange, placeholder, ariaLabel }: Sel
     }
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopImmediatePropagation()
         closeAndFocus()
       }
     }

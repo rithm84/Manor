@@ -16,7 +16,7 @@ import type { ReactNode } from 'react'
 
 import { Button, EmptyState, QuickActionsMenu } from '../components/ui'
 import type { QuickActionItem, QuickActionPoint } from '../components/ui'
-import { events, taskContexts, tasks as seedTasks, user } from '../data/mock'
+import { user } from '../data/mock'
 import type {
   ContextDefinition,
   ContextDraft,
@@ -27,6 +27,7 @@ import type {
 import type { SavedTaskView } from '../../../shared/home'
 import { KanbanBoard } from './home/KanbanBoard'
 import { MasterTaskTable } from './home/MasterTaskTable'
+import { createHomeSeed } from './home/homeSeed'
 import { ScratchBlockDialog } from './home/ScratchBlockDialog'
 import { TaskCardPreview } from './home/TaskCard'
 import { TaskCreateDialog } from './home/TaskCreateDialog'
@@ -62,29 +63,6 @@ interface TaskQuickTarget {
 const homeCollisionDetection: CollisionDetection = (args) => {
   const pointerCollisions = pointerWithin(args)
   return pointerCollisions.length > 0 ? pointerCollisions : closestCenter(args)
-}
-
-const SEED_PORTIONS: Readonly<Record<string, string>> = {
-  'evt-scratch-mon': 'first pass',
-  'evt-neetcode-block': 'first half',
-  'evt-neetcode-fri': 'rest',
-  'evt-weekly-review': 'full task'
-}
-
-function seedScratchBlocks(): readonly ScratchBlock[] {
-  return events.flatMap((event) => {
-    if (!event.scratch || event.taskId === null) return []
-    return [{
-      id: event.id,
-      taskId: event.taskId,
-      date: event.date,
-      start: event.start,
-      end: event.end,
-      portion: SEED_PORTIONS[event.id] ?? 'planned work',
-      createdAt: new Date(`${event.date}T${event.start}:00`).toISOString(),
-      expiresAt: scratchExpiry(event.date, event.end)
-    }]
-  })
 }
 
 function greetingFor(time: string): string {
@@ -141,7 +119,7 @@ export function HomePage(): ReactNode {
       }
     }
     void window.manor.home
-      .load({ tasks: seedTasks, contexts: taskContexts, scratchBlocks: seedScratchBlocks(), savedTaskViews: [] })
+      .load(createHomeSeed())
       .then((state) => {
         if (cancelled) return
         setTasks(state.tasks)

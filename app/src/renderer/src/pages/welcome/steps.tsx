@@ -5,6 +5,8 @@ import { ThinkingOrb } from '../../components/orb/ThinkingOrb'
 import { Button, Input, Kbd } from '../../components/ui'
 import { habits } from '../../data/mock'
 
+const ZERO_AUDIO_LEVEL = { current: 0 }
+
 export function WelcomeIntro({ onContinue }: { onContinue: () => void }): ReactNode {
   return (
     <div className="welcome-step">
@@ -149,7 +151,7 @@ export function HotkeyStep({ onFinish }: { onFinish: () => void }): ReactNode {
   return (
     <div className="welcome-step">
       <div className="welcome-orb">
-        <ThinkingOrb size={72} state="idle" />
+        <ThinkingOrb size={72} state="idle" audioLevelRef={ZERO_AUDIO_LEVEL} />
       </div>
       <h1 className="welcome-headline">Meet Alfred</h1>
       <p className="welcome-sub">
