@@ -25,14 +25,14 @@ interface FlowNodeProps extends SankeyNodeProps {
 }
 
 const STAGE_TONES: Readonly<Record<JobStage, StageTone>> = {
-  to_apply: { strong: '#6A6669', tint: '#F2EFEA' },
-  applied: { strong: '#3B684B', tint: '#E7F1E9' },
-  oa: { strong: '#825D16', tint: '#F7ECD2' },
-  interview_1: { strong: '#6B5375', tint: '#EEE8F1' },
-  interview_2: { strong: '#5B4966', tint: '#E8E0EC' },
-  interview_3: { strong: '#4C3D58', tint: '#E2D9E7' },
-  offer: { strong: '#38674A', tint: '#E6F1E9' },
-  rejected: { strong: '#A33F46', tint: '#F8E4E5' }
+  to_apply: { strong: '#6e6975', tint: '#f5f4f1' },
+  applied: { strong: '#3d7a52', tint: '#e6f2ea' },
+  oa: { strong: '#8f6a0e', tint: '#f8efd8' },
+  interview_1: { strong: '#6f5680', tint: '#efe9f4' },
+  interview_2: { strong: '#6f5680', tint: '#efe9f4' },
+  interview_3: { strong: '#6f5680', tint: '#efe9f4' },
+  offer: { strong: '#3d7a52', tint: '#e6f2ea' },
+  rejected: { strong: '#b0434b', tint: '#f9e6e7' }
 }
 
 export interface JobsFlowProps {
@@ -70,7 +70,7 @@ function FlowNode({ x, y, width, height, payload, chartWidth }: FlowNodeProps): 
         y={y + height / 2 + 13}
         textAnchor={alignRight ? 'end' : 'start'}
         fill="var(--ink-muted)"
-        fontSize={10}
+        fontSize={12}
       >
         {payload.value} moved
       </text>

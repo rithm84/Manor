@@ -1,7 +1,27 @@
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 import { FOCUS_SCALE, MOOD_SCALE } from '../../../../shared/moodFocus'
 import { FOCUS_TONES, MOOD_TONES } from './scaleTones'
+
+const tokensCss = readFileSync(
+  fileURLToPath(new URL('../../styles/tokens.css', import.meta.url)),
+  'utf8'
+)
+
+function resolveToken(reference: string): string {
+  const name = reference.match(/^var\((--[a-z-]+)\)$/)?.[1]
+  if (name === undefined) {
+    throw new Error(`Not a var() token reference: ${reference}`)
+  }
+  const value = tokensCss.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6});`))?.[1]
+  if (value === undefined) {
+    throw new Error(`Token ${name} is not defined as an opaque hex color in tokens.css`)
+  }
+  return value
+}
 
 function relativeLuminance(hex: string): number {
   const channels = [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16) / 255)
@@ -32,8 +52,10 @@ function expectCompleteDistinctMapping<T extends string>(
   expect(new Set(mappedTones.map((tone) => tone.strong)).size).toBe(levels.length)
   expect(new Set(mappedTones.map((tone) => tone.tint)).size).toBe(levels.length)
   mappedTones.forEach((tone) => {
-    expect(tone.strong).toMatch(/^#[0-9A-F]{6}$/)
-    expect(tone.tint).toMatch(/^#[0-9A-F]{6}$/)
+    expect(tone.strong).toMatch(/^var\(--scale-[a-z]+\)$/)
+    expect(tone.tint).toMatch(/^var\(--scale-[a-z]+-tint\)$/)
+    expect(resolveToken(tone.strong)).toMatch(/^#[0-9a-fA-F]{6}$/)
+    expect(resolveToken(tone.tint)).toMatch(/^#[0-9a-fA-F]{6}$/)
   })
 }
 
@@ -56,8 +78,8 @@ describe('mood and focus scale tones', () => {
 
   it('keeps white icon labels readable on every strong tone', () => {
     const strongTones = [
-      ...Object.values(MOOD_TONES).map((tone) => tone.strong),
-      ...Object.values(FOCUS_TONES).map((tone) => tone.strong)
+      ...Object.values(MOOD_TONES).map((tone) => resolveToken(tone.strong)),
+      ...Object.values(FOCUS_TONES).map((tone) => resolveToken(tone.strong))
     ]
     strongTones.forEach((tone) => {
       expect(contrastRatio(tone, '#FFFFFF')).toBeGreaterThanOrEqual(4.5)

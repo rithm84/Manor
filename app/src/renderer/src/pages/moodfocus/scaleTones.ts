@@ -6,20 +6,20 @@ export interface ScaleTone {
 }
 
 export const MOOD_TONES: Readonly<Record<Mood, ScaleTone>> = {
-  Awful: { strong: '#9C3D4A', tint: '#F7E3E6' },
-  Bad: { strong: '#9A5538', tint: '#F6E8DF' },
-  Neutral: { strong: '#6F655B', tint: '#EEEAE5' },
-  Good: { strong: '#5E7035', tint: '#EAF0DF' },
-  Great: { strong: '#2F684A', tint: '#E3EEE7' }
+  Awful: { strong: 'var(--scale-awful)', tint: 'var(--scale-awful-tint)' },
+  Bad: { strong: 'var(--scale-bad)', tint: 'var(--scale-bad-tint)' },
+  Neutral: { strong: 'var(--scale-neutral)', tint: 'var(--scale-neutral-tint)' },
+  Good: { strong: 'var(--scale-good)', tint: 'var(--scale-good-tint)' },
+  Great: { strong: 'var(--scale-great)', tint: 'var(--scale-great-tint)' }
 }
 
 export const FOCUS_TONES: Readonly<Record<Focus, ScaleTone>> = {
-  'Locked Out': { strong: '#765681', tint: '#EEE7F1' },
-  Low: { strong: '#5E6092', tint: '#E9E9F3' },
-  Medium: { strong: '#4E6E91', tint: '#E5ECF3' },
-  High: { strong: '#39728B', tint: '#E2EDF1' },
-  'Locked In': { strong: '#245F70', tint: '#DEEAEE' },
-  Resting: { strong: '#6C676F', tint: '#ECE9EE' }
+  'Locked Out': { strong: 'var(--scale-lockedout)', tint: 'var(--scale-lockedout-tint)' },
+  Low: { strong: 'var(--scale-low)', tint: 'var(--scale-low-tint)' },
+  Medium: { strong: 'var(--scale-medium)', tint: 'var(--scale-medium-tint)' },
+  High: { strong: 'var(--scale-high)', tint: 'var(--scale-high-tint)' },
+  'Locked In': { strong: 'var(--scale-lockedin)', tint: 'var(--scale-lockedin-tint)' },
+  Resting: { strong: 'var(--scale-resting)', tint: 'var(--scale-resting-tint)' }
 }
 
 export function moodTone(mood: Mood): ScaleTone {

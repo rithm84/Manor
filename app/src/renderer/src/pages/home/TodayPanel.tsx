@@ -51,7 +51,7 @@ function blockFromEvent(event: CalendarEvent): TimelineBlock {
 function blockFromScratch(block: ScratchBlock, tasks: readonly Task[]): TimelineBlock {
   const task = tasks.find((candidate) => candidate.id === block.taskId)
   if (task === undefined) throw new Error(`Scratch block ${block.id} references missing task ${block.taskId}`)
-  return { id: block.id, title: task.title, start: block.start, end: block.end, scratch: true, taskId: task.id, color: '#416883' }
+  return { id: block.id, title: task.title, start: block.start, end: block.end, scratch: true, taskId: task.id, color: '#48708e' }
 }
 
 export function timelineTop(minutes: number): number {

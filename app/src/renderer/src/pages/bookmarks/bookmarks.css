@@ -90,9 +90,9 @@
 }
 
 .bm-chip.is-active {
-  background: var(--frozen-info-tint);
-  border-color: var(--frozen-info);
-  color: var(--frozen-info);
+  background: var(--primary-tint);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .bm-count {

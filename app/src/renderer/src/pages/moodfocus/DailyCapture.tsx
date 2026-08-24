@@ -31,7 +31,7 @@ export function DailyCapture({
       <div className="mf-capture-head">
         <div>
           <span className="mf-capture-kicker">Check-in</span>
-          <h2 id="mf-capture-title" className="display">{dateLabel}</h2>
+          <h2 id="mf-capture-title">{dateLabel}</h2>
         </div>
         <div className="mf-capture-actions">
           <span className={`mf-save-state${loggedCount === 2 ? ' is-complete' : ''}`} aria-live="polite">

@@ -135,8 +135,8 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--forest);
-  color: var(--surface-canvas);
+  background: var(--primary);
+  color: #ffffff;
   font-size: var(--text-xs);
   font-weight: 600;
   flex-shrink: 0;
@@ -341,6 +341,6 @@
 }
 
 .ws-toggle-btn.is-active {
-  background: var(--surface-strong);
-  color: var(--ink);
+  background: var(--primary-tint);
+  color: var(--primary);
 }

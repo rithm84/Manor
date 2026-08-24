@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-08-22_
+_Last updated: 2026-08-23_
 
 Operational guide for coding agents working on Manor.
 
@@ -16,10 +16,12 @@ user's behalf. Electron on macOS ships first; a native iOS app begins only
 after the Mac app is finished. Personal software, built to a
 proper-product bar (sign-in, onboarding, settings, empty states).
 
-**Current phase: hi-fi UI shell shipped; component drill-downs next.** The
-Electron app in `app/` is a clickable UI-only shell (mock data, no backend).
-The next design phase drills into individual components (colors, charts,
-freeze-management UI) — likely via the design canvas.
+**Current phase: Paper redesign landed (2026-08-23); component drill-downs
+continue.** The Electron app in `app/` is a clickable UI-only shell (mock
+data, no backend). The 2026-08-23 pass replaced the cream Atelier surfaces
+with the Paper system (white content, paper chrome, violet accent, 12px type
+floor) and rebuilt the calendar to Notion Calendar anatomy. Remaining design
+areas: charts language, freeze-management UI.
 Do not start an ARCHITECTURE doc unprompted.
 
 ## Repository Layout
@@ -30,7 +32,7 @@ manor/
 │   ├── PRD.md                # The product decision record — the source of truth
 │   ├── NOTION-REPORT.md      # Research on the legacy Notion system being replaced
 │   ├── NOTION-DESIGN.md      # Study of Notion's interface craft (reference)
-│   ├── DESIGN.md             # Binding design charter: Atelier tokens, type roles, copy voice
+│   ├── DESIGN.md             # Binding design charter: Paper tokens, type roles, sound, copy voice
 │   └── design/canvas/        # Design-canvas working files (SPEC.md §B mirrors the mock canon)
 ├── app/                      # The Electron shell (electron-vite + React 19 + TS)
 │   └── src/renderer/src/     # data/mock.ts = single mock-data source; pages/; components/ui/
@@ -75,8 +77,9 @@ charter) and `docs/NOTION-DESIGN.md` (micro-interaction craft reference).
 - Settled decisions are not re-litigated unless user reopens them. In
   particular: Electron (Swift prototypes were built, evaluated, deleted);
   the global summon panel (notch UI and menu-bar dropdown are retired);
-  thinking orb (no mascots/characters, ever); light Atelier direction (dark
-  mode rejected for productivity); journal gets zero AI access,
+  thinking orb (no mascots/characters, ever); light Paper direction, violet
+  accent (beige-heavy Atelier chrome retired 2026-08-23; dark mode rejected
+  for productivity); journal gets zero AI access,
   architecturally; 1-day backfill everywhere; Home = kanban + Today
   timeline only; calendar is a workspace toggle, not a sidebar tab.
 - When user changes a decision mid-session, update PRD.md (including its
@@ -123,7 +126,10 @@ Notion, Cron Calendar, Obvious).
 - **No em-dashes in UI copy.** Rewrite the sentence instead.
 - **Fonts stay in their roles.** Display/serif faces never appear inside
   data components (stats, chips, tables); don't mix faces within a
-  component.
+  component. **Mono is for code only** — never times, dates, hour axes,
+  IDs, or kbd hints (scattered mono reads as AI slop).
+- **No UI text below 12px.** The one exception is dense time-grid gutters
+  at 11px (`--text-gutter`).
 - **No left-edge accent bar/curve on selected sidebar items.** Selected
   state = background fill + weight/color change.
 - **No mascots or characters, ever.** The agent renders as the thinking orb

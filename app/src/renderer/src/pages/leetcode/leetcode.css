@@ -39,7 +39,7 @@
 }
 
 .lc-hero-count {
-  font-size: 28px;
+  font-size: var(--display-md);
   font-weight: 600;
   color: var(--ink);
   line-height: 1;
@@ -61,15 +61,15 @@
 
 .lc-hero-bar {
   height: 5px;
-  border-radius: 3px;
-  background: var(--surface-soft);
+  border-radius: 999px;
+  background: var(--primary-tint);
   overflow: hidden;
 }
 
 .lc-hero-fill {
   height: 100%;
-  border-radius: 3px;
-  background: var(--tomorrow-gold);
+  border-radius: 999px;
+  background: var(--primary);
   transition: width var(--duration-panel) var(--ease-out);
 }
 
@@ -206,7 +206,7 @@
 .lc-topic-bar {
   flex: 1;
   height: 5px;
-  border-radius: 3px;
+  border-radius: 999px;
   background: var(--surface-soft);
   overflow: hidden;
   min-width: 60px;
@@ -215,7 +215,7 @@
 .lc-topic-fill {
   display: block;
   height: 100%;
-  border-radius: 3px;
+  border-radius: 999px;
   background: var(--surface-strong);
 }
 
@@ -332,8 +332,8 @@
   width: 100%;
   max-width: 14px;
   min-height: 10px;
-  border-radius: 3px;
-  background: var(--tomorrow-gold);
+  border-radius: 999px;
+  background: var(--primary);
   opacity: 0.85;
   transition: opacity var(--duration-fast) ease;
 }
@@ -346,7 +346,7 @@
   display: block;
   width: 14px;
   height: 4px;
-  border-radius: 2px;
+  border-radius: 999px;
   background: var(--surface-strong);
 }
 
@@ -531,7 +531,7 @@
   resize: vertical;
   padding: var(--space-3);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 400;
   line-height: 1.6;
   tab-size: 2;
@@ -541,8 +541,8 @@
 
 .lc-field input:focus,
 .lc-field textarea:focus {
-  border-color: var(--frozen-info);
-  box-shadow: 0 0 0 3px var(--frozen-info-tint);
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-ring);
   outline: none;
 }
 
@@ -661,7 +661,7 @@
   background: var(--surface-soft);
   color: var(--ink);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.6;
   tab-size: 2;
   white-space: pre;

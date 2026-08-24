@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { SIDEBAR_DOCKED_KEY } from '../app/AppFrame'
 import { Button, Input, Kbd, Pill, Select } from '../components/ui'
 import { user } from '../data/mock'
+import { setSoundsEnabled, soundsEnabled } from '../sound/sounds'
 import { SettingsRow, SettingsToggle } from './settings/controls'
 import { PageShell } from './PageShell'
 import './settings/settings.css'
@@ -72,6 +73,12 @@ export function SettingsPage(): ReactNode {
   const setSidebar = (docked: boolean): void => {
     window.localStorage.setItem(SIDEBAR_DOCKED_KEY, docked ? '1' : '0')
     setSidebarDocked(docked)
+  }
+
+  const [sounds, setSounds] = useState(soundsEnabled)
+  const setSoundPreference = (enabled: boolean): void => {
+    setSoundsEnabled(enabled)
+    setSounds(enabled)
   }
 
   useEffect(() => {
@@ -247,6 +254,13 @@ export function SettingsPage(): ReactNode {
                       />
                     ))}
                   </div>
+                </SettingsRow>
+                <SettingsRow label="Sounds" description="A soft tick when you check something off.">
+                  <SettingsToggle
+                    checked={sounds}
+                    onChange={setSoundPreference}
+                    ariaLabel="Completion sounds"
+                  />
                 </SettingsRow>
                 <SettingsRow label="Sidebar" description="Default sidebar state.">
                   <div className="set-segment" role="radiogroup" aria-label="Sidebar behavior">

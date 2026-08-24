@@ -253,13 +253,13 @@ export function HabitHistory({
               <XAxis
                 axisLine={false}
                 dataKey="shortLabel"
-                tick={{ fill: 'var(--ink-muted)', fontSize: 10 }}
+                tick={{ fill: 'var(--ink-muted)', fontSize: 12 }}
                 tickLine={false}
               />
               <YAxis
                 axisLine={false}
                 domain={[0, 100]}
-                tick={{ fill: 'var(--ink-muted)', fontSize: 10 }}
+                tick={{ fill: 'var(--ink-muted)', fontSize: 12 }}
                 tickFormatter={(value: number) => `${value}%`}
                 tickLine={false}
                 ticks={[0, 25, 50, 75, 100]}

@@ -30,14 +30,14 @@
 .jlock-ghost-date {
   width: 120px;
   height: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-chip);
   background: var(--surface-strong);
   margin-bottom: var(--space-3);
 }
 
 .jlock-ghost-line {
   height: 9px;
-  border-radius: 5px;
+  border-radius: var(--radius-chip);
   background: var(--surface-soft);
   margin-bottom: var(--space-2);
 }
@@ -51,7 +51,11 @@
   justify-content: center;
   gap: var(--space-3);
   text-align: center;
-  background: linear-gradient(180deg, rgba(250, 248, 243, 0.4), rgba(250, 248, 243, 0.85));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-canvas) 40%, transparent),
+    color-mix(in srgb, var(--surface-canvas) 85%, transparent)
+  );
 }
 
 .jlock-glyph {
@@ -250,7 +254,7 @@
   resize: none;
   background: transparent;
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: var(--text-lg);
   line-height: 1.7;
   color: var(--ink-body);
 }
