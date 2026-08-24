@@ -167,7 +167,7 @@ export function TimePicker({ value, onChange, ariaLabel, format }: TimePickerPro
   return (
     <div className="ui-timepicker" ref={rootRef}>
       <div ref={controlRef} className={`ui-timepicker-control${invalid ? ' is-invalid' : ''}${open ? ' is-open' : ''}`}>
-        <input ref={inputRef} className="ui-timepicker-input" type="text" inputMode="text" role="combobox" aria-label={ariaLabel} aria-expanded={open} aria-controls={listId} aria-activedescendant={open ? activeOptionId : undefined} aria-autocomplete="list" aria-invalid={invalid} value={text} onChange={(event) => { setText(event.target.value); setInvalid(false) }} onBlur={onInputBlur} onKeyDown={onInputKeyDown} />
+        <input ref={inputRef} className="ui-timepicker-input" type="text" inputMode="text" role="combobox" aria-label={ariaLabel} aria-expanded={open} aria-controls={listId} aria-activedescendant={open ? activeOptionId : undefined} aria-autocomplete="list" aria-invalid={invalid} value={text} onClick={() => { if (!open) openList() }} onChange={(event) => { setText(event.target.value); setInvalid(false) }} onBlur={onInputBlur} onKeyDown={onInputKeyDown} />
         <button type="button" aria-label={`Choose ${ariaLabel.toLocaleLowerCase()}`} aria-expanded={open} onClick={() => open ? close() : openList()}><Clock3 size={14} /></button>
       </div>
       {invalid ? <span className="ui-timepicker-error" role="alert">Use a time such as 9:15 AM or 21:15</span> : null}

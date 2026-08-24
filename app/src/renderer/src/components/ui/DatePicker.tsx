@@ -69,11 +69,14 @@ export function datePickerMonthCells(cursor: MonthCursor): readonly (string | nu
 }
 
 function formatDate(iso: string): string {
+  const date = parseIso(iso)
+  const sameYear = date.getFullYear() === new Date().getFullYear()
   return new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
     day: 'numeric',
     month: 'short',
-    year: 'numeric'
-  }).format(parseIso(iso))
+    ...(sameYear ? {} : { year: 'numeric' })
+  }).format(date)
 }
 
 function menuPosition(trigger: DOMRect): MenuPosition {

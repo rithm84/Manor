@@ -21,10 +21,14 @@ const EVENT: CalendarEventRecord = {
 }
 
 describe('calendar source overlays', () => {
-  it('uses the full configured source colour for grid events', () => {
-    expect(calendarEventTone('#3b684b')).toEqual({
-      backgroundColor: '#3c8057', borderColor: '#3c8057', textColor: '#ffffff'
+  it('derives a tint fill, full-strength accent bar, and darkened text from the source colour', () => {
+    expect(calendarEventTone('#3B684B')).toEqual({
+      backgroundColor: '#e2e8e4', borderColor: '#3b684b', textColor: '#33533f'
     })
+  })
+
+  it('rejects colours that are not #RRGGBB', () => {
+    expect(() => calendarEventTone('rebeccapurple')).toThrow(TypeError)
   })
 
   it('keeps scratch blocks as one Home-derived overlay instead of a duplicate calendar', () => {

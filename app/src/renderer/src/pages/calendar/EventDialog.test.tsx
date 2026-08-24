@@ -21,6 +21,7 @@ describe('Calendar event editor', () => {
   it('renders the floating event editor, recurrence controls, and destructive confirmation', () => {
     const markup = renderToStaticMarkup(
       <EventDialog open event={EVENT} calendars={[CALENDAR]} creating={false} confirmingDelete occurrenceDate="2026-08-22" occurrenceEvent={null} timeFormat="12h" notePages={[]}
+        anchor={null}
         onClose={() => undefined} onSave={() => undefined} onDuplicate={() => undefined} onDelete={() => undefined} onOpenNote={() => undefined} />
     )
     expect(markup).toContain('role="dialog"')
