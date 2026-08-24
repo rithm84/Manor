@@ -24,9 +24,9 @@
 .alfred-surface--panel {
   height: 100%;
   border: 1px solid var(--hairline);
-  border-radius: 16px;
+  border-radius: var(--radius-card-lg);
   background: var(--surface-canvas);
-  box-shadow: 0 14px 38px rgba(25, 23, 25, 0.19);
+  box-shadow: var(--shadow-overlay);
 }
 
 .alfred-header {

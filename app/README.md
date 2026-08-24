@@ -1,6 +1,6 @@
 # Manor
 
-_Last updated: 2026-08-22_
+_Last updated: 2026-08-23_
 
 The Electron app for Manor. Design charter: `docs/DESIGN.md` at the repo
 root. Product truth: `../docs/PRD.md`.
@@ -34,7 +34,7 @@ remaining modules still use the canonical mock story.
 
 - `src/main/` window bootstrap and main-process stores; `src/preload/` the
   typed renderer bridge.
-- `src/renderer/src/styles/` design tokens (Atelier v2) + base styles.
+- `src/renderer/src/styles/` design tokens (Paper Violet) + base styles.
 - `src/renderer/src/components/ui/` shared primitives (Button, Pill, Card,
   Checkbox, Select, Modal, DetailDialog, Tooltip, EmptyState, Input, Kbd).
 - `src/renderer/src/app/` the frame: sidebar, titlebar strip, Alfred modal

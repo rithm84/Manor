@@ -1,46 +1,74 @@
-/* Manor design tokens — Aubergine Editorial. Single source of truth. */
+/* Manor design tokens — Paper Violet. Single source of truth.
+   Never write color/radius/shadow/font-size literals in page CSS;
+   if a value is missing here, add a token first (see docs/DESIGN.md). */
 
 :root {
-  /* Surfaces */
-  --surface-canvas: #faf8f3;
-  --surface-soft: #f5efe9;
+  /* Surfaces — content on white, chrome on paper */
+  --surface-canvas: #ffffff;
+  --surface-paper: #fafaf8;
+  --surface-soft: #f5f4f1;
   --surface-card: #ffffff;
-  --surface-card-warm: #f5efe9;
-  --surface-strong: #e9e0d9;
+  --surface-card-warm: #f5f4f1;
+  --surface-strong: #eae8e3;
 
   /* Ink */
-  --ink: #191719;
-  --ink-body: #403b40;
-  --ink-muted: #6a6669;
+  --ink: #1b191d;
+  --ink-body: #3f3b44;
+  --ink-muted: #6e6975;
 
   /* Hairline borders are the elevation system */
-  --hairline: #e4dcd5;
-  --shadow-overlay: 0 4px 16px rgba(25, 23, 25, 0.1);
-  --shadow-hover: 0 1px 3px rgba(25, 23, 25, 0.08);
+  --hairline: #e8e6e1;
+  --hairline-strong: #dcd9d3;
+  --shadow-overlay: 0 16px 40px rgba(27, 25, 29, 0.12), 0 2px 6px rgba(27, 25, 29, 0.05);
+  --shadow-hover: 0 1px 3px rgba(27, 25, 29, 0.07);
 
-  /* Primary actions only */
-  --primary: #6a4e6c;
-  --primary-hover: #5b415d;
-  --primary-active: #4c354e;
-  --primary-tint: #f0e8f0;
+  /* Violet — the single interaction accent */
+  --primary: #71549e;
+  --primary-hover: #654a8d;
+  --primary-active: #57407b;
+  --primary-tint: #f2edf9;
 
-  /* Grounding — forest */
+  /* Grounding — forest (legacy; prefer violet for selection states) */
   --forest: #2f4127;
   --forest-soft: var(--completion-tint);
 
-  /* Semantic strong/tint pairs */
-  --completion: #3b684b;
-  --completion-tint: #e7f1e9;
-  --today-warning: #825d16;
-  --today-warning-tint: #f7ecd2;
-  --tomorrow-gold: #6d6422;
-  --tomorrow-gold-tint: #efecd8;
-  --overdue-error: #a33f46;
-  --overdue-error-tint: #f8e4e5;
-  --frozen-info: #416883;
-  --frozen-info-tint: #e5eef4;
-  --this-week-plum: #6b5375;
-  --this-week-plum-tint: #eee8f1;
+  /* Semantic strong/tint pairs — used only when they mean something */
+  --completion: #3d7a52;
+  --completion-tint: #e6f2ea;
+  --today-warning: #8f6a0e;
+  --today-warning-tint: #f8efd8;
+  --tomorrow-gold: #6f671f;
+  --tomorrow-gold-tint: #f1eeda;
+  --overdue-error: #b0434b;
+  --overdue-error-tint: #f9e6e7;
+  --frozen-info: #48708e;
+  --frozen-info-tint: #e8eff5;
+  --this-week-plum: #6f5680;
+  --this-week-plum-tint: #efe9f4;
+
+  /* Mood & Focus scale (strong / tint) — the one sanctioned multi-hue ladder */
+  --scale-awful: #a63d4c;
+  --scale-awful-tint: #f8e3e7;
+  --scale-bad: #a05a3a;
+  --scale-bad-tint: #f7e9e0;
+  --scale-neutral: #6e6975;
+  --scale-neutral-tint: #efedea;
+  --scale-good: #5e7a35;
+  --scale-good-tint: #ecf1df;
+  --scale-great: #2f7a50;
+  --scale-great-tint: #e3efe8;
+  --scale-lockedout: #7b5686;
+  --scale-lockedout-tint: #f0e7f2;
+  --scale-low: #5e6092;
+  --scale-low-tint: #e9e9f4;
+  --scale-medium: #4e6e91;
+  --scale-medium-tint: #e5ecf4;
+  --scale-high: #39728b;
+  --scale-high-tint: #e2edf2;
+  --scale-lockedin: #245f70;
+  --scale-lockedin-tint: #deeaee;
+  --scale-resting: #6c676f;
+  --scale-resting-tint: #eceaee;
 
   /* Compatibility aliases for established module roles */
   --teal: var(--frozen-info);
@@ -54,16 +82,17 @@
   --error: var(--overdue-error);
   --error-soft: var(--overdue-error-tint);
 
-  /* Interaction and Home timeline roles */
-  --link: var(--frozen-info);
+  /* Interaction roles — violet owns interaction; red owns "now" */
+  --link: var(--primary);
   --link-hover: var(--ink);
-  --focus-border: var(--frozen-info);
-  --selection: var(--frozen-info-tint);
+  --focus-border: var(--primary);
+  --selection: var(--primary-tint);
   --scratch: var(--frozen-info);
   --scratch-tint: var(--frozen-info-tint);
   --timeline-now: var(--overdue-error);
 
-  /* Kanban group pills (the signature): dark fill, white text */
+  /* Kanban group pills (the signature): dark fill, white text.
+     Column washes mix the tint toward white so boards read as paper. */
   --pill-overdue: var(--overdue-error);
   --pill-overdue-tint: var(--overdue-error-tint);
   --pill-today: var(--today-warning);
@@ -74,26 +103,27 @@
   --pill-week-tint: var(--this-week-plum-tint);
   --pill-text: #ffffff;
 
-  /* Sidebar is intentionally near-neutral, separate from brand */
-  --sidebar-background: #f2efea;
-  --sidebar-border: #e4dcd5;
-  --sidebar-hover: #ece8e4;
-  --sidebar-selected: #e8e4e2;
+  /* Sidebar — paper chrome; selection carries a faint violet cast */
+  --sidebar-background: var(--surface-paper);
+  --sidebar-border: var(--hairline);
+  --sidebar-hover: #f1efec;
+  --sidebar-selected: #edeaf2;
 
   /* Typography */
   --font-ui: 'Inter', -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   --font-display: 'EB Garamond', 'Iowan Old Style', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
 
-  --text-xs: 11px;
-  --text-sm: 12px;
-  --text-body: 13px;
-  --text-md: 14px;
-  --text-emphasis: 15px;
-  --text-lg: 16px;
+  /* Scale floor is --text-xs; --text-gutter is the one sanctioned
+     exception for dense time-grid gutters and mini-month letters. */
+  --text-gutter: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-body: 14px;
+  --text-md: 15px;
+  --text-emphasis: 16px;
+  --text-lg: 17px;
   --display-md: 28px;
-  --display-lg: 34px;
-  --display-xl: 40px;
 
   /* Spacing — 4px base scale */
   --space-1: 4px;
@@ -106,14 +136,14 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* Radii */
+  /* Radii — the complete set; nothing else ships */
   --radius-chip: 6px;
   --radius-control: 8px;
   --radius-card: 10px;
   --radius-card-lg: 12px;
 
-  /* Focus uses the information role, not the brand primary */
-  --focus-ring: 0 0 0 3px var(--frozen-info-tint);
+  /* Focus is violet, like every interaction state */
+  --focus-ring: 0 0 0 3px #e5dcf3;
 
   /* Motion — spring-feel, interruptible (emil bar) */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);

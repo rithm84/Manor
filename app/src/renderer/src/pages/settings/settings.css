@@ -38,7 +38,7 @@
 }
 
 .set-nav-item.is-active {
-  background: rgba(20, 20, 19, 0.07);
+  background: var(--sidebar-selected);
   color: var(--ink);
   font-weight: 600;
 }
@@ -135,8 +135,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--forest);
-  color: var(--surface-canvas);
+  background: var(--primary);
+  color: #ffffff;
   font-size: var(--text-md);
   font-weight: 600;
   flex-shrink: 0;
@@ -167,7 +167,7 @@
   position: relative;
   width: 36px;
   height: 21px;
-  border-radius: 11px;
+  border-radius: 999px;
   background: var(--surface-strong);
   transition: background-color var(--duration-base) ease;
 }
@@ -178,13 +178,13 @@
 
 .set-toggle-knob {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 17px;
-  height: 17px;
+  top: 3px;
+  left: 3px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(20, 20, 19, 0.18);
+  box-shadow: var(--shadow-hover);
   transition: transform var(--duration-base) var(--ease-out);
 }
 
@@ -211,7 +211,7 @@
 }
 
 .set-swatch:hover {
-  box-shadow: 0 0 0 2px var(--surface-canvas), 0 0 0 3.5px var(--surface-strong);
+  box-shadow: 0 0 0 2px var(--surface-canvas), 0 0 0 3px var(--surface-strong);
 }
 
 .set-swatch:active {
@@ -219,7 +219,7 @@
 }
 
 .set-swatch.is-active {
-  box-shadow: 0 0 0 2px var(--surface-canvas), 0 0 0 3.5px var(--swatch);
+  box-shadow: 0 0 0 2px var(--surface-canvas), 0 0 0 3px var(--swatch);
 }
 
 /* Two-option segment */

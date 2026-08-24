@@ -47,8 +47,8 @@ const POINT_COUNT = 240
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
 /** Fixed axis tilt so the sphere reads as 3D, not a spinning disc. */
 const TILT = 0.42
-/** Aubergine focus color from Atelier's selected primary. */
-const DOT_RGB = '106, 78, 108'
+/** Violet interaction accent (--primary #71549e) as decimal RGB. */
+const DOT_RGB = '113, 84, 158'
 
 const buildPoints = (): readonly OrbPoint[] => {
   const points: OrbPoint[] = []
@@ -115,7 +115,7 @@ const drawFrame = (
 }
 
 /**
- * The agent's visual presence: a particle-sphere of aubergine dots on a
+ * The agent's visual presence: a particle-sphere of violet dots on a
  * transparent ground (reference: orbs.jakubantalik.com). Canvas 2D, no
  * dependencies. Motion is continuous across state changes: speeds ease
  * toward the active state's targets instead of restarting.

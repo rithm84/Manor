@@ -162,7 +162,7 @@
 }
 .ui-pill--tag.is-success {
   background: var(--success-soft);
-  color: #3d8a52;
+  color: var(--success);
 }
 .ui-pill--tag.is-gold {
   background: var(--gold-soft);
@@ -636,7 +636,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(20, 20, 19, 0.32);
+  background: rgba(27, 25, 29, 0.32);
   transition: opacity var(--duration-base) ease;
 
   @starting-style {

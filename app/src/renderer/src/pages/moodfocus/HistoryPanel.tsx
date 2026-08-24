@@ -242,8 +242,8 @@ export function HistoryPanel({ state, month, onMonthChange, onEditDate }: Histor
           <ResponsiveContainer width="100%" height="100%">
             <LineChart accessibilityLayer data={trend} margin={{ top: 10, right: 14, bottom: 0, left: -16 }}>
               <CartesianGrid vertical={false} stroke="var(--hairline)" strokeDasharray="2 5" />
-              <XAxis axisLine={false} dataKey="shortLabel" tick={{ fill: 'var(--ink-muted)', fontSize: 11 }} tickLine={false} />
-              <YAxis axisLine={false} domain={[1, 5]} tick={{ fill: 'var(--ink-muted)', fontSize: 10 }} tickLine={false} ticks={[1, 2, 3, 4, 5]} width={32} />
+              <XAxis axisLine={false} dataKey="shortLabel" tick={{ fill: 'var(--ink-muted)', fontSize: 12 }} tickLine={false} />
+              <YAxis axisLine={false} domain={[1, 5]} tick={{ fill: 'var(--ink-muted)', fontSize: 12 }} tickLine={false} ticks={[1, 2, 3, 4, 5]} width={32} />
               <Tooltip
                 contentStyle={{ background: 'var(--surface-card)', border: '1px solid var(--hairline)', borderRadius: 8, boxShadow: 'var(--shadow-overlay)', color: 'var(--ink-body)', fontSize: 12 }}
                 cursor={{ stroke: 'var(--surface-strong)', strokeWidth: 1 }}

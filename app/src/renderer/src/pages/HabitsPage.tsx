@@ -12,6 +12,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { addDays, monthKey, statusOn } from '../../../shared/habits'
+import { playCelebrationChime, playCompletionTick } from '../sound/sounds'
 import type { HabitDraft, HabitsState } from '../../../shared/habits'
 import { Button, EmptyState, Modal } from '../components/ui'
 import { TODAY_ISO } from '../data/mock'
@@ -294,6 +295,12 @@ export function HabitsPage(): ReactNode {
                     habit={habit}
                     isToday={selectedDate === today}
                     onLog={(habitId, value) => {
+                      const wasComplete =
+                        activeModels.find((model) => model.definition.id === habitId)?.entry?.value === 100
+                      if (value === 100 && !wasComplete) {
+                        if (selectedDate === today && remaining === 1) playCelebrationChime()
+                        else playCompletionTick()
+                      }
                       void persist('Could not save habit entry', () =>
                         window.manor.habits.setEntry({ habitId, date: selectedDate, value })
                       )

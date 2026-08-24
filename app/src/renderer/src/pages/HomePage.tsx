@@ -25,6 +25,7 @@ import type {
   TaskBucket
 } from '../data/mock'
 import type { SavedTaskView } from '../../../shared/home'
+import { playCompletionTick } from '../sound/sounds'
 import { KanbanBoard } from './home/KanbanBoard'
 import { MasterTaskTable } from './home/MasterTaskTable'
 import { createHomeSeed } from './home/homeSeed'
@@ -213,6 +214,7 @@ export function HomePage(): ReactNode {
   const completeTask = async (taskId: string): Promise<void> => {
     const task = tasks.find((candidate) => candidate.id === taskId)
     if (task === undefined) throw new Error(`Cannot complete missing task ${taskId}`)
+    playCompletionTick()
     setPeekOpen(false)
     setCompletingIds((current) => new Set(current).add(taskId))
     const timer = window.setTimeout(() => {
