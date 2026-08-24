@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
+import type { AlfredRoute } from '../../../shared/alfred'
 import { Tooltip } from '../components/ui'
 import { AlfredModal } from './AlfredModal'
 import { Sidebar } from './Sidebar'
@@ -64,20 +65,21 @@ export function AppFrame(): ReactNode {
   }, [cancelDismiss])
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.altKey && event.code === 'Space') {
-        event.preventDefault()
-        setAlfredOpen((current) => !current)
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
     const onOpenAlfred = (): void => setAlfredOpen(true)
     window.addEventListener('manor:open-alfred', onOpenAlfred)
+    const unsubscribeToggle = window.manor.alfred.onModalToggle(() => {
+      setAlfredOpen((current) => !current)
+    })
+    const unsubscribeNavigate = window.manor.alfred.onNavigate((route) => {
+      setAlfredOpen(false)
+      void navigate(route)
+    })
     return (): void => {
-      window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('manor:open-alfred', onOpenAlfred)
+      unsubscribeToggle()
+      unsubscribeNavigate()
     }
-  }, [])
+  }, [navigate])
 
   useEffect(() => {
     return (): void => {
@@ -177,7 +179,14 @@ export function AppFrame(): ReactNode {
         </main>
       </div>
 
-      <AlfredModal open={alfredOpen} onClose={() => setAlfredOpen(false)} />
+      <AlfredModal
+        open={alfredOpen}
+        onClose={() => setAlfredOpen(false)}
+        onNavigate={(route: AlfredRoute) => {
+          setAlfredOpen(false)
+          void navigate(route)
+        }}
+      />
     </div>
   )
 }

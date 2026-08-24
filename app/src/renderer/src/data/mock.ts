@@ -1217,18 +1217,3 @@ export const alfredAudit: readonly AlfredAuditEntry[] = [
   { id: 'audit-water', action: 'Logged Water', whenLabel: '9:42 PM Tue' },
   { id: 'audit-task', action: "Created task 'two-pointers set'", whenLabel: 'Aug 18' }
 ]
-
-export interface AlfredExchange {
-  userSaid: string
-  alfredSaid: string
-  /** Habit completion shown in the glance row after this exchange. */
-  glanceDone: number
-  glanceTotal: number
-}
-
-export const alfredSampleExchange: AlfredExchange = {
-  userSaid: 'Log protein and family time, and mark the neetcode problem done.',
-  alfredSaid: 'Done. Protein, Family QT, and one LeetCode problem logged. Eight of ten today; two left.',
-  glanceDone: 8,
-  glanceTotal: 10
-}

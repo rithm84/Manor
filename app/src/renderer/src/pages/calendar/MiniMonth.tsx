@@ -2,87 +2,89 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { TODAY_ISO } from '../../data/mock'
-import { addMonths, monthCells, monthTitle, startOfWeek } from './calendarModel'
+import { addCalendarDays, calendarWallTimeInZone } from '../../../../shared/calendar'
+import type { CalendarWeekStart } from '../../../../shared/calendar'
 
-const WEEKDAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+] as const
+
+function parts(iso: string): { year: number; month: number; day: number } {
+  const [year, month, day] = iso.split('-').map(Number)
+  return { year, month: month - 1, day }
+}
+
+function iso(year: number, month: number, day: number): string {
+  return new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10)
+}
+
+function monthShift(isoDate: string, amount: number): string {
+  const value = parts(isoDate)
+  return iso(value.year, value.month + amount, 1)
+}
+
+function monthCells(anchor: string, weekStart: CalendarWeekStart): readonly string[] {
+  const value = parts(anchor)
+  const first = iso(value.year, value.month, 1)
+  const firstWeekday = new Date(`${first}T00:00:00.000Z`).getUTCDay()
+  const offset = weekStart === 'monday' ? (firstWeekday + 6) % 7 : firstWeekday
+  const start = addCalendarDays(first, -offset)
+  return Array.from({ length: 42 }, (_, index) => addCalendarDays(start, index))
+}
 
 export interface MiniMonthProps {
-  /** The main view's anchor date; its week row is banded. */
   anchor: string
+  weekStart: CalendarWeekStart
+  primaryTimeZone: string
   onPickDay: (iso: string) => void
 }
 
-/**
- * Notion Calendar mini month: title + chevrons, weekday letters, banded
- * current week, today filled. Chevrons browse months locally without
- * moving the main view; picking a day hands the date up and snaps back.
- */
-export function MiniMonth({ anchor, onPickDay }: MiniMonthProps): ReactNode {
-  const [monthShift, setMonthShift] = useState(0)
+export function MiniMonth({ anchor, weekStart, primaryTimeZone, onPickDay }: MiniMonthProps): ReactNode {
+  const [shown, setShown] = useState(anchor)
+  const today = calendarWallTimeInZone(new Date(), primaryTimeZone).date
+  const anchorParts = parts(shown)
+  const cells = monthCells(shown, weekStart)
+  const labels = weekStart === 'monday'
+    ? ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+    : ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
-  useEffect(() => {
-    setMonthShift(0)
-  }, [anchor])
-
-  const shownMonth = addMonths(anchor, monthShift)
-  const cells = monthCells(shownMonth)
-  const bandStart = startOfWeek(anchor)
-  const weeks: (typeof cells)[] = []
-  for (let i = 0; i < cells.length; i += 7) {
-    weeks.push(cells.slice(i, i + 7))
-  }
+  useEffect(() => setShown(anchor), [anchor])
 
   return (
-    <div className="cal-mini">
-      <div className="cal-mini-head">
-        <span className="cal-mini-title">{monthTitle(shownMonth)}</span>
+    <section className="cal-mini" aria-label="Jump to date">
+      <header className="cal-mini-head">
+        <span className="cal-mini-title">{MONTHS[anchorParts.month]} {anchorParts.year}</span>
         <span className="cal-mini-nav">
-          <button
-            type="button"
-            className="cal-chev cal-chev--sm"
-            onClick={() => setMonthShift(monthShift - 1)}
-            aria-label="Previous month"
-          >
+          <button type="button" className="cal-icon-btn" onClick={() => setShown(monthShift(shown, -1))} aria-label="Previous month">
             <ChevronLeft size={14} />
           </button>
-          <button
-            type="button"
-            className="cal-chev cal-chev--sm"
-            onClick={() => setMonthShift(monthShift + 1)}
-            aria-label="Next month"
-          >
+          <button type="button" className="cal-icon-btn" onClick={() => setShown(monthShift(shown, 1))} aria-label="Next month">
             <ChevronRight size={14} />
           </button>
         </span>
+      </header>
+      <div className="cal-mini-weekdays" aria-hidden="true">
+        {labels.map((label) => <span key={label}>{label}</span>)}
       </div>
-      <div className="cal-mini-row" aria-hidden="true">
-        {WEEKDAY_LETTERS.map((letter, index) => (
-          <span key={`${letter}-${index}`} className="cal-mini-cell cal-mini-weekday">
-            {letter}
-          </span>
-        ))}
+      <div className="cal-mini-days">
+        {cells.map((date) => {
+          const cell = parts(date)
+          const outside = cell.month !== anchorParts.month
+          return (
+            <button
+              key={date}
+              type="button"
+              className={`cal-mini-day${outside ? ' is-outside' : ''}${date === today ? ' is-today' : ''}${date === anchor ? ' is-anchor' : ''}`}
+              onClick={() => onPickDay(date)}
+              aria-label={date}
+              aria-current={date === today ? 'date' : undefined}
+            >
+              {cell.day}
+            </button>
+          )
+        })}
       </div>
-      {weeks.map((week) => {
-        const banded = week[0].iso === bandStart
-        return (
-          <div key={week[0].iso} className={`cal-mini-row${banded ? ' is-current-week' : ''}`}>
-            {week.map((cell) => (
-              <button
-                key={cell.iso}
-                type="button"
-                className={`cal-mini-cell cal-mini-day${cell.inMonth ? '' : ' is-outside'}${
-                  cell.iso === TODAY_ISO ? ' is-today' : ''
-                }${cell.iso === anchor ? ' is-anchor' : ''}`}
-                onClick={() => onPickDay(cell.iso)}
-                aria-label={cell.iso}
-              >
-                {cell.day}
-              </button>
-            ))}
-          </div>
-        )
-      })}
-    </div>
+    </section>
   )
 }

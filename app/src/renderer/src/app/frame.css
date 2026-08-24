@@ -252,6 +252,23 @@
   padding: 0 var(--space-6);
 }
 
+.route-loading {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.route-loading-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
 /* Calendar workspace mode: the page owns the whole window below the topbar. */
 .page--bare {
   padding: 0;
@@ -326,131 +343,4 @@
 .ws-toggle-btn.is-active {
   background: var(--surface-strong);
   color: var(--ink);
-}
-
-/* --- Alfred modal ---------------------------------------------------------- */
-
-.alfred {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: var(--space-8) var(--space-8) var(--space-6);
-  gap: var(--space-4);
-}
-
-.alfred-orb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  padding: var(--space-1);
-  transition: transform var(--duration-press) var(--ease-out);
-}
-
-.alfred-orb:active {
-  transform: scale(0.96);
-}
-
-.alfred-state {
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--ink-muted);
-  letter-spacing: 0.2px;
-  margin-top: calc(-1 * var(--space-2));
-}
-
-.alfred-exchange {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  text-align: center;
-}
-
-.alfred-line {
-  font-size: var(--text-body);
-  line-height: 1.45;
-}
-
-.alfred-line--user {
-  color: var(--ink-muted);
-}
-
-.alfred-line--user::before {
-  content: '\201C';
-}
-
-.alfred-line--user::after {
-  content: '\201D';
-}
-
-.alfred-line--alfred {
-  color: var(--ink);
-  font-weight: 500;
-}
-
-.alfred-glance {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-card);
-  background: var(--surface-card);
-}
-
-.alfred-glance-dots {
-  display: flex;
-  gap: 4px;
-}
-
-.alfred-glance-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--surface-strong);
-}
-
-.alfred-glance-dot.is-done {
-  background: var(--success);
-}
-
-.alfred-glance-stat {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: var(--text-sm);
-  color: var(--ink-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.alfred-last {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  color: var(--ink-muted);
-}
-
-.alfred-last-link {
-  font-weight: 500;
-  transition: color var(--duration-fast) ease;
-}
-
-.alfred-last-link:hover {
-  color: var(--link-hover);
-}
-
-.alfred-hints {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  color: var(--ink-muted);
-  font-size: var(--text-xs);
-}
-
-.alfred-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { SIDEBAR_DOCKED_KEY } from '../app/AppFrame'
@@ -56,8 +56,7 @@ export function SettingsPage(): ReactNode {
   const [jobFeed, setJobFeed] = useState(true)
 
   // Alfred
-  const [capturingHotkey, setCapturingHotkey] = useState(false)
-  const [voice, setVoice] = useState(true)
+  const [shortcutAvailable, setShortcutAvailable] = useState<boolean | null>(null)
   const [briefingTime, setBriefingTime] = useState('07:00')
 
   // Notifications
@@ -74,6 +73,22 @@ export function SettingsPage(): ReactNode {
     window.localStorage.setItem(SIDEBAR_DOCKED_KEY, docked ? '1' : '0')
     setSidebarDocked(docked)
   }
+
+  useEffect(() => {
+    let cancelled = false
+    void window.manor.alfred
+      .getShortcutStatus()
+      .then((status) => {
+        if (!cancelled) setShortcutAvailable(status.registered)
+      })
+      .catch((error: unknown) => {
+        console.error('Alfred shortcut status failed', { error })
+        if (!cancelled) setShortcutAvailable(false)
+      })
+    return (): void => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <PageShell title="Settings" fullBleed={false}>
@@ -165,25 +180,16 @@ export function SettingsPage(): ReactNode {
               <h2 className="set-section-title">Alfred</h2>
               <div className="set-card">
                 <SettingsRow label="Summon" description="Open Alfred from any app while Manor is running.">
-                  {capturingHotkey ? (
-                    <button
-                      type="button"
-                      className="set-hotkey-capture"
-                      onClick={() => setCapturingHotkey(false)}
-                    >
-                      Press new keys, or click to keep
-                    </button>
-                  ) : (
-                    <div className="set-connected">
-                      <Kbd keys={['⌥', 'Space']} />
-                      <Button variant="subtle" onClick={() => setCapturingHotkey(true)}>
-                        Change
-                      </Button>
-                    </div>
-                  )}
-                </SettingsRow>
-                <SettingsRow label="Voice" description="Play Alfred's replies aloud.">
-                  <SettingsToggle checked={voice} onChange={setVoice} ariaLabel="Voice" />
+                  <div className="set-connected">
+                    <Kbd keys={['⌥', 'Space']} />
+                    {shortcutAvailable !== null ? (
+                      <Pill
+                        variant="tag"
+                        colorway={shortcutAvailable ? 'success' : 'overdue'}
+                        label={shortcutAvailable ? 'Available' : 'Unavailable'}
+                      />
+                    ) : null}
+                  </div>
                 </SettingsRow>
                 <SettingsRow label="Morning briefing" description="Prepare the briefing by this time.">
                   <Select

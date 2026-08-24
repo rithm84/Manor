@@ -71,7 +71,8 @@ export function Modal({ open, onClose, children, width, ariaLabel }: ModalProps)
       const visibleModals = document.querySelectorAll<HTMLElement>('.ui-modal')
       if (visibleModals.item(visibleModals.length - 1) !== modalRef.current) return
       if (event.key === 'Escape') {
-        if (modalRef.current?.querySelector('[aria-expanded="true"]') !== null) return
+        const openPicker = modalRef.current?.querySelector('.ui-select-menu, .ui-datepicker-menu, .ui-timepicker-menu')
+        if (openPicker !== null && openPicker !== undefined) return
         event.preventDefault()
         onCloseRef.current()
         return
