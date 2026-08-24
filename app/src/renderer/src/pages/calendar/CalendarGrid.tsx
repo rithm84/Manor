@@ -10,7 +10,7 @@ import type {
 import interactionPlugin, { type EventResizeDoneArg } from '@fullcalendar/interaction'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import { forwardRef, useEffect, useState } from 'react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { calendarGridDate, calendarGridTime, calendarWallTimeInZone, calendarWallTimeToInstant } from '../../../../shared/calendar'
@@ -20,7 +20,7 @@ export type CalendarWorkspaceView = 'day' | 'week' | 'month'
 
 export function calendarGridViewName(view: CalendarWorkspaceView): string {
   if (view === 'day') return 'timeGridDay'
-  if (view === 'week') return 'timeGridContinuousWeek'
+  if (view === 'week') return 'timeGridWeek'
   return 'dayGridMonth'
 }
 
@@ -54,12 +54,33 @@ function currentGridTime(timeZone: string): string {
   return `${current.date}T${current.time}:00.000Z`
 }
 
-function CalendarEventContent({ event, timeText }: EventContentArg): ReactNode {
+function CalendarEventContent({ event, timeText, view }: EventContentArg): ReactNode {
+  if (view.type === 'dayGridMonth' && !event.allDay) {
+    return (
+      <div className="cal-event-content cal-event-content--row" data-calendar-item-id={event.id}>
+        <i className="cal-event-dot" style={{ background: event.borderColor }} aria-hidden="true" />
+        {timeText === '' ? null : <time>{timeText}</time>}
+        <strong>{event.title}</strong>
+      </div>
+    )
+  }
   return (
     <div className="cal-event-content" data-calendar-item-id={event.id}>
       {timeText === '' ? null : <time>{timeText}</time>}
       <strong>{event.title}</strong>
     </div>
+  )
+}
+
+const DAY_HEAD_WEEKDAY = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' })
+
+function CalendarDayHeader({ date, view, isToday, text }: { date: Date; view: { type: string }; isToday: boolean; text: string }): ReactNode {
+  if (view.type === 'dayGridMonth') return <>{text}</>
+  return (
+    <span className={`cal-day-head${isToday ? ' is-today' : ''}`}>
+      <span className="cal-day-head-name">{DAY_HEAD_WEEKDAY.format(date)}</span>
+      <span className="cal-day-head-num tnum">{date.getUTCDate()}</span>
+    </span>
   )
 }
 
@@ -78,6 +99,16 @@ export const CalendarGrid = forwardRef<FullCalendar, CalendarGridProps>(function
 }, ref): ReactNode {
   const viewName = calendarGridViewName(view)
   const [now, setNow] = useState(() => currentGridTime(settings.primaryTimeZone))
+  const gridRef = useRef<HTMLDivElement | null>(null)
+  const calendarRef = useRef<FullCalendar | null>(null)
+  const panAccum = useRef(0)
+  const panResetTimer = useRef<number | null>(null)
+
+  const assignRefs = (instance: FullCalendar | null): void => {
+    calendarRef.current = instance
+    if (typeof ref === 'function') ref(instance)
+    else if (ref !== null) ref.current = instance
+  }
 
   useEffect(() => {
     setNow(currentGridTime(settings.primaryTimeZone))
@@ -85,10 +116,51 @@ export const CalendarGrid = forwardRef<FullCalendar, CalendarGridProps>(function
     return () => window.clearInterval(timer)
   }, [settings.primaryTimeZone])
 
+  /* Trackpad horizontal panning navigates the grid, as in Notion Calendar.
+     Day view slides a day per step; week and month step a full period. */
+  useEffect(() => {
+    const element = gridRef.current
+    if (element === null) return
+    const threshold = view === 'day' ? 110 : view === 'week' ? 240 : 280
+    const moveBy = (direction: 1 | -1): void => {
+      const api = calendarRef.current?.getApi()
+      if (api === undefined) return
+      if (view === 'month') {
+        if (direction === 1) api.next()
+        else api.prev()
+        return
+      }
+      api.incrementDate({ days: direction * (view === 'week' ? 7 : 1) })
+    }
+    const onWheel = (event: WheelEvent): void => {
+      const horizontalDelta = event.shiftKey && Math.abs(event.deltaY) > Math.abs(event.deltaX)
+        ? event.deltaY
+        : event.deltaX
+      if (Math.abs(horizontalDelta) <= Math.abs(event.deltaY) && !event.shiftKey) return
+      event.preventDefault()
+      panAccum.current += horizontalDelta
+      while (panAccum.current >= threshold) {
+        panAccum.current -= threshold
+        moveBy(1)
+      }
+      while (panAccum.current <= -threshold) {
+        panAccum.current += threshold
+        moveBy(-1)
+      }
+      if (panResetTimer.current !== null) window.clearTimeout(panResetTimer.current)
+      panResetTimer.current = window.setTimeout(() => { panAccum.current = 0 }, 300)
+    }
+    element.addEventListener('wheel', onWheel, { passive: false })
+    return () => {
+      element.removeEventListener('wheel', onWheel)
+      if (panResetTimer.current !== null) window.clearTimeout(panResetTimer.current)
+    }
+  }, [view])
+
   return (
-    <div className={`cal-grid${view === 'week' ? ' is-continuous-week' : ''}`} style={{ '--calendar-hour-height': `${hourHeight}px` } as React.CSSProperties}>
+    <div ref={gridRef} className="cal-grid" style={{ '--calendar-hour-height': `${hourHeight}px` } as React.CSSProperties}>
       <FullCalendar
-        ref={ref}
+        ref={assignRefs}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView={viewName}
         timeZone="UTC"
@@ -124,16 +196,14 @@ export const CalendarGrid = forwardRef<FullCalendar, CalendarGridProps>(function
         slotLabelFormat={{ hour: 'numeric', minute: '2-digit', hour12: settings.timeFormat === '12h' }}
         views={{
           dayGridMonth: { dayHeaderFormat: { weekday: 'short' } },
-          timeGridContinuousWeek: {
-            type: 'timeGrid',
-            duration: { days: 14 },
-            dateAlignment: 'week',
-            dayHeaderFormat: { weekday: 'short', month: 'short', day: 'numeric' }
-          },
-          timeGridDay: { dayHeaderFormat: { weekday: 'long', month: 'short', day: 'numeric' } }
+          timeGridWeek: { dayHeaderFormat: { weekday: 'short', day: 'numeric' } },
+          timeGridDay: { dayHeaderFormat: { weekday: 'short', day: 'numeric' } }
         }}
-        eventDisplay="block"
-        eventTimeFormat={{ hour: 'numeric', minute: '2-digit', hour12: settings.timeFormat === '12h' }}
+        dayHeaderContent={(header) => (
+          <CalendarDayHeader date={header.date} view={header.view} isToday={header.isToday} text={header.text} />
+        )}
+        eventDisplay="auto"
+        eventTimeFormat={{ hour: 'numeric', minute: '2-digit', omitZeroMinute: true, meridiem: 'short', hour12: settings.timeFormat === '12h' }}
         dayMaxEvents={4}
         stickyHeaderDates
         expandRows={false}

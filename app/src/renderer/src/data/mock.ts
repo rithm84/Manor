@@ -438,9 +438,9 @@ export interface CalendarSource {
 }
 
 export const calendars: readonly CalendarSource[] = [
-  { id: 'google-personal', name: 'Personal', color: '#5db872', scratch: false, enabled: true },
-  { id: 'ucla', name: 'UCLA', color: '#6f9fd8', scratch: false, enabled: true },
-  { id: 'manor-scratch', name: 'Scratch blocks', color: '#416883', scratch: true, enabled: true }
+  { id: 'google-personal', name: 'Personal', color: '#4576b5', scratch: false, enabled: true },
+  { id: 'ucla', name: 'UCLA', color: '#a8761c', scratch: false, enabled: true },
+  { id: 'manor-scratch', name: 'Scratch blocks', color: '#48708e', scratch: true, enabled: true }
 ]
 
 export interface CalendarEvent {

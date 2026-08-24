@@ -23,11 +23,11 @@ export interface CalendarOverlayInput extends EventInput {
 
 const CONTEXT_COLORS: Readonly<Record<ContextDefinition['color'], string>> = {
   forest: '#2f4127',
-  success: '#3b684b',
-  gold: '#6d6422',
-  info: '#416883',
-  plum: '#6b5375',
-  today: '#825d16'
+  success: '#3d7a52',
+  gold: '#6f671f',
+  info: '#48708e',
+  plum: '#6f5680',
+  today: '#8f6a0e'
 }
 
 interface CalendarEventTone {
@@ -36,22 +36,27 @@ interface CalendarEventTone {
   textColor: string
 }
 
-const VIVID_CALENDAR_COLORS: Readonly<Record<string, string>> = {
-  '#5db872': '#2f9f62',
-  '#6f9fd8': '#2f9fda',
-  '#416883': '#397ca7',
-  '#2f4127': '#315f3e',
-  '#3b684b': '#3c8057',
-  '#6d6422': '#9b791b',
-  '#6b5375': '#765983',
-  '#825d16': '#a56f16'
+function hexChannel(hex: string, index: number): number {
+  return Number.parseInt(hex.slice(1 + index * 2, 3 + index * 2), 16)
 }
 
-/** Uses each calendar's configured source colour at full strength, as in Notion Calendar. */
+function mixHex(color: string, base: string, colorWeight: number): string {
+  const mixed = [0, 1, 2].map((index) => {
+    const value = Math.round(hexChannel(color, index) * colorWeight + hexChannel(base, index) * (1 - colorWeight))
+    return value.toString(16).padStart(2, '0')
+  })
+  return `#${mixed.join('')}`
+}
+
+/** Notion Calendar treatment: soft tint fill, full-strength accent bar, darkened text. */
 export function calendarEventTone(color: string): CalendarEventTone {
   if (!/^#[\da-f]{6}$/i.test(color)) throw new TypeError(`Calendar colour ${color} must use #RRGGBB`)
-  const backgroundColor = VIVID_CALENDAR_COLORS[color.toLowerCase()] ?? color
-  return { backgroundColor, borderColor: backgroundColor, textColor: '#ffffff' }
+  const normalized = color.toLowerCase()
+  return {
+    backgroundColor: mixHex(normalized, '#ffffff', 0.15),
+    borderColor: normalized,
+    textColor: mixHex(normalized, '#1b191d', 0.74)
+  }
 }
 
 function gridDateTime(date: string, time: string, sourceTimeZone: string, primaryTimeZone: string): string {
@@ -128,7 +133,7 @@ export function taskOverlayInputs(
 ): readonly CalendarOverlayInput[] {
   const colorByContext = new Map(contexts.map((context) => [context.name, CONTEXT_COLORS[context.color]]))
   return tasks.filter((task) => task.status !== 'Done').map((task) => {
-    const tone = calendarEventTone(colorByContext.get(task.context) ?? '#6a6669')
+    const tone = calendarEventTone(colorByContext.get(task.context) ?? '#6e6975')
     return {
       id: `task:${task.id}`,
       title: task.title,
@@ -158,15 +163,16 @@ export function scratchOverlayInputs(
   return blocks.map((block) => {
     const endDate = block.end === '24:00' ? addCalendarDays(block.date, 1) : block.date
     const endTime = block.end === '24:00' ? '00:00' : block.end
+    const tone = calendarEventTone('#48708e')
     return {
       id: `scratch:${block.id}`,
       title: taskById.get(block.taskId)?.title ?? block.portion,
       start: `${block.date}T${block.start}:00Z`,
       end: `${endDate}T${endTime}:00Z`,
       allDay: false,
-      backgroundColor: '#e5eef4',
-      borderColor: '#416883',
-      textColor: '#2f515d',
+      backgroundColor: tone.backgroundColor,
+      borderColor: tone.borderColor,
+      textColor: tone.textColor,
       editable: false,
       classNames: ['manor-calendar-overlay', 'manor-calendar-overlay--scratch'],
       extendedProps: {
@@ -189,11 +195,11 @@ interface JobMilestone {
 }
 
 const JOB_MILESTONES: readonly JobMilestone[] = [
-  { key: 'oaDueDate', label: 'OA', color: '#825d16' },
-  { key: 'interview1Date', label: 'Interview 1', color: '#6b5375' },
-  { key: 'interview2Date', label: 'Interview 2', color: '#6b5375' },
-  { key: 'interview3Date', label: 'Interview 3', color: '#6b5375' },
-  { key: 'decisionDate', label: 'Decision', color: '#3b684b' }
+  { key: 'oaDueDate', label: 'OA', color: '#8f6a0e' },
+  { key: 'interview1Date', label: 'Interview 1', color: '#6f5680' },
+  { key: 'interview2Date', label: 'Interview 2', color: '#6f5680' },
+  { key: 'interview3Date', label: 'Interview 3', color: '#6f5680' },
+  { key: 'decisionDate', label: 'Decision', color: '#3d7a52' }
 ]
 
 export function jobOverlayInputs(roles: readonly JobRole[]): readonly CalendarOverlayInput[] {

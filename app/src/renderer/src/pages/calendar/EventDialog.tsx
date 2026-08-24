@@ -1,6 +1,6 @@
-import { ArrowRight, Bell, CalendarDays, Clock3, Copy, Ellipsis, ExternalLink, FileText, Globe2, MapPin, Repeat2, Trash2, Video, X } from 'lucide-react'
+import { ArrowRight, Bell, Clock3, Copy, Ellipsis, ExternalLink, FileText, MapPin, Trash2, Video, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 import { addCalendarDays, calendarEventForOccurrence, parseCalendarEvent } from '../../../../shared/calendar'
 import type { CalendarDefinition, CalendarEventRecord, CalendarFrequency } from '../../../../shared/calendar'
@@ -9,19 +9,58 @@ import { DatePicker, Select, TimePicker } from '../../components/ui'
 
 export type EventEditScope = 'occurrence' | 'series'
 
-const TIME_ZONES = [
-  'America/Los_Angeles', 'America/New_York', 'UTC', 'Europe/London',
-  'Asia/Kolkata', 'Asia/Tokyo', 'Australia/Sydney'
-] as const
+/** Viewport rectangle of the clicked event; null opens the editor centered. */
+export interface EventDialogAnchor {
+  top: number
+  left: number
+  right: number
+  bottom: number
+}
+
+const POPOVER_WIDTH = 380
+const POPOVER_GAP = 12
+const VIEWPORT_GUTTER = 8
+const POPOVER_EST_HEIGHT = 560
+
+const TIME_ZONES: readonly { value: string; label: string }[] = [
+  { value: 'America/Los_Angeles', label: 'Los Angeles' },
+  { value: 'America/New_York', label: 'New York' },
+  { value: 'UTC', label: 'UTC' },
+  { value: 'Europe/London', label: 'London' },
+  { value: 'Asia/Kolkata', label: 'Kolkata' },
+  { value: 'Asia/Tokyo', label: 'Tokyo' },
+  { value: 'Australia/Sydney', label: 'Sydney' }
+]
 const WEEKDAYS = [
   { value: 0, label: 'S' }, { value: 1, label: 'M' }, { value: 2, label: 'T' },
   { value: 3, label: 'W' }, { value: 4, label: 'T' }, { value: 5, label: 'F' },
   { value: 6, label: 'S' }
 ] as const
 const REMINDERS = [
-  { value: 0, label: 'At start' }, { value: 5, label: '5 min' }, { value: 10, label: '10 min' },
-  { value: 30, label: '30 min' }, { value: 60, label: '1 hour' }, { value: 1440, label: '1 day' }
+  { value: 0, label: 'At start' }, { value: 5, label: '5 min before' }, { value: 10, label: '10 min before' },
+  { value: 30, label: '30 min before' }, { value: 60, label: '1 hour before' }, { value: 1440, label: '1 day before' }
 ] as const
+
+function popoverPlacement(anchor: EventDialogAnchor | null): CSSProperties {
+  if (anchor === null) return {}
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  const fitsRight = anchor.right + POPOVER_GAP + POPOVER_WIDTH <= viewportWidth - VIEWPORT_GUTTER
+  const left = fitsRight
+    ? anchor.right + POPOVER_GAP
+    : Math.max(VIEWPORT_GUTTER, anchor.left - POPOVER_GAP - POPOVER_WIDTH)
+  const top = Math.min(
+    Math.max(VIEWPORT_GUTTER, anchor.top),
+    Math.max(VIEWPORT_GUTTER, viewportHeight - POPOVER_EST_HEIGHT - VIEWPORT_GUTTER)
+  )
+  return {
+    position: 'fixed',
+    top,
+    left,
+    width: POPOVER_WIDTH,
+    transformOrigin: fitsRight ? 'left top' : 'right top'
+  }
+}
 
 export interface EventDialogProps {
   open: boolean
@@ -33,6 +72,7 @@ export interface EventDialogProps {
   occurrenceEvent: CalendarEventRecord | null
   timeFormat: '12h' | '24h'
   notePages: readonly NotePage[]
+  anchor: EventDialogAnchor | null
   onClose: () => void
   onSave: (event: CalendarEventRecord, scope: EventEditScope) => void
   onDuplicate: (event: CalendarEventRecord, scope: EventEditScope) => void
@@ -92,6 +132,7 @@ export function EventDialog({
   occurrenceEvent,
   timeFormat,
   notePages,
+  anchor,
   onClose,
   onSave,
   onDuplicate,
@@ -216,8 +257,8 @@ export function EventDialog({
   }
 
   return (
-    <div className="cal-event-popover-layer" onPointerDown={(pointerEvent) => { if (pointerEvent.target === pointerEvent.currentTarget) closeOrSave() }}>
-      <form ref={popoverRef} className="cal-event-popover" role="dialog" aria-modal="true" aria-label={creating ? 'Create event' : 'Edit event'} onSubmit={(submitEvent) => { submitEvent.preventDefault(); save() }}>
+    <div className={`cal-event-popover-layer${anchor === null ? ' is-centered' : ''}`} onPointerDown={(pointerEvent) => { if (pointerEvent.target === pointerEvent.currentTarget) closeOrSave() }}>
+      <form ref={popoverRef} className="cal-event-popover" style={popoverPlacement(anchor)} role="dialog" aria-modal="true" aria-label={creating ? 'Create event' : 'Edit event'} onSubmit={(submitEvent) => { submitEvent.preventDefault(); save() }}>
         <header className="cal-event-popover-header">
           <Select value={draft.eventType} options={[{ value: 'event', label: 'Event' }, { value: 'focus', label: 'Focus time' }, { value: 'out_of_office', label: 'Out of office' }, { value: 'birthday', label: 'Birthday' }]} onChange={(eventType) => update({ eventType: eventType as CalendarEventRecord['eventType'] })} placeholder={eventTypeLabel(draft.eventType)} ariaLabel="Event type" />
           <span />
@@ -230,12 +271,12 @@ export function EventDialog({
         {scopedOccurrence ? <div className="cal-popover-scope"><Select value={scope} options={[{ value: 'occurrence', label: 'This event' }, { value: 'series', label: 'All events' }]} onChange={changeScope} placeholder="This event" ariaLabel="Recurring event scope" /></div> : null}
 
         <section className="cal-popover-schedule">
-          {draft.allDay ? null : <div className="cal-popover-time-row"><Clock3 size={20} /><TimePicker value={draft.startTime ?? '09:00'} format={timeFormat} onChange={(startTime) => update({ startTime })} ariaLabel="Event start time" /><ArrowRight size={20} /><TimePicker value={draft.endTime ?? '10:00'} format={timeFormat} onChange={(endTime) => update({ endTime })} ariaLabel="Event end time" />{duration === null ? null : <span>{duration}</span>}</div>}
-          <div className="cal-popover-date-row"><CalendarDays size={20} /><DatePicker value={draft.startDate} onChange={changeStartDate} ariaLabel="Event start date" min={null} max={null} />{endDate === draft.startDate ? null : <><ArrowRight size={18} /><DatePicker value={endDate} onChange={(date) => date !== null && setEndDate(date)} ariaLabel="Event end date" min={draft.startDate} max={null} /></>}</div>
+          {draft.allDay ? null : <div className="cal-popover-time-row"><Clock3 size={18} /><TimePicker value={draft.startTime ?? '09:00'} format={timeFormat} onChange={(startTime) => update({ startTime })} ariaLabel="Event start time" /><ArrowRight size={16} /><TimePicker value={draft.endTime ?? '10:00'} format={timeFormat} onChange={(endTime) => update({ endTime })} ariaLabel="Event end time" />{duration === null ? null : <span>{duration}</span>}</div>}
+          <div className="cal-popover-date-row"><DatePicker value={draft.startDate} onChange={changeStartDate} ariaLabel="Event start date" min={null} max={null} />{endDate === draft.startDate ? null : <><ArrowRight size={16} /><DatePicker value={endDate} onChange={(date) => date !== null && setEndDate(date)} ariaLabel="Event end date" min={draft.startDate} max={null} /></>}</div>
           <div className="cal-popover-meta-row">
             <button type="button" className={`cal-popover-meta-toggle${draft.allDay ? ' is-active' : ''}`} role="switch" aria-checked={draft.allDay} onClick={() => update({ allDay: !draft.allDay, startTime: draft.allDay ? '09:00' : null, endTime: draft.allDay ? '10:00' : null })}>All-day</button>
-            <span className="cal-popover-meta-select"><Globe2 size={17} /><Select value={draft.timeZone} options={TIME_ZONES.map((zone) => ({ value: zone, label: zone.replaceAll('_', ' ') }))} onChange={(timeZone) => update({ timeZone })} placeholder="Time zone" ariaLabel="Event time zone" /></span>
-            {scope === 'series' ? <span className="cal-popover-meta-select"><Repeat2 size={17} /><Select value={recurrence?.frequency ?? 'none'} options={[{ value: 'none', label: 'Does not repeat' }, { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }, { value: 'yearly', label: 'Yearly' }]} onChange={setFrequency} placeholder="Does not repeat" ariaLabel="Event recurrence" /></span> : null}
+            <span className="cal-popover-meta-select"><Select value={draft.timeZone} options={TIME_ZONES.map((zone) => ({ value: zone.value, label: zone.label }))} onChange={(timeZone) => update({ timeZone })} placeholder="Time zone" ariaLabel="Event time zone" /></span>
+            {scope === 'series' ? <span className="cal-popover-meta-select"><Select value={recurrence?.frequency ?? null} options={[{ value: 'none', label: 'Does not repeat' }, { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }, { value: 'yearly', label: 'Yearly' }]} onChange={setFrequency} placeholder="Repeat" ariaLabel="Event recurrence" /></span> : null}
           </div>
         </section>
 
@@ -245,14 +286,23 @@ export function EventDialog({
           <label className="cal-popover-detail-field"><Video size={21} /><input type="url" value={draft.conferenceUrl} onChange={(changeEvent) => update({ conferenceUrl: changeEvent.target.value })} placeholder="Conferencing" aria-label="Conferencing URL" />{openableHttpUrl(draft.conferenceUrl) === null ? null : <button type="button" aria-label="Open conferencing URL" onClick={() => window.open(openableHttpUrl(draft.conferenceUrl) as string, '_blank', 'noopener,noreferrer')}><ExternalLink size={16} /></button>}</label>
           <label className="cal-popover-detail-field"><MapPin size={21} /><input value={draft.location} onChange={(changeEvent) => update({ location: changeEvent.target.value })} placeholder="Location" aria-label="Location" /></label>
           <div className="cal-popover-note-field"><FileText size={21} /><div>{draft.notePageIds.length === 0 ? <span>Attach note</span> : draft.notePageIds.map((notePageId) => { const note = notePages.find((page) => page.id === notePageId); return note === undefined ? null : <button key={note.id} type="button" onClick={() => onOpenNote(note.id)}>{note.title}</button> })}</div><Select value={noteToAttach} options={notePages.filter((page) => page.status === 'active' && !draft.notePageIds.includes(page.id)).map((page) => ({ value: page.id, label: page.title }))} onChange={(notePageId) => { update({ notePageIds: [...draft.notePageIds, notePageId] }); setNoteToAttach(null) }} placeholder="Add" ariaLabel="Attach note" /></div>
-          <label className="cal-popover-description"><span>Description</span><textarea value={draft.description} onChange={(changeEvent) => update({ description: changeEvent.target.value })} rows={draft.description === '' ? 1 : 4} aria-label="Description" /></label>
+        </section>
+
+        <section className="cal-popover-description-section">
+          <textarea className="cal-popover-description" value={draft.description} onChange={(changeEvent) => update({ description: changeEvent.target.value })} rows={draft.description === '' ? 1 : 4} placeholder="Description" aria-label="Description" />
         </section>
 
         <section className="cal-popover-calendar-settings">
-          <span className="cal-popover-meta-select"><span className="cal-select-swatch" style={{ background: calendars.find((calendar) => calendar.id === draft.calendarId)?.color ?? '#6a4e6c' }} /><Select value={draft.calendarId} options={editableCalendars.map((calendar) => ({ value: calendar.id, label: calendar.name }))} onChange={(calendarId) => update({ calendarId })} placeholder="Calendar" ariaLabel="Event calendar" /></span>
-          <span className="cal-popover-meta-select"><Select value={draft.busyStatus} options={[{ value: 'busy', label: 'Busy' }, { value: 'free', label: 'Free' }]} onChange={(busyStatus) => update({ busyStatus: busyStatus as CalendarEventRecord['busyStatus'] })} placeholder="Busy" ariaLabel="Event availability" /></span>
-          <span className="cal-popover-meta-select"><Select value={draft.visibility} options={[{ value: 'default', label: 'Default visibility' }, { value: 'public', label: 'Public' }, { value: 'private', label: 'Private' }]} onChange={(visibility) => update({ visibility: visibility as CalendarEventRecord['visibility'] })} placeholder="Default visibility" ariaLabel="Event visibility" /></span>
-          <span className="cal-popover-meta-select"><Bell size={17} /><Select value={String(draft.reminders[0] ?? 10)} options={REMINDERS.map((reminder) => ({ value: String(reminder.value), label: reminder.label }))} onChange={(reminder) => update({ reminders: [Number(reminder)] })} placeholder="Reminders" ariaLabel="Event reminder" /></span>
+          <div className="cal-popover-settings-row">
+            <span className="cal-popover-meta-select"><span className="cal-select-swatch" style={{ background: calendars.find((calendar) => calendar.id === draft.calendarId)?.color ?? '#71549e' }} /><Select value={draft.calendarId} options={editableCalendars.map((calendar) => ({ value: calendar.id, label: calendar.name }))} onChange={(calendarId) => update({ calendarId })} placeholder="Calendar" ariaLabel="Event calendar" /></span>
+          </div>
+          <div className="cal-popover-settings-row cal-popover-settings-row--indent">
+            <span className="cal-popover-meta-select"><Select value={draft.busyStatus} options={[{ value: 'busy', label: 'Busy' }, { value: 'free', label: 'Free' }]} onChange={(busyStatus) => update({ busyStatus: busyStatus as CalendarEventRecord['busyStatus'] })} placeholder="Busy" ariaLabel="Event availability" /></span>
+            <span className="cal-popover-meta-select"><Select value={draft.visibility} options={[{ value: 'default', label: 'Default visibility' }, { value: 'public', label: 'Public' }, { value: 'private', label: 'Private' }]} onChange={(visibility) => update({ visibility: visibility as CalendarEventRecord['visibility'] })} placeholder="Default visibility" ariaLabel="Event visibility" /></span>
+          </div>
+          <div className="cal-popover-settings-row">
+            <span className="cal-popover-meta-select"><Bell size={17} /><Select value={String(draft.reminders[0] ?? 10)} options={REMINDERS.map((reminder) => ({ value: String(reminder.value), label: reminder.label }))} onChange={(reminder) => update({ reminders: [Number(reminder)] })} placeholder="Reminders" ariaLabel="Event reminder" /></span>
+          </div>
         </section>
 
         {deleteConfirm ? <div className="cal-popover-delete-confirm"><span>{scope === 'occurrence' ? 'Delete this event?' : recurrence === null ? 'Delete this event?' : 'Delete all events?'}</span><button type="button" onClick={() => setDeleteConfirm(false)}>Cancel</button><button type="button" onClick={() => onDelete(draft.id, scope)}>Delete</button></div> : null}

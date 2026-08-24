@@ -6,7 +6,7 @@ import type { CalendarDefinition } from '../../../../shared/calendar'
 import { Button, Modal } from '../../components/ui'
 
 export const CALENDAR_COLORS = [
-  '#3b684b', '#416883', '#6a4e6c', '#815e18', '#a33f46', '#32686c', '#6d6422', '#8a5b3f'
+  '#71549e', '#4576b5', '#3d8a57', '#a8761c', '#c14f57', '#38808a', '#9a4f86', '#6e6975'
 ] as const
 
 export interface CalendarEditorDialogProps {

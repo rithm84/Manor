@@ -24,7 +24,7 @@ import { CalendarSidebar } from './calendar/CalendarSidebar'
 import type { ManorOverlay } from './calendar/CalendarSidebar'
 import type { CalendarUpcomingItem } from './calendar/CalendarSidebar'
 import { EventDialog } from './calendar/EventDialog'
-import type { EventEditScope } from './calendar/EventDialog'
+import type { EventDialogAnchor, EventEditScope } from './calendar/EventDialog'
 import { LinkedCalendarDialog } from './calendar/LinkedCalendarDialog'
 import { RecurringChangeDialog } from './calendar/RecurringChangeDialog'
 import { jobOverlayInputs, persistedEventInputs, scratchOverlayInputs, taskOverlayInputs } from './calendar/calendarEvents'
@@ -52,6 +52,15 @@ interface EventDialogState {
   confirmDelete: boolean
   occurrenceDate: string | null
   occurrenceEvent: CalendarEventRecord | null
+  anchor: EventDialogAnchor | null
+}
+
+function anchorFromRect(rect: DOMRect): EventDialogAnchor {
+  return { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom }
+}
+
+function anchorFromPoint(x: number, y: number): EventDialogAnchor {
+  return { top: y, left: x, right: x, bottom: y }
 }
 
 interface PendingRecurringChange {
@@ -86,6 +95,11 @@ function timeFromInput(value: Date | null): string {
 
 function calendarToolbarMonth(date: string): string {
   return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(new Date(`${date}T12:00:00`))
+}
+
+function upcomingDateLabel(date: string): string {
+  return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
+    .format(new Date(`${date}T12:00:00.000Z`))
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -191,10 +205,11 @@ export function CalendarPage(): ReactNode {
         id: String(event.id),
         title: event.title ?? 'Untitled event',
         date: event.start.slice(0, 10),
-        color: typeof event.borderColor === 'string' ? event.borderColor : '#6a6669',
+        color: typeof event.borderColor === 'string' ? event.borderColor : '#6e6975',
         reference: event.extendedProps as CalendarItemReference
       }]
     }).sort((first, second) => first.date.localeCompare(second.date) || first.title.localeCompare(second.title)).slice(0, 5)
+      .map((item) => ({ ...item, date: upcomingDateLabel(item.date) }))
   }, [calendarState, homeState, jobsState, overlays])
 
   const updateCalendarState = useCallback(async (operation: () => Promise<CalendarState>): Promise<boolean> => {
@@ -211,15 +226,11 @@ export function CalendarPage(): ReactNode {
   const movePeriod = useCallback((direction: -1 | 1): void => {
     const api = calendarRef.current?.getApi()
     if (api === undefined) return
-    if (view === 'month') {
-      if (direction === -1) api.prev()
-      else api.next()
-      return
-    }
-    api.incrementDate({ days: view === 'week' ? direction * 7 : direction })
-  }, [view])
+    if (direction === -1) api.prev()
+    else api.next()
+  }, [])
 
-  const openEventReference = useCallback((reference: CalendarItemReference): void => {
+  const openEventReference = useCallback((reference: CalendarItemReference, anchor: EventDialogAnchor | null): void => {
     if (reference.kind !== 'event') { setLinkedReference(reference); return }
     const record = calendarState?.events.find((event) => event.id === reference.sourceId) ?? null
     if (record !== null) {
@@ -231,16 +242,16 @@ export function CalendarPage(): ReactNode {
       setSelectedEventId(parent.id)
       setSelectedOccurrenceDate(occurrenceDate)
       setSelectedOccurrenceEvent(record.recurrenceParentId === null ? null : record)
-      setEventDialog({ event: parent, creating: false, confirmDelete: false, occurrenceDate, occurrenceEvent: record.recurrenceParentId === null ? null : record })
+      setEventDialog({ event: parent, creating: false, confirmDelete: false, occurrenceDate, occurrenceEvent: record.recurrenceParentId === null ? null : record, anchor })
     }
   }, [calendarState])
 
-  const createAt = useCallback((date: string, allDay: boolean, startTime: string | null, endTime: string | null, endDate: string): void => {
+  const createAt = useCallback((date: string, allDay: boolean, startTime: string | null, endTime: string | null, endDate: string, anchor: EventDialogAnchor | null): void => {
     const calendar = editableCalendars[0]
     if (calendar === undefined || calendarState === null) { setError('Create a local calendar before adding an event'); return }
-    setEventDialog({ creating: true, confirmDelete: false, occurrenceDate: null, occurrenceEvent: null, event: emptyEvent(calendar.id, date, endDate, startTime, endTime, allDay, calendarState.settings.primaryTimeZone) })
+    setEventDialog({ creating: true, confirmDelete: false, occurrenceDate: null, occurrenceEvent: null, anchor, event: emptyEvent(calendar.id, date, endDate, startTime, endTime, allDay, calendarState.settings.primaryTimeZone) })
   }, [calendarState, editableCalendars])
-  const createDefaultEvent = useCallback(() => createAt(anchor, false, '09:00', '10:00', anchor), [anchor, createAt])
+  const createDefaultEvent = useCallback(() => createAt(anchor, false, '09:00', '10:00', anchor, null), [anchor, createAt])
 
   const commands = useMemo<readonly CalendarCommand[]>(() => [
     { id: 'new-event', label: 'New event', group: 'Actions', icon: <CalendarPlus size={15} />, keys: ['C'], run: createDefaultEvent },
@@ -273,7 +284,7 @@ export function CalendarPage(): ReactNode {
       else if (event.key === '?') { event.preventDefault(); setShortcutsOpen(true) }
       else if (event.key === 'Delete' && selectedEventId !== null) {
         const record = calendarState?.events.find((item) => item.id === selectedEventId)
-        if (record !== undefined) { event.preventDefault(); setEventDialog({ event: record, creating: false, confirmDelete: true, occurrenceDate: selectedOccurrenceDate, occurrenceEvent: selectedOccurrenceEvent }) }
+        if (record !== undefined) { event.preventDefault(); setEventDialog({ event: record, creating: false, confirmDelete: true, occurrenceDate: selectedOccurrenceDate, occurrenceEvent: selectedOccurrenceEvent, anchor: null }) }
       }
     }
     window.addEventListener('keydown', onKeyDown)
@@ -284,11 +295,12 @@ export function CalendarPage(): ReactNode {
 
   const selectRange = (selection: DateSelectArg): void => {
     const startDate = dateFromInput(selection.start)
-    if (selection.allDay) createAt(startDate, true, null, null, dateFromInput(selection.end))
-    else createAt(startDate, false, timeFromInput(selection.start), timeFromInput(selection.end), dateFromInput(selection.end))
+    const selectionAnchor = selection.jsEvent === null ? null : anchorFromPoint(selection.jsEvent.clientX, selection.jsEvent.clientY)
+    if (selection.allDay) createAt(startDate, true, null, null, dateFromInput(selection.end), selectionAnchor)
+    else createAt(startDate, false, timeFromInput(selection.start), timeFromInput(selection.end), dateFromInput(selection.end), selectionAnchor)
     selection.view.calendar.unselect()
   }
-  const clickEvent = (click: EventClickArg): void => openEventReference(click.event.extendedProps as CalendarItemReference)
+  const clickEvent = (click: EventClickArg): void => openEventReference(click.event.extendedProps as CalendarItemReference, anchorFromRect(click.el.getBoundingClientRect()))
   const replaceOccurrence = async (record: CalendarEventRecord, occurrenceDate: string, event: CalendarEventRecord | null): Promise<boolean> => {
     const now = new Date().toISOString()
     const series = excludeCalendarOccurrence(record, occurrenceDate, now)
@@ -332,10 +344,10 @@ export function CalendarPage(): ReactNode {
     const now = new Date().toISOString()
     const recurrence = scope === 'occurrence' ? null : event.recurrence === null ? null : { ...event.recurrence, excludedDates: [] }
     const copy = parseCalendarEvent({ ...event, id: `calendar-event-${crypto.randomUUID()}`, title: `${event.title} copy`, recurrence, recurrenceParentId: null, recurrenceOriginalDate: null, createdAt: now, updatedAt: now })
-    void updateCalendarState(() => window.manor.calendar.upsertEvent(copy)).then((saved) => { if (saved) setEventDialog({ event: copy, creating: false, confirmDelete: false, occurrenceDate: null, occurrenceEvent: null }) })
+    void updateCalendarState(() => window.manor.calendar.upsertEvent(copy)).then((saved) => { if (saved) setEventDialog({ event: copy, creating: false, confirmDelete: false, occurrenceDate: null, occurrenceEvent: null, anchor: null }) })
   }
   const contextItems: readonly QuickActionItem[] = contextMenu === null ? [] : [
-    { id: 'open', label: 'Open details', icon: <CalendarPlus size={15} />, tone: 'default', onSelect: () => openEventReference(contextMenu.reference) },
+    { id: 'open', label: 'Open details', icon: <CalendarPlus size={15} />, tone: 'default', onSelect: () => openEventReference(contextMenu.reference, anchorFromPoint(contextMenu.point.x, contextMenu.point.y)) },
     ...(contextMenu.reference.kind === 'event' ? [
       { id: 'duplicate', label: 'Duplicate', icon: <Copy size={15} />, tone: 'default' as const, onSelect: () => {
         const record = calendarState.events.find((event) => event.id === contextMenu.reference.sourceId)
@@ -350,7 +362,7 @@ export function CalendarPage(): ReactNode {
           const parent = record.recurrenceParentId === null ? record : calendarState.events.find((event) => event.id === record.recurrenceParentId)
           if (parent !== undefined) {
             const occurrenceDate = record.recurrenceParentId === null ? occurrenceDateFor(contextMenu.reference, record) : record.recurrenceOriginalDate
-            setEventDialog({ event: parent, creating: false, confirmDelete: true, occurrenceDate, occurrenceEvent: record.recurrenceParentId === null ? null : record })
+            setEventDialog({ event: parent, creating: false, confirmDelete: true, occurrenceDate, occurrenceEvent: record.recurrenceParentId === null ? null : record, anchor: anchorFromPoint(contextMenu.point.x, contextMenu.point.y) })
           }
         }
       } }
@@ -365,10 +377,13 @@ export function CalendarPage(): ReactNode {
           onToggleCalendar={(calendar) => void updateCalendarState(() => window.manor.calendar.upsertCalendar({ ...calendar, visible: !calendar.visible, updatedAt: new Date().toISOString() }))}
           onEditCalendar={setCalendarDialog} onCreateCalendar={() => setCalendarDialog('new')}
           onToggleOverlay={(overlay) => setOverlays((current) => { const next = new Set(current); if (next.has(overlay)) next.delete(overlay); else next.add(overlay); return next })}
-          onOpenSettings={() => setSettingsOpen(true)} onOpenUpcoming={openEventReference} />
+          onOpenSettings={() => setSettingsOpen(true)} onOpenUpcoming={(reference) => openEventReference(reference, null)} />
 
         <section className="cal-main" aria-label="Calendar workspace">
           <header className="cal-toolbar">
+            <h1 className="cal-toolbar-title"><strong>{title.split(' ')[0]}</strong> <span className="tnum">{title.split(' ')[1]}</span></h1>
+            <span className="cal-toolbar-spacer" />
+            <label className="cal-search"><Search size={14} /><input ref={searchRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search events" aria-label="Search calendar events" />{search === '' ? <kbd>/</kbd> : <button type="button" onClick={() => setSearch('')} aria-label="Clear search">×</button>}</label>
             <div className="cal-toolbar-nav">
               <div className="cal-view-select">
                 <Select
@@ -383,8 +398,6 @@ export function CalendarPage(): ReactNode {
               <button type="button" className="cal-icon-btn" onClick={() => movePeriod(-1)} aria-label="Previous period"><ChevronLeft size={16} /></button>
               <button type="button" className="cal-icon-btn" onClick={() => movePeriod(1)} aria-label="Next period"><ChevronRight size={16} /></button>
             </div>
-            <h1 className="cal-toolbar-title">{title}</h1>
-            <label className="cal-search"><Search size={14} /><input ref={searchRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search events" aria-label="Search calendar events" />{search === '' ? <kbd>/</kbd> : <button type="button" onClick={() => setSearch('')} aria-label="Clear search">×</button>}</label>
             <span className="cal-toolbar-tools"><button type="button" className="cal-icon-btn" onClick={() => setHourHeight(Math.max(36, hourHeight - 8))} aria-label="Compress hours"><Minus size={15} /></button><button type="button" className="cal-icon-btn" onClick={() => setHourHeight(Math.min(84, hourHeight + 8))} aria-label="Expand hours"><Plus size={15} /></button><button type="button" className={`cal-icon-btn${allDayVisible ? ' is-active' : ''}`} onClick={() => setAllDayVisible(!allDayVisible)} aria-label={`${allDayVisible ? 'Hide' : 'Show'} all-day row`}><PanelTopClose size={15} /></button><button type="button" className="cal-icon-btn" onClick={() => setShortcutsOpen(true)} aria-label="Keyboard shortcuts"><HelpCircle size={15} /></button><button type="button" className="cal-icon-btn" onClick={() => setSettingsOpen(true)} aria-label="Calendar settings"><Settings2 size={15} /></button></span>
           </header>
           {error === null ? null : <div className="cal-error" role="alert">{error}<button type="button" onClick={() => setError(null)}>Dismiss</button></div>}
@@ -399,7 +412,7 @@ export function CalendarPage(): ReactNode {
             }} />
         </section>
 
-        <EventDialog open={eventDialog !== null} event={eventDialog?.event ?? null} calendars={calendarState.calendars} creating={eventDialog?.creating ?? false} confirmingDelete={eventDialog?.confirmDelete ?? false} occurrenceDate={eventDialog?.occurrenceDate ?? null} occurrenceEvent={eventDialog?.occurrenceEvent ?? null} timeFormat={calendarState.settings.timeFormat} notePages={notesState.pages} onClose={() => setEventDialog(null)}
+        <EventDialog open={eventDialog !== null} event={eventDialog?.event ?? null} calendars={calendarState.calendars} creating={eventDialog?.creating ?? false} confirmingDelete={eventDialog?.confirmDelete ?? false} occurrenceDate={eventDialog?.occurrenceDate ?? null} occurrenceEvent={eventDialog?.occurrenceEvent ?? null} timeFormat={calendarState.settings.timeFormat} notePages={notesState.pages} anchor={eventDialog?.anchor ?? null} onClose={() => setEventDialog(null)}
           onSave={(event, scope) => {
             const operation = scope === 'occurrence' && eventDialog?.occurrenceDate !== null && eventDialog?.occurrenceDate !== undefined
               ? replaceOccurrence(eventDialog.event, eventDialog.occurrenceDate, event)

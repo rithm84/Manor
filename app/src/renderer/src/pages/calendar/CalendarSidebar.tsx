@@ -62,9 +62,9 @@ function CalendarRow({
 }
 
 const OVERLAY_ROWS: readonly { id: ManorOverlay; label: string; icon: ReactNode; color: string }[] = [
-  { id: 'tasks', label: 'Task due dates', icon: <CheckSquare2 size={14} />, color: '#6a4e6c' },
-  { id: 'jobs', label: 'Job milestones', icon: <BriefcaseBusiness size={14} />, color: '#815e18' },
-  { id: 'scratch', label: 'Scratch blocks', icon: <TimerReset size={14} />, color: '#416883' }
+  { id: 'tasks', label: 'Task due dates', icon: <CheckSquare2 size={14} />, color: '#71549e' },
+  { id: 'jobs', label: 'Job milestones', icon: <BriefcaseBusiness size={14} />, color: '#8f6a0e' },
+  { id: 'scratch', label: 'Scratch blocks', icon: <TimerReset size={14} />, color: '#48708e' }
 ]
 
 export function CalendarSidebar({
