@@ -6,7 +6,16 @@ import type { Plugin } from 'vite'
 
 import { closeManorStores, createBridgeChannels, createManorStores } from './bridgeChannels'
 import type { BridgeChannelHandler } from './bridgeChannels'
+import { createAlfredCloudChannels } from './alfredCloudChannels'
+import { createGcalChannels } from './gcalChannels'
+import { createKbChannels } from './kbChannels'
+import { createResumeChannels } from './resumeChannels'
+import { createXChannels } from './xChannels'
+import { createAccountChannels, createCloudClient } from './supabaseCore'
+import type { ManorCloudConfig } from './supabaseCore'
+import { SyncEngine, pullOnBoot, withAccountSync, withPushScheduling } from './syncEngine'
 import { BROWSER_BRIDGE_ENDPOINT } from '../shared/devBridge'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 interface BridgeRequestBody {
   channel: string
@@ -47,7 +56,32 @@ export function browserBridgePlugin(): Plugin {
         join(workspace, 'manor.sqlite'),
         join(workspace, 'notes-attachments')
       )
-      const channels: Record<string, BridgeChannelHandler> = createBridgeChannels(stores)
+      // Real Supabase auth in browser preview too; the dev server runs from
+      // app/, so the repository root (holding .env.local) is one level up.
+      const cloudConfig: ManorCloudConfig = {
+        envRoot: join(process.cwd(), '..'),
+        sessionFile: join(workspace, 'supabase-session.json')
+      }
+      let cloudClient: SupabaseClient | null = null
+      const clientOf = (): SupabaseClient => {
+        if (cloudClient === null) cloudClient = createCloudClient(cloudConfig)
+        return cloudClient
+      }
+      const syncEngine = new SyncEngine(stores, clientOf)
+      const channels: Record<string, BridgeChannelHandler> = {
+        ...withPushScheduling(createBridgeChannels(stores), syncEngine),
+        ...withAccountSync(createAccountChannels(cloudConfig, clientOf), syncEngine),
+        ...createResumeChannels(clientOf),
+        ...createKbChannels(clientOf),
+        ...createXChannels({ envRoot: cloudConfig.envRoot }, clientOf),
+        ...createGcalChannels({ envRoot: cloudConfig.envRoot, storageDir: workspace }),
+        ...createAlfredCloudChannels(clientOf)
+      }
+      void pullOnBoot(syncEngine, clientOf).catch((error: unknown) => {
+        console.error('manor-sync dev-bridge boot pull failed', {
+          error: error instanceof Error ? error.message : String(error)
+        })
+      })
       server.httpServer?.once('close', () => closeManorStores(stores))
       server.middlewares.use(
         BROWSER_BRIDGE_ENDPOINT,

@@ -105,7 +105,7 @@ describe('HabitStore', () => {
     )
   })
 
-  it('preserves history on pause and retirement and rejects destructive deletion', () => {
+  it('preserves history on pause and rejects destructive deletion of older habits', () => {
     store = new HabitStore(':memory:')
     const initial = store.load(SEED)
     const habit = initial.habits[1]
@@ -118,16 +118,30 @@ describe('HabitStore', () => {
       '2026-08-20T12:00:00.000Z'
     )
     expect(statusOn(habit.id, SEED.today, paused.lifecycle)).toBe('paused')
+    expect(paused.entries.some((entry) => entry.habitId === habit.id)).toBe(true)
     expect(metricsForHabit(paused, habit).trackedDays).toBeLessThan(
       metricsForHabit(initial, habit).trackedDays
     )
+    expect(() => store?.deleteHabit(habit.id)).toThrow(/only a habit created today with no entries/)
+  })
+
+  it('purges entries and freeze usage when a habit is retired', () => {
+    store = new HabitStore(':memory:')
+    store.load(SEED)
+    const frozen = store.setEntry(
+      { habitId: 'habit-a', date: '2026-08-19', value: 0 },
+      '2026-08-20T12:00:00.000Z'
+    )
+    expect(frozen.freezes.some((freeze) => freeze.habitId === 'habit-a')).toBe(true)
 
     const retired = store.setStatus(
-      { habitId: habit.id, date: SEED.today, status: 'retired' },
+      { habitId: 'habit-a', date: SEED.today, status: 'retired' },
       '2026-08-20T12:01:00.000Z'
     )
-    expect(retired.entries.some((entry) => entry.habitId === habit.id)).toBe(true)
-    expect(() => store?.deleteHabit(habit.id)).toThrow(/retire it to preserve its history/)
+
+    expect(statusOn('habit-a', SEED.today, retired.lifecycle)).toBe('retired')
+    expect(retired.entries.some((entry) => entry.habitId === 'habit-a')).toBe(false)
+    expect(retired.freezes.some((freeze) => freeze.habitId === 'habit-a')).toBe(false)
   })
 
   it('rejects backfill older than one day', () => {

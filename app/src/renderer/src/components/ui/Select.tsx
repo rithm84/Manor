@@ -1,7 +1,9 @@
 import { ChevronDown } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
+import { useDismissLayer } from './dismissLayer'
+import { clampMenuPosition } from './menuPosition'
 import { Pill } from './Pill'
 import type { PillColorway } from './Pill'
 
@@ -23,13 +25,38 @@ export interface SelectProps {
 /** Notion-style property dropdown shell: trigger + popover listbox. */
 export function Select({ value, options, onChange, placeholder, ariaLabel }: SelectProps): ReactNode {
   const [open, setOpen] = useState(false)
+  const [menuStyle, setMenuStyle] = useState<CSSProperties | null>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+
+  const selected = options.find((option) => option.value === value)
+  const usesSemanticOptions = options.every((option) => option.tone !== undefined)
 
   const closeAndFocus = useCallback((): void => {
     setOpen(false)
     window.requestAnimationFrame(() => triggerRef.current?.focus())
   }, [])
+
+  // Semantic menus size to their pills; plain menus stretch to the trigger.
+  const updatePosition = useCallback((): void => {
+    const trigger = triggerRef.current
+    const menu = menuRef.current
+    if (trigger === null || menu === null) return
+    const triggerRect = trigger.getBoundingClientRect()
+    const menuWidth = usesSemanticOptions
+      ? menu.offsetWidth
+      : Math.max(menu.offsetWidth, triggerRect.width)
+    const { left, top } = clampMenuPosition(triggerRect, menuWidth, menu.offsetHeight)
+    setMenuStyle(usesSemanticOptions ? { left, top } : { left, top, minWidth: triggerRect.width })
+  }, [usesSemanticOptions])
+
+  useLayoutEffect(() => {
+    if (open) updatePosition()
+    else setMenuStyle(null)
+  }, [open, updatePosition])
+
+  useDismissLayer(open, closeAndFocus)
 
   useEffect(() => {
     if (!open) {
@@ -40,23 +67,16 @@ export function Select({ value, options, onChange, placeholder, ariaLabel }: Sel
         setOpen(false)
       }
     }
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        event.stopImmediatePropagation()
-        closeAndFocus()
-      }
-    }
+    const onViewportChange = (): void => updatePosition()
     window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('resize', onViewportChange)
+    window.addEventListener('scroll', onViewportChange, true)
     return (): void => {
       window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('resize', onViewportChange)
+      window.removeEventListener('scroll', onViewportChange, true)
     }
-  }, [closeAndFocus, open])
-
-  const selected = options.find((option) => option.value === value)
-  const usesSemanticOptions = options.every((option) => option.tone !== undefined)
+  }, [open, updatePosition])
 
   const optionLabel = (option: SelectOption): ReactNode =>
     option.tone === undefined ? (
@@ -92,9 +112,11 @@ export function Select({ value, options, onChange, placeholder, ariaLabel }: Sel
       </button>
       {open ? (
         <div
+          ref={menuRef}
           className={`ui-select-menu${usesSemanticOptions ? ' ui-select-menu--semantic' : ''}`}
           role="listbox"
           aria-label={ariaLabel}
+          style={menuStyle ?? undefined}
         >
           {options.map((option) => (
             <button

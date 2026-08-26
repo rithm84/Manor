@@ -228,8 +228,16 @@ export function emptyJobRoleFields(stage: JobStage): JobRoleFields {
     interview1Date: null,
     interview2Date: null,
     interview3Date: null,
-    decisionDate: null
+    decisionDate: null,
+    resumeId: null
   }
+}
+
+/** Field-level equality for the dirty-close guard on the role modals. */
+export function sameRoleFields(left: JobRoleFields, right: JobRoleFields): boolean {
+  return (Object.keys(left) as readonly (keyof JobRoleFields)[]).every(
+    (key) => left[key] === right[key]
+  )
 }
 
 export function roleFields(role: JobRole): JobRoleFields {
@@ -245,7 +253,8 @@ export function roleFields(role: JobRole): JobRoleFields {
     interview1Date: role.interview1Date,
     interview2Date: role.interview2Date,
     interview3Date: role.interview3Date,
-    decisionDate: role.decisionDate
+    decisionDate: role.decisionDate,
+    resumeId: role.resumeId ?? null
   }
 }
 

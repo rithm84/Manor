@@ -67,20 +67,29 @@ const buildPoints = (): readonly OrbPoint[] => {
   return points
 }
 
+interface OrbPhases {
+  /** Accumulated whole-orb pulse phase, radians. */
+  pulse: number
+  /** Accumulated shimmer phase, radians. */
+  shimmer: number
+  /** Accumulated scatter-swirl phase, radians. */
+  swirl: number
+}
+
 const drawFrame = (
   ctx: CanvasRenderingContext2D,
   points: readonly OrbPoint[],
   size: number,
   dpr: number,
   angle: number,
-  timeSec: number,
+  phases: OrbPhases,
   motion: OrbMotion,
   audioLevel: number
 ): void => {
   const px = size * dpr
   ctx.clearRect(0, 0, px, px)
   const center = px / 2
-  const pulse = 1 + motion.pulse * Math.sin(timeSec * motion.pulseHz * Math.PI * 2)
+  const pulse = 1 + motion.pulse * Math.sin(phases.pulse)
   const audioScale = 1 + audioLevel * 0.09
   const radius = px * 0.38 * pulse * audioScale
   const dotBase = Math.max(0.9, px * (0.014 + audioLevel * 0.003))
@@ -91,11 +100,10 @@ const drawFrame = (
   const sinT = Math.sin(TILT)
 
   for (const point of points) {
-    const shimmer =
-      1 + motion.shimmer * Math.sin(timeSec * motion.shimmerHz * Math.PI * 2 + point.phase)
+    const shimmer = 1 + motion.shimmer * Math.sin(phases.shimmer + point.phase)
     const scatter =
       motion.scatter > 0
-        ? 1 + motion.scatter * point.drift * Math.sin(timeSec * 1.7 + point.phase)
+        ? 1 + motion.scatter * point.drift * Math.sin(phases.swirl + point.phase)
         : 1
     const r = shimmer * scatter
     // Rotate about Y, then tilt about X.
@@ -147,9 +155,16 @@ export function ThinkingOrb({ size, state, audioLevelRef }: ThinkingOrbProps): R
     let last = performance.now()
     // Eased copy of the motion params so state changes glide.
     const current: OrbMotion = { ...MOTION[stateRef.current] }
+    /* Oscillator phases accumulate per frame. Multiplying absolute time by
+       the eased frequencies instead makes phase jump by t*df every frame a
+       frequency ramps, which reads as a violent spasm on every state change
+       (worse the longer the window has been open). */
+    const phases: OrbPhases = { pulse: 0, shimmer: 0, swirl: 0 }
 
     const tick = (now: number): void => {
-      const dt = Math.min(0.05, (now - last) / 1000)
+      // rAF can hand a timestamp earlier than the performance.now() taken in
+      // start(); a negative dt would ease every parameter away from target.
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000))
       last = now
       const target = MOTION[stateRef.current]
       const ease = Math.min(1, dt * 5)
@@ -160,15 +175,18 @@ export function ThinkingOrb({ size, state, audioLevelRef }: ThinkingOrbProps): R
       current.pulseHz += (target.pulseHz - current.pulseHz) * ease
       current.scatter += (target.scatter - current.scatter) * ease
       angle += current.spin * dt
+      phases.pulse += current.pulseHz * Math.PI * 2 * dt
+      phases.shimmer += current.shimmerHz * Math.PI * 2 * dt
+      phases.swirl += 1.7 * dt
       const audioLevel = Math.max(0, Math.min(1, audioLevelRef.current))
-      drawFrame(ctx, points, size, dpr, angle, now / 1000, current, audioLevel)
+      drawFrame(ctx, points, size, dpr, angle, phases, current, audioLevel)
       raf = window.requestAnimationFrame(tick)
     }
 
     const start = (): void => {
       if (reduceMotion.matches) {
         const still: OrbMotion = { spin: 0, shimmer: 0, shimmerHz: 0, pulse: 0, pulseHz: 0, scatter: 0 }
-        drawFrame(ctx, points, size, dpr, angle, 0, still, 0)
+        drawFrame(ctx, points, size, dpr, angle, { pulse: 0, shimmer: 0, swirl: 0 }, still, 0)
         return
       }
       last = performance.now()

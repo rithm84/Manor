@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import type { JobRoleFields, JobsState, JobStage } from '../../../shared/jobs'
-import { Button, EmptyState } from '../components/ui'
+import { Button, EmptyState, Modal } from '../components/ui'
 import { AddRoleModal } from './jobs/AddRoleModal'
 import { JobDetailModal } from './jobs/JobDetailModal'
 import { PipelineBoard } from './jobs/PipelineBoard'
@@ -49,6 +49,7 @@ export function JobsPage(): ReactNode {
   const [dragging, setDragging] = useState<DragPayload | null>(null)
   const [detailRoleId, setDetailRoleId] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [removeCandidateId, setRemoveCandidateId] = useState<string | null>(null)
   const [view, setView] = useState<JobsView>('board')
   const timers = useRef<Set<number>>(new Set())
   const suppressClick = useRef(false)
@@ -129,9 +130,13 @@ export function JobsPage(): ReactNode {
     return <div className="jobs-error" role="alert">{persistError ?? 'Jobs data could not be loaded.'}</div>
   }
 
-  const toApplyRoles = state.roles.filter((role) => role.stage === 'to_apply')
+  // Rows mid leave-animation stay in the table (and out of the pipeline)
+  // even though their stage change is already persisted.
+  const toApplyRoles = state.roles.filter(
+    (role) => role.stage === 'to_apply' || leavingIds.has(role.id)
+  )
   const cards = state.roles
-    .filter((role) => role.stage !== 'to_apply')
+    .filter((role) => role.stage !== 'to_apply' && !leavingIds.has(role.id))
     .map((role) => toBoardCard(role, state.today))
   const detailRole = detailRoleId === null
     ? null
@@ -151,14 +156,16 @@ export function JobsPage(): ReactNode {
 
   const markApplied = (roleId: string): void => {
     if (leavingIds.has(roleId)) return
+    // Persist immediately; the timer only runs the visual row exit, so an
+    // unmount mid-animation cannot lose the stage change.
     setLeavingIds((current) => new Set(current).add(roleId))
+    updateStage(roleId, 'applied')
     later(() => {
       setLeavingIds((current) => {
         const next = new Set(current)
         next.delete(roleId)
         return next
       })
-      updateStage(roleId, 'applied')
     }, ROW_LEAVE_MS)
   }
 
@@ -175,6 +182,16 @@ export function JobsPage(): ReactNode {
     if (suppressClick.current) return
     setDetailRoleId(roleId)
     setDetailOpen(true)
+  }
+
+  const removeCandidate = removeCandidateId === null
+    ? null
+    : state.roles.find((role) => role.id === removeCandidateId) ?? null
+
+  const removeRole = (roleId: string): void => {
+    if (detailRoleId === roleId) setDetailOpen(false)
+    setRemoveCandidateId(null)
+    void persist('Could not remove role', () => window.manor.jobs.deleteRole(roleId))
   }
 
   return (
@@ -246,10 +263,7 @@ export function JobsPage(): ReactNode {
                 onDropOnColumn={dropOnColumn}
                 onOpenCard={openDetail}
                 onMoveCard={updateStage}
-                onRemoveCard={(roleId) => {
-                  if (detailRoleId === roleId) setDetailOpen(false)
-                  void persist('Could not remove role', () => window.manor.jobs.deleteRole(roleId))
-                }}
+                onRemoveCard={(roleId) => setRemoveCandidateId(roleId)}
               />
             ) : (
               <Suspense fallback={<div className="jobs-loading">Loading flow…</div>}>
@@ -264,20 +278,51 @@ export function JobsPage(): ReactNode {
         role={detailRole}
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
-        onSave={(roleId, fields) => {
+        onSave={async (roleId, fields) => {
+          // Close only once the persist lands; a failure keeps the modal
+          // (and its field state) open, with the error shown inside it.
+          const next = await window.manor.jobs.updateRole({ id: roleId, fields })
+          setState(next)
+          setPersistError(null)
           setDetailOpen(false)
-          void persist('Could not save role', () => window.manor.jobs.updateRole({ id: roleId, fields }))
         }}
       />
 
       <AddRoleModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onAdd={(fields: JobRoleFields) => {
+        onAdd={async (fields: JobRoleFields) => {
+          const next = await window.manor.jobs.createRole(fields)
+          setState(next)
+          setPersistError(null)
           setAddOpen(false)
-          void persist('Could not add role', () => window.manor.jobs.createRole(fields))
         }}
       />
+
+      <Modal
+        open={removeCandidate !== null}
+        onClose={() => setRemoveCandidateId(null)}
+        width={420}
+        ariaLabel="Delete role"
+      >
+        <div className="ui-confirm">
+          <h2>Delete this role?</h2>
+          <p>{removeCandidate?.company ?? 'This role'} comes off the board. Its stage history goes with it.</p>
+          <div className="ui-confirm-actions">
+            <Button variant="ghost" onClick={() => setRemoveCandidateId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                if (removeCandidate !== null) removeRole(removeCandidate.id)
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

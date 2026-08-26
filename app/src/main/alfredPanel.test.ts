@@ -7,7 +7,7 @@ describe('alfred panel lifecycle decisions', () => {
     expect(alfredSummonTarget(true, false)).toBe('modal')
     expect(alfredSummonTarget(false, false)).toBe('show-panel')
     expect(alfredSummonTarget(false, true)).toBe('hide-panel')
-    expect(alfredShortcutStatus(true)).toEqual({ accelerator: 'Alt+Space', registered: true })
+    expect(alfredShortcutStatus(true)).toEqual({ accelerator: 'Alt+M', registered: true })
   })
 
   it('centers the panel in the active work area without leaving it', () => {

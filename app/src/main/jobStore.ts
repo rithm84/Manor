@@ -22,6 +22,12 @@ import type {
   JobStageTransition
 } from '../shared/jobs'
 
+/** Everything the cloud mirrors for jobs: roles and stage transitions. */
+export interface JobsSyncState {
+  roles: readonly JobRole[]
+  transitions: readonly JobStageTransition[]
+}
+
 interface PayloadRow {
   payload: string
 }
@@ -148,6 +154,50 @@ export class JobStore {
     if (result.changes !== 1) {
       throw new Error(`Cannot delete role ${roleId}: no persisted role has that id`)
     }
+    return this.readState()
+  }
+
+  /** Whether the store has ever been seeded or hydrated. */
+  initialized(): boolean {
+    return (
+      this.database
+        .prepare("SELECT value FROM jobs_metadata WHERE key = 'initialized'")
+        .get() !== undefined
+    )
+  }
+
+  /** Current persisted roles and transitions, for the sync engine's push. */
+  snapshot(): JobsSyncState {
+    const state = this.readState()
+    return { roles: state.roles, transitions: state.transitions }
+  }
+
+  /** Replace every persisted row with cloud state (sync pull). */
+  replaceAll(stateValue: JobsSyncState, fallbackToday: string): JobsState {
+    const seed = parseJobsSeed({ ...stateValue, today: fallbackToday })
+    this.transaction(() => {
+      this.database.exec('DELETE FROM job_roles; DELETE FROM job_stage_transitions;')
+      seed.roles.forEach((role) => this.insertRole(role))
+      const insertTransition = this.database.prepare(`
+        INSERT INTO job_stage_transitions (id, role_id, from_stage, to_stage, changed_at)
+        VALUES (?, ?, ?, ?, ?)
+      `)
+      seed.transitions.forEach((transition) =>
+        insertTransition.run(
+          transition.id,
+          transition.roleId,
+          transition.fromStage,
+          transition.toStage,
+          transition.changedAt
+        )
+      )
+      this.database
+        .prepare("INSERT OR REPLACE INTO jobs_metadata (key, value) VALUES ('initialized', ?)")
+        .run(new Date().toISOString())
+      this.database
+        .prepare("INSERT OR IGNORE INTO jobs_metadata (key, value) VALUES ('today', ?)")
+        .run(seed.today)
+    })
     return this.readState()
   }
 

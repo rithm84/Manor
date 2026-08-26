@@ -16,12 +16,19 @@ import { closeManorStores, createBridgeChannels, createManorStores } from './bri
 import type { ManorStores } from './bridgeChannels'
 import { alfredPanelBounds, alfredShortcutStatus, alfredSummonTarget } from './alfredPanel'
 import { ALFRED_ACCELERATOR, parseAlfredRoute } from '../shared/alfred'
+import { captureToKnowledgeBase } from './captureService'
+import { createAlfredCloudChannels } from './alfredCloudChannels'
+import { createGcalChannels } from './gcalChannels'
+import { createKbChannels } from './kbChannels'
+import { createResumeChannels } from './resumeChannels'
+import { createXChannels } from './xChannels'
+import { electronAccountChannels, supabase } from './supabaseAuth'
+import { SyncEngine, pullOnBoot, withAccountSync, withPushScheduling } from './syncEngine'
 
 let manorStores: ManorStores | null = null
 let mainWindow: BrowserWindow | null = null
 let alfredPanelWindow: BrowserWindow | null = null
 let alfredShortcutRegistered = false
-let alfredEscapeRegistered = false
 
 const ALFRED_PANEL_WIDTH = 472
 const ALFRED_PANEL_HEIGHT = 576
@@ -43,8 +50,8 @@ function applicationIcon(): NativeImage {
   return icon
 }
 
-function registerBridgeHandlers(stores: ManorStores): void {
-  const channels = createBridgeChannels(stores)
+function registerBridgeHandlers(stores: ManorStores, syncEngine: SyncEngine): void {
+  const channels = withPushScheduling(createBridgeChannels(stores), syncEngine)
   for (const [channel, handler] of Object.entries(channels)) {
     ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(args))
   }
@@ -82,25 +89,26 @@ function positionAlfredPanel(panel: BrowserWindow): void {
   )
 }
 
-function unregisterAlfredEscape(): void {
-  if (!alfredEscapeRegistered) return
-  globalShortcut.unregister('Escape')
-  alfredEscapeRegistered = false
-}
-
 function hideAlfredPanel(): void {
   const panel = alfredPanelWindow
   if (panel === null || panel.isDestroyed()) return
   panel.webContents.send('alfred:panel-visibility', false)
   panel.hide()
-  unregisterAlfredEscape()
 }
 
+let dockIcon: NativeImage | null = null
+
 /* Creating or showing a panel-type window flips the macOS activation policy
-   to accessory, which removes the dock icon; Manor is a regular app. */
+   to accessory, which removes the dock icon; Manor is a regular app. The
+   round trip can also reset the dock tile to Electron's stock icon in dev,
+   so the Manor icon is re-applied every time the dock comes back. */
 function restoreDockPresence(): void {
-  if (process.platform === 'darwin' && app.dock !== undefined && !app.dock.isVisible()) {
+  if (process.platform !== 'darwin' || app.dock === undefined) return
+  if (!app.dock.isVisible()) {
     void app.dock.show()
+  }
+  if (dockIcon !== null) {
+    app.dock.setIcon(dockIcon)
   }
 }
 
@@ -110,15 +118,11 @@ function showAlfredPanel(): void {
     throw new Error('Alfred panel is unavailable')
   }
   positionAlfredPanel(panel)
-  panel.showInactive()
+  // Focused show: the panel takes key input the moment it opens, so its own
+  // renderer Escape handler covers dismissal; blur hides the panel otherwise.
+  panel.show()
   restoreDockPresence()
   panel.webContents.send('alfred:panel-visibility', true)
-  if (!globalShortcut.isRegistered('Escape')) {
-    alfredEscapeRegistered = globalShortcut.register('Escape', hideAlfredPanel)
-    if (!alfredEscapeRegistered) {
-      console.error('Alfred panel Escape shortcut registration failed', { accelerator: 'Escape' })
-    }
-  }
 }
 
 function summonAlfred(): void {
@@ -166,7 +170,6 @@ function createAlfredPanel(icon: NativeImage): void {
     if (panel.isVisible()) panel.webContents.send('alfred:panel-visibility', true)
   })
   panel.on('closed', () => {
-    unregisterAlfredEscape()
     alfredPanelWindow = null
   })
 
@@ -178,6 +181,30 @@ function createAlfredPanel(icon: NativeImage): void {
       hash: '/alfred-panel'
     })
   }
+}
+
+function registerCloudHandlers(syncEngine: SyncEngine): void {
+  const envRoot = app.isPackaged ? app.getPath('userData') : join(app.getAppPath(), '..')
+  const cloudChannels = {
+    ...withAccountSync(electronAccountChannels(), syncEngine),
+    ...createResumeChannels(supabase),
+    ...createKbChannels(supabase),
+    ...createXChannels({ envRoot }, supabase),
+    ...createGcalChannels({ envRoot, storageDir: app.getPath('userData') }),
+    ...createAlfredCloudChannels(supabase)
+  }
+  for (const [channel, handler] of Object.entries(cloudChannels)) {
+    ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(args))
+  }
+  ipcMain.handle('capture:knowledge-base', async () => {
+    // The shot must show what the user was looking at, not the summon panel.
+    const panelWasVisible = alfredPanelWindow?.isVisible() ?? false
+    if (panelWasVisible) {
+      hideAlfredPanel()
+      await new Promise((resolve) => setTimeout(resolve, 250))
+    }
+    return captureToKnowledgeBase()
+  })
 }
 
 function microphonePermission(): string {
@@ -256,6 +283,7 @@ function createWindow(icon: NativeImage): void {
 
 void app.whenReady().then(() => {
   const icon = applicationIcon()
+  dockIcon = icon
   if (process.platform === 'darwin' && app.dock !== undefined) {
     app.dock.setIcon(icon)
   }
@@ -263,8 +291,15 @@ void app.whenReady().then(() => {
     join(app.getPath('userData'), 'manor.sqlite'),
     join(app.getPath('userData'), 'notes-attachments')
   )
-  registerBridgeHandlers(manorStores)
+  const syncEngine = new SyncEngine(manorStores, supabase)
+  registerBridgeHandlers(manorStores, syncEngine)
   registerAlfredHandlers()
+  registerCloudHandlers(syncEngine)
+  void pullOnBoot(syncEngine, supabase).catch((error: unknown) => {
+    console.error('manor-sync boot pull failed', {
+      error: error instanceof Error ? error.message : String(error)
+    })
+  })
   createWindow(icon)
   createAlfredPanel(icon)
   restoreDockPresence()
@@ -299,7 +334,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
-  unregisterAlfredEscape()
   globalShortcut.unregister(ALFRED_ACCELERATOR)
   if (manorStores !== null) {
     closeManorStores(manorStores)

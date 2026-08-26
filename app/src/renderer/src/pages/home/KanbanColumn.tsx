@@ -4,9 +4,9 @@ import type { ReactNode } from 'react'
 
 import { Pill } from '../../components/ui'
 import type { QuickActionPoint } from '../../components/ui'
-import type { ContextDefinition, Task, TaskBucketMeta } from '../../data/mock'
+import type { ContextDefinition, Task, TaskBucket, TaskBucketMeta } from '../../data/mock'
 import { TaskCard } from './TaskCard'
-import { canCreateTaskInBucket } from './taskModel'
+import { canCreateTaskInBucket, canDropTaskOnBucket } from './taskModel'
 
 export interface KanbanColumnProps {
   meta: TaskBucketMeta
@@ -14,6 +14,8 @@ export interface KanbanColumnProps {
   contexts: readonly ContextDefinition[]
   today: string
   completingIds: ReadonlySet<string>
+  /** The active drag's source bucket; null while nothing is dragging. */
+  dragSourceBucket: TaskBucket | null
   onOpenComposer: (trigger: HTMLElement) => void
   onOpenTask: (taskId: string) => void
   onQuickActions: (taskId: string, point: QuickActionPoint) => void
@@ -31,6 +33,7 @@ export function KanbanColumn({
   contexts,
   today,
   completingIds,
+  dragSourceBucket,
   onOpenComposer,
   onOpenTask,
   onQuickActions,
@@ -41,11 +44,14 @@ export function KanbanColumn({
     id: `bucket:${meta.bucket}`,
     data: { type: 'bucket', targetBucket: meta.bucket }
   })
+  // Only targets that will actually accept the drop read as droppable.
+  const legalTarget =
+    dragSourceBucket !== null && canDropTaskOnBucket(dragSourceBucket, meta.bucket)
 
   return (
     <section
       ref={setNodeRef}
-      className={`kanban-col is-${meta.colorway}${isOver ? ' is-drag-over' : ''}`}
+      className={`kanban-col is-${meta.colorway}${isOver && legalTarget ? ' is-drag-over' : ''}`}
       aria-label={meta.label}
     >
       <header className="kanban-col-head">

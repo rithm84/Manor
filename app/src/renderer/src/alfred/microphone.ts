@@ -74,6 +74,11 @@ export class MicrophoneCapture {
     }
   }
 
+  /** The live capture stream, shared with the Realtime transport. */
+  streamOf(): MediaStream | null {
+    return this.#stream
+  }
+
   setMuted(muted: boolean): void {
     this.#muted = muted
     this.#stream?.getAudioTracks().forEach((track) => {

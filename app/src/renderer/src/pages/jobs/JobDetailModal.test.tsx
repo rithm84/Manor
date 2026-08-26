@@ -25,7 +25,7 @@ const ROLE: JobRole = {
 describe('JobDetailModal', () => {
   it('renders the same complete editable schema for an interview role', () => {
     const markup = renderToStaticMarkup(
-      <JobDetailModal role={ROLE} open onClose={() => undefined} onSave={() => undefined} />
+      <JobDetailModal role={ROLE} open onClose={() => undefined} onSave={async () => undefined} />
     )
     ;[
       'Company',
@@ -41,6 +41,9 @@ describe('JobDetailModal', () => {
       'Decision date'
     ].forEach((label) => expect(markup).toContain(`aria-label="${label}`))
     expect(markup).toContain('aria-label="Stage: Interview 1"')
+    expect(markup).toContain('aria-label="Resume: None"')
+    expect(markup).toContain('Upload new version')
+    expect(markup).toContain('accept="application/pdf"')
     expect(markup).toContain('ui-pill--tag is-plum')
     expect(markup).not.toContain('type="date"')
     expect(markup).not.toContain('jobdetail-stage')

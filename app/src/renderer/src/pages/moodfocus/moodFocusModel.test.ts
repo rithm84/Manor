@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { MoodFocusState } from '../../../../shared/moodFocus'
-import { monthSummary, sixMonthTrend } from './moodFocusModel'
+import { earliestEntryMonth, monthSummary, sixMonthTrend } from './moodFocusModel'
 
 const state: MoodFocusState = {
   today: '2026-08-20',
@@ -47,5 +47,10 @@ describe('mood and focus history model', () => {
     expect(trend).toHaveLength(6)
     expect(trend.at(-2)).toMatchObject({ month: '2026-07', mood: 4, focus: 4 })
     expect(trend.at(-1)).toMatchObject({ month: '2026-08', mood: 4.5, focus: 4 })
+  })
+
+  it('bounds backward navigation at the earliest entry month', () => {
+    expect(earliestEntryMonth(state)).toBe('2026-07')
+    expect(earliestEntryMonth({ today: state.today, entries: [] })).toBe('2026-08')
   })
 })

@@ -20,6 +20,13 @@ import type {
   UpdateLeetCodeAttemptMutation
 } from '../shared/leetcode'
 
+/** Everything the cloud mirrors for LeetCode: problems and attempts. The
+    summary metadata is legacy display data and never syncs. */
+export interface LeetCodeSyncState {
+  problems: readonly LeetCodeProblem[]
+  attempts: readonly LeetCodeAttempt[]
+}
+
 interface ProblemRow {
   id: string
   topic: string
@@ -143,6 +150,85 @@ export class LeetCodeStore {
     if (result.changes !== 1) {
       throw new Error(`Cannot delete LeetCode attempt ${attemptId}: no record has that id`)
     }
+    return this.readState()
+  }
+
+  /** Whether the store has ever been seeded or hydrated. */
+  initialized(): boolean {
+    return (
+      this.database
+        .prepare("SELECT value FROM leetcode_metadata WHERE key = 'initialized'")
+        .get() !== undefined
+    )
+  }
+
+  /** Current persisted problems and attempts, for the sync engine's push. */
+  snapshot(): LeetCodeSyncState {
+    const state = this.readState()
+    return { problems: state.problems, attempts: state.attempts }
+  }
+
+  /** Replace every persisted row with cloud state (sync pull). A store that
+      was never seeded gets a zeroed legacy summary: cloud state carries no
+      legacy Notion progress. */
+  replaceAll(stateValue: LeetCodeSyncState, fallbackToday: string): LeetCodeState {
+    if (!Array.isArray(stateValue.problems) || !Array.isArray(stateValue.attempts)) {
+      throw new TypeError('leetcode sync state problems and attempts must be arrays')
+    }
+    const problems = stateValue.problems.map(parseLeetCodeProblem)
+    const attempts = stateValue.attempts.map(parseLeetCodeAttempt)
+    const today = parseLeetCodeDate(fallbackToday, 'fallback today')
+    this.transaction(() => {
+      this.database.exec('DELETE FROM leetcode_problems; DELETE FROM leetcode_attempts;')
+      const nowIso = new Date().toISOString()
+      const insertProblem = this.database.prepare(`
+        INSERT INTO leetcode_problems
+          (id, topic, name, difficulty, curriculum_order, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `)
+      const insertAttempt = this.database.prepare(`
+        INSERT INTO leetcode_attempts
+          (id, problem_id, date, solution, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `)
+      problems.forEach((problem) =>
+        insertProblem.run(
+          problem.id,
+          problem.topic,
+          problem.name,
+          problem.difficulty,
+          problem.curriculumOrder,
+          nowIso,
+          nowIso
+        )
+      )
+      attempts.forEach((attempt) =>
+        insertAttempt.run(
+          attempt.id,
+          attempt.problemId,
+          attempt.date,
+          attempt.solution,
+          attempt.createdAt,
+          attempt.updatedAt
+        )
+      )
+      this.database
+        .prepare("INSERT OR REPLACE INTO leetcode_metadata (key, value) VALUES ('initialized', ?)")
+        .run(nowIso)
+      this.database
+        .prepare("INSERT OR IGNORE INTO leetcode_metadata (key, value) VALUES ('today', ?)")
+        .run(today)
+      const emptySummary = JSON.stringify({
+        totalProblems: problems.length,
+        streak: 0,
+        freezesLeft: 0,
+        freezesPerMonth: 0,
+        legacyProgress: []
+      })
+      this.database
+        .prepare("INSERT OR IGNORE INTO leetcode_metadata (key, value) VALUES ('summary', ?)")
+        .run(emptySummary)
+    })
     return this.readState()
   }
 

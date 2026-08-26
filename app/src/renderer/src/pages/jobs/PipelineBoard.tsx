@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { DragEvent, ReactNode } from 'react'
 
 import type { JobStage } from '../../../../shared/jobs'
-import { Pill } from '../../components/ui'
+import { Pill, useDismissLayer } from '../../components/ui'
 import type { BoardCard, DragPayload, JobColumn } from './jobsModel'
 import { jobColumns, jobStageOptions } from './jobsModel'
 
@@ -30,6 +30,13 @@ interface CardMenuProps {
 function CardMenu({ card, onMove, onRemove }: CardMenuProps): ReactNode {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+
+  const dismiss = (): void => {
+    setOpen(false)
+    triggerRef.current?.focus()
+  }
+  useDismissLayer(open, dismiss)
 
   useEffect(() => {
     if (!open) {
@@ -40,16 +47,9 @@ function CardMenu({ card, onMove, onRemove }: CardMenuProps): ReactNode {
         setOpen(false)
       }
     }
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        setOpen(false)
-      }
-    }
     window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onKeyDown)
     return (): void => {
       window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onKeyDown)
     }
   }, [open])
 
@@ -61,6 +61,7 @@ function CardMenu({ card, onMove, onRemove }: CardMenuProps): ReactNode {
     >
       <button
         type="button"
+        ref={triggerRef}
         className="pipeline-card-menu-btn"
         aria-label={`Options for ${card.role.company}`}
         aria-expanded={open}
@@ -204,8 +205,18 @@ export function PipelineBoard({
                         ? ' is-dragging'
                         : ''
                     }`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${card.role.company}, ${card.role.role}, open details`}
                     draggable
                     onClick={() => onOpenCard(card.role.id)}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        onOpenCard(card.role.id)
+                      }
+                    }}
                     onDragStart={(event) => {
                       event.dataTransfer.setData('text/plain', card.role.id)
                       event.dataTransfer.effectAllowed = 'move'

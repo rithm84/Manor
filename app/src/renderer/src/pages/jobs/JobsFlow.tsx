@@ -116,18 +116,16 @@ function FlowLink({
   targetY,
   sourceControlX,
   targetControlX,
-  sourceRelativeY,
-  targetRelativeY,
   linkWidth,
   payload
 }: SankeyLinkProps): ReactElement<SVGProps<SVGPathElement>> {
   const targetStage = stageFromName(payload.target.name)
   const tone = STAGE_TONES[targetStage]
-  const sourcePoint = sourceY + sourceRelativeY
-  const targetPoint = targetY + targetRelativeY
+  /* sourceY/targetY are already the ribbon centerlines (node y + sy + dy/2);
+     adding sourceRelativeY again shifted stacked ribbons past the SVG bottom. */
   return (
     <path
-      d={`M${sourceX},${sourcePoint} C${sourceControlX},${sourcePoint} ${targetControlX},${targetPoint} ${targetX},${targetPoint}`}
+      d={`M${sourceX},${sourceY} C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`}
       fill="none"
       stroke={tone.strong}
       strokeOpacity={0.28}

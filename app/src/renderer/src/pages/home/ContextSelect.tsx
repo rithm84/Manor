@@ -8,6 +8,7 @@ import type {
   ContextDraft,
   ContextIcon
 } from '../../../../shared/home'
+import { useDismissLayer } from '../../components/ui'
 import { ContextPill } from './ContextPill'
 import {
   CONTEXT_ICON_CATEGORIES,
@@ -222,6 +223,7 @@ export function ContextSelect({
   const [draftColor, setDraftColor] = useState<ContextColor>('plum')
   const [draftIcon, setDraftIcon] = useState<ContextIcon>('target')
   const [propertyPicker, setPropertyPicker] = useState<ContextPropertyPicker | null>(null)
+  const [adding, setAdding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
@@ -242,6 +244,13 @@ export function ContextSelect({
     })
   }, [])
 
+  // Two stacked dismiss layers: the menu, then the property picker above it,
+  // so Escape closes the picker before the menu (and never the host dialog).
+  useDismissLayer(open, closeAndFocus)
+  useDismissLayer(open && propertyPicker !== null, () => {
+    if (propertyPicker !== null) closePropertyPicker(propertyPicker)
+  })
+
   useEffect(() => {
     if (!open) return
     const onPointerDown = (event: PointerEvent): void => {
@@ -250,26 +259,17 @@ export function ContextSelect({
         setPropertyPicker(null)
       }
     }
-    const onKeyDown = (event: globalThis.KeyboardEvent): void => {
-      if (event.key !== 'Escape') return
-      if (propertyPicker !== null) {
-        event.preventDefault()
-        closePropertyPicker(propertyPicker)
-        return
-      }
-      closeAndFocus()
-    }
     window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onKeyDown)
     return (): void => {
       window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onKeyDown)
     }
-  }, [closeAndFocus, closePropertyPicker, open, propertyPicker])
+  }, [open])
 
   const add = async (): Promise<void> => {
     const next = draft.trim()
-    if (next === '') return
+    // The adding gate keeps a mashed Enter from firing repeated creates.
+    if (next === '' || adding) return
+    setAdding(true)
     try {
       const context = await onAdd({ name: next, color: draftColor, icon: draftIcon })
       onChange(context.name)
@@ -280,6 +280,8 @@ export function ContextSelect({
       closeAndFocus()
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not add context')
+    } finally {
+      setAdding(false)
     }
   }
 
@@ -345,7 +347,10 @@ export function ContextSelect({
                 maxLength={48}
                 placeholder="New context"
                 aria-label="New context"
-                onChange={(event) => setDraft(event.target.value)}
+                onChange={(event) => {
+                  setDraft(event.target.value)
+                  setError(null)
+                }}
                 onKeyDown={onDraftKeyDown}
               />
               <div className="context-property-control">
@@ -399,7 +404,7 @@ export function ContextSelect({
                 type="button"
                 className="context-create-button"
                 aria-label="Create context"
-                disabled={draft.trim() === ''}
+                disabled={draft.trim() === '' || adding}
                 onClick={() => void add()}
               >
                 <Plus size={14} />

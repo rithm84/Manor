@@ -7,7 +7,12 @@ describe('DailyCapture', () => {
   it('renders only the two keyboard-addressable signal controls and the Alfred entry point', () => {
     const markup = renderToStaticMarkup(
       <DailyCapture
-        dateLabel="Today"
+        dayTitle="Today"
+        dayDate="Thursday, August 20"
+        previousDisabled={false}
+        nextDisabled={true}
+        onPreviousDay={() => undefined}
+        onNextDay={() => undefined}
         entry={null}
         saving={false}
         onMoodChange={() => undefined}

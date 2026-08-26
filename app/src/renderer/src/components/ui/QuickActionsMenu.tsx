@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 
 import type { QuickActionPoint } from './clickIntent'
+import { useDismissLayer } from './dismissLayer'
 
 export interface QuickActionItem {
   id: string
@@ -19,42 +20,49 @@ export interface QuickActionsMenuProps {
 }
 
 const MENU_WIDTH = 204
-const MENU_ESTIMATED_HEIGHT = 128
+/** First-pass guess; a layout effect re-clamps with the measured height. */
+const MENU_ESTIMATED_HEIGHT = 152
 const VIEWPORT_GUTTER = 12
 
-function menuPosition(point: QuickActionPoint): CSSProperties {
+function menuPosition(point: QuickActionPoint, menuHeight: number): CSSProperties {
   const left = Math.max(
     VIEWPORT_GUTTER,
     Math.min(point.x, window.innerWidth - MENU_WIDTH - VIEWPORT_GUTTER)
   )
   const top = Math.max(
     VIEWPORT_GUTTER,
-    Math.min(point.y, window.innerHeight - MENU_ESTIMATED_HEIGHT - VIEWPORT_GUTTER)
+    Math.min(point.y, window.innerHeight - menuHeight - VIEWPORT_GUTTER)
   )
   return { left, top, width: MENU_WIDTH }
 }
 
 export function QuickActionsMenu({ point, label, items, onClose }: QuickActionsMenuProps): ReactNode {
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  const [style, setStyle] = useState<CSSProperties>(() => menuPosition(point, MENU_ESTIMATED_HEIGHT))
+
+  useDismissLayer(true, onClose)
+
+  useLayoutEffect(() => {
+    const menu = rootRef.current
+    if (menu !== null) setStyle(menuPosition(point, menu.offsetHeight))
+  }, [point])
 
   useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
     rootRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
     const onPointerDown = (event: PointerEvent): void => {
-      if (rootRef.current !== null && !rootRef.current.contains(event.target as Node)) onClose()
-    }
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onClose()
+      if (rootRef.current !== null && !rootRef.current.contains(event.target as Node)) {
+        onCloseRef.current()
       }
     }
     window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onKeyDown)
     return (): void => {
       window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onKeyDown)
+      if (opener !== null && opener.isConnected) opener.focus()
     }
-  }, [onClose])
+  }, [])
 
   const moveFocus = (direction: 1 | -1): void => {
     const buttons = Array.from(
@@ -70,7 +78,7 @@ export function QuickActionsMenu({ point, label, items, onClose }: QuickActionsM
     <div
       ref={rootRef}
       className={`ui-quick-actions${point.source === 'keyboard' ? ' is-keyboard' : ''}`}
-      style={menuPosition(point)}
+      style={style}
       role="menu"
       aria-label={label}
       onKeyDown={(event) => {

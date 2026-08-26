@@ -25,6 +25,7 @@ describe('habit week progress', () => {
     const markup = renderToStaticMarkup(
       <WeekStrip
         atRisk
+        gold={false}
         habitId="morning-routine"
         habitName="Morning routine"
         onOpen={() => undefined}
@@ -37,6 +38,7 @@ describe('habit week progress', () => {
     expect(markup.match(/habit-week-segment/g)).toHaveLength(7)
     expect(markup).toContain('habit-week-day is-selected')
     expect(markup).toContain('habit-week-segment is-pending')
+    expect(markup).toContain('streak-flame is-dim')
     expect(markup).toContain('data-testid="habit-week-progress-morning-routine"')
     expect(markup.match(/habit-week-label/g)).toHaveLength(7)
     expect(markup).toContain('>Mo<')

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LockKeyhole, Mic, PencilLine, TrendingUp } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Mic, PencilLine, TrendingUp } from 'lucide-react'
 import type { CSSProperties, ReactNode } from 'react'
 import {
   CartesianGrid,
@@ -15,6 +15,7 @@ import { EmptyState } from '../../components/ui'
 import {
   canEditEntry,
   dayLabel,
+  earliestEntryMonth,
   entriesForMonth,
   monthKey,
   monthShift,
@@ -99,13 +100,13 @@ function RecordRow({
   return (
     <button
       type="button"
-      className={`mf-record-row${editable ? ' is-editable' : ''}`}
+      className={`mf-record-row${editable ? ' is-editable' : ''}${entry.date === today ? ' is-today' : ''}`}
       disabled={!editable}
       onClick={() => onEditDate(entry.date)}
       aria-label={`${dayLabel(entry.date, today)}. Mood ${entry.mood ?? 'not logged'}. Focus ${entry.focus ?? 'not logged'}${editable ? '. Edit entry.' : ''}`}
     >
       <span className="mf-record-date" aria-hidden="true">
-        <span>{editable ? dayLabel(entry.date, today) : weekdayLabel(entry.date)}</span>
+        <span>{weekdayLabel(entry.date)}</span>
         <span className="tnum">{entry.date.slice(8)}</span>
       </span>
       <span className="mf-record-content">
@@ -148,53 +149,25 @@ function RecordRow({
   )
 }
 
-function RecordGroup({
-  label,
-  readOnly,
-  entries,
-  today,
-  onEditDate
-}: {
-  label: string
-  readOnly: boolean
-  entries: readonly MoodFocusEntry[]
-  today: string
-  onEditDate: (date: string) => void
-}): ReactNode {
-  if (entries.length === 0) {
-    return null
-  }
-  return (
-    <section className="mf-record-group" aria-label={label}>
-      <header className="mf-record-group-head">
-        <h4>{label}</h4>
-        <span>{readOnly ? <><LockKeyhole size={11} /> Read only</> : 'Editable'}</span>
-      </header>
-      <div className="mf-record-stack">
-        {entries.map((entry) => (
-          <RecordRow key={entry.date} entry={entry} today={today} onEditDate={onEditDate} />
-        ))}
-      </div>
-    </section>
-  )
-}
-
 export function HistoryPanel({ state, month, onMonthChange, onEditDate }: HistoryPanelProps): ReactNode {
   const summary = monthSummary(state.entries, month)
   const entries = [...entriesForMonth(state.entries, month)].reverse()
   const trend = sixMonthTrend(state, month)
   const currentMonth = monthKey(state.today)
   const canMoveForward = month < currentMonth
-  const editableEntries = entries.filter((entry) => canEditEntry(entry.date, state.today))
-  const archivedEntries = entries.filter((entry) => !canEditEntry(entry.date, state.today))
-  const monthName = summary.label.replace(/ \d{4}$/, '')
+  const canMoveBack = month > earliestEntryMonth(state)
 
   return (
     <div className="mf-history">
       <section className="mf-history-head">
         <h2>History</h2>
         <div className="mf-month-nav" role="group" aria-label="History month">
-          <button type="button" aria-label="Previous month" onClick={() => onMonthChange(monthShift(month, -1))}>
+          <button
+            type="button"
+            aria-label="Previous month"
+            disabled={!canMoveBack}
+            onClick={() => onMonthChange(monthShift(month, -1))}
+          >
             <ChevronLeft size={16} />
           </button>
           <span aria-live="polite">{summary.label}</span>
@@ -265,21 +238,10 @@ export function HistoryPanel({ state, month, onMonthChange, onEditDate }: Histor
         {entries.length === 0 ? (
           <EmptyState icon={<TrendingUp size={20} />} title="No check-ins" message={`No entries in ${summary.label}.`} />
         ) : (
-          <div className="mf-record-groups">
-            <RecordGroup
-              label="Today and yesterday"
-              readOnly={false}
-              entries={editableEntries}
-              today={state.today}
-              onEditDate={onEditDate}
-            />
-            <RecordGroup
-              label={month === currentMonth ? `Earlier in ${monthName}` : monthName}
-              readOnly={true}
-              entries={archivedEntries}
-              today={state.today}
-              onEditDate={onEditDate}
-            />
+          <div className="mf-record-stack">
+            {entries.map((entry) => (
+              <RecordRow key={entry.date} entry={entry} today={state.today} onEditDate={onEditDate} />
+            ))}
           </div>
         )}
       </section>

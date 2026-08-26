@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-08-23_
+_Last updated: 2026-08-25_
 
 Operational guide for coding agents working on Manor.
 
@@ -16,9 +16,14 @@ user's behalf. Electron on macOS ships first; a native iOS app begins only
 after the Mac app is finished. Personal software, built to a
 proper-product bar (sign-in, onboarding, settings, empty states).
 
-**Current phase: Paper redesign landed (2026-08-23); component drill-downs
-continue.** The Electron app in `app/` is a clickable UI-only shell (mock
-data, no backend). The 2026-08-23 pass replaced the cream Atelier surfaces
+**Current phase: Supabase backend live (2026-08-25) on top of the Paper
+redesign (2026-08-23).** The Electron app in `app/` runs against local
+SQLite stores that sync to Supabase (source of truth) when signed in; auth,
+schema + RLS, storage buckets, resume versions, and the Alfred capture
+pipeline are real, while voice, X ingestion, and fitness stay mocked.
+Supabase env lives in repo-root `.env.local` (never commit or print it);
+migrations in `supabase/migrations/` push via the us-east-2 session pooler
+(direct db host is IPv6-only). The 2026-08-23 pass replaced the cream Atelier surfaces
 with the Paper system (white content, paper chrome, violet accent, 12px type
 floor). The calendar workspace was removed the same day (Notion Calendar the
 app covers calendaring; only the Home Today timeline shows day events).
@@ -93,8 +98,9 @@ charter) and `docs/NOTION-DESIGN.md` (micro-interaction craft reference).
 Use these terms exactly: **module** (config-defined for simple trackers,
 code-defined for complex ones), **Alfred / the agent** (voice-only, never
 typed), **thinking orb** (the agent's visual presence), **global summon
-panel** (the hotkey panel; "today's completion at a glance" has a locked
-spot in it), **calendar workspace** (the Workspace↔Calendar toggle),
+panel** (the ⌥M hotkey panel: thinking orb, voice controls, and page
+search; the completion glance was retired 2026-08-24), **calendar
+workspace** (the Workspace↔Calendar toggle),
 **perfect day**, **freeze pool**, **Earn-Back** (streak mechanics — PRD §6),
 **scratch blocks** (disposable Manor-only time blocks), **the legacy Notion system**
 (the legacy Notion system, past tense).

@@ -3,12 +3,14 @@ import type { FormEvent, ReactNode } from 'react'
 
 import type { JobRoleFields, JobStage } from '../../../../shared/jobs'
 import { Button, DatePicker, Input, Modal, Select } from '../../components/ui'
-import { emptyJobRoleFields, jobStageOptions } from './jobsModel'
+import { ResumeField } from './ResumeField'
+import { emptyJobRoleFields, jobStageOptions, sameRoleFields } from './jobsModel'
 
 export interface AddRoleModalProps {
   open: boolean
   onClose: () => void
-  onAdd: (fields: JobRoleFields) => void
+  /** Resolves once the role is persisted; a rejection keeps the modal open. */
+  onAdd: (fields: JobRoleFields) => Promise<void>
 }
 
 function isJobStage(value: string): value is JobStage {
@@ -17,29 +19,51 @@ function isJobStage(value: string): value is JobStage {
 
 export function AddRoleModal({ open, onClose, onAdd }: AddRoleModalProps): ReactNode {
   const [fields, setFields] = useState<JobRoleFields>(() => emptyJobRoleFields('to_apply'))
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (open) {
       setFields(emptyJobRoleFields('to_apply'))
+      setConfirmDiscard(false)
+      setSubmitError(null)
+      setSubmitting(false)
     }
   }, [open])
 
   const ready = fields.company.trim() !== '' && fields.role.trim() !== ''
+  const dirty = !sameRoleFields(fields, emptyJobRoleFields('to_apply'))
+
+  // Escape, scrim, and Cancel all prompt before discarding typed fields.
+  const requestClose = (): void => {
+    if (dirty) setConfirmDiscard(true)
+    else onClose()
+  }
 
   const submit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
-    if (!ready) return
+    if (!ready || submitting) return
+    setSubmitting(true)
+    setSubmitError(null)
     onAdd({
       ...fields,
       company: fields.company.trim(),
       role: fields.role.trim(),
       location: fields.location.trim(),
       postingLink: fields.postingLink.trim()
+    }).catch((error: unknown) => {
+      setSubmitError(
+        `Could not add the role: ${error instanceof Error ? error.message : String(error)}`
+      )
+    }).finally(() => {
+      setSubmitting(false)
     })
   }
 
   return (
-    <Modal open={open} onClose={onClose} width={520} ariaLabel="Add a role">
+    <>
+    <Modal open={open} onClose={requestClose} width={520} ariaLabel="Add a role">
       <form className="addrole" onSubmit={submit}>
         <div className="addrole-title">Add a role</div>
         <div className="addrole-fields">
@@ -107,14 +131,48 @@ export function AddRoleModal({ open, onClose, onAdd }: AddRoleModalProps): React
               ariaLabel="Initial stage"
             />
           </div>
+          <div className="addrole-field addrole-field--wide">
+            <span className="addrole-label">Resume</span>
+            <ResumeField
+              value={fields.resumeId ?? null}
+              onChange={(resumeId) => setFields((current) => ({ ...current, resumeId }))}
+            />
+          </div>
         </div>
+        {submitError !== null ? (
+          <div className="addrole-error" role="alert">{submitError}</div>
+        ) : null}
         <div className="addrole-actions">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <button className="ui-button ui-button--primary" type="submit" disabled={!ready}>
+          <Button variant="ghost" onClick={requestClose}>Cancel</Button>
+          <button className="ui-button ui-button--primary" type="submit" disabled={!ready || submitting}>
             Add role
           </button>
         </div>
       </form>
     </Modal>
+    <Modal
+      open={confirmDiscard}
+      onClose={() => setConfirmDiscard(false)}
+      width={380}
+      ariaLabel="Discard this role"
+    >
+      <div className="ui-confirm">
+        <h2>Discard this role?</h2>
+        <p>It has not been added yet.</p>
+        <div className="ui-confirm-actions">
+          <Button variant="ghost" onClick={() => setConfirmDiscard(false)}>Cancel</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              setConfirmDiscard(false)
+              onClose()
+            }}
+          >
+            Discard
+          </Button>
+        </div>
+      </div>
+    </Modal>
+    </>
   )
 }

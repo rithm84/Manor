@@ -14,7 +14,8 @@ const FIELDS = {
   interview1Date: '2026-08-22',
   interview2Date: '2026-08-29',
   interview3Date: null,
-  decisionDate: null
+  decisionDate: null,
+  resumeId: null
 } as const
 
 describe('jobs validation', () => {
@@ -32,6 +33,15 @@ describe('jobs validation', () => {
       interview1Date: null,
       interview2Date: null
     })).toMatchObject({ stage: 'to_apply', appliedDate: null, interview2Date: null })
+  })
+
+  it('normalizes the applied resume version reference', () => {
+    const withoutResume = Object.fromEntries(
+      Object.entries(FIELDS).filter(([key]) => key !== 'resumeId')
+    )
+    expect(parseJobRoleFields(withoutResume).resumeId).toBeNull()
+    expect(parseJobRoleFields({ ...FIELDS, resumeId: ' resume-1 ' }).resumeId).toBe('resume-1')
+    expect(() => parseJobRoleFields({ ...FIELDS, resumeId: '' })).toThrow(/job.resumeId/)
   })
 
   it('rejects unsupported stages and unsafe posting links', () => {

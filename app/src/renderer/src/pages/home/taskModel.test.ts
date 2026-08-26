@@ -4,13 +4,16 @@ import type { ScratchBlock } from '../../data/mock'
 import {
   bucketForDue,
   canCreateTaskInBucket,
+  canDropTaskOnBucket,
   compareWeeklyTasks,
   dueForTaskCreation,
   dueForBucket,
   findFreeStart,
+  isTimeString,
   minutesToTime,
   scratchExpiry,
-  taskCreationDefaults
+  taskCreationDefaults,
+  timeToMinutes
 } from './taskModel'
 import { AXIS_END_MIN, AXIS_START_MIN } from './TodayPanel'
 
@@ -71,6 +74,36 @@ describe('computed task buckets', () => {
     expect([...tasks].sort(compareWeeklyTasks).map((task) => task.id)).toEqual([
       'high', 'medium', 'low', 'none', 'later'
     ])
+  })
+})
+
+describe('time strings', () => {
+  it('accepts only complete HH:MM values, so a half-typed input is transient', () => {
+    expect(isTimeString('09:30')).toBe(true)
+    expect(isTimeString('24:00')).toBe(true)
+    expect(isTimeString('')).toBe(false)
+    expect(isTimeString('9:30')).toBe(false)
+    expect(isTimeString('09:3')).toBe(false)
+  })
+
+  it('throws a clear TypeError instead of silently returning NaN', () => {
+    expect(timeToMinutes('10:15')).toBe(615)
+    expect(() => timeToMinutes('')).toThrow(TypeError)
+    expect(() => timeToMinutes('')).toThrow('Time "" is not an HH:MM string')
+  })
+})
+
+describe('board drop targets', () => {
+  it('allows only overdue to an exact day, today and tomorrow swaps, and week handoff', () => {
+    expect(canDropTaskOnBucket('overdue', 'today')).toBe(true)
+    expect(canDropTaskOnBucket('overdue', 'tomorrow')).toBe(true)
+    expect(canDropTaskOnBucket('today', 'tomorrow')).toBe(true)
+    expect(canDropTaskOnBucket('tomorrow', 'today')).toBe(true)
+    expect(canDropTaskOnBucket('today', 'week')).toBe(true)
+    expect(canDropTaskOnBucket('week', 'week')).toBe(false)
+    expect(canDropTaskOnBucket('today', 'today')).toBe(false)
+    expect(canDropTaskOnBucket('week', 'today')).toBe(false)
+    expect(canDropTaskOnBucket('today', 'overdue')).toBe(false)
   })
 })
 

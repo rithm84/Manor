@@ -732,6 +732,12 @@
   }
 }
 
+.task-create-error {
+  display: block;
+  color: var(--error);
+  font-size: var(--text-sm);
+}
+
 .context-error,
 .block-error {
   display: block;

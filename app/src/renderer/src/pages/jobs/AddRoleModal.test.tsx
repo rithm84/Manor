@@ -6,7 +6,7 @@ import { AddRoleModal } from './AddRoleModal'
 describe('AddRoleModal', () => {
   it('includes the complete creation fields without defaulting date posted', () => {
     const markup = renderToStaticMarkup(
-      <AddRoleModal open onClose={() => undefined} onAdd={() => undefined} />
+      <AddRoleModal open onClose={() => undefined} onAdd={async () => undefined} />
     )
     expect(markup).toContain('aria-label="Company"')
     expect(markup).toContain('aria-label="Role"')
@@ -14,6 +14,9 @@ describe('AddRoleModal', () => {
     expect(markup).toContain('aria-label="Posting link"')
     expect(markup).toContain('aria-label="Date posted"')
     expect(markup).toContain('aria-label="Initial stage: To apply"')
+    expect(markup).toContain('aria-label="Resume: None"')
+    expect(markup).toContain('Upload new version')
+    expect(markup).toContain('accept="application/pdf"')
     expect(markup).toContain('class="ui-datepicker-trigger"')
     expect(markup).toContain('Not set')
     expect(markup).not.toContain('type="date"')

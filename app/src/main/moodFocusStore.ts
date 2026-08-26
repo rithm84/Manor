@@ -120,6 +120,53 @@ export class MoodFocusStore {
     return this.readState()
   }
 
+  /** Whether the store has ever been seeded or hydrated. */
+  initialized(): boolean {
+    return (
+      this.database
+        .prepare("SELECT value FROM mood_focus_metadata WHERE key = 'initialized'")
+        .get() !== undefined
+    )
+  }
+
+  /** Current persisted entries, for the sync engine's full-module push. */
+  snapshot(): readonly MoodFocusEntry[] {
+    return this.readState().entries
+  }
+
+  /** Replace every persisted entry with cloud state (sync pull). */
+  replaceAll(entriesValue: readonly MoodFocusEntry[], fallbackToday: string): MoodFocusState {
+    const seed = parseMoodFocusSeed({ today: fallbackToday, entries: entriesValue })
+    this.transaction(() => {
+      this.database.exec('DELETE FROM mood_focus_entries')
+      const insert = this.database.prepare(`
+        INSERT INTO mood_focus_entries
+          (date, mood, focus, note, note_source, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `)
+      seed.entries.forEach((entry) =>
+        insert.run(
+          entry.date,
+          entry.mood,
+          entry.focus,
+          entry.note,
+          entry.noteSource,
+          entry.createdAt,
+          entry.updatedAt
+        )
+      )
+      this.database
+        .prepare(
+          "INSERT OR REPLACE INTO mood_focus_metadata (key, value) VALUES ('initialized', ?)"
+        )
+        .run(new Date().toISOString())
+      this.database
+        .prepare("INSERT OR IGNORE INTO mood_focus_metadata (key, value) VALUES ('today', ?)")
+        .run(seed.today)
+    })
+    return this.readState()
+  }
+
   private seed(seed: MoodFocusSeed): void {
     this.transaction(() => {
       const insert = this.database.prepare(`

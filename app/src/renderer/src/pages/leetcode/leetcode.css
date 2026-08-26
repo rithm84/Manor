@@ -162,6 +162,11 @@
   background: var(--surface-canvas);
 }
 
+/* Legacy-only topics carry no problem list; the row is plain data. */
+.lc-topic.is-static:hover {
+  background: transparent;
+}
+
 .lc-topic-chev {
   display: inline-flex;
   align-items: center;
@@ -573,6 +578,23 @@
   background: var(--overdue-error-tint);
   color: var(--overdue-error);
   font-size: var(--text-sm);
+}
+
+.lc-error--page {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+}
+
+.lc-error--page button {
+  color: var(--overdue-error);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: underline;
+  flex-shrink: 0;
 }
 
 .lc-history {

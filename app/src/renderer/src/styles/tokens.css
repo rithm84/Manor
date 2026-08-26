@@ -34,6 +34,7 @@
 
   /* Semantic strong/tint pairs — used only when they mean something */
   --completion: #3d7a52;
+  --completion-soft: color-mix(in srgb, #3d7a52 55%, white);
   --completion-tint: #e6f2ea;
   --today-warning: #8f6a0e;
   --today-warning-tint: #f8efd8;
@@ -45,6 +46,14 @@
   --frozen-info-tint: #e8eff5;
   --this-week-plum: #6f5680;
   --this-week-plum-tint: #efe9f4;
+
+  /* Streak fire — the classic flame ladder, reserved for the streak
+     indicator alone (2026-08-24; completion marks are green everywhere) */
+  --streak: #e8590c;
+  --streak-deep: #d9480f;
+  --streak-glow: #ff922b;
+  --streak-core: #ffd43b;
+  --streak-tint: #fff4e6;
 
   /* Mood & Focus scale (strong / tint) — the one sanctioned multi-hue ladder */
   --scale-awful: #a63d4c;
@@ -126,6 +135,9 @@
   --text-emphasis: 16px;
   --text-lg: 17px;
   --display-md: 28px;
+  /* Sits clearly above BlockNote's 3em document H1 (45px at the 15px base):
+     a note's title must outrank every heading inside it. */
+  --display-lg: 54px;
 
   /* Spacing — 4px base scale */
   --space-1: 4px;

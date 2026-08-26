@@ -1,6 +1,6 @@
 # Manor Hi-Fi Round 2 — Build Spec (for builder agents)
 
-_Last updated: 2026-08-23_
+_Last updated: 2026-08-24_
 
 > **Design-direction note (2026-08-23):** the canvas mocks below are
 > Atelier-era. The shipped app has moved to the **Paper** system (white
@@ -64,7 +64,7 @@ Rules:
 Today is **Wednesday, August 20**. User: user.
 - Habits (10): Morning Routine ✓(streak 45, gold), Night Routine ✓(32, gold), Wind-Down &amp; Prep ○(21), Deep Work 90m ✓(17), Read 25 pages ✓(21, gold), Water 48 oz ✓(26), Protein 105 g ○(14), Family QT 15m ○(169, gold, AT RISK tonight), Sleep by 11:30 ○(10), Manor Logging ✓(62, gold). **6/10 today.** Freeze pool **7/10** left (August). Gold badge = ≥7 freeze-free days. Earn-Back = 2 clean days in 48h, once/habit/month. Quantized habit demo: Water at 100 (0/25/50/75/100 only).
 - Tasks: Overdue(1): "Hackathon team form" (Hackathons, &lt;30min, 1d late). Today(2): "MyMathLab 14.2" (Uni, &lt;2hrs, High), "Send CS 225 transcript to UCLA" (Personal, &lt;30min). Tomorrow(2): "Chapter 14 Practice Exam" (Uni, Exam, &gt;4hrs), "Book skin doc appt" (Personal). This Week(4): "Neetcode — Two Pointers" (Leetcode, &lt;3hrs, In Progress, due Fri, ½ time-blocked today 14:00–15:00 + rest Fri 14:00), "Weekly review + plan" (Personal, recurring Sun), "Update resume — fall apps" (Apps, &lt;3hrs), "Load Airtel account" (Personal, &lt;30min).
-- Calendar Wed: Calc III lecture 10:00–11:15 (Google, green), Neetcode scratch block 14:00–15:00 (dashed, Manor-only, "fades 48h after end"), Gym 16:30–17:30 (Google). Now-line at ~13:00.
+- Calendar Wed: Calc III lecture 10:00–11:15 (Google, green), Neetcode scratch block 14:00–15:00 (dashed, Manor-only, "fades 48h after end"), Gym 16:30–17:30 (Google). Now-line at ~13:00. Two connected Google accounts feed the Today timeline read-only: user@example.com (Personal, Family) and user@example.com (UCLA, Clubs; Clubs toggled off); scratch blocks never sync back.
 - Mood/Focus: not logged today. Mood scale (5): Great/Good/Neutral/Bad/Awful. Focus scale (6): Locked In/High/Medium/Low/Locked Out/Resting. Four months of canonical history include independently missing signals, manual context, and an Alfred debrief summary; combined voice debrief remains optional.
 - Fitness: nightly Bevel clip ingestion — "Last clip processed 11:42 PM · calories + workout normalized by terra". Yesterday: 2,140 in / 310 out / deficit −270. Week avg in 2,109. Muscle groups (9): Chest, Biceps, Triceps, Back, Core, Shoulders, Traps, Legs, Cardio; this week hit: Chest, Biceps, Legs, Cardio (4/9); longest streaks: Cardio 22, Legs 11, Chest 6.
 - LeetCode: Neetcode **42/150**. Topics (done/total): Arrays &amp; Hashing 9/9 ✓, Two Pointers 3/5 (current), Sliding Window 4/6, Stack 5/7, Binary Search 4/7, Linked List 6/11, Trees 8/15, rest 3/90 untouched. Own streak **5**, own freeze pool **3/5** (no Earn-Back). Solved today: 0 (block at 14:00).

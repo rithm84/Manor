@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+
+import { useDismissLayer } from './dismissLayer'
 
 export interface ModalProps {
   open: boolean
@@ -21,12 +23,10 @@ export function Modal({ open, onClose, children, width, ariaLabel }: ModalProps)
   const [closing, setClosing] = useState(false)
   const closeTimer = useRef<number | null>(null)
   const modalRef = useRef<HTMLDivElement | null>(null)
+  const overlayRef = useRef<HTMLDivElement | null>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
-  const onCloseRef = useRef(onClose)
 
-  useEffect(() => {
-    onCloseRef.current = onClose
-  }, [onClose])
+  useDismissLayer(open, onClose)
 
   useEffect(() => {
     if (open) {
@@ -70,13 +70,6 @@ export function Modal({ open, onClose, children, width, ariaLabel }: ModalProps)
     const onKeyDown = (event: KeyboardEvent): void => {
       const visibleModals = document.querySelectorAll<HTMLElement>('.ui-modal')
       if (visibleModals.item(visibleModals.length - 1) !== modalRef.current) return
-      if (event.key === 'Escape') {
-        const openPicker = modalRef.current?.querySelector('.ui-select-menu, .ui-datepicker-menu, .ui-timepicker-menu')
-        if (openPicker !== null && openPicker !== undefined) return
-        event.preventDefault()
-        onCloseRef.current()
-        return
-      }
       if (event.key !== 'Tab' || modalRef.current === null) return
       const focusable = Array.from(
         modalRef.current.querySelectorAll<HTMLElement>(
@@ -109,12 +102,38 @@ export function Modal({ open, onClose, children, width, ariaLabel }: ModalProps)
     }
   }, [open])
 
+  // The overlay renders in place (no portal, so server-rendered tests see the
+  // markup). Background isolation therefore inerts every sibling along the
+  // ancestor chain up to #root instead of inerting #root itself.
+  useLayoutEffect(() => {
+    if (!mounted) return
+    const overlay = overlayRef.current
+    if (overlay === null) return
+    const boundary = document.getElementById('root') ?? document.body
+    const inerted: HTMLElement[] = []
+    let node: HTMLElement = overlay
+    while (node.parentElement !== null) {
+      for (const sibling of node.parentElement.children) {
+        if (sibling !== node && sibling instanceof HTMLElement && !sibling.inert) {
+          sibling.inert = true
+          inerted.push(sibling)
+        }
+      }
+      if (node.parentElement === boundary || node.parentElement === document.body) break
+      node = node.parentElement
+    }
+    return (): void => {
+      for (const element of inerted) element.inert = false
+    }
+  }, [mounted])
+
   if (!mounted) {
     return null
   }
 
   return (
     <div
+      ref={overlayRef}
       className={`ui-overlay${closing ? ' is-closing' : ''}`}
       onClick={(event) => {
         if (event.target === event.currentTarget) {

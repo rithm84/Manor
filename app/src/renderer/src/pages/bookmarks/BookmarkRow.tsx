@@ -12,6 +12,15 @@ export interface BookmarkRowProps {
   onToggle: () => void
 }
 
+/** Only https posts get an external-open link; anything else renders none. */
+export function isSecurePostUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 function timeLabel(savedAt: string): string {
   const date = new Date(savedAt)
   const hours = date.getHours()
@@ -40,6 +49,7 @@ export function BookmarkRow({
         aria-expanded={expanded}
         onClick={onToggle}
         onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
             onToggle()
@@ -63,15 +73,19 @@ export function BookmarkRow({
         </span>
         <span className="bm-side">
           <span className="bm-time">{timeLabel(bookmark.savedAt)}</span>
-          <button
-            type="button"
-            className="bm-open"
-            aria-label={`Open ${bookmark.authorHandle} on X`}
-            title="Open on X"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <ExternalLink size={14} />
-          </button>
+          {isSecurePostUrl(bookmark.postUrl) ? (
+            <a
+              className="bm-open"
+              href={bookmark.postUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`Open ${bookmark.authorHandle} on X`}
+              title="Open on X"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <ExternalLink size={14} />
+            </a>
+          ) : null}
           <ChevronDown size={14} className="bm-caret" />
         </span>
       </div>

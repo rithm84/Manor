@@ -144,6 +144,15 @@ export function sixMonthTrend(state: MoodFocusState, endMonth: string): readonly
   })
 }
 
+/** The first month with any check-in; the current month when nothing is logged yet. */
+export function earliestEntryMonth(state: MoodFocusState): string {
+  const earliestDate = state.entries.reduce(
+    (earliest, entry) => (entry.date < earliest ? entry.date : earliest),
+    state.today
+  )
+  return monthKey(earliestDate)
+}
+
 export function canEditEntry(date: string, today: string): boolean {
   if (date === today) {
     return true

@@ -1,5 +1,12 @@
 import { ALFRED_ACCELERATOR } from '../../../shared/alfred'
+import type { AccountApi, AccountInfo } from '../../../shared/account'
 import type { AlfredApi, AlfredMicrophonePermission } from '../../../shared/alfred'
+import type { CaptureApi } from '../../../shared/capture'
+import type { KbApi, KbEntry } from '../../../shared/kb'
+import type { ResumesApi, ResumeVersion } from '../../../shared/resumes'
+import type { XApi, XConnectionStatus } from '../../../shared/xConnection'
+import type { CalendarAccount, CalendarApi, CalendarDayEvent, GoogleCalendar } from '../../../shared/calendar'
+import type { AlfredCloudApi, AlfredMintedSession } from '../../../shared/alfredVoice'
 import { BROWSER_BRIDGE_ENDPOINT } from '../../../shared/devBridge'
 import type { HabitsApi, HabitsState } from '../../../shared/habits'
 import type {
@@ -52,7 +59,7 @@ function invokeSync(channel: string, args: readonly unknown[]): unknown {
 function createAlfredApi(): AlfredApi {
   const modalListeners = new Set<() => void>()
   window.addEventListener('keydown', (event) => {
-    if (event.altKey && event.code === 'Space') {
+    if (event.altKey && event.code === 'KeyM') {
       event.preventDefault()
       modalListeners.forEach((listener) => listener())
     }
@@ -148,8 +155,67 @@ export function installBrowserBridgeIfMissing(): void {
       'Manor bridge unavailable: the renderer is running outside Electron and the browser bridge only exists on the dev server'
     )
   }
+  const accountApi: AccountApi = {
+    signIn: (mutation) => invoke<AccountInfo>('account:sign-in', [mutation]),
+    signUp: (mutation) => invoke<AccountInfo>('account:sign-up', [mutation]),
+    signOut: () => invoke<void>('account:sign-out', []),
+    current: () => invoke<AccountInfo | null>('account:current', [])
+  }
+
+  const captureApi: CaptureApi = {
+    captureToKnowledgeBase: () =>
+      Promise.reject(new Error('Screen capture needs the Manor desktop app, not browser preview'))
+  }
+
+  const resumesApi: ResumesApi = {
+    list: () => invoke<readonly ResumeVersion[]>('resumes:list', []),
+    upload: (upload) => invoke<ResumeVersion>('resumes:upload', [upload]),
+    remove: (resumeId) => invoke<void>('resumes:remove', [resumeId])
+  }
+
+  const kbApi: KbApi = {
+    list: () => invoke<readonly KbEntry[]>('kb:list', []),
+    remove: (entryId) => invoke<void>('kb:remove', [entryId]),
+    screenshotUrl: (entryId) => invoke<string | null>('kb:screenshot-url', [entryId]),
+    normalize: (entryId) => invoke<void>('kb:normalize', [entryId])
+  }
+
+  const xApi: XApi = {
+    beginConnect: () => invoke<{ authorizeUrl: string }>('x:begin-connect', []),
+    completeConnect: () => invoke<XConnectionStatus>('x:complete-connect', []),
+    status: () => invoke<XConnectionStatus>('x:status', []),
+    disconnect: () => invoke<void>('x:disconnect', []),
+    ingestNow: () => invoke<{ added: number }>('x:ingest-now', [])
+  }
+
+  const gcalApi: CalendarApi = {
+    beginConnect: () => invoke<{ authorizeUrl: string }>('gcal:begin-connect', []),
+    completeConnect: () => invoke<CalendarAccount>('gcal:complete-connect', []),
+    accounts: () => invoke<readonly CalendarAccount[]>('gcal:accounts', []),
+    calendars: () => invoke<readonly GoogleCalendar[]>('gcal:calendars', []),
+    setCalendarEnabled: (calendarId, accountId, enabled) =>
+      invoke<void>('gcal:set-calendar-enabled', [calendarId, accountId, enabled]),
+    disconnect: (accountId) => invoke<void>('gcal:disconnect', [accountId]),
+    eventsFor: (dates) => invoke<readonly CalendarDayEvent[]>('gcal:events-for', [dates])
+  }
+
+  const alfredCloudApi: AlfredCloudApi = {
+    mintSession: () => invoke<AlfredMintedSession>('alfred:mint-session', []),
+    consult: (query) => invoke<string>('alfred:consult', [query]),
+    remember: (fact) => invoke<void>('alfred:remember', [fact]),
+    sessionSummary: (summary) => invoke<void>('alfred:session-summary', [summary]),
+    audit: (draft) => invoke<void>('alfred:audit', [draft])
+  }
+
   window.manor = {
+    account: accountApi,
     alfred: createAlfredApi(),
+    alfredCloud: alfredCloudApi,
+    capture: captureApi,
+    gcal: gcalApi,
+    kb: kbApi,
+    resumes: resumesApi,
+    x: xApi,
     home: homeApi,
     habits: habitsApi,
     jobs: jobsApi,

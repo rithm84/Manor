@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 export interface KbdProps {
-  /** e.g. ['⌥', 'Space'] or ['⌘', 'K'] */
+  /** e.g. ['⌥', 'M'] or ['⌘', 'K'] */
   keys: readonly string[]
 }
 

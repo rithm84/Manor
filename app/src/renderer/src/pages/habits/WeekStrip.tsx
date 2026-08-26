@@ -1,10 +1,13 @@
-import { ChevronRight, Flame } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { StreakFlame } from '../../components/ui'
+import type { StreakFlameState } from '../../components/ui'
 import type { HabitWeekDay } from './habitModel'
 
 export interface WeekStripProps {
   atRisk: boolean
+  gold: boolean
   habitId: string
   habitName: string
   onOpen: () => void
@@ -23,6 +26,12 @@ function accessibleMarkLabel(mark: HabitWeekDay['mark']): string {
   return 'upcoming'
 }
 
+export function streakFlameState(streak: number, atRisk: boolean, gold: boolean): StreakFlameState {
+  if (streak === 0) return 'ember'
+  if (atRisk) return 'dim'
+  return gold ? 'blazing' : 'lit'
+}
+
 export function weekProgressLabel(
   habitName: string,
   week: readonly HabitWeekDay[],
@@ -39,15 +48,18 @@ export function weekProgressLabel(
   return `${habitName}. This week: ${days}. ${streak}-day streak.${risk} Open details.`
 }
 
-/** Compact Mon-to-Sun state rail with streak and detail navigation. */
+/** Compact Mon-to-Sun state rail with the streak flame and detail navigation. */
 export function WeekStrip({
   atRisk,
+  gold,
   habitId,
   habitName,
   onOpen,
   streak,
   week
 }: WeekStripProps): ReactNode {
+  const flameState = streakFlameState(streak, atRisk, gold)
+
   return (
     <button
       type="button"
@@ -64,8 +76,8 @@ export function WeekStrip({
           </span>
         ))}
       </span>
-      <span className="habit-week-streak tnum" aria-hidden="true">
-        <Flame size={12} />
+      <span className={`habit-week-streak tnum is-${flameState}`} aria-hidden="true">
+        <StreakFlame size={22} state={flameState} />
         {streak}
       </span>
       <ChevronRight className="habit-week-chevron" size={13} aria-hidden="true" />

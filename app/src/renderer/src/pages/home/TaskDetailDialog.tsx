@@ -31,9 +31,11 @@ export interface TaskDetailDialogProps {
   onClose: () => void
   onUpdate: (task: Task) => Promise<void>
   onAddContext: (context: ContextDraft) => Promise<ContextDefinition>
-  onComplete: (taskId: string) => Promise<void>
+  /** Receives the task with any pending title edit already applied, so the
+      completion upsert cannot clobber the edit with a stale snapshot. */
+  onComplete: (task: Task) => Promise<void>
   onDuplicate: (task: Task) => Promise<void>
-  onDelete: (taskId: string) => Promise<void>
+  onDelete: (taskId: string) => void
 }
 
 /**
@@ -63,15 +65,20 @@ export function TaskDetailDialog({
   }
   const provenance = provenanceFor(task)
 
-  const saveTitle = (): void => {
+  /** The task with any pending title edit applied; `task` itself when the
+      edit is empty or unchanged. */
+  const editedTask = (): Task => {
     const trimmed = title.trim()
-    if (trimmed === '') {
+    return trimmed === '' || trimmed === task.title ? task : { ...task, title: trimmed }
+  }
+
+  const saveTitle = (): void => {
+    const edited = editedTask()
+    if (edited === task) {
       setTitle(task.title)
       return
     }
-    if (trimmed !== task.title) {
-      void onUpdate({ ...task, title: trimmed })
-    }
+    void onUpdate(edited)
   }
 
   const onTitleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
@@ -80,10 +87,16 @@ export function TaskDetailDialog({
     }
   }
 
+  // Closing must save the title itself; blur does not fire on unmount.
+  const closeWithSave = (): void => {
+    saveTitle()
+    onClose()
+  }
+
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={closeWithSave}
       width={620}
       ariaLabel={`Task details for ${task.title}`}
     >
@@ -101,7 +114,7 @@ export function TaskDetailDialog({
           <button
             type="button"
             className="task-detail-close"
-            onClick={onClose}
+            onClick={closeWithSave}
             aria-label="Close task details"
           >
             <X size={16} />
@@ -192,7 +205,7 @@ export function TaskDetailDialog({
               <Button
                 variant="primary"
                 icon={<Check size={16} />}
-                onClick={() => void onComplete(task.id)}
+                onClick={() => void onComplete(editedTask())}
               >
                 Mark complete
               </Button>
@@ -200,7 +213,11 @@ export function TaskDetailDialog({
                 <button
                   type="button"
                   className="peek-duplicate"
-                  onClick={() => void onDuplicate(task)}
+                  onClick={() => {
+                    const edited = editedTask()
+                    if (edited !== task) void onUpdate(edited)
+                    void onDuplicate(edited)
+                  }}
                 >
                   <Copy size={15} />
                   Duplicate
@@ -208,7 +225,10 @@ export function TaskDetailDialog({
                 <button
                   type="button"
                   className="peek-delete"
-                  onClick={() => void onDelete(task.id)}
+                  onClick={() => {
+                    saveTitle()
+                    onDelete(task.id)
+                  }}
                 >
                   <Trash2 size={15} />
                   Delete

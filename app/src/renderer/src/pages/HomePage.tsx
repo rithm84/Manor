@@ -25,7 +25,7 @@ import type {
   TaskBucket
 } from '../data/mock'
 import type { SavedTaskView } from '../../../shared/home'
-import { playCompletionTick } from '../sound/sounds'
+import { playClick, playCompletionTick } from '../sound/sounds'
 import { KanbanBoard } from './home/KanbanBoard'
 import { MasterTaskTable } from './home/MasterTaskTable'
 import { createHomeSeed } from './home/homeSeed'
@@ -39,10 +39,12 @@ import {
   addDays,
   blockMinutesFor,
   bucketForDue,
+  canDropTaskOnBucket,
   defaultPortion,
   dueForTaskCreation,
   dueForBucket,
   findFreeStart,
+  formatDayLabel,
   formatLongDayLabel,
   localTime,
   localTodayIso,
@@ -54,7 +56,15 @@ import type { DraftTask } from './home/taskModel'
 import './home/home.css'
 
 const COMPLETE_FADE_MS = 480
+const UNDO_WINDOW_MS = 10_000
+const DROP_NOTICE_MS = 4_000
 type HomeView = 'weekly' | 'master'
+
+/** The one undoable action inside the Cmd+Z window; `task` is the snapshot
+    to restore (previous status for completions, full row for deletes). */
+type UndoRecord =
+  | { kind: 'complete'; task: Task }
+  | { kind: 'delete'; task: Task }
 
 interface TaskQuickTarget {
   taskId: string
@@ -90,6 +100,9 @@ export function HomePage(): ReactNode {
   const [view, setView] = useState<HomeView>('weekly')
   const [scheduleDay, setScheduleDay] = useState<ScheduleDay>('today')
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+  /* A landed drop suppresses the overlay's return-home animation (the card is
+     already in its new column); cancels and misses still settle back. */
+  const [dropLanded, setDropLanded] = useState(false)
   const [dropPreview, setDropPreview] = useState<TimelineDropPreview | null>(null)
   const [completingIds, setCompletingIds] = useState<ReadonlySet<string>>(new Set())
   const [composerBucket, setComposerBucket] = useState<TaskBucket | null>(null)
@@ -99,6 +112,13 @@ export function HomePage(): ReactNode {
   const [blockPeekId, setBlockPeekId] = useState<string | null>(null)
   const [blockPeekOpen, setBlockPeekOpen] = useState(false)
   const [quickTarget, setQuickTarget] = useState<TaskQuickTarget | null>(null)
+  const [undoHintVisible, setUndoHintVisible] = useState(false)
+  /** Transient validation feedback for a rejected timeline drop; never a
+      persistence error, so it clears itself. */
+  const [dropNotice, setDropNotice] = useState<string | null>(null)
+  const dropNoticeTimer = useRef<number | null>(null)
+  const undoRecord = useRef<UndoRecord | null>(null)
+  const undoTimer = useRef<number | null>(null)
   const completeTimers = useRef<Map<string, number>>(new Map())
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -146,8 +166,46 @@ export function HomePage(): ReactNode {
     return (): void => {
       timers.forEach((timer) => window.clearTimeout(timer))
       timers.clear()
+      if (undoTimer.current !== null) {
+        window.clearTimeout(undoTimer.current)
+        undoTimer.current = null
+      }
+      if (dropNoticeTimer.current !== null) {
+        window.clearTimeout(dropNoticeTimer.current)
+        dropNoticeTimer.current = null
+      }
     }
   }, [])
+
+  const showDropNotice = (message: string): void => {
+    if (dropNoticeTimer.current !== null) window.clearTimeout(dropNoticeTimer.current)
+    setDropNotice(message)
+    dropNoticeTimer.current = window.setTimeout(() => {
+      dropNoticeTimer.current = null
+      setDropNotice(null)
+    }, DROP_NOTICE_MS)
+  }
+
+  const clearUndo = (): void => {
+    if (undoTimer.current !== null) {
+      window.clearTimeout(undoTimer.current)
+      undoTimer.current = null
+    }
+    undoRecord.current = null
+    setUndoHintVisible(false)
+  }
+
+  const recordUndo = (record: UndoRecord): void => {
+    if (undoTimer.current !== null) window.clearTimeout(undoTimer.current)
+    undoRecord.current = record
+    // Completions are too frequent to hint; Cmd+Z still covers them.
+    setUndoHintVisible(record.kind === 'delete')
+    undoTimer.current = window.setTimeout(() => {
+      undoTimer.current = null
+      undoRecord.current = null
+      setUndoHintVisible(false)
+    }, UNDO_WINDOW_MS)
+  }
 
   const reportPersistenceError = (operation: string, error: unknown): void => {
     console.error('Home persistence operation failed', { operation, error })
@@ -198,17 +256,12 @@ export function HomePage(): ReactNode {
       tags: [],
       recurrence: null
     }
-    try {
-      const persisted = await window.manor.home.upsertTask(task)
-      setTasks((current) => [...current, persisted])
-      setComposerBucket(null)
-      setPeekId(persisted.id)
-      setDueAttention(false)
-      setPeekOpen(true)
-      setPersistError(null)
-    } catch (error) {
-      reportPersistenceError('Could not create task', error)
-    }
+    // Creation failures propagate so the dialog can show them inside itself;
+    // the page banner would sit behind the dialog scrim.
+    const persisted = await window.manor.home.upsertTask(task)
+    setTasks((current) => [...current, persisted])
+    setComposerBucket(null)
+    setPersistError(null)
   }
 
   const duplicateTask = async (source: Task): Promise<void> => {
@@ -228,31 +281,36 @@ export function HomePage(): ReactNode {
     }
   }
 
-  const completeTask = async (taskId: string): Promise<void> => {
-    const task = tasks.find((candidate) => candidate.id === taskId)
-    if (task === undefined) throw new Error(`Cannot complete missing task ${taskId}`)
-    playCompletionTick()
+  const removeCompleting = (taskId: string): void => {
+    setCompletingIds((current) => {
+      const next = new Set(current)
+      next.delete(taskId)
+      return next
+    })
+  }
+
+  /** Takes the task snapshot to complete so callers with pending edits
+      (the detail dialog's title) persist them in the same upsert. */
+  const completeTask = async (task: Task): Promise<void> => {
     setPeekOpen(false)
-    setCompletingIds((current) => new Set(current).add(taskId))
+    // Persist right away; the timer only decides when the faded card leaves
+    // the board, so an unmount mid-fade cannot lose the completion.
+    setCompletingIds((current) => new Set(current).add(task.id))
     const timer = window.setTimeout(() => {
-      completeTimers.current.delete(taskId)
-      void updateTask({ ...task, status: 'Done' })
-        .then(() => {
-          setCompletingIds((current) => {
-            const next = new Set(current)
-            next.delete(taskId)
-            return next
-          })
-        })
-        .catch(() => {
-          setCompletingIds((current) => {
-            const next = new Set(current)
-            next.delete(taskId)
-            return next
-          })
-        })
+      completeTimers.current.delete(task.id)
+      removeCompleting(task.id)
     }, COMPLETE_FADE_MS)
-    completeTimers.current.set(taskId, timer)
+    completeTimers.current.set(task.id, timer)
+    try {
+      await updateTask({ ...task, status: 'Done' })
+      playCompletionTick()
+      recordUndo({ kind: 'complete', task })
+    } catch {
+      // updateTask already surfaced the error; keep the card in place.
+      window.clearTimeout(timer)
+      completeTimers.current.delete(task.id)
+      removeCompleting(task.id)
+    }
   }
 
   const toggleComplete = (taskId: string): void => {
@@ -260,26 +318,62 @@ export function HomePage(): ReactNode {
     if (pending !== undefined) {
       window.clearTimeout(pending)
       completeTimers.current.delete(taskId)
-      setCompletingIds((current) => {
-        const next = new Set(current)
-        next.delete(taskId)
-        return next
-      })
+      removeCompleting(taskId)
+      // The un-tick already reverts this completion; its undo record is stale.
+      if (undoRecord.current?.kind === 'complete' && undoRecord.current.task.id === taskId) {
+        clearUndo()
+      }
+      const task = tasks.find((candidate) => candidate.id === taskId)
+      if (task !== undefined) {
+        void updateTask({ ...task, status: 'Not started' })
+      }
       return
     }
-    void completeTask(taskId)
+    const task = tasks.find((candidate) => candidate.id === taskId)
+    if (task === undefined) throw new Error(`Cannot complete missing task ${taskId}`)
+    void completeTask(task)
   }
 
   const deleteTask = async (taskId: string): Promise<void> => {
+    const snapshot = tasks.find((task) => task.id === taskId) ?? null
     try {
       await window.manor.home.deleteTask(taskId)
       setPeekOpen(false)
       setTasks((current) => current.filter((task) => task.id !== taskId))
       setScratchBlocks((current) => current.filter((block) => block.taskId !== taskId))
       setPersistError(null)
+      // Delete cascades the task's scratch blocks; undo restores the task only.
+      if (snapshot !== null) recordUndo({ kind: 'delete', task: snapshot })
     } catch (error) {
       reportPersistenceError('Could not delete task', error)
       throw error
+    }
+  }
+
+  const performUndo = async (): Promise<void> => {
+    const record = undoRecord.current
+    if (record === null) return
+    clearUndo()
+    if (record.kind === 'complete') {
+      const pending = completeTimers.current.get(record.task.id)
+      if (pending !== undefined) {
+        window.clearTimeout(pending)
+        completeTimers.current.delete(record.task.id)
+      }
+      removeCompleting(record.task.id)
+      try {
+        await updateTask(record.task)
+      } catch {
+        // updateTask already surfaced the error.
+      }
+      return
+    }
+    try {
+      const persisted = await window.manor.home.upsertTask(record.task)
+      setTasks((current) => [...current, persisted])
+      setPersistError(null)
+    } catch (error) {
+      reportPersistenceError('Could not restore task', error)
     }
   }
 
@@ -336,6 +430,30 @@ export function HomePage(): ReactNode {
     }
   }
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.altKey) return
+      if (event.key.toLowerCase() !== 'z') return
+      if (undoRecord.current === null) return
+      const target = event.target
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return
+      }
+      // Leave the shortcut alone while any modal or dialog is up.
+      if (document.querySelector('.ui-overlay') !== null) return
+      event.preventDefault()
+      void performUndo()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return (): void => window.removeEventListener('keydown', onKeyDown)
+    // performUndo and its helpers only touch refs and stable setters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const openTask = (taskId: string): void => {
     setPeekId(taskId)
     setDueAttention(false)
@@ -365,9 +483,8 @@ export function HomePage(): ReactNode {
       createdAt: new Date().toISOString(),
       expiresAt: scratchExpiry(date, end)
     }
+    // The drag set date, time, and task; the block needs no follow-up dialog.
     await upsertScratchBlock(block)
-    setBlockPeekId(block.id)
-    setBlockPeekOpen(true)
   }
 
   const timelinePreviewFor = (
@@ -399,6 +516,7 @@ export function HomePage(): ReactNode {
     const taskId = event.active.data.current?.taskId
     setActiveTaskId(typeof taskId === 'string' ? taskId : null)
     setDropPreview(null)
+    setDropLanded(false)
   }
 
   const onDragMove = (event: DragMoveEvent): void => {
@@ -426,9 +544,12 @@ export function HomePage(): ReactNode {
       const date = event.over.data.current?.date
       const preview = timelinePreviewFor(event, task)
       if (typeof date !== 'string' || preview === null || preview.error !== null) {
-        setPersistError(preview?.error ?? 'Could not place this time block.')
+        // Transient validation, not a save failure; it clears itself.
+        showDropNotice(preview?.error ?? 'Could not place this time block.')
         return
       }
+      setDropLanded(true)
+      playClick()
       void createScratchBlock(task, date, preview.start).catch((error: unknown) => {
         reportPersistenceError('Could not create time block', error)
       })
@@ -437,23 +558,24 @@ export function HomePage(): ReactNode {
 
     if (targetType !== 'bucket' || typeof sourceBucket !== 'string') return
     const targetBucket = event.over.data.current?.targetBucket
+    if (targetBucket !== 'today' && targetBucket !== 'tomorrow' && targetBucket !== 'week') return
+    if (!canDropTaskOnBucket(sourceBucket as TaskBucket, targetBucket)) return
     if (targetBucket === 'week') {
       setPeekId(taskId)
       setDueAttention(true)
       setPeekOpen(true)
       return
     }
-    const allowed =
-      (sourceBucket === 'overdue' && (targetBucket === 'today' || targetBucket === 'tomorrow')) ||
-      (sourceBucket === 'today' && targetBucket === 'tomorrow') ||
-      (sourceBucket === 'tomorrow' && targetBucket === 'today')
-    if (allowed && (targetBucket === 'today' || targetBucket === 'tomorrow')) {
-      void updateTask({ ...task, due: dueForBucket(targetBucket, today) })
-    }
+    setDropLanded(true)
+    playClick()
+    void updateTask({ ...task, due: dueForBucket(targetBucket, today) })
   }
 
+  // Done tasks stay on the board while their completion fade plays out.
   const boardTasks = tasks.filter(
-    (task) => task.status !== 'Done' && bucketForDue(task.due, today) !== null
+    (task) =>
+      (task.status !== 'Done' || completingIds.has(task.id)) &&
+      bucketForDue(task.due, today) !== null
   )
   const peekTask = peekId === null ? null : tasks.find((task) => task.id === peekId) ?? null
   const blockPeek = blockPeekId === null
@@ -464,8 +586,9 @@ export function HomePage(): ReactNode {
     : tasks.find((task) => task.id === blockPeek.taskId) ?? null
   const todayLabel = formatLongDayLabel(today)
   const scheduleDate = scheduleDay === 'today' ? today : addDays(today, 1)
-  const scheduleDateLabel = formatLongDayLabel(scheduleDate)
+  const scheduleDateLabel = formatDayLabel(scheduleDate)
   const activeTask = activeTaskId === null ? null : tasks.find((task) => task.id === activeTaskId) ?? null
+  const dragSourceBucket = activeTask === null ? null : bucketForDue(activeTask.due, today)
   const quickTask = quickTarget === null
     ? null
     : tasks.find((task) => task.id === quickTarget.taskId) ?? null
@@ -506,7 +629,7 @@ export function HomePage(): ReactNode {
           label: 'Delete task',
           icon: <Trash2 size={15} />,
           tone: 'danger',
-          onSelect: () => void deleteTask(quickTask.id)
+          onSelect: () => void deleteTask(quickTask.id).catch(() => undefined)
         }
       ]
 
@@ -566,6 +689,7 @@ export function HomePage(): ReactNode {
                 contexts={contexts}
                 today={today}
                 completingIds={completingIds}
+                dragSourceBucket={dragSourceBucket}
                 onOpenComposer={openTaskCreation}
                 onOpenTask={openTask}
                 onQuickActions={openQuickActions}
@@ -658,8 +782,11 @@ export function HomePage(): ReactNode {
           onUpdate={updateTask}
           onAddContext={addContext}
           onComplete={completeTask}
-          onDuplicate={duplicateTask}
-          onDelete={deleteTask}
+          onDuplicate={async (source) => {
+            await duplicateTask(source)
+            setPeekOpen(false)
+          }}
+          onDelete={(taskId) => void deleteTask(taskId).catch(() => undefined)}
         />
         <ScratchBlockDialog
           block={blockPeek}
@@ -669,7 +796,8 @@ export function HomePage(): ReactNode {
           onUpdate={upsertScratchBlock}
           onDelete={deleteScratchBlock}
         />
-        <DragOverlay dropAnimation={null} zIndex={1000}>
+        {/* Default drop animation so a cancelled drag settles home visibly. */}
+        <DragOverlay zIndex={1000} dropAnimation={dropLanded ? null : undefined}>
           {activeTask === null ? null : <TaskCardPreview task={activeTask} contexts={contexts} />}
         </DragOverlay>
         {quickTarget !== null && quickTask !== null ? (
@@ -679,6 +807,15 @@ export function HomePage(): ReactNode {
             items={quickItems}
             onClose={() => setQuickTarget(null)}
           />
+        ) : null}
+        {undoHintVisible ? (
+          <div className="ui-undo-hint" role="status">
+            Task deleted. Press ⌘Z to bring it back.
+          </div>
+        ) : dropNotice !== null ? (
+          <div className="ui-undo-hint" role="status">
+            {dropNotice}
+          </div>
         ) : null}
       </div>
     </DndContext>

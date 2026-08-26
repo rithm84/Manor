@@ -93,6 +93,7 @@ export function ProblemReviewModal({
   const [deleteCandidate, setDeleteCandidate] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
 
   useEffect(() => {
     setNewDate(today)
@@ -100,7 +101,23 @@ export function ProblemReviewModal({
     setEditingId(null)
     setDeleteCandidate(null)
     setError(null)
+    setConfirmDiscard(false)
   }, [problem.id, today])
+
+  const yesterday = previousIsoDate(today)
+  const editingAttempt = editingId === null
+    ? null
+    : attempts.find((attempt) => attempt.id === editingId) ?? null
+  const editDirty =
+    editingAttempt !== null &&
+    (editDate !== editingAttempt.date || editSolution !== editingAttempt.solution)
+
+  // Escape, scrim, and the close button all prompt before discarding a typed
+  // but unsaved solution or unsaved edits to an existing attempt.
+  const requestClose = (): void => {
+    if (newSolution.trim() !== '' || editDirty) setConfirmDiscard(true)
+    else onClose()
+  }
 
   const saveNewAttempt = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault()
@@ -151,7 +168,8 @@ export function ProblemReviewModal({
   }
 
   return (
-    <Modal open onClose={onClose} width={860} ariaLabel={`${problem.name} solve and review history`}>
+    <>
+    <Modal open onClose={requestClose} width={860} ariaLabel={`${problem.name} solve and review history`}>
       <article className="lc-review-modal">
         <header className="lc-review-header">
           <div>
@@ -173,7 +191,7 @@ export function ProblemReviewModal({
               ) : null}
             </div>
           </div>
-          <button type="button" className="lc-review-close" onClick={onClose} aria-label="Close problem review">
+          <button type="button" className="lc-review-close" onClick={requestClose} aria-label="Close problem review">
             <X size={17} />
           </button>
         </header>
@@ -192,7 +210,7 @@ export function ProblemReviewModal({
               dateLabel="Solved or reviewed"
               solutionLabel="Solution"
               autoFocus
-              minDate={previousIsoDate(today)}
+              minDate={yesterday}
               maxDate={today}
               onDateChange={setNewDate}
               onSolutionChange={setNewSolution}
@@ -284,8 +302,8 @@ export function ProblemReviewModal({
                             dateLabel="Solved or reviewed"
                             solutionLabel="Solution"
                             autoFocus={false}
-                            minDate={null}
-                            maxDate={null}
+                            minDate={attempt.date < yesterday ? attempt.date : yesterday}
+                            maxDate={today}
                             onDateChange={setEditDate}
                             onSolutionChange={setEditSolution}
                           />
@@ -314,5 +332,33 @@ export function ProblemReviewModal({
         </div>
       </article>
     </Modal>
+    <Modal
+      open={confirmDiscard}
+      onClose={() => setConfirmDiscard(false)}
+      width={380}
+      ariaLabel={newSolution.trim() !== '' ? 'Discard this solution' : 'Discard these changes'}
+    >
+      <div className="ui-confirm">
+        <h2>{newSolution.trim() !== '' ? 'Discard this solution?' : 'Discard these changes?'}</h2>
+        <p>
+          {newSolution.trim() !== ''
+            ? 'It has not been saved as an attempt.'
+            : 'They have not been saved.'}
+        </p>
+        <div className="ui-confirm-actions">
+          <Button variant="ghost" onClick={() => setConfirmDiscard(false)}>Cancel</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              setConfirmDiscard(false)
+              onClose()
+            }}
+          >
+            Discard
+          </Button>
+        </div>
+      </div>
+    </Modal>
+    </>
   )
 }

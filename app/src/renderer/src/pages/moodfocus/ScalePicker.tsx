@@ -10,7 +10,6 @@ export interface ScalePickerProps<T extends string> {
   kind: 'mood' | 'focus'
   options: readonly ScaleOption<T>[]
   value: T | null
-  disabled: boolean
   onChange: (value: T) => void
 }
 
@@ -25,7 +24,6 @@ export function ScalePicker<T extends string>({
   kind,
   options,
   value,
-  disabled,
   onChange
 }: ScalePickerProps<T>): ReactNode {
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([])
@@ -53,7 +51,7 @@ export function ScalePicker<T extends string>({
   }
 
   return (
-    <fieldset className={`mf-picker is-${kind}`} disabled={disabled}>
+    <fieldset className={`mf-picker is-${kind}`}>
       <legend id={`${id}-label`} className="mf-prompt">{prompt}</legend>
       <div className="mf-picker-options" role="radiogroup" aria-labelledby={`${id}-label`}>
         {options.map((option, index) => {

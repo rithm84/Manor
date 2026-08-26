@@ -7,6 +7,7 @@ import type {
   HabitsState
 } from '../../../../shared/habits'
 import {
+  earliestHistoryMonth,
   historyMonthAfterNavigation,
   monthSummary,
   twelveMonthTrend
@@ -70,7 +71,7 @@ function historyState(): HabitsState {
 }
 
 describe('habit history aggregation', () => {
-  it('retains retired habits and separates complete, partial, frozen, and missed days', () => {
+  it('excludes retired habits and separates complete, partial, frozen, and missed days', () => {
     const summary = monthSummary(historyState(), '2026-08')
     const active = summary.rows.find((row) => row.habit.id === ACTIVE_HABIT.id)
     const retired = summary.rows.find((row) => row.habit.id === RETIRED_HABIT.id)
@@ -82,12 +83,8 @@ describe('habit history aggregation', () => {
       trackedDays: 5,
       completionRate: 20
     })
-    expect(retired).toMatchObject({
-      status: 'retired',
-      completedDays: 2,
-      trackedDays: 3,
-      completionRate: 67
-    })
+    expect(retired).toBeUndefined()
+    expect(summary.rows).toHaveLength(1)
     expect(summary.frozenDays).toBe(1)
   })
 
@@ -105,5 +102,20 @@ describe('habit history month navigation', () => {
     expect(historyMonthAfterNavigation('2026-08', -1, '2026-08-05')).toBe('2026-07')
     expect(historyMonthAfterNavigation('2026-07', 1, '2026-08-05')).toBe('2026-08')
     expect(historyMonthAfterNavigation('2026-08', 1, '2026-08-05')).toBe('2026-08')
+  })
+
+  it('bounds backward navigation at the earliest habit or entry month', () => {
+    expect(earliestHistoryMonth(historyState())).toBe('2026-08')
+
+    const backdated = historyState()
+    expect(
+      earliestHistoryMonth({
+        ...backdated,
+        habits: [{ ...ACTIVE_HABIT, createdOn: '2026-05-14' }, RETIRED_HABIT]
+      })
+    ).toBe('2026-05')
+    expect(
+      earliestHistoryMonth({ ...backdated, habits: [], entries: [], freezes: [] })
+    ).toBe('2026-08')
   })
 })
