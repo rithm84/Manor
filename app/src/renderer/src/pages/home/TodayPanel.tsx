@@ -1,9 +1,11 @@
 import { useDroppable } from '@dnd-kit/core'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 
+import type { CalendarDayEvent } from '../../../../shared/calendar'
 import { calendars, events } from '../../data/mock'
 import type { CalendarEvent, ScratchBlock, Task } from '../../data/mock'
+import { calendarApi } from '../settings/useGoogleConnect'
 import { formatClock, minutesToTime, timeToMinutes } from './taskModel'
 
 export type ScheduleDay = 'today' | 'tomorrow'
@@ -56,6 +58,25 @@ function blockFromEvent(event: CalendarEvent): TimelineBlock {
   return { id: event.id, title: event.title, start: event.start, end: event.end, scratch: false, taskId: null, color: calendarColor(event.calendarId) }
 }
 
+const LIVE_EVENT_FALLBACK_COLOR = '#48708e'
+
+/** A connected-calendar event, clamped to the visible axis; null when the
+    whole event falls outside it. All-day events carry no timeline slot. */
+function blockFromDayEvent(event: CalendarDayEvent): TimelineBlock | null {
+  const startMin = Math.max(timeToMinutes(event.start), AXIS_START_MIN)
+  const endMin = Math.min(timeToMinutes(event.end), AXIS_END_MIN)
+  if (endMin <= startMin) return null
+  return {
+    id: event.id,
+    title: event.title,
+    start: minutesToTime(startMin),
+    end: minutesToTime(endMin),
+    scratch: false,
+    taskId: null,
+    color: event.color ?? LIVE_EVENT_FALLBACK_COLOR
+  }
+}
+
 function blockFromScratch(block: ScratchBlock, tasks: readonly Task[]): TimelineBlock {
   if (block.taskId === null) {
     const title = block.portion.trim() === '' ? 'Sticky note' : block.portion
@@ -91,11 +112,71 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
   const suppressClickRef = useRef(false)
   const [drag, setDrag] = useState<TimelineDrag | null>(null)
 
+  // Connected-calendar feed: while at least one Google account is connected,
+  // real events replace the mock story. Polled every 60s; the main-process
+  // service handles caching and incremental sync.
+  const [liveEvents, setLiveEvents] = useState<readonly CalendarDayEvent[] | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    const load = (): void => {
+      Promise.resolve()
+        .then(() => {
+          const api = calendarApi()
+          return api
+            .accounts()
+            .then((accounts) => (accounts.length === 0 ? null : api.eventsFor([date])))
+        })
+        .then((eventsForDay) => {
+          if (!cancelled) setLiveEvents(eventsForDay)
+        })
+        .catch((error: unknown) => {
+          // No connection or no bridge: the mock story stays on screen.
+          console.warn('Connected calendar events unavailable', { error })
+          if (!cancelled) setLiveEvents(null)
+        })
+    }
+    load()
+    const timer = window.setInterval(load, 60_000)
+    return (): void => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [date])
+
   const dayScratchBlocks = scratchBlocks.filter((block) => block.date === date)
+  const dayEventBlocks: readonly TimelineBlock[] =
+    liveEvents !== null
+      ? liveEvents
+          .filter((event) => event.date === date && !event.allDay)
+          .flatMap((event) => {
+            const block = blockFromDayEvent(event)
+            return block === null ? [] : [block]
+          })
+      : events.filter((event) => event.date === date && !event.scratch).map(blockFromEvent)
   const blocks: readonly TimelineBlock[] = [
-    ...events.filter((event) => event.date === date && !event.scratch).map(blockFromEvent),
+    ...dayEventBlocks,
     ...dayScratchBlocks.map((block) => blockFromScratch(block, tasks))
   ]
+
+  // Escape cancels an in-progress pointer drag; the block snaps back. A plain
+  // listener is fine here because no dismiss layer can open mid-drag.
+  const dragActive = drag !== null
+  useEffect(() => {
+    if (!dragActive) return
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setDrag(null)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return (): void => window.removeEventListener('keydown', onKeyDown)
+  }, [dragActive])
+
+  const overlapsOtherBlock = (blockId: string, startMin: number, endMin: number): boolean =>
+    blocks.some(
+      (block) =>
+        block.id !== blockId &&
+        startMin < timeToMinutes(block.end) &&
+        endMin > timeToMinutes(block.start)
+    )
   const hours = Array.from({ length: AXIS_END_MIN / 60 - AXIS_START_MIN / 60 + 1 }, (_, index) => AXIS_START_MIN / 60 + index)
   const nowMinutes = timeToMinutes(nowTime)
   const axisHeight = timelineTop(AXIS_END_MIN)
@@ -148,7 +229,12 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
     if (drag.kind === 'move') {
       suppressClickRef.current = true
       if (drag.moved) {
-        onMoveScratchBlock(drag.blockId, minutesToTime(drag.startMin), minutesToTime(drag.startMin + drag.durationMin))
+        const endMin = drag.startMin + drag.durationMin
+        // A span landing on another block snaps back instead of overlapping;
+        // the block reads as invalid while it hovers there.
+        if (!overlapsOtherBlock(drag.blockId, drag.startMin, endMin)) {
+          onMoveScratchBlock(drag.blockId, minutesToTime(drag.startMin), minutesToTime(endMin))
+        }
       } else {
         onOpenScratchBlock(drag.blockId)
       }
@@ -212,10 +298,14 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
             const height = timelineTop(endMin) - timelineTop(startMin)
             const startLabel = dragging ? minutesToTime(startMin) : block.start
             const endLabel = dragging ? minutesToTime(endMin) : block.end
+            const invalid = dragging && drag.moved && overlapsOtherBlock(block.id, startMin, endMin)
+            // Title wraps to the lines the block's height affords (16.5px per
+            // line after padding and the time row); slim blocks keep one line.
+            const titleLines = Math.max(1, Math.floor((height - 20) / 16.5))
             return (
               <button key={block.id} type="button" data-block-id={block.id}
-                className={`today-block${block.scratch ? ' is-scratch is-linked' : ''}${height < 34 ? ' is-slim' : ''}${dragging && drag.moved ? ' is-dragging' : ''}`}
-                style={{ top: timelineTop(startMin), height, ['--entry-color' as string]: block.color }}
+                className={`today-block${block.scratch ? ' is-scratch is-linked' : ''}${height < 34 ? ' is-slim' : ''}${dragging && drag.moved ? ' is-dragging' : ''}${invalid ? ' is-drag-invalid' : ''}`}
+                style={{ top: timelineTop(startMin), height, ['--entry-color' as string]: block.color, ['--title-lines' as string]: titleLines }}
                 title={`${block.title}, ${formatClock(startLabel)} to ${formatClock(endLabel)}`}
                 onClick={() => openBlock(block)}>
                 <span className="today-block-title">{block.title}</span>

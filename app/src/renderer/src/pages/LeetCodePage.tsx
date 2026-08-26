@@ -1,4 +1,4 @@
-import { Code2, Flame, Snowflake } from 'lucide-react'
+import { Code2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
@@ -8,7 +8,7 @@ import type {
   UpdateLeetCodeAttemptMutation
 } from '../../../shared/leetcode'
 import { leetCodeLocalDate } from '../../../shared/leetcode'
-import { Button, Tooltip } from '../components/ui'
+import { Button, FreezeCrystal, StreakFlame, Tooltip } from '../components/ui'
 import { leetcodeTopics } from '../data/mock'
 import { ProblemReviewModal } from './leetcode/ProblemReviewModal'
 import { TopicList } from './leetcode/TopicList'
@@ -46,6 +46,7 @@ function firstIncompleteTopic(state: LeetCodeState): string | null {
 export function LeetCodePage(): ReactNode {
   const [state, setState] = useState<LeetCodeState | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [persistError, setPersistError] = useState<string | null>(null)
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set())
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null)
@@ -95,17 +96,31 @@ export function LeetCodePage(): ReactNode {
     })
   }
 
-  const addAttempt = async (mutation: AddLeetCodeAttemptMutation): Promise<void> => {
-    setState(await window.manor.leetcode.addAttempt(mutation))
+  // Rethrows after recording the failure so the review modal keeps its
+  // inline error handling (fields stay put, the editor stays open).
+  const persist = async (
+    operation: string,
+    mutation: () => Promise<LeetCodeState>
+  ): Promise<void> => {
+    try {
+      const next = await mutation()
+      setState(next)
+      setPersistError(null)
+    } catch (error) {
+      console.error('LeetCode persistence operation failed', { operation, error })
+      setPersistError(`${operation}: ${errorMessage(error)}`)
+      throw error
+    }
   }
 
-  const updateAttempt = async (mutation: UpdateLeetCodeAttemptMutation): Promise<void> => {
-    setState(await window.manor.leetcode.updateAttempt(mutation))
-  }
+  const addAttempt = (mutation: AddLeetCodeAttemptMutation): Promise<void> =>
+    persist('Could not save attempt', () => window.manor.leetcode.addAttempt(mutation))
 
-  const deleteAttempt = async (attemptId: string): Promise<void> => {
-    setState(await window.manor.leetcode.deleteAttempt(attemptId))
-  }
+  const updateAttempt = (mutation: UpdateLeetCodeAttemptMutation): Promise<void> =>
+    persist('Could not update attempt', () => window.manor.leetcode.updateAttempt(mutation))
+
+  const deleteAttempt = (attemptId: string): Promise<void> =>
+    persist('Could not delete attempt', () => window.manor.leetcode.deleteAttempt(attemptId))
 
   const selectedProblem = state?.problems.find((problem) => problem.id === selectedProblemId) ?? null
   const selectedAttempts = state === null || selectedProblem === null
@@ -144,6 +159,13 @@ export function LeetCodePage(): ReactNode {
         <span className="lc-header-meta">Neetcode 150</span>
       </header>
 
+      {persistError === null ? null : (
+        <div className="lc-error lc-error--page" role="alert">
+          <span>{persistError}</span>
+          <button type="button" onClick={() => setPersistError(null)}>Dismiss</button>
+        </div>
+      )}
+
       <section className="lc-hero" aria-label="Neetcode progress">
         <div className="lc-hero-main">
           <span className="lc-hero-count tnum">
@@ -162,11 +184,11 @@ export function LeetCodePage(): ReactNode {
         </div>
         <div className="lc-hero-side">
           <span className="lc-chip">
-            <Flame size={14} aria-hidden="true" />
+            <StreakFlame size={16} state={state.summary.streak > 0 ? 'lit' : 'ember'} />
             <span className="tnum">{state.summary.streak}</span> day streak
           </span>
           <span className="lc-chip">
-            <Snowflake size={14} aria-hidden="true" />
+            <FreezeCrystal size={15} />
             <span className="tnum">{state.summary.freezesLeft}</span> of{' '}
             <span className="tnum">{state.summary.freezesPerMonth}</span> freezes left
           </span>

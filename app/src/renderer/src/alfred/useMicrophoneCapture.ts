@@ -12,6 +12,8 @@ export interface MicrophoneCaptureView {
   audioLevelRef: RefObject<number>
   muted: boolean
   error: string | null
+  /** The live microphone stream once capture starts; shared with the voice session. */
+  stream: MediaStream | null
   setMuted: (muted: boolean) => void
 }
 
@@ -21,6 +23,7 @@ export function useMicrophoneCapture(active: boolean): MicrophoneCaptureView {
   const [state, setState] = useState<MicrophoneCaptureState>('idle')
   const [muted, setMutedState] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
 
   useEffect(() => {
     if (!active) {
@@ -30,6 +33,7 @@ export function useMicrophoneCapture(active: boolean): MicrophoneCaptureView {
       audioLevelRef.current = 0
       setMutedState(false)
       setError(null)
+      setStream(null)
       if (capture !== null) {
         void capture.stop().catch((stopError: unknown) => {
           console.error('Alfred microphone cleanup failed', { error: stopError })
@@ -52,6 +56,7 @@ export function useMicrophoneCapture(active: boolean): MicrophoneCaptureView {
           return capture.stop()
         }
         setState(nextState)
+        setStream(capture.streamOf())
       })
       .catch((captureError: unknown) => {
         console.error('Alfred microphone start failed', { error: captureError })
@@ -64,6 +69,7 @@ export function useMicrophoneCapture(active: boolean): MicrophoneCaptureView {
     return (): void => {
       cancelled = true
       if (captureRef.current === capture) captureRef.current = null
+      setStream(null)
       void capture.stop().catch((stopError: unknown) => {
         console.error('Alfred microphone cleanup failed', { error: stopError })
       })
@@ -79,5 +85,5 @@ export function useMicrophoneCapture(active: boolean): MicrophoneCaptureView {
     })
   }, [])
 
-  return { state, audioLevelRef, muted, error, setMuted }
+  return { state, audioLevelRef, muted, error, stream, setMuted }
 }

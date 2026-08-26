@@ -336,6 +336,95 @@ export class NotesStore {
     return `data:${row.mime_type};base64,${bytes.toString('base64')}`
   }
 
+  /** Whether the store has ever been seeded or hydrated. */
+  initialized(): boolean {
+    return (
+      this.database
+        .prepare("SELECT value FROM notes_metadata WHERE key = 'initialized'")
+        .get() !== undefined
+    )
+  }
+
+  /** Current persisted folders and pages, for the sync engine's push.
+      Attachments are local-only and excluded from sync. */
+  snapshot(): NotesState {
+    return this.readState()
+  }
+
+  /** Replace folders and pages with cloud state (sync pull). Pages are
+      upserted rather than delete-and-reinserted so ON DELETE CASCADE does not
+      wipe the local-only note_attachments rows of pages that survive. */
+  replaceAll(stateValue: NotesState): NotesState {
+    const state = parseNotesSeed(stateValue)
+    this.transaction(() => {
+      // Incoming rows can reference parents in any order; check FKs at commit.
+      this.database.exec('PRAGMA defer_foreign_keys = ON')
+      this.deleteRowsNotIn('note_pages', state.pages.map((page) => page.id))
+      this.deleteRowsNotIn('note_folders', state.folders.map((folder) => folder.id))
+      const upsertFolder = this.database.prepare(`
+        INSERT INTO note_folders (id, name, parent_folder_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          name = excluded.name,
+          parent_folder_id = excluded.parent_folder_id,
+          created_at = excluded.created_at,
+          updated_at = excluded.updated_at
+      `)
+      state.folders.forEach((folder) =>
+        upsertFolder.run(folder.id, folder.name, folder.parentFolderId, folder.createdAt, folder.updatedAt)
+      )
+      const upsertPage = this.database.prepare(`
+        INSERT INTO note_pages (
+          id, title, folder_id, parent_page_id, content_json, favorite, status,
+          created_at, updated_at, last_opened_at, archived_at, deleted_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          title = excluded.title,
+          folder_id = excluded.folder_id,
+          parent_page_id = excluded.parent_page_id,
+          content_json = excluded.content_json,
+          favorite = excluded.favorite,
+          status = excluded.status,
+          created_at = excluded.created_at,
+          updated_at = excluded.updated_at,
+          last_opened_at = excluded.last_opened_at,
+          archived_at = excluded.archived_at,
+          deleted_at = excluded.deleted_at
+      `)
+      state.pages.forEach((page) =>
+        upsertPage.run(
+          page.id,
+          page.title,
+          page.folderId,
+          page.parentPageId,
+          page.contentJson,
+          page.favorite ? 1 : 0,
+          page.status,
+          page.createdAt,
+          page.updatedAt,
+          page.lastOpenedAt,
+          page.archivedAt,
+          page.deletedAt
+        )
+      )
+      this.database
+        .prepare("INSERT OR REPLACE INTO notes_metadata (key, value) VALUES ('initialized', ?)")
+        .run(new Date().toISOString())
+    })
+    return this.readState()
+  }
+
+  private deleteRowsNotIn(table: 'note_pages' | 'note_folders', ids: readonly string[]): void {
+    if (ids.length === 0) {
+      this.database.exec(`DELETE FROM ${table}`)
+      return
+    }
+    const placeholders = ids.map(() => '?').join(', ')
+    this.database
+      .prepare(`DELETE FROM ${table} WHERE id NOT IN (${placeholders})`)
+      .run(...ids)
+  }
+
   private seed(seed: NotesSeed): void {
     seed.folders.forEach((folder) => this.insertFolder(folder))
     seed.pages.forEach((page) => this.insertPage(page))

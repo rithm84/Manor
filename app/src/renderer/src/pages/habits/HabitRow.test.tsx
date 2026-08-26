@@ -41,21 +41,22 @@ const GOLD_HABIT: HabitViewModel = {
 }
 
 describe('daily habit row status styling', () => {
-  it('localizes gold to the completion control and risk to week progress', () => {
+  it('keeps completion green and localizes streak state to the flame', () => {
     const markup = renderToStaticMarkup(
       <HabitRow
         habit={GOLD_HABIT}
         isToday
-        onLog={() => undefined}
+        onLog={() => Promise.resolve()}
         onOpen={() => undefined}
         onResume={() => undefined}
       />
     )
 
     expect(markup).toContain('class="habit-row"')
-    expect(markup).toContain('class="habit-row-completion is-gold"')
+    expect(markup).toContain('class="habit-row-completion"')
+    expect(markup).not.toContain('is-gold')
     expect(markup).toContain('class="habit-week-progress is-atrisk"')
-    expect(markup).not.toContain('habit-row is-gold')
+    expect(markup).toContain('streak-flame is-dim')
     expect(markup).not.toContain('habit-row is-atrisk')
   })
 })

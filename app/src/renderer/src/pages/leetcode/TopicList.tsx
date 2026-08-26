@@ -43,35 +43,40 @@ export function TopicList({
         const rowClass = ['lc-topic', complete ? 'is-complete' : '', open ? 'is-open' : '']
           .filter((part) => part !== '')
           .join(' ')
+        const rowContent = (
+          <>
+            <span className={`lc-topic-chev${open ? ' is-open' : ''}`} aria-hidden="true">
+              {expandable ? <ChevronRight size={14} /> : null}
+            </span>
+            <span className="lc-topic-mark" aria-hidden="true">
+              {complete ? <Check size={12} /> : null}
+            </span>
+            <span className="lc-topic-name">{topic.name}</span>
+            <span className="lc-topic-bar" aria-hidden="true">
+              <span
+                className="lc-topic-fill"
+                style={{ width: `${topic.total === 0 ? 0 : (topic.done / topic.total) * 100}%` }}
+              />
+            </span>
+            <span className="lc-topic-count tnum">
+              {topic.done} of {topic.total}
+            </span>
+          </>
+        )
         return (
           <div key={topic.name} className="lc-topic-block">
-            <button
-              type="button"
-              className={rowClass}
-              onClick={() => {
-                if (expandable) {
-                  onToggleExpand(topic.name)
-                }
-              }}
-              aria-expanded={expandable ? open : undefined}
-            >
-              <span className={`lc-topic-chev${open ? ' is-open' : ''}`} aria-hidden="true">
-                {expandable ? <ChevronRight size={14} /> : null}
-              </span>
-              <span className="lc-topic-mark" aria-hidden="true">
-                {complete ? <Check size={12} /> : null}
-              </span>
-              <span className="lc-topic-name">{topic.name}</span>
-              <span className="lc-topic-bar" aria-hidden="true">
-                <span
-                  className="lc-topic-fill"
-                  style={{ width: `${topic.total === 0 ? 0 : (topic.done / topic.total) * 100}%` }}
-                />
-              </span>
-              <span className="lc-topic-count tnum">
-                {topic.done} of {topic.total}
-              </span>
-            </button>
+            {expandable ? (
+              <button
+                type="button"
+                className={rowClass}
+                onClick={() => onToggleExpand(topic.name)}
+                aria-expanded={open}
+              >
+                {rowContent}
+              </button>
+            ) : (
+              <div className={`${rowClass} is-static`}>{rowContent}</div>
+            )}
 
             {open && topic.problems !== null ? (
               <div className="lc-problems">

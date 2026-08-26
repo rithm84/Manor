@@ -216,6 +216,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  /* 18px visual box, 24px hit target; negative margin keeps layout unchanged. */
+  padding: 3px;
+  margin: -3px;
 }
 
 .ui-checkbox-box {
@@ -342,11 +345,12 @@
 }
 
 .ui-select-menu {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 4px);
-  left: 0;
-  min-width: 100%;
+  /* Fixed + inline left/top/min-width from Select.tsx: escapes overflow-hidden
+     dialog bodies; clamped and flipped against the viewport like the pickers. */
+  position: fixed;
+  z-index: 70;
+  max-height: 280px;
+  overflow-y: auto;
   padding: var(--space-1);
   background: var(--surface-card);
   border: 1px solid var(--hairline);
@@ -655,6 +659,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(27, 25, 29, 0.32);
+  overscroll-behavior: contain;
   transition: opacity var(--duration-base) ease;
 
   @starting-style {
@@ -674,6 +679,8 @@
   max-height: calc(100vh - 96px);
   max-width: calc(100vw - 32px);
   overflow: auto;
+  /* The modal is the actual scroll container; stop wheel chaining to the page. */
+  overscroll-behavior: contain;
   transform-origin: center;
   transition:
     opacity var(--duration-base) var(--ease-out),
@@ -696,6 +703,60 @@
   opacity: 0;
   transform: scale(0.97);
   transition-duration: var(--duration-press);
+}
+
+/* Quiet transient hint pill, bottom-center of a positioned page container.
+   Announces an undoable action for the length of the undo window. */
+.ui-undo-hint {
+  position: absolute;
+  z-index: 40;
+  bottom: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+/* Small confirmation dialog body shared by destructive and discard prompts. */
+.ui-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  font-family: var(--font-ui);
+}
+
+.ui-confirm h2 {
+  color: var(--ink);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.ui-confirm p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-body);
+  line-height: 1.45;
+}
+
+.ui-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 .ui-detail-dialog {
@@ -723,6 +784,11 @@
   font-size: var(--text-emphasis);
   font-weight: 600;
   line-height: 1.3;
+}
+
+/* An editable title (click-to-edit input) takes the full header width. */
+.ui-detail-dialog-title:has(input) {
+  flex: 1;
 }
 
 .ui-detail-dialog-close {

@@ -1,6 +1,6 @@
 import { Check, Gauge } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 
 import { Button, Input, Modal } from '../../components/ui'
 import type { HabitDraft, HabitKind } from '../../../../shared/habits'
@@ -9,7 +9,7 @@ export interface HabitEditorModalProps {
   open: boolean
   initialDraft: HabitDraft | null
   onClose: () => void
-  onSave: (draft: HabitDraft) => void
+  onSave: (draft: HabitDraft) => Promise<void>
 }
 
 const EMPTY_DRAFT: HabitDraft = { name: '', kind: 'binary', targetLabel: null }
@@ -23,6 +23,8 @@ export function HabitEditorModal({
   const [name, setName] = useState('')
   const [kind, setKind] = useState<HabitKind>('binary')
   const [targetLabel, setTargetLabel] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
 
   useEffect(() => {
     if (!open) {
@@ -32,22 +34,45 @@ export function HabitEditorModal({
     setName(draft.name)
     setKind(draft.kind)
     setTargetLabel(draft.targetLabel ?? '')
+    setSaving(false)
+    setConfirmDiscard(false)
   }, [initialDraft, open])
 
-  const submit = (): void => {
-    onSave({
-      name: name.trim(),
-      kind,
-      targetLabel: kind === 'quantized' ? targetLabel.trim() : null
-    })
-  }
   const valid = name.trim() !== '' && (kind === 'binary' || targetLabel.trim() !== '')
   const editing = initialDraft !== null
   const changingToBinary = initialDraft?.kind === 'quantized' && kind === 'binary'
+  const baseline = initialDraft ?? EMPTY_DRAFT
+  const dirty =
+    name !== baseline.name ||
+    kind !== baseline.kind ||
+    targetLabel !== (baseline.targetLabel ?? '')
+
+  // Escape, scrim, and Cancel all prompt before discarding typed fields.
+  const requestClose = (): void => {
+    if (saving) return
+    if (dirty) setConfirmDiscard(true)
+    else onClose()
+  }
+
+  const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault()
+    if (!valid || saving) return
+    setSaving(true)
+    try {
+      await onSave({
+        name: name.trim(),
+        kind,
+        targetLabel: kind === 'quantized' ? targetLabel.trim() : null
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
-    <Modal open={open} onClose={onClose} width={460} ariaLabel={editing ? 'Edit habit' : 'New habit'}>
-      <div className="habit-add">
+    <>
+    <Modal open={open} onClose={requestClose} width={460} ariaLabel={editing ? 'Edit habit' : 'New habit'}>
+      <form className="habit-add" onSubmit={(event) => void submit(event)}>
         <h2 className="habit-add-title">{editing ? 'Edit habit' : 'New habit'}</h2>
 
         <label className="habit-add-field">
@@ -108,14 +133,42 @@ export function HabitEditorModal({
         ) : null}
 
         <div className="habit-add-footer">
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={requestClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={submit} disabled={!valid}>
+          <button
+            className="ui-button ui-button--primary"
+            type="submit"
+            disabled={!valid || saving}
+          >
             {editing ? 'Save changes' : 'Add habit'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+    <Modal
+      open={confirmDiscard}
+      onClose={() => setConfirmDiscard(false)}
+      width={380}
+      ariaLabel={editing ? 'Discard these changes' : 'Discard this habit'}
+    >
+      <div className="ui-confirm">
+        <h2>{editing ? 'Discard these changes?' : 'Discard this habit?'}</h2>
+        <p>{editing ? 'They have not been saved.' : 'It has not been added yet.'}</p>
+        <div className="ui-confirm-actions">
+          <Button variant="ghost" onClick={() => setConfirmDiscard(false)}>Cancel</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              setConfirmDiscard(false)
+              onClose()
+            }}
+          >
+            Discard
           </Button>
         </div>
       </div>
     </Modal>
+    </>
   )
 }

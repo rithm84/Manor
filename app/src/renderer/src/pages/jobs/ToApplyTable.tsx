@@ -35,8 +35,8 @@ export function ToApplyTable({
   }
 
   return (
-    <div className="toapply" role="table" aria-label="Roles to apply to">
-      <div className="toapply-row toapply-head" role="row">
+    <div className="toapply" role="group" aria-label="Roles to apply to">
+      <div className="toapply-row toapply-head" aria-hidden="true">
         <span>Company</span>
         <span>Role</span>
         <span>Location</span>
@@ -47,9 +47,18 @@ export function ToApplyTable({
         <div
           key={role.id}
           className={`toapply-item toapply-row${leavingIds.has(role.id) ? ' is-leaving' : ''}`}
-          role="row"
+          role="button"
+          tabIndex={0}
+          aria-label={`${role.company}, ${role.role}, open details`}
           draggable
           onClick={() => onOpenRole(role.id)}
+          onKeyDown={(event) => {
+            if (event.target !== event.currentTarget) return
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              onOpenRole(role.id)
+            }
+          }}
           onDragStart={(event) => {
             event.dataTransfer.setData('text/plain', role.id)
             event.dataTransfer.effectAllowed = 'move'

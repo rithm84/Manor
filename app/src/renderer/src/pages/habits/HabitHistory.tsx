@@ -1,4 +1,4 @@
-import { Archive, ChevronLeft, ChevronRight, Snowflake } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   Area,
@@ -14,7 +14,9 @@ import {
 } from 'recharts'
 
 import type { HabitsState } from '../../../../shared/habits'
+import { FreezeCrystal } from '../../components/ui'
 import {
+  earliestHistoryMonth,
   historyMonthAfterNavigation,
   monthShift,
   monthSummary,
@@ -30,9 +32,9 @@ export interface HabitHistoryProps {
   onOpenHabit: (habitId: string) => void
 }
 
+/** Retired habits never reach the history rows; only pauses are labeled. */
 function statusLabel(status: 'active' | 'paused' | 'retired' | null): string | null {
-  if (status === 'active' || status === null) return null
-  return status === 'paused' ? 'Paused' : 'Retired'
+  return status === 'paused' ? 'Paused' : null
 }
 
 export interface HabitPerformanceSlice {
@@ -67,7 +69,7 @@ export function habitPerformanceSlices(row: HabitMonthRow): readonly HabitPerfor
       key: 'partial',
       label: 'Partial',
       value: row.partialDays,
-      fill: 'var(--primary)'
+      fill: 'var(--completion-soft)'
     },
     {
       key: 'frozen',
@@ -118,16 +120,16 @@ export function HabitPerformanceDonut({ row }: { row: HabitMonthRow }): ReactNod
       {presentation.seamlessFill !== null ? (
         <svg
           className="habit-history-seamless-ring"
-          viewBox="0 0 52 52"
+          viewBox="0 0 40 40"
           shapeRendering="geometricPrecision"
         >
           <circle
-            cx="26"
-            cy="26"
+            cx="20"
+            cy="20"
             fill="none"
-            r="19"
+            r="14.75"
             stroke={presentation.seamlessFill}
-            strokeWidth="8"
+            strokeWidth="6.5"
           />
         </svg>
       ) : (
@@ -136,9 +138,9 @@ export function HabitPerformanceDonut({ row }: { row: HabitMonthRow }): ReactNod
             <Pie
               data={presentation.slices}
               dataKey="value"
-              innerRadius={15}
+              innerRadius={11.5}
               isAnimationActive={false}
-              outerRadius={23}
+              outerRadius={18}
               paddingAngle={1.5}
               stroke="var(--surface-card)"
               strokeWidth={1}
@@ -150,7 +152,6 @@ export function HabitPerformanceDonut({ row }: { row: HabitMonthRow }): ReactNod
           </PieChart>
         </ResponsiveContainer>
       )}
-      <span className="habit-history-rankrate tnum">{row.completionRate}%</span>
     </span>
   )
 }
@@ -165,6 +166,7 @@ export function HabitHistory({
   const trend = twelveMonthTrend(state, month)
   const nextMonth = historyMonthAfterNavigation(month, 1, state.today)
   const canMoveForward = nextMonth !== month
+  const canMoveBack = month > earliestHistoryMonth(state)
   const averageCompletion = Math.round(
     trend.reduce((total, item) => total + item.completionRate, 0) / trend.length
   )
@@ -182,6 +184,7 @@ export function HabitHistory({
             type="button"
             className="habit-history-navbutton"
             aria-label="Previous month"
+            disabled={!canMoveBack}
             onClick={() => onMonthChange(monthShift(month, -1))}
           >
             <ChevronLeft size={16} />
@@ -351,10 +354,7 @@ export function HabitHistory({
                     <span className="habit-history-ranktitle">
                       <span>{row.habit.name}</span>
                       {lifecycleLabel !== null ? (
-                        <span className="habit-history-lifecycle">
-                          {lifecycleLabel === 'Retired' ? <Archive size={11} /> : null}
-                          {lifecycleLabel}
-                        </span>
+                        <span className="habit-history-lifecycle">{lifecycleLabel}</span>
                       ) : null}
                     </span>
                     <span className="habit-history-rankmeta">
@@ -364,11 +364,14 @@ export function HabitHistory({
                       {row.partialDays > 0 ? <span>{row.partialDays} partial</span> : null}
                       {row.frozenDays > 0 ? (
                         <span className="habit-history-freezecount">
-                          <Snowflake size={11} /> {row.frozenDays}
+                          <FreezeCrystal size={12} /> {row.frozenDays}
                         </span>
                       ) : null}
                       {missedDays > 0 ? <span>{missedDays} missed</span> : null}
                     </span>
+                  </span>
+                  <span className="habit-history-rankrate tnum" aria-hidden="true">
+                    {row.completionRate}%
                   </span>
                   <HabitPerformanceDonut row={row} />
                   <ChevronRight className="habit-history-rankchevron" size={14} aria-hidden="true" />

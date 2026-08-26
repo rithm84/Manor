@@ -1,5 +1,10 @@
 /* Home page: header, kanban board, Today panel, and centered detail dialogs. */
 
+/* Anchors the bottom-center undo hint pill. */
+.home {
+  position: relative;
+}
+
 /* --- Header ---------------------------------------------------------------- */
 
 .home-header {
@@ -219,8 +224,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-chip);
   color: var(--ink-muted);
   opacity: 0;
@@ -229,7 +234,8 @@
     background-color var(--duration-fast) ease;
 }
 
-.kanban-col:hover .kanban-col-add {
+.kanban-col:hover .kanban-col-add,
+.kanban-col-add:focus-visible {
   opacity: 1;
 }
 
@@ -311,9 +317,12 @@
   filter: drop-shadow(-1px -1px 1px rgba(27, 25, 29, 0.09));
 }
 
+/* Lift on hover comes from the border and a nudge, never box-shadow: a
+   shadow traces the uncut rectangle and reveals a ghost of the dog-eared
+   corner. */
 .task-card:hover {
   border-color: var(--surface-strong);
-  box-shadow: var(--shadow-hover);
+  transform: rotate(var(--card-tilt)) translateY(-1px);
 }
 
 .task-card:active {
@@ -483,6 +492,7 @@
 .today-date {
   font-size: var(--text-sm);
   color: var(--ink-muted);
+  white-space: nowrap;
 }
 
 /* Hour axis: tabular labels in a 44px gutter, faint hourlines, blocks placed
@@ -573,13 +583,16 @@
 
 /* Scratch blocks are disposable paper: the one sanctioned full skeuomorph.
    Sticky-note stock, faint grain, a hair of rotation, and a dog-ear fold. */
+/* The dog-ear corner is genuinely cut off the note's geometry (clip-path),
+   so nothing sticks out past the fold on any background. No resting shadow:
+   box-shadow would trace the uncut rectangle and betray the fold. */
 .today-block.is-scratch {
   background: var(--sticky-note);
   border: 1px solid var(--sticky-note-edge);
   border-radius: 2px;
   transform: rotate(-0.5deg);
-  box-shadow: var(--shadow-hover);
   color: var(--tomorrow-gold);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 13px), calc(100% - 13px) 100%, 0 100%);
 }
 
 .today-block.is-scratch:nth-child(even) {
@@ -603,6 +616,12 @@
   transform: rotate(-1deg) scale(1.02);
 }
 
+/* Hovering over another block: this position will snap back on release. */
+.today-block.is-drag-invalid {
+  border: 1px dashed var(--error);
+  opacity: 0.65;
+}
+
 .today-create-ghost {
   z-index: 5;
   border-style: dashed;
@@ -619,17 +638,29 @@
   display: none;
 }
 
+/* The flap folded back over the cut, same anatomy as task cards. */
 .today-block.is-scratch::after {
   content: '';
   position: absolute;
-  right: 0;
-  bottom: 0;
+  right: -1px;
+  bottom: -1px;
   width: 0;
   height: 0;
   border-style: solid;
-  border-width: 0 0 10px 10px;
-  border-color: transparent transparent var(--surface-canvas) transparent;
-  filter: drop-shadow(-1px -1px 1px rgba(27, 25, 29, 0.08));
+  border-width: 12px 12px 0 0;
+  border-color: color-mix(in srgb, var(--ink) 8%, var(--sticky-note)) transparent transparent
+    transparent;
+  filter: drop-shadow(-1px -1px 1px rgba(27, 25, 29, 0.09));
+}
+
+/* A lifted note flattens: clip-path would clip the drag shadow away, so the
+   fold rests while dragging and the overlay shadow does the lifting. */
+.today-block.is-scratch.is-dragging {
+  clip-path: none;
+}
+
+.today-block.is-scratch.is-dragging::after {
+  display: none;
 }
 
 .today-block.is-faded {
@@ -648,14 +679,17 @@
   transform: scale(0.99);
 }
 
+/* Wraps up to the lines the block height affords (--title-lines from the
+   timeline), then clamps with an ellipsis. */
 .today-block-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--title-lines, 1);
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--ink);
   line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .today-block-time {

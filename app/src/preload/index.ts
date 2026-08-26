@@ -1,6 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+import type { AccountApi, SignInMutation } from '../shared/account'
 import type { AlfredApi, AlfredRoute } from '../shared/alfred'
+import type { CaptureApi } from '../shared/capture'
+import type { KbApi } from '../shared/kb'
+import type { ResumesApi, ResumeUpload } from '../shared/resumes'
+import type { XApi } from '../shared/xConnection'
+import type { CalendarApi } from '../shared/calendar'
+import type { AlfredCloudApi, AlfredAuditDraft, AlfredConsultQuery } from '../shared/alfredVoice'
 
 import type {
   ContextDraft,
@@ -161,8 +168,66 @@ const alfredApi: AlfredApi = {
   }
 }
 
+const accountApi: AccountApi = {
+  signIn: (mutation: SignInMutation) => ipcRenderer.invoke('account:sign-in', mutation),
+  signUp: (mutation: SignInMutation) => ipcRenderer.invoke('account:sign-up', mutation),
+  signOut: () => ipcRenderer.invoke('account:sign-out'),
+  current: () => ipcRenderer.invoke('account:current')
+}
+
+const captureApi: CaptureApi = {
+  captureToKnowledgeBase: () => ipcRenderer.invoke('capture:knowledge-base')
+}
+
+const resumesApi: ResumesApi = {
+  list: () => ipcRenderer.invoke('resumes:list'),
+  upload: (upload: ResumeUpload) => ipcRenderer.invoke('resumes:upload', upload),
+  remove: (resumeId: string) => ipcRenderer.invoke('resumes:remove', resumeId)
+}
+
+const kbApi: KbApi = {
+  list: () => ipcRenderer.invoke('kb:list'),
+  remove: (entryId: string) => ipcRenderer.invoke('kb:remove', entryId),
+  screenshotUrl: (entryId: string) => ipcRenderer.invoke('kb:screenshot-url', entryId),
+  normalize: (entryId: string) => ipcRenderer.invoke('kb:normalize', entryId)
+}
+
+const xApi: XApi = {
+  beginConnect: () => ipcRenderer.invoke('x:begin-connect'),
+  completeConnect: () => ipcRenderer.invoke('x:complete-connect'),
+  status: () => ipcRenderer.invoke('x:status'),
+  disconnect: () => ipcRenderer.invoke('x:disconnect'),
+  ingestNow: () => ipcRenderer.invoke('x:ingest-now')
+}
+
+const gcalApi: CalendarApi = {
+  beginConnect: () => ipcRenderer.invoke('gcal:begin-connect'),
+  completeConnect: () => ipcRenderer.invoke('gcal:complete-connect'),
+  accounts: () => ipcRenderer.invoke('gcal:accounts'),
+  calendars: () => ipcRenderer.invoke('gcal:calendars'),
+  setCalendarEnabled: (calendarId: string, accountId: string, enabled: boolean) =>
+    ipcRenderer.invoke('gcal:set-calendar-enabled', calendarId, accountId, enabled),
+  disconnect: (accountId: string) => ipcRenderer.invoke('gcal:disconnect', accountId),
+  eventsFor: (dates: readonly string[]) => ipcRenderer.invoke('gcal:events-for', dates)
+}
+
+const alfredCloudApi: AlfredCloudApi = {
+  mintSession: () => ipcRenderer.invoke('alfred:mint-session'),
+  consult: (query: AlfredConsultQuery) => ipcRenderer.invoke('alfred:consult', query),
+  remember: (fact: string) => ipcRenderer.invoke('alfred:remember', fact),
+  sessionSummary: (summary: string) => ipcRenderer.invoke('alfred:session-summary', summary),
+  audit: (draft: AlfredAuditDraft) => ipcRenderer.invoke('alfred:audit', draft)
+}
+
 contextBridge.exposeInMainWorld('manor', {
+  account: accountApi,
   alfred: alfredApi,
+  alfredCloud: alfredCloudApi,
+  capture: captureApi,
+  gcal: gcalApi,
+  kb: kbApi,
+  resumes: resumesApi,
+  x: xApi,
   home: homeApi,
   habits: habitsApi,
   jobs: jobsApi,

@@ -2,6 +2,7 @@ import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
+import { useDismissLayer } from '../../components/ui'
 import { addDays, formatDayLabel, localTodayIso, parseIso, toIso } from './taskModel'
 
 export interface DueDatePickerProps {
@@ -68,6 +69,9 @@ export function DueDatePicker({ value, onChange, ariaLabel, min, max }: DueDateP
     window.requestAnimationFrame(() => triggerRef.current?.focus())
   }
 
+  // Escape while open dismisses only this picker, never its host dialog.
+  useDismissLayer(open, closeAndFocus)
+
   useEffect(() => {
     if (!open) {
       return
@@ -77,16 +81,9 @@ export function DueDatePicker({ value, onChange, ariaLabel, min, max }: DueDateP
         setOpen(false)
       }
     }
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        closeAndFocus()
-      }
-    }
     window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onKeyDown)
     return (): void => {
       window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onKeyDown)
     }
   }, [open])
 

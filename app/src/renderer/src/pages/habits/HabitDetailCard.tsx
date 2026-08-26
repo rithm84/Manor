@@ -2,17 +2,15 @@ import {
   Archive,
   ChevronLeft,
   ChevronRight,
-  Flame,
   Info,
   Pause,
   Pencil,
   Play,
-  Snowflake,
   Trash2
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import { Button } from '../../components/ui'
+import { Button, FreezeCrystal, StreakFlame } from '../../components/ui'
 import { markForDate } from '../../../../shared/habits'
 import type { HabitsState } from '../../../../shared/habits'
 import { daysInMonth, monthLabel, monthShift } from './habitModel'
@@ -65,7 +63,11 @@ export function HabitDetailCard({
       <div className="habit-detail-identity">
         <div className="habit-detail-titleline">
           <h2>{definition.name}</h2>
-          {metrics.gold ? <Flame size={17} className="habit-detail-goldflame" aria-label="Violet streak" /> : null}
+          {metrics.gold ? (
+            <span className="habit-detail-goldflame" role="img" aria-label="Freeze-free week streak">
+              <StreakFlame size={18} state="blazing" />
+            </span>
+          ) : null}
         </div>
         <span className="habit-detail-kind">
           {definition.kind === 'binary' ? 'One tap' : `In quarters to ${definition.targetLabel}`}
@@ -135,7 +137,7 @@ export function HabitDetailCard({
                 title={`${date}: ${mark}`}
               >
                 {mark === 'frozen' ? (
-                  <Snowflake size={11} />
+                  <FreezeCrystal size={12} />
                 ) : (
                   <span className="habit-month-daynum tnum">{index + 1}</span>
                 )}
@@ -162,7 +164,7 @@ export function HabitDetailCard({
         </summary>
         <div className="habit-rules-body">
           <p>A freeze is spent automatically when this habit misses a day.</p>
-          <p>Seven completed days without a freeze turn the flame violet.</p>
+          <p>Seven completed days without a freeze make the flame blaze.</p>
           <p>After a break, two clean days within 48 hours can restore the streak once this month.</p>
           {metrics.earnBackUsedThisMonth ? <p>Earn-Back has been used this month.</p> : null}
         </div>
@@ -189,7 +191,7 @@ export function HabitDetailCard({
         <section className="habit-retire-zone">
           <div>
             <span className="habit-retire-title">Retire habit</span>
-            <span className="habit-retire-copy">Retiring removes it from daily logging and keeps every entry.</span>
+            <span className="habit-retire-copy">Retiring removes this habit and its whole history.</span>
           </div>
           <Button variant="subtle" icon={<Archive size={14} />} onClick={onRetire}>
             Retire

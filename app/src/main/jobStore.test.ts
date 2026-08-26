@@ -99,6 +99,21 @@ describe('JobStore', () => {
     expect(reloaded.today).toBe('2026-08-21')
   })
 
+  it('round-trips the applied resume version and defaults legacy roles to null', () => {
+    store = new JobStore(':memory:')
+    const loaded = store.load(SEED, '2026-08-20')
+    expect(loaded.roles[0]?.resumeId).toBeNull()
+
+    const updated = store.updateRole({
+      id: ROLE.id,
+      fields: { ...ROLE, resumeId: 'resume-2026-swe' }
+    }, '2026-08-21T12:00:00.000Z')
+    expect(updated.roles[0]?.resumeId).toBe('resume-2026-swe')
+
+    const reloaded = store.load({ ...SEED, roles: [], transitions: [] }, '2026-08-22')
+    expect(reloaded.roles[0]?.resumeId).toBe('resume-2026-swe')
+  })
+
   it('creates roles without inventing a posted or stage date', () => {
     store = new JobStore(':memory:')
     store.load({ today: '2026-08-20', roles: [], transitions: [] }, '2026-08-20')

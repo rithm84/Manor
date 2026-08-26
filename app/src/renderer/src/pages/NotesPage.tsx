@@ -25,6 +25,7 @@ import type { ChangeEvent, KeyboardEvent as ReactKeyboardEvent, ReactNode } from
 import { useSearchParams } from 'react-router-dom'
 
 import type { NoteFolder, NotePage, NotesState } from '../../../shared/notes'
+import { hasOpenDismissLayer, useDismissLayer } from '../components/ui/dismissLayer'
 import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { PageShell } from './PageShell'
@@ -110,8 +111,13 @@ export function NotesPage(): ReactNode {
   const [menuOpen, setMenuOpen] = useState(false)
   const [dialog, setDialog] = useState<DialogState>(null)
   const searchRef = useRef<HTMLInputElement | null>(null)
+  const titleRef = useRef<HTMLInputElement | null>(null)
+  const pendingTitleFocusRef = useRef(false)
   const importRef = useRef<HTMLInputElement | null>(null)
   const actionsRef = useRef<HTMLDivElement | null>(null)
+  const menuTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const [exportedFlash, setExportedFlash] = useState(false)
+  const exportTimerRef = useRef<number | null>(null)
   const timerRef = useRef<number | null>(null)
   const pendingRef = useRef<NoteDraft | null>(null)
   const draftRef = useRef<NoteDraft | null>(null)
@@ -279,19 +285,19 @@ export function NotesPage(): ReactNode {
     return (): void => window.removeEventListener('manor:open-note', onOpenMention)
   }, [openPage])
 
+  useDismissLayer(menuOpen, () => {
+    setMenuOpen(false)
+    menuTriggerRef.current?.focus()
+  })
+
   useEffect(() => {
     if (!menuOpen) return
     const closeOnPointer = (event: PointerEvent): void => {
       if (event.target instanceof Node && !actionsRef.current?.contains(event.target)) setMenuOpen(false)
     }
-    const closeOnEscape = (event: globalThis.KeyboardEvent): void => {
-      if (event.key === 'Escape') setMenuOpen(false)
-    }
     document.addEventListener('pointerdown', closeOnPointer)
-    window.addEventListener('keydown', closeOnEscape)
     return (): void => {
       document.removeEventListener('pointerdown', closeOnPointer)
-      window.removeEventListener('keydown', closeOnEscape)
     }
   }, [menuOpen])
 
@@ -311,6 +317,7 @@ export function NotesPage(): ReactNode {
       setData(state)
       setError(null)
       const created = newestCreatedPage(previousIds, state)
+      pendingTitleFocusRef.current = true
       selectNoteRoute(created.id)
       setScope(created.folderId === null ? 'all' : `folder:${created.folderId}`)
     } catch (createError) {
@@ -318,18 +325,38 @@ export function NotesPage(): ReactNode {
     }
   }, [data.pages, savePending, scope, selectNoteRoute])
 
+  // A freshly created page gets its title focused once the editor renders.
+  useEffect(() => {
+    if (!pendingTitleFocusRef.current) return
+    if (draft === null || selectedPage === null || draft.id !== selectedPage.id) return
+    pendingTitleFocusRef.current = false
+    titleRef.current?.focus()
+    titleRef.current?.select()
+  }, [draft, selectedPage])
+
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent): void => {
-      if (!(event.metaKey || event.ctrlKey)) return
-      if (event.key.toLowerCase() === 's' && selectedId !== null) {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return
+      const target = event.target
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return
+      }
+      // Leave the shortcuts alone while any modal, menu, or dialog is up.
+      if (hasOpenDismissLayer() || document.querySelector('.ui-overlay') !== null) return
+      const key = event.key.toLowerCase()
+      if (key === 's' && !event.shiftKey && selectedId !== null) {
         event.preventDefault()
         void savePending()
       }
-      if (event.key.toLowerCase() === 'n') {
+      if (key === 'n' && !event.shiftKey) {
         event.preventDefault()
         void createPage(null)
       }
-      if (event.shiftKey && event.key.toLowerCase() === 'f') {
+      if (key === 'f' && event.shiftKey) {
         event.preventDefault()
         searchRef.current?.focus()
       }
@@ -363,22 +390,57 @@ export function NotesPage(): ReactNode {
     setMenuOpen(false)
   }
 
+  /** Restore keeps the note selected and follows it back to its live scope. */
+  const restoreSelected = async (pageId: string): Promise<void> => {
+    if (!(await savePending())) return
+    const state = await replaceState(window.manor.notes.restorePage(pageId))
+    setMenuOpen(false)
+    if (state === null) return
+    const restored = state.pages.find((page) => page.id === pageId)
+    if (restored === undefined) {
+      setError(`Restored note ${pageId} was missing from the reloaded state`)
+      return
+    }
+    setScope(scopeForPage(restored))
+  }
+
+  const duplicateSelected = async (pageId: string): Promise<void> => {
+    if (!(await savePending())) return
+    setMenuOpen(false)
+    const previousIds = new Set(data.pages.map((page) => page.id))
+    const state = await replaceState(window.manor.notes.duplicatePage(pageId))
+    if (state === null) return
+    try {
+      selectNoteRoute(newestCreatedPage(previousIds, state).id)
+    } catch (duplicateError) {
+      setError(duplicateError instanceof Error ? duplicateError.message : String(duplicateError))
+    }
+  }
+
   const exportMarkdown = async (): Promise<void> => {
     if (selectedPage === null) return
     const contentJson = draft?.id === selectedPage.id ? draft.contentJson : selectedPage.contentJson
     if (!(await savePending())) return
-    const module = await import('./notes/RichNoteEditor')
-    const markdown = module.contentJsonToMarkdown(contentJson)
-    const anchor = document.createElement('a')
-    anchor.href = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown' }))
-    anchor.download = `${selectedPage.title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'note'}.md`
-    anchor.hidden = true
-    document.body.append(anchor)
-    anchor.click()
-    window.setTimeout(() => {
-      URL.revokeObjectURL(anchor.href)
-      anchor.remove()
-    }, 1_000)
+    setMenuOpen(false)
+    try {
+      const module = await import('./notes/RichNoteEditor')
+      const markdown = module.contentJsonToMarkdown(contentJson)
+      const anchor = document.createElement('a')
+      anchor.href = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown' }))
+      anchor.download = `${selectedPage.title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'note'}.md`
+      anchor.hidden = true
+      document.body.append(anchor)
+      anchor.click()
+      window.setTimeout(() => {
+        URL.revokeObjectURL(anchor.href)
+        anchor.remove()
+      }, 1_000)
+      setExportedFlash(true)
+      if (exportTimerRef.current !== null) window.clearTimeout(exportTimerRef.current)
+      exportTimerRef.current = window.setTimeout(() => setExportedFlash(false), 2_000)
+    } catch (exportError) {
+      setError(`Export failed: ${exportError instanceof Error ? exportError.message : String(exportError)}`)
+    }
   }
 
   const importMarkdown = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -400,6 +462,16 @@ export function NotesPage(): ReactNode {
     } catch (importError) {
       setError(importError instanceof Error ? importError.message : String(importError))
     }
+  }
+
+  useEffect(() => (): void => {
+    if (exportTimerRef.current !== null) window.clearTimeout(exportTimerRef.current)
+  }, [])
+
+  /** Favorites flush the pending draft first so the list row never shows stale data. */
+  const toggleFavorite = async (page: NotePage): Promise<void> => {
+    if (!(await savePending())) return
+    await replaceState(window.manor.notes.setFavorite({ id: page.id, favorite: !page.favorite }))
   }
 
   const moveWithKeyboard = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number): void => {
@@ -484,19 +556,19 @@ export function NotesPage(): ReactNode {
               <div className="notes-editor-toolbar">
                 <div className="notes-breadcrumb"><span>{folderName}</span><ChevronRight size={13} /><strong>{draft.title || 'Untitled'}</strong></div>
                 <div ref={actionsRef} className="notes-editor-actions">
-                  <span className={`notes-save-state is-${saveState}`}>{saveState === 'unsaved' ? 'Unsaved' : saveState === 'saving' ? 'Saving' : saveState === 'error' ? 'Save failed' : 'Saved'}</span>
-                  <button type="button" className={`notes-favorite-button${selectedPage.favorite ? ' is-active' : ''}`} aria-label={selectedPage.favorite ? 'Remove from favorites' : 'Add to favorites'} onClick={() => void replaceState(window.manor.notes.setFavorite({ id: selectedPage.id, favorite: !selectedPage.favorite }))}><Heart size={15} fill={selectedPage.favorite ? 'currentColor' : 'none'} /></button>
-                  <button type="button" className="notes-icon-button" aria-label="Note actions" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><Ellipsis size={17} /></button>
+                  <span className={`notes-save-state is-${saveState}`}>{saveState === 'unsaved' ? 'Unsaved' : saveState === 'saving' ? 'Saving' : saveState === 'error' ? 'Save failed' : exportedFlash ? 'Exported' : 'Saved'}</span>
+                  <button type="button" className={`notes-favorite-button${selectedPage.favorite ? ' is-active' : ''}`} aria-label={selectedPage.favorite ? 'Remove from favorites' : 'Add to favorites'} onClick={() => void toggleFavorite(selectedPage)}><Heart size={15} fill={selectedPage.favorite ? 'currentColor' : 'none'} /></button>
+                  <button type="button" ref={menuTriggerRef} className="notes-icon-button" aria-label="Note actions" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><Ellipsis size={17} /></button>
                   {menuOpen ? (
                     <div className="notes-action-menu">
                       {selectedPage.status === 'active' ? <button type="button" onClick={() => void createPage(selectedPage.id)}><FilePlus2 size={14} />Add subpage</button> : null}
                       {selectedPage.status === 'active' ? <button type="button" onClick={() => setDialog({ kind: 'move', page: selectedPage })}><Move size={14} />Move</button> : null}
-                      {selectedPage.status === 'active' ? <button type="button" onClick={() => void replaceState(window.manor.notes.duplicatePage(selectedPage.id))}><Copy size={14} />Duplicate</button> : null}
+                      {selectedPage.status === 'active' ? <button type="button" onClick={() => void duplicateSelected(selectedPage.id)}><Copy size={14} />Duplicate</button> : null}
                       <button type="button" onClick={() => void exportMarkdown()}><Download size={14} />Export Markdown</button>
                       {selectedPage.status === 'active' ? <button type="button" onClick={() => void mutateSelected(() => window.manor.notes.archivePage(selectedPage.id))}><Archive size={14} />Archive</button> : null}
-                      {selectedPage.status === 'archived' ? <button type="button" onClick={() => void mutateSelected(() => window.manor.notes.restorePage(selectedPage.id))}><ArchiveRestore size={14} />Restore</button> : null}
+                      {selectedPage.status === 'archived' ? <button type="button" onClick={() => void restoreSelected(selectedPage.id)}><ArchiveRestore size={14} />Restore</button> : null}
                       {selectedPage.status !== 'trash' ? <button type="button" className="is-danger" onClick={() => void mutateSelected(() => window.manor.notes.trashPage(selectedPage.id))}><Trash2 size={14} />Move to Trash</button> : null}
-                      {selectedPage.status === 'trash' ? <button type="button" onClick={() => void mutateSelected(() => window.manor.notes.restorePage(selectedPage.id))}><ArchiveRestore size={14} />Restore</button> : null}
+                      {selectedPage.status === 'trash' ? <button type="button" onClick={() => void restoreSelected(selectedPage.id)}><ArchiveRestore size={14} />Restore</button> : null}
                       {selectedPage.status === 'trash' ? <button type="button" className="is-danger" onClick={() => setDialog({ kind: 'delete', page: selectedPage })}><Trash2 size={14} />Delete permanently</button> : null}
                     </div>
                   ) : null}
@@ -504,7 +576,7 @@ export function NotesPage(): ReactNode {
               </div>
               <div className="notes-editor-scroll">
                 <article className="notes-editor-measure">
-                  <input className="notes-title-input" value={draft.title} maxLength={300} onChange={(event) => queueSave({ ...draft, title: event.target.value })} onBlur={() => void savePending()} aria-label="Note title" placeholder="Untitled" />
+                  <input ref={titleRef} className="notes-title-input" value={draft.title} maxLength={300} onChange={(event) => queueSave({ ...draft, title: event.target.value })} onBlur={() => void savePending()} aria-label="Note title" placeholder="Untitled" />
                   <Suspense fallback={<div className="notes-editor-loading">Opening editor…</div>}>
                     <RichNoteEditor key={selectedPage.id} page={{ ...selectedPage, title: draft.title, contentJson: draft.contentJson }} allPages={data.pages} onChange={updateEditorContent} />
                   </Suspense>
@@ -547,19 +619,35 @@ function FolderDialog({ value, onClose, onSubmit, onDelete }: {
   onDelete: (folder: NoteFolder) => Promise<void>
 }): ReactNode {
   const [name, setName] = useState('')
-  useEffect(() => setName(value?.folder?.name ?? ''), [value])
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  useEffect(() => {
+    setName(value?.folder?.name ?? '')
+    setConfirmingDelete(false)
+  }, [value])
+  const folderItem = value?.folder ?? null
   return (
     <Modal open={value !== null} onClose={onClose} width={420} ariaLabel={value?.folder === null ? 'Create folder' : 'Rename folder'}>
-      <form className="notes-dialog" onSubmit={(event) => { event.preventDefault(); if (value !== null && name.trim() !== '') void onSubmit(name.trim(), value.folder) }}>
-        <div className="notes-dialog-head"><h2>{value?.folder === null ? 'New folder' : 'Rename folder'}</h2><button type="button" onClick={onClose}><X size={17} /></button></div>
-        <label>Folder name<input autoFocus value={name} maxLength={120} onChange={(event) => setName(event.target.value)} /></label>
-        <div className="notes-dialog-actions">
-          {value?.folder !== null && value?.folder !== undefined ? <button type="button" className="is-danger-quiet" onClick={() => { const folderItem = value?.folder; if (folderItem !== null && folderItem !== undefined) void onDelete(folderItem) }}>Delete folder</button> : null}
-          <span />
-          <button type="button" onClick={onClose}>Cancel</button>
-          <button type="submit" className="is-primary" disabled={name.trim() === ''}>Save</button>
+      {confirmingDelete && folderItem !== null ? (
+        <div className="notes-dialog">
+          <div className="notes-dialog-head"><h2>Delete this folder?</h2><button type="button" onClick={onClose}><X size={17} /></button></div>
+          <p>The notes in {folderItem.name} move up one level.</p>
+          <div className="notes-dialog-actions">
+            <button type="button" onClick={() => setConfirmingDelete(false)}>Cancel</button>
+            <button type="button" className="is-danger" onClick={() => void onDelete(folderItem)}>Delete</button>
+          </div>
         </div>
-      </form>
+      ) : (
+        <form className="notes-dialog" onSubmit={(event) => { event.preventDefault(); if (value !== null && name.trim() !== '') void onSubmit(name.trim(), value.folder) }}>
+          <div className="notes-dialog-head"><h2>{value?.folder === null ? 'New folder' : 'Rename folder'}</h2><button type="button" onClick={onClose}><X size={17} /></button></div>
+          <label>Folder name<input autoFocus value={name} maxLength={120} onChange={(event) => setName(event.target.value)} /></label>
+          <div className="notes-dialog-actions">
+            {folderItem !== null ? <button type="button" className="is-danger-quiet" onClick={() => setConfirmingDelete(true)}>Delete folder</button> : null}
+            <span />
+            <button type="button" onClick={onClose}>Cancel</button>
+            <button type="submit" className="is-primary" disabled={name.trim() === ''}>Save</button>
+          </div>
+        </form>
+      )}
     </Modal>
   )
 }

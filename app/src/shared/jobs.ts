@@ -24,6 +24,9 @@ export interface JobRoleFields {
   interview2Date: string | null
   interview3Date: string | null
   decisionDate: string | null
+  /** ResumeVersion id the application was sent with. Optional on input so
+      pre-resume rows and seeds stay valid; parsing always emits null. */
+  resumeId?: string | null
 }
 
 export interface JobRole extends JobRoleFields {
@@ -149,6 +152,13 @@ function nullableStage(value: unknown, label: string): JobStage | null {
   return value === null ? null : parseJobStage(value, label)
 }
 
+function nullableResumeId(value: unknown): string | null {
+  if (value === undefined || value === null) {
+    return null
+  }
+  return stringValue(value, 'job.resumeId')
+}
+
 function postingLink(value: unknown): string {
   const link = optionalString(value, 'job.postingLink', 2000)
   if (link === '') {
@@ -180,7 +190,8 @@ export function parseJobRoleFields(value: unknown): JobRoleFields {
     interview1Date: nullableDate(fields.interview1Date, 'job.interview1Date'),
     interview2Date: nullableDate(fields.interview2Date, 'job.interview2Date'),
     interview3Date: nullableDate(fields.interview3Date, 'job.interview3Date'),
-    decisionDate: nullableDate(fields.decisionDate, 'job.decisionDate')
+    decisionDate: nullableDate(fields.decisionDate, 'job.decisionDate'),
+    resumeId: nullableResumeId(fields.resumeId)
   }
 }
 

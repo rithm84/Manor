@@ -1,0 +1,58 @@
+/* X connection row for Settings → Connections. Tokens only. */
+
+.setx-connected {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.setx-since {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.setx-hint {
+  padding-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.setx-error {
+  padding-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--error);
+}
+
+.setx-ghost {
+  width: 96px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.setx-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+}
+
+.setx-dialog-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.setx-dialog-body {
+  font-size: var(--text-body);
+  color: var(--ink-body);
+}
+
+.setx-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+}

@@ -12,6 +12,8 @@ export interface KanbanBoardProps {
   contexts: readonly ContextDefinition[]
   today: string
   completingIds: ReadonlySet<string>
+  /** The active drag's source bucket; null while nothing is dragging. */
+  dragSourceBucket: TaskBucket | null
   onOpenComposer: (bucket: TaskBucket, trigger: HTMLElement) => void
   onOpenTask: (taskId: string) => void
   onQuickActions: (taskId: string, point: QuickActionPoint) => void
@@ -29,6 +31,7 @@ export function KanbanBoard({
   contexts,
   today,
   completingIds,
+  dragSourceBucket,
   onOpenComposer,
   onOpenTask,
   onQuickActions,
@@ -78,6 +81,7 @@ export function KanbanBoard({
             contexts={contexts}
             today={today}
             completingIds={completingIds}
+            dragSourceBucket={dragSourceBucket}
             onOpenComposer={(trigger) => onOpenComposer(meta.bucket, trigger)}
             onOpenTask={onOpenTask}
             onQuickActions={onQuickActions}

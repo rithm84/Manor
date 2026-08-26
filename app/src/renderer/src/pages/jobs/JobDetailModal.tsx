@@ -4,7 +4,8 @@ import type { FormEvent, ReactNode } from 'react'
 
 import type { JobRole, JobRoleFields, JobStage } from '../../../../shared/jobs'
 import { Button, DatePicker, Input, Modal, Select } from '../../components/ui'
-import { jobStageOptions, roleFields } from './jobsModel'
+import { ResumeField } from './ResumeField'
+import { jobStageOptions, roleFields, sameRoleFields } from './jobsModel'
 
 type JobDateField =
   | 'datePosted'
@@ -29,7 +30,8 @@ export interface JobDetailModalProps {
   role: JobRole | null
   open: boolean
   onClose: () => void
-  onSave: (roleId: string, fields: JobRoleFields) => void
+  /** Resolves once the edits are persisted; a rejection keeps the modal open. */
+  onSave: (roleId: string, fields: JobRoleFields) => Promise<void>
 }
 
 function isJobStage(value: string): value is JobStage {
@@ -40,10 +42,16 @@ export function JobDetailModal({ role, open, onClose, onSave }: JobDetailModalPr
   const [fields, setFields] = useState<JobRoleFields | null>(
     role === null ? null : roleFields(role)
   )
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (open && role !== null) {
       setFields(roleFields(role))
+      setConfirmDiscard(false)
+      setSubmitError(null)
+      setSubmitting(false)
     }
   }, [open, role])
 
@@ -52,20 +60,36 @@ export function JobDetailModal({ role, open, onClose, onSave }: JobDetailModalPr
   }
 
   const ready = fields.company.trim() !== '' && fields.role.trim() !== ''
+  const dirty = !sameRoleFields(fields, roleFields(role))
+
+  // Escape, scrim, and Cancel all prompt before discarding unsaved edits.
+  const requestClose = (): void => {
+    if (dirty) setConfirmDiscard(true)
+    else onClose()
+  }
   const submit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
-    if (!ready) return
+    if (!ready || submitting) return
+    setSubmitting(true)
+    setSubmitError(null)
     onSave(role.id, {
       ...fields,
       company: fields.company.trim(),
       role: fields.role.trim(),
       location: fields.location.trim(),
       postingLink: fields.postingLink.trim()
+    }).catch((error: unknown) => {
+      setSubmitError(
+        `Could not save the changes: ${error instanceof Error ? error.message : String(error)}`
+      )
+    }).finally(() => {
+      setSubmitting(false)
     })
   }
 
   return (
-    <Modal open={open} onClose={onClose} width={720} ariaLabel={`${role.company} role details`}>
+    <>
+    <Modal open={open} onClose={requestClose} width={720} ariaLabel={`${role.company} role details`}>
       <form className="jobdetail" onSubmit={submit}>
         <header className="jobdetail-head">
           <div>
@@ -115,6 +139,13 @@ export function JobDetailModal({ role, open, onClose, onSave }: JobDetailModalPr
                   ) : null}
                 </span>
               </label>
+              <div className="jobdetail-field jobdetail-field--wide">
+                <span>Resume</span>
+                <ResumeField
+                  value={fields.resumeId ?? null}
+                  onChange={(resumeId) => setFields((current) => current === null ? null : ({ ...current, resumeId }))}
+                />
+              </div>
             </div>
           </section>
 
@@ -141,12 +172,39 @@ export function JobDetailModal({ role, open, onClose, onSave }: JobDetailModalPr
         </div>
 
         <footer className="jobdetail-actions">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <button className="ui-button ui-button--primary" type="submit" disabled={!ready}>
+          {submitError !== null ? (
+            <div className="jobdetail-error" role="alert">{submitError}</div>
+          ) : null}
+          <Button variant="ghost" onClick={requestClose}>Cancel</Button>
+          <button className="ui-button ui-button--primary" type="submit" disabled={!ready || submitting}>
             Save changes
           </button>
         </footer>
       </form>
     </Modal>
+    <Modal
+      open={confirmDiscard}
+      onClose={() => setConfirmDiscard(false)}
+      width={380}
+      ariaLabel="Discard changes"
+    >
+      <div className="ui-confirm">
+        <h2>Discard changes?</h2>
+        <p>Your edits to this role have not been saved.</p>
+        <div className="ui-confirm-actions">
+          <Button variant="ghost" onClick={() => setConfirmDiscard(false)}>Cancel</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              setConfirmDiscard(false)
+              onClose()
+            }}
+          >
+            Discard
+          </Button>
+        </div>
+      </div>
+    </Modal>
+    </>
   )
 }

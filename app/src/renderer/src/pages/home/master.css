@@ -394,6 +394,55 @@
   color: var(--error);
 }
 
+/* Two-step delete: the row swaps to an inline confirm instead of a modal. */
+.master-saved-confirm {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--surface-soft);
+  font-size: var(--text-sm);
+}
+
+.master-saved-confirm > span {
+  overflow: hidden;
+  flex: 1;
+  color: var(--ink-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.master-saved-confirm button {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-chip);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.master-saved-confirm button:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+
+.master-saved-confirm button.is-danger {
+  color: var(--error);
+}
+
+.master-saved-confirm button.is-danger:hover {
+  background: var(--error-soft);
+}
+
+.master-view-error {
+  display: block;
+  padding: 0 var(--space-2) var(--space-1);
+  color: var(--error);
+  font-size: var(--text-xs);
+}
+
 .master-count {
   margin-left: auto;
   color: var(--ink-muted);
@@ -467,27 +516,6 @@ button.master-row:hover {
   display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: var(--space-2);
-  color: var(--ink);
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-
-.master-group-cell svg {
-  flex-shrink: 0;
-  color: var(--ink-muted);
-}
-
-.master-group-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.master-group-count {
-  color: var(--ink-muted);
-  font-size: var(--text-xs);
-  font-weight: 500;
 }
 
 .master-title {
@@ -496,8 +524,24 @@ button.master-row:hover {
 }
 
 .master-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
   padding: var(--space-6) var(--space-2);
   color: var(--ink-muted);
   font-size: var(--text-body);
   text-align: center;
+}
+
+.master-empty-clear {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-chip);
+  color: var(--primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.master-empty-clear:hover {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
 }

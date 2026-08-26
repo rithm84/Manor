@@ -16,6 +16,7 @@ import {
 import type {
   HabitDefinition,
   HabitDraft,
+  HabitEntry,
   HabitFreezeGrant,
   HabitFreezeUsage,
   HabitLifecycleEvent,
@@ -25,6 +26,17 @@ import type {
   HabitStatusMutation,
   HabitSeed
 } from '../shared/habits'
+
+/** Everything the cloud mirrors for habits: raw tables only, no derived state. */
+export interface HabitSyncState {
+  habits: readonly HabitDefinition[]
+  lifecycle: readonly HabitLifecycleEvent[]
+  entries: readonly HabitEntry[]
+  freezes: readonly HabitFreezeUsage[]
+  grants: readonly HabitFreezeGrant[]
+  finalizedDays: readonly string[]
+  monthCapacities: Readonly<Record<string, number>>
+}
 
 interface JsonRow {
   payload: string
@@ -234,6 +246,13 @@ export class HabitStore {
             created_at = excluded.created_at
         `)
         .run(habit.id, today, mutation.status, nowIso)
+      if (mutation.status === 'retired') {
+        // Product decision 2026-08-24: retiring erases the habit's whole
+        // history. The definition and lifecycle rows stay so freeze-pool
+        // capacities and per-date status checks remain coherent.
+        this.database.prepare('DELETE FROM habit_entries WHERE habit_id = ?').run(habit.id)
+        this.database.prepare('DELETE FROM habit_freeze_usage WHERE habit_id = ?').run(habit.id)
+      }
     })
     return this.readState()
   }
@@ -246,7 +265,7 @@ export class HabitStore {
       const freezeCount = this.count('habit_freeze_usage', habitId)
       if (entryCount > 0 || freezeCount > 0 || habit.createdOn !== this.readToday()) {
         throw new Error(
-          `Cannot permanently delete ${habit.name}: retire it to preserve its history`
+          `Cannot permanently delete ${habit.name}: only a habit created today with no entries can be deleted. Retire it instead`
         )
       }
       const result = this.database.prepare('DELETE FROM habits WHERE id = ?').run(habitId)
@@ -263,7 +282,75 @@ export class HabitStore {
     return this.readState()
   }
 
+  /** Whether the store has ever been seeded or hydrated. */
+  initialized(): boolean {
+    return (
+      this.database
+        .prepare("SELECT value FROM habits_metadata WHERE key = 'initialized'")
+        .get() !== undefined
+    )
+  }
+
+  /** Current raw-table state, for the sync engine's full-module push. */
+  snapshot(): HabitSyncState {
+    const finalized = this.database
+      .prepare('SELECT date FROM habit_finalized_days ORDER BY date')
+      .all() as unknown as DateRow[]
+    const months = this.database
+      .prepare('SELECT month, capacity FROM habit_month_pools ORDER BY month')
+      .all() as unknown as MonthRow[]
+    const monthCapacities: Record<string, number> = {}
+    months.forEach((row) => {
+      monthCapacities[row.month] = row.capacity
+    })
+    const state = this.readState()
+    return {
+      habits: state.habits,
+      lifecycle: state.lifecycle,
+      entries: state.entries,
+      freezes: state.freezes,
+      grants: state.grants,
+      finalizedDays: finalized.map((row) => row.date),
+      monthCapacities
+    }
+  }
+
+  /** Replace every persisted row with cloud state (sync pull). The local
+      'today' metadata stays store-owned; fallbackToday only initializes it
+      when the store was never seeded. */
+  replaceAll(stateValue: HabitSyncState, fallbackToday: string): HabitsState {
+    const state = parseHabitSeed({ ...stateValue, today: fallbackToday })
+    this.transaction(() => {
+      this.database.exec(`
+        DELETE FROM habits;
+        DELETE FROM habit_freeze_grants;
+        DELETE FROM habit_finalized_days;
+        DELETE FROM habit_month_pools;
+      `)
+      this.seedRows(state)
+      const nowIso = new Date().toISOString()
+      this.database
+        .prepare("INSERT OR REPLACE INTO habits_metadata (key, value) VALUES ('initialized', ?)")
+        .run(nowIso)
+      this.database
+        .prepare("INSERT OR IGNORE INTO habits_metadata (key, value) VALUES ('today', ?)")
+        .run(state.today)
+    })
+    return this.readState()
+  }
+
   private seed(seed: HabitSeed): void {
+    const nowIso = new Date().toISOString()
+    this.seedRows(seed)
+    this.database
+      .prepare("INSERT INTO habits_metadata (key, value) VALUES ('initialized', ?)")
+      .run(nowIso)
+    this.database
+      .prepare("INSERT INTO habits_metadata (key, value) VALUES ('today', ?)")
+      .run(seed.today)
+  }
+
+  private seedRows(seed: HabitSeed): void {
     const nowIso = new Date().toISOString()
     const insertHabit = this.database.prepare(
       'INSERT INTO habits (id, payload, updated_at) VALUES (?, ?, ?)'
@@ -296,12 +383,6 @@ export class HabitStore {
     Object.entries(seed.monthCapacities).forEach(([month, capacity]) =>
       insertPool.run(month, capacity)
     )
-    this.database
-      .prepare("INSERT INTO habits_metadata (key, value) VALUES ('initialized', ?)")
-      .run(nowIso)
-    this.database
-      .prepare("INSERT INTO habits_metadata (key, value) VALUES ('today', ?)")
-      .run(seed.today)
   }
 
   private finalizeThrough(lastDate: string): void {

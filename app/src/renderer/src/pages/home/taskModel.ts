@@ -39,7 +39,7 @@ export function daysBetween(from: string, to: string): number {
   return Math.round((parseIso(to).getTime() - parseIso(from).getTime()) / 86_400_000)
 }
 
-const MONTHS_SHORT = [
+export const MONTHS_SHORT = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ] as const
@@ -67,7 +67,17 @@ export function formatShortDate(iso: string): string {
   return `${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}`
 }
 
+const TIME_PATTERN = /^\d{2}:\d{2}$/
+
+/** True for a complete HH:MM string; a half-typed time input is not. */
+export function isTimeString(value: string): boolean {
+  return TIME_PATTERN.test(value)
+}
+
 export function timeToMinutes(time: string): number {
+  if (!isTimeString(time)) {
+    throw new TypeError(`Time "${time}" is not an HH:MM string`)
+  }
   const [hours, minutes] = time.split(':').map((part) => Number(part))
   return hours * 60 + minutes
 }
@@ -95,6 +105,15 @@ export function bucketForDue(due: string, today: string): TaskBucket | null {
   if (diff === 1) return 'tomorrow'
   if (diff <= 7) return 'week'
   return null
+}
+
+/** Board drops reschedule between exact days; a This Week target instead
+    hands off to the detail dialog for an exact date. */
+export function canDropTaskOnBucket(source: TaskBucket, target: TaskBucket): boolean {
+  if (target === 'week') return source !== 'week'
+  if (target === 'today') return source === 'overdue' || source === 'tomorrow'
+  if (target === 'tomorrow') return source === 'overdue' || source === 'today'
+  return false
 }
 
 export function dueForBucket(bucket: TaskBucket, today: string): string {

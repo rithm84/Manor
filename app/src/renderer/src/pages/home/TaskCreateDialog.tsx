@@ -38,6 +38,16 @@ function emptyDraft(bucket: TaskBucket, today: string): DraftTask {
   }
 }
 
+function sameDraft(left: DraftTask, right: DraftTask): boolean {
+  return (
+    left.title === right.title &&
+    left.context === right.context &&
+    left.due === right.due &&
+    left.estimateMinutes === right.estimateMinutes &&
+    left.priority === right.priority
+  )
+}
+
 function bucketName(bucket: TaskBucket): string {
   if (bucket === 'today') return 'Today'
   if (bucket === 'tomorrow') return 'Tomorrow'
@@ -57,20 +67,35 @@ export function TaskCreateDialog({
   const activeBucket = bucket ?? 'today'
   const [draft, setDraft] = useState<DraftTask>(() => emptyDraft(activeBucket, today))
   const [saving, setSaving] = useState(false)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   useEffect(() => {
     if (bucket === null) return
     setDraft(emptyDraft(bucket, today))
     setSaving(false)
+    setConfirmDiscard(false)
+    setCreateError(null)
   }, [bucket, today])
+
+  const dirty = bucket !== null && !sameDraft(draft, emptyDraft(activeBucket, today))
+
+  // Escape, scrim, and Cancel all prompt before discarding typed work.
+  const requestClose = (): void => {
+    if (dirty) setConfirmDiscard(true)
+    else onClose()
+  }
 
   const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault()
     const title = draft.title.trim()
     if (title === '' || draft.context === null || draft.due === null || saving) return
     setSaving(true)
+    setCreateError(null)
     try {
       await onCreate(activeBucket, { ...draft, title })
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : 'Could not create this task')
     } finally {
       setSaving(false)
     }
@@ -80,9 +105,10 @@ export function TaskCreateDialog({
     draft.title.trim() !== '' && draft.context !== null && draft.due !== null && !saving
 
   return (
+    <>
     <Modal
       open={bucket !== null}
-      onClose={onClose}
+      onClose={requestClose}
       width={560}
       ariaLabel={`New task for ${bucketName(activeBucket)}`}
     >
@@ -161,13 +187,41 @@ export function TaskCreateDialog({
           </div>
         </div>
 
+        {createError !== null ? (
+          <span className="task-create-error" role="alert">{createError}</span>
+        ) : null}
+
         <footer className="task-create-actions">
-          <Button variant="subtle" onClick={onClose}>Cancel</Button>
+          <Button variant="subtle" onClick={requestClose}>Cancel</Button>
           <button type="submit" className="ui-button ui-button--primary" disabled={!canSubmit}>
             {saving ? 'Creating…' : 'Create task'}
           </button>
         </footer>
       </form>
     </Modal>
+    <Modal
+      open={confirmDiscard}
+      onClose={() => setConfirmDiscard(false)}
+      width={380}
+      ariaLabel="Discard this task"
+    >
+      <div className="ui-confirm">
+        <h2>Discard this task?</h2>
+        <p>It has not been created yet.</p>
+        <div className="ui-confirm-actions">
+          <Button variant="ghost" onClick={() => setConfirmDiscard(false)}>Keep editing</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              setConfirmDiscard(false)
+              onClose()
+            }}
+          >
+            Discard
+          </Button>
+        </div>
+      </div>
+    </Modal>
+    </>
   )
 }

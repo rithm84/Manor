@@ -19,7 +19,7 @@ const PERFORMANCE_ROW: HabitMonthRow = {
     createdOn: '2026-08-01',
     createdAt: '2026-08-01T08:00:00.000Z'
   },
-  status: 'retired',
+  status: 'paused',
   days: ['complete', 'complete', 'partial', 'frozen', 'missed', 'pending', 'future'],
   completedDays: 2,
   partialDays: 1,
@@ -54,7 +54,7 @@ describe('habit performance donut data', () => {
   it('preserves every tracked state as a purposeful chart slice', () => {
     expect(habitPerformanceSlices(PERFORMANCE_ROW)).toEqual([
       { key: 'complete', label: 'Complete', value: 2, fill: 'var(--completion)' },
-      { key: 'partial', label: 'Partial', value: 1, fill: 'var(--primary)' },
+      { key: 'partial', label: 'Partial', value: 1, fill: 'var(--completion-soft)' },
       { key: 'frozen', label: 'Frozen', value: 1, fill: 'var(--frozen-info)' },
       { key: 'missed', label: 'Missed', value: 1, fill: 'var(--overdue-error)' },
       { key: 'pending', label: 'Pending', value: 1, fill: 'var(--surface-strong)' }
@@ -63,7 +63,7 @@ describe('habit performance donut data', () => {
 
   it('announces status, rate, counts, and drill-in intent', () => {
     expect(habitPerformanceLabel(PERFORMANCE_ROW)).toBe(
-      'Read. Retired. 33% complete. 2 complete, 1 partial, 1 frozen, 1 missed, 1 pending. Open details.'
+      'Read. Paused. 33% complete. 2 complete, 1 partial, 1 frozen, 1 missed, 1 pending. Open details.'
     )
   })
 
@@ -75,18 +75,16 @@ describe('habit performance donut data', () => {
     })
     expect(markup).toContain('habit-history-seamless-ring')
     expect(markup).toContain('stroke="var(--completion)"')
-    expect(markup).toContain('stroke-width="8"')
-    expect(markup).toContain('100%')
+    expect(markup).toContain('stroke-width="6.5"')
     expect(markup).not.toContain('recharts-sector')
   })
 
-  it('keeps zero-percent mixed composition separated and its center label at zero', () => {
+  it('keeps zero-percent mixed composition as separated slices, not a seamless ring', () => {
     const markup = renderToStaticMarkup(
       createElement(HabitPerformanceDonut, { row: ZERO_MIXED_ROW })
     )
 
     expect(habitDonutPresentation(ZERO_MIXED_ROW).seamlessFill).toBeNull()
-    expect(markup).toContain('0%')
     expect(markup).not.toContain('habit-history-seamless-ring')
   })
 })

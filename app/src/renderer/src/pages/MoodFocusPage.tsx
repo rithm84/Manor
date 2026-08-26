@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, History, SlidersHorizontal } from 'lucide-react'
+import { History, SlidersHorizontal } from 'lucide-react'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
@@ -122,30 +122,19 @@ export function MoodFocusPage(): ReactNode {
           />
         </Suspense>
       ) : (
-        <>
-          <div className="mf-daybar">
-            <div>
-              <span className="mf-daybar-title">{dayLabel(selectedDate, state.today)}</span>
-              <span className="mf-daybar-date">{fullDateLabel(selectedDate)}</span>
-            </div>
-            <span className="mf-daynav">
-              <button type="button" aria-label="Previous day" disabled={selectedDate === yesterday} title={selectedDate === yesterday ? 'Backfill is limited to one day' : undefined} onClick={() => setSelectedDate(yesterday)}>
-                <ChevronLeft size={15} />
-              </button>
-              <button type="button" aria-label="Next day" disabled={selectedDate === state.today} onClick={() => setSelectedDate(state.today)}>
-                <ChevronRight size={15} />
-              </button>
-            </span>
-          </div>
-          <DailyCapture
-            dateLabel={dayLabel(selectedDate, state.today)}
-            entry={entry}
-            saving={saving}
-            onMoodChange={(mood: Mood) => void persist('Could not save mood', () => window.manor.moodFocus.setMood({ date: selectedDate, mood }))}
-            onFocusChange={(focus: Focus) => void persist('Could not save focus', () => window.manor.moodFocus.setFocus({ date: selectedDate, focus }))}
-            onDebrief={() => window.dispatchEvent(new CustomEvent('manor:open-alfred'))}
-          />
-        </>
+        <DailyCapture
+          dayTitle={dayLabel(selectedDate, state.today)}
+          dayDate={fullDateLabel(selectedDate)}
+          previousDisabled={selectedDate === yesterday}
+          nextDisabled={selectedDate === state.today}
+          onPreviousDay={() => setSelectedDate(yesterday)}
+          onNextDay={() => setSelectedDate(state.today)}
+          entry={entry}
+          saving={saving}
+          onMoodChange={(mood: Mood) => void persist('Could not save mood', () => window.manor.moodFocus.setMood({ date: selectedDate, mood }))}
+          onFocusChange={(focus: Focus) => void persist('Could not save focus', () => window.manor.moodFocus.setFocus({ date: selectedDate, focus }))}
+          onDebrief={() => window.dispatchEvent(new CustomEvent('manor:open-alfred'))}
+        />
       )}
     </div>
   )

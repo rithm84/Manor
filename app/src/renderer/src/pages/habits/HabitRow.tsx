@@ -1,7 +1,7 @@
-import { ChevronRight, Flame, Play } from 'lucide-react'
+import { ChevronRight, Play } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import { Checkbox, Tooltip } from '../../components/ui'
+import { Checkbox, StreakFlame, Tooltip } from '../../components/ui'
 import { QuantizedHabitControl } from './QuantizedHabitControl'
 import { WeekStrip } from './WeekStrip'
 import type { HabitViewModel } from './habitModel'
@@ -9,7 +9,7 @@ import type { HabitViewModel } from './habitModel'
 export interface HabitRowProps {
   habit: HabitViewModel
   isToday: boolean
-  onLog: (habitId: string, value: 0 | 25 | 50 | 75 | 100) => void
+  onLog: (habitId: string, value: 0 | 25 | 50 | 75 | 100) => Promise<void>
   onOpen: (habitId: string) => void
   onResume: (habitId: string) => void
 }
@@ -37,19 +37,18 @@ export function HabitRow({ habit, isToday, onLog, onOpen, onResume }: HabitRowPr
 
   return (
     <div className={rowClass} data-testid={`habit-row-${definition.id}`}>
-      <span className={`habit-row-completion${metrics.gold ? ' is-gold' : ''}`}>
+      <span className="habit-row-completion">
         {selectedStatus === 'paused' ? (
           <span className="habit-row-resthole" aria-hidden="true" />
         ) : definition.kind === 'binary' ? (
           <Checkbox
             shape="round"
             checked={complete}
-            onChange={() => onLog(definition.id, complete ? 0 : 100)}
-            ariaLabel={`${complete ? 'Clear' : 'Complete'} ${definition.name}${metrics.gold ? '. Violet streak' : ''}`}
+            onChange={() => void onLog(definition.id, complete ? 0 : 100)}
+            ariaLabel={`${complete ? 'Clear' : 'Complete'} ${definition.name}`}
           />
         ) : (
           <QuantizedHabitControl
-            gold={metrics.gold}
             habitId={definition.id}
             habitName={definition.name}
             targetLabel={requiredTargetLabel(definition.name, definition.targetLabel)}
@@ -67,6 +66,7 @@ export function HabitRow({ habit, isToday, onLog, onOpen, onResume }: HabitRowPr
       {selectedStatus === 'active' ? (
         <WeekStrip
           atRisk={atRisk}
+          gold={metrics.gold}
           habitId={definition.id}
           habitName={definition.name}
           onOpen={() => onOpen(definition.id)}
@@ -76,7 +76,7 @@ export function HabitRow({ habit, isToday, onLog, onOpen, onResume }: HabitRowPr
       ) : (
         <span className="habit-row-pausedmeta">
           <span className="habit-row-pausedstreak tnum" aria-label={`${metrics.currentStreak} day streak`}>
-            <Flame size={12} aria-hidden="true" />
+            <StreakFlame size={16} state="ember" />
             {metrics.currentStreak}
           </span>
           {isToday ? (

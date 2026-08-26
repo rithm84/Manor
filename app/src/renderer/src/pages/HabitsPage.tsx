@@ -5,16 +5,15 @@ import {
   History,
   Info,
   ListChecks,
-  Plus,
-  Snowflake
+  Plus
 } from 'lucide-react'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { addDays, monthKey, statusOn } from '../../../shared/habits'
-import { playCelebrationChime, playCompletionTick } from '../sound/sounds'
+import { playCelebrationChime, playClick } from '../sound/sounds'
 import type { HabitDraft, HabitsState } from '../../../shared/habits'
-import { Button, EmptyState, HandCircle, Modal } from '../components/ui'
+import { Button, EmptyState, FreezeCrystal, HandCircle, Modal } from '../components/ui'
 import { TODAY_ISO } from '../data/mock'
 import { HabitEditorModal } from './habits/AddHabitModal'
 import { HabitDetailDialog } from './habits/HabitDetailDialog'
@@ -54,6 +53,8 @@ export function HabitsPage(): ReactNode {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editTargetId, setEditTargetId] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
+  const [confirmBusy, setConfirmBusy] = useState(false)
+  const [freezeInfoOpen, setFreezeInfoOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -153,12 +154,6 @@ export function HabitsPage(): ReactNode {
     if (result !== null) {
       setEditorOpen(false)
       setEditTargetId(null)
-      if (editTargetId === null) {
-        const created = result.habits.at(-1)
-        if (created !== undefined) {
-          openHabit(created.id)
-        }
-      }
     }
   }
 
@@ -168,25 +163,29 @@ export function HabitsPage(): ReactNode {
     )
     if (result !== null && status === 'retired') {
       setPeekOpen(false)
-      setView('history')
     }
   }
 
   const confirm = async (): Promise<void> => {
-    if (confirmAction === null) {
+    if (confirmAction === null || confirmBusy) {
       return
     }
-    if (confirmAction.kind === 'retire') {
-      await setLifecycle(confirmAction.habitId, 'retired')
-    } else {
-      const result = await persist('Could not delete habit', () =>
-        window.manor.habits.deleteHabit(confirmAction.habitId)
-      )
-      if (result !== null) {
-        setPeekOpen(false)
+    setConfirmBusy(true)
+    try {
+      if (confirmAction.kind === 'retire') {
+        await setLifecycle(confirmAction.habitId, 'retired')
+      } else {
+        const result = await persist('Could not delete habit', () =>
+          window.manor.habits.deleteHabit(confirmAction.habitId)
+        )
+        if (result !== null) {
+          setPeekOpen(false)
+        }
       }
+      setConfirmAction(null)
+    } finally {
+      setConfirmBusy(false)
     }
-    setConfirmAction(null)
   }
 
   const confirmHabit =
@@ -243,7 +242,10 @@ export function HabitsPage(): ReactNode {
             <Button
               variant="primary"
               icon={<Plus size={15} />}
-              onClick={() => setEditorOpen(true)}
+              onClick={() => {
+                setEditTargetId(null)
+                setEditorOpen(true)
+              }}
             >
               New habit
             </Button>
@@ -294,14 +296,14 @@ export function HabitsPage(): ReactNode {
                     key={habit.definition.id}
                     habit={habit}
                     isToday={selectedDate === today}
-                    onLog={(habitId, value) => {
+                    onLog={async (habitId, value) => {
                       const wasComplete =
                         activeModels.find((model) => model.definition.id === habitId)?.entry?.value === 100
                       if (value === 100 && !wasComplete) {
                         if (selectedDate === today && remaining === 1) playCelebrationChime()
-                        else playCompletionTick()
+                        else playClick()
                       }
-                      void persist('Could not save habit entry', () =>
+                      await persist('Could not save habit entry', () =>
                         window.manor.habits.setEntry({ habitId, date: selectedDate, value })
                       )
                     }}
@@ -320,7 +322,7 @@ export function HabitsPage(): ReactNode {
                         key={habit.definition.id}
                         habit={habit}
                         isToday
-                        onLog={() => undefined}
+                        onLog={() => Promise.resolve()}
                         onOpen={openHabit}
                         onResume={(habitId) => void setLifecycle(habitId, 'active')}
                       />
@@ -362,13 +364,26 @@ export function HabitsPage(): ReactNode {
                 <div className="habits-freeze">
                   <div className="habits-freeze-head">
                     <span className="habits-card-label">
-                      <Snowflake size={13} /> Freeze pool
+                      <FreezeCrystal size={14} /> Freeze pool
                     </span>
-                    <span className="habits-freeze-hint">
-                      <button type="button" className="habit-row-iconbtn" aria-label="About streak freezes">
+                    <span className={`habits-freeze-hint${freezeInfoOpen ? ' is-open' : ''}`}>
+                      <button
+                        type="button"
+                        className="habit-row-iconbtn"
+                        aria-label="About streak freezes"
+                        aria-expanded={freezeInfoOpen}
+                        aria-controls="habits-freeze-pop"
+                        onClick={() => setFreezeInfoOpen((open) => !open)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Escape' && freezeInfoOpen) {
+                            setFreezeInfoOpen(false)
+                          }
+                        }}
+                        onBlur={() => setFreezeInfoOpen(false)}
+                      >
                         <Info size={13} />
                       </button>
-                      <span className="habits-freeze-pop">
+                      <span className="habits-freeze-pop" id="habits-freeze-pop">
                         <span>Perfect days earn freezes until the pool is full.</span>
                         <span>Misses spend them automatically, one per habit each day.</span>
                       </span>
@@ -422,7 +437,7 @@ export function HabitsPage(): ReactNode {
           setEditorOpen(false)
           setEditTargetId(null)
         }}
-        onSave={(draft) => void saveHabit(draft)}
+        onSave={saveHabit}
       />
 
       <Modal
@@ -436,14 +451,14 @@ export function HabitsPage(): ReactNode {
           <p>
             {confirmAction?.kind === 'delete'
               ? `${confirmHabit?.name ?? 'This habit'} has no history yet. Permanent deletion cannot be undone.`
-              : `${confirmHabit?.name ?? 'This habit'} leaves daily logging, while its entries and streak history stay intact.`}
+              : `Retiring removes ${confirmHabit?.name ?? 'this habit'} and its whole history.`}
           </p>
           <div className="habit-add-footer">
-            <Button variant="ghost" onClick={() => setConfirmAction(null)}>
+            <Button variant="ghost" onClick={() => setConfirmAction(null)} disabled={confirmBusy}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={() => void confirm()}>
-              {confirmAction?.kind === 'delete' ? 'Delete permanently' : 'Retire habit'}
+            <Button variant="primary" onClick={() => void confirm()} disabled={confirmBusy}>
+              {confirmAction?.kind === 'delete' ? 'Delete permanently' : 'Retire'}
             </Button>
           </div>
         </div>

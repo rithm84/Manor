@@ -403,6 +403,7 @@
 }
 
 .pipeline-card:hover .pipeline-card-menu-btn,
+.pipeline-card-menu-btn:focus-visible,
 .pipeline-card-menu-btn[aria-expanded='true'] {
   opacity: 1;
 }
@@ -527,8 +528,7 @@
   overflow-y: auto;
 }
 
-.ui-modal:has(.jobdetail),
-.ui-modal:has(.addrole) {
+.ui-modal:has(.jobdetail) {
   overflow: hidden;
 }
 
@@ -621,12 +621,114 @@
   color: var(--link);
 }
 
+/* --- Resume version field ---------------------------------------------------- */
+
+.resumefield {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.resumefield .ui-select,
+.resumefield .ui-select-trigger {
+  width: 100%;
+}
+
+.resumefield .ui-select-trigger {
+  height: 34px;
+  justify-content: space-between;
+}
+
+.resumefield-note,
+.resumefield-meta {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.resumefield-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resumefield-error {
+  font-size: var(--text-sm);
+  color: var(--overdue-error);
+}
+
+.resumefield-actions {
+  justify-self: start;
+}
+
+.resumefield-actions .ui-button {
+  height: 28px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.resumefield-pending {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.resumefield-pending .ui-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.resumefield-file {
+  max-width: 180px;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  color: var(--ink-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resumefield-pending-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.resumefield-pending-actions .ui-button {
+  height: 28px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.resumefield-input {
+  display: none;
+}
+
 .jobdetail-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--space-2);
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--hairline);
+}
+
+.addrole-error,
+.jobdetail-error {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--overdue-error);
+  border-radius: var(--radius-control);
+  background: var(--overdue-error-tint);
+  color: var(--overdue-error);
+  font-size: var(--text-sm);
+}
+
+.jobdetail-error {
+  flex: 1;
+  min-width: 0;
+}
+
+.addrole-error {
+  margin-top: var(--space-4);
 }
 
 /* --- Add role modal ----------------------------------------------------------- */
@@ -660,7 +762,8 @@
   color: var(--ink-muted);
 }
 
-.addrole-field:nth-child(4) {
+.addrole-field:nth-child(4),
+.addrole-field--wide {
   grid-column: 1 / -1;
 }
 

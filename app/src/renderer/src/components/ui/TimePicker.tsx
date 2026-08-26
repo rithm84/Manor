@@ -2,6 +2,10 @@ import { Clock3 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, FocusEvent, KeyboardEvent, ReactNode } from 'react'
 
+import { useDismissLayer } from './dismissLayer'
+import { clampMenuPosition } from './menuPosition'
+import type { MenuPosition } from './menuPosition'
+
 export interface TimePickerProps {
   value: string
   onChange: (value: string) => void
@@ -9,14 +13,8 @@ export interface TimePickerProps {
   format: '12h' | '24h'
 }
 
-interface MenuPosition {
-  left: number
-  top: number
-}
-
 const MENU_WIDTH = 220
 const MENU_HEIGHT = 280
-const VIEWPORT_GUTTER = 12
 
 export const TIME_PICKER_OPTIONS: readonly string[] = Array.from({ length: 96 }, (_, index) => {
   const minutes = index * 15
@@ -54,16 +52,6 @@ export function parseTimePickerText(value: string): string | null {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
-function menuPosition(trigger: DOMRect): MenuPosition {
-  const maxLeft = Math.max(VIEWPORT_GUTTER, window.innerWidth - MENU_WIDTH - VIEWPORT_GUTTER)
-  const left = Math.min(Math.max(trigger.left, VIEWPORT_GUTTER), maxLeft)
-  const roomBelow = window.innerHeight - trigger.bottom - VIEWPORT_GUTTER
-  const top = roomBelow >= MENU_HEIGHT
-    ? trigger.bottom + 4
-    : Math.max(VIEWPORT_GUTTER, trigger.top - MENU_HEIGHT - 4)
-  return { left, top }
-}
-
 function nearestOptionIndex(value: string): number {
   const [hour, minute] = value.split(':').map(Number)
   return Math.min(95, Math.max(0, Math.round((hour * 60 + minute) / 15)))
@@ -91,7 +79,9 @@ export function TimePicker({ value, onChange, ariaLabel, format }: TimePickerPro
   }, [format, value])
 
   const updatePosition = useCallback((): void => {
-    if (controlRef.current !== null) setPosition(menuPosition(controlRef.current.getBoundingClientRect()))
+    if (controlRef.current !== null) {
+      setPosition(clampMenuPosition(controlRef.current.getBoundingClientRect(), MENU_WIDTH, MENU_HEIGHT))
+    }
   }, [])
   const close = useCallback((): void => setOpen(false), [])
   const commitText = useCallback((): boolean => {
@@ -119,6 +109,8 @@ export function TimePicker({ value, onChange, ariaLabel, format }: TimePickerPro
     updatePosition()
     setOpen(true)
   }, [updatePosition, value])
+
+  useDismissLayer(open, close)
 
   useEffect(() => {
     if (!open) return
@@ -152,7 +144,6 @@ export function TimePicker({ value, onChange, ariaLabel, format }: TimePickerPro
     }
     if (event.key === 'Home' && open) { event.preventDefault(); setActiveIndex(0); return }
     if (event.key === 'End' && open) { event.preventDefault(); setActiveIndex(95); return }
-    if (event.key === 'Escape' && open) { event.preventDefault(); event.nativeEvent.stopImmediatePropagation(); close(); return }
     if (event.key === 'Enter') {
       event.preventDefault()
       if (open) pick(TIME_PICKER_OPTIONS[activeIndex] as string)

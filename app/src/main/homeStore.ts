@@ -145,6 +145,57 @@ export class HomeStore {
     return this.readState()
   }
 
+  /** Whether the store has ever been seeded or hydrated. */
+  initialized(): boolean {
+    return (
+      this.database
+        .prepare("SELECT value FROM home_metadata WHERE key = 'initialized'")
+        .get() !== undefined
+    )
+  }
+
+  /** Current persisted state, for the sync engine's full-module push. */
+  snapshot(): HomeState {
+    return this.readState()
+  }
+
+  /** Replace every persisted row with cloud state (sync pull). */
+  replaceAll(stateValue: HomeState, nowIso: string): HomeState {
+    const state = parseHomeSeed(stateValue)
+    this.database.exec('BEGIN IMMEDIATE')
+    try {
+      this.database.exec(
+        'DELETE FROM scratch_blocks; DELETE FROM tasks; DELETE FROM contexts; DELETE FROM saved_task_views;'
+      )
+      const insertTask = this.database.prepare(
+        'INSERT INTO tasks (id, payload, updated_at) VALUES (?, ?, ?)'
+      )
+      const insertContext = this.database.prepare(
+        'INSERT INTO contexts (name, payload) VALUES (?, ?)'
+      )
+      const insertBlock = this.database.prepare(
+        'INSERT INTO scratch_blocks (id, task_id, payload, expires_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+      )
+      const insertView = this.database.prepare(
+        'INSERT INTO saved_task_views (id, payload, updated_at) VALUES (?, ?, ?)'
+      )
+      state.tasks.forEach((task) => insertTask.run(task.id, JSON.stringify(task), nowIso))
+      state.contexts.forEach((context) => insertContext.run(context.name, JSON.stringify(context)))
+      state.scratchBlocks.forEach((block) =>
+        insertBlock.run(block.id, block.taskId, JSON.stringify(block), block.expiresAt, nowIso)
+      )
+      state.savedTaskViews.forEach((view) => insertView.run(view.id, JSON.stringify(view), nowIso))
+      this.database
+        .prepare("INSERT OR REPLACE INTO home_metadata (key, value) VALUES ('initialized', ?)")
+        .run(nowIso)
+      this.database.exec('COMMIT')
+    } catch (error) {
+      this.database.exec('ROLLBACK')
+      throw error
+    }
+    return this.readState()
+  }
+
   upsertTask(value: Task, nowIso: string): Task {
     const task = parseTask(value)
     this.database

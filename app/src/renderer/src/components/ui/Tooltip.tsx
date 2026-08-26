@@ -29,6 +29,22 @@ export function Tooltip({ label, children, side }: TooltipProps): ReactNode {
     }
   }, [])
 
+  // Passive Escape hide: never preventDefault/stopPropagation, so the dismiss
+  // stack (and anything else) still receives the key.
+  useEffect(() => {
+    if (!visible) return
+    const onKeyDown = (event: globalThis.KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        lastShownAt = Date.now()
+        setVisible(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown, { capture: true })
+    return (): void => {
+      window.removeEventListener('keydown', onKeyDown, { capture: true })
+    }
+  }, [visible])
+
   const show = (): void => {
     const instant = Date.now() - lastShownAt < INSTANT_WINDOW_MS
     if (instant) {
@@ -52,7 +68,14 @@ export function Tooltip({ label, children, side }: TooltipProps): ReactNode {
   }
 
   return (
-    <span className="ui-tooltip-anchor" onMouseEnter={show} onMouseLeave={hide} onMouseDown={hide}>
+    <span
+      className="ui-tooltip-anchor"
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      onMouseDown={hide}
+      onFocus={show}
+      onBlur={hide}
+    >
       {children}
       {visible ? (
         <span className={`ui-tooltip${side === 'bottom' ? ' ui-tooltip--below' : ''}`} role="tooltip">

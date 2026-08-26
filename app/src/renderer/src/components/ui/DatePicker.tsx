@@ -2,6 +2,10 @@ import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
+import { useDismissLayer } from './dismissLayer'
+import { clampMenuPosition } from './menuPosition'
+import type { MenuPosition } from './menuPosition'
+
 export interface DatePickerProps {
   value: string | null
   onChange: (value: string | null) => void
@@ -15,11 +19,6 @@ interface MonthCursor {
   month: number
 }
 
-interface MenuPosition {
-  left: number
-  top: number
-}
-
 const MONTH_LABELS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -27,7 +26,6 @@ const MONTH_LABELS = [
 const WEEKDAY_HEADERS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
 const MENU_WIDTH = 260
 const MENU_HEIGHT = 330
-const VIEWPORT_GUTTER = 12
 
 function localIso(date: Date): string {
   const year = date.getFullYear()
@@ -79,16 +77,6 @@ function formatDate(iso: string): string {
   }).format(date)
 }
 
-function menuPosition(trigger: DOMRect): MenuPosition {
-  const maxLeft = Math.max(VIEWPORT_GUTTER, window.innerWidth - MENU_WIDTH - VIEWPORT_GUTTER)
-  const left = Math.min(Math.max(trigger.left, VIEWPORT_GUTTER), maxLeft)
-  const roomBelow = window.innerHeight - trigger.bottom - VIEWPORT_GUTTER
-  const top = roomBelow >= MENU_HEIGHT
-    ? trigger.bottom + 4
-    : Math.max(VIEWPORT_GUTTER, trigger.top - MENU_HEIGHT - 4)
-  return { left, top }
-}
-
 export function DatePicker({ value, onChange, ariaLabel, min, max }: DatePickerProps): ReactNode {
   const today = localIso(new Date())
   const [open, setOpen] = useState(false)
@@ -104,7 +92,7 @@ export function DatePicker({ value, onChange, ariaLabel, min, max }: DatePickerP
 
   const updatePosition = useCallback((): void => {
     if (triggerRef.current !== null) {
-      setPosition(menuPosition(triggerRef.current.getBoundingClientRect()))
+      setPosition(clampMenuPosition(triggerRef.current.getBoundingClientRect(), MENU_WIDTH, MENU_HEIGHT))
     }
   }, [])
 
@@ -122,6 +110,8 @@ export function DatePicker({ value, onChange, ariaLabel, min, max }: DatePickerP
     })
   }, [isAllowed])
 
+  useDismissLayer(open, closeAndFocus)
+
   useEffect(() => {
     if (!open) return
     const onPointerDown = (event: PointerEvent): void => {
@@ -129,26 +119,17 @@ export function DatePicker({ value, onChange, ariaLabel, min, max }: DatePickerP
         setOpen(false)
       }
     }
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        event.stopImmediatePropagation()
-        closeAndFocus()
-      }
-    }
     const onViewportChange = (): void => updatePosition()
     window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onKeyDown)
     window.addEventListener('resize', onViewportChange)
     window.addEventListener('scroll', onViewportChange, true)
     focusDate(activeDate)
     return (): void => {
       window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('resize', onViewportChange)
       window.removeEventListener('scroll', onViewportChange, true)
     }
-  }, [activeDate, closeAndFocus, focusDate, open, updatePosition])
+  }, [activeDate, focusDate, open, updatePosition])
 
   const pick = (iso: string): void => {
     if (!isAllowed(iso)) return

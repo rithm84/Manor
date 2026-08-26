@@ -1,4 +1,4 @@
-import { Check, Mic } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Mic } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import type { Focus, Mood, MoodFocusEntry } from '../../../../shared/moodFocus'
@@ -7,7 +7,12 @@ import { ScalePicker } from './ScalePicker'
 import { focusOptions, moodOptions } from './scales'
 
 export interface DailyCaptureProps {
-  dateLabel: string
+  dayTitle: string
+  dayDate: string
+  previousDisabled: boolean
+  nextDisabled: boolean
+  onPreviousDay: () => void
+  onNextDay: () => void
   entry: MoodFocusEntry | null
   saving: boolean
   onMoodChange: (mood: Mood) => void
@@ -16,7 +21,12 @@ export interface DailyCaptureProps {
 }
 
 export function DailyCapture({
-  dateLabel,
+  dayTitle,
+  dayDate,
+  previousDisabled,
+  nextDisabled,
+  onPreviousDay,
+  onNextDay,
   entry,
   saving,
   onMoodChange,
@@ -28,20 +38,31 @@ export function DailyCapture({
 
   return (
     <section className="mf-capture" aria-labelledby="mf-capture-title">
-      <div className="mf-capture-head">
-        <div>
-          <span className="mf-capture-kicker">Check-in</span>
-          <h2 id="mf-capture-title">{dateLabel}</h2>
+      <header className="mf-capture-head">
+        <button
+          type="button"
+          className="mf-capture-nav"
+          aria-label="Previous day"
+          disabled={previousDisabled}
+          title={previousDisabled ? 'Backfill is limited to one day' : undefined}
+          onClick={onPreviousDay}
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <div className="mf-capture-daytitle">
+          <h2 id="mf-capture-title">{dayTitle}</h2>
+          <span>{dayDate}</span>
         </div>
-        <div className="mf-capture-actions">
-          <span className={`mf-save-state${loggedCount === 2 ? ' is-complete' : ''}`} aria-live="polite">
-            {saving ? 'Saving…' : loggedCount === 2 ? <><Check size={13} /> Complete</> : `${loggedCount} of 2`}
-          </span>
-          <Button variant="subtle" icon={<Mic size={14} />} onClick={onDebrief}>
-            Debrief with Alfred
-          </Button>
-        </div>
-      </div>
+        <button
+          type="button"
+          className="mf-capture-nav"
+          aria-label="Next day"
+          disabled={nextDisabled}
+          onClick={onNextDay}
+        >
+          <ChevronRight size={16} />
+        </button>
+      </header>
 
       <div className="mf-capture-body">
         <ScalePicker
@@ -50,7 +71,6 @@ export function DailyCapture({
           kind="mood"
           options={moodOptions}
           value={entry?.mood ?? null}
-          disabled={saving}
           onChange={onMoodChange}
         />
         <ScalePicker
@@ -59,10 +79,18 @@ export function DailyCapture({
           kind="focus"
           options={focusOptions}
           value={entry?.focus ?? null}
-          disabled={saving}
           onChange={onFocusChange}
         />
       </div>
+
+      <footer className="mf-capture-footer">
+        <span className={`mf-save-state${loggedCount === 2 ? ' is-complete' : ''}`} aria-live="polite">
+          {saving ? 'Saving…' : loggedCount === 2 ? <><Check size={13} /> Complete</> : `${loggedCount} of 2`}
+        </span>
+        <Button variant="subtle" icon={<Mic size={14} />} onClick={onDebrief}>
+          Debrief with Alfred
+        </Button>
+      </footer>
     </section>
   )
 }

@@ -2,7 +2,7 @@ import { Bookmark, Filter, Layers, Plus, RotateCcw, Search, Trash2, X } from 'lu
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { Pill, Select, useClickIntent } from '../../components/ui'
+import { Pill, Select, useClickIntent, useDismissLayer } from '../../components/ui'
 import type { QuickActionPoint } from '../../components/ui'
 import type { ContextDefinition, Task } from '../../data/mock'
 import type {
@@ -194,28 +194,36 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
   const [filterOpen, setFilterOpen] = useState(false)
   const [viewsOpen, setViewsOpen] = useState(false)
   const [viewName, setViewName] = useState('')
+  const [viewError, setViewError] = useState<string | null>(null)
+  const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null)
   const [activeViewId, setActiveViewId] = useState<string | null>(null)
   const filterRoot = useRef<HTMLDivElement | null>(null)
   const viewsRoot = useRef<HTMLDivElement | null>(null)
+
+  const closeViews = (): void => {
+    setViewsOpen(false)
+    setViewError(null)
+    setDeleteCandidateId(null)
+  }
+
+  // Dismiss layers so an open Select inside a popover takes Escape first.
+  useDismissLayer(filterOpen, () => setFilterOpen(false))
+  useDismissLayer(viewsOpen, closeViews)
 
   useEffect(() => {
     if (!filterOpen && !viewsOpen) return
     const onPointerDown = (event: PointerEvent): void => {
       const target = event.target as Node
       if (filterOpen && filterRoot.current !== null && !filterRoot.current.contains(target)) setFilterOpen(false)
-      if (viewsOpen && viewsRoot.current !== null && !viewsRoot.current.contains(target)) setViewsOpen(false)
-    }
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        setFilterOpen(false)
+      if (viewsOpen && viewsRoot.current !== null && !viewsRoot.current.contains(target)) {
         setViewsOpen(false)
+        setViewError(null)
+        setDeleteCandidateId(null)
       }
     }
     window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onKeyDown)
     return (): void => {
       window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onKeyDown)
     }
   }, [filterOpen, viewsOpen])
 
@@ -249,9 +257,25 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
     const name = viewName.trim()
     if (name === '') return
     const view: SavedTaskView = { id: crypto.randomUUID(), name, rules }
-    await onSaveView(view)
-    setViewName('')
-    setActiveViewId(view.id)
+    try {
+      await onSaveView(view)
+      setViewName('')
+      setViewError(null)
+      setActiveViewId(view.id)
+    } catch (error) {
+      setViewError(error instanceof Error ? error.message : 'Could not save this view')
+    }
+  }
+
+  const deleteView = async (viewId: string): Promise<void> => {
+    try {
+      await onDeleteView(viewId)
+      setViewError(null)
+      setDeleteCandidateId(null)
+      if (activeViewId === viewId) setActiveViewId(null)
+    } catch (error) {
+      setViewError(error instanceof Error ? error.message : 'Could not delete this view')
+    }
   }
 
   return (
@@ -308,18 +332,27 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
           <button type="button" className={`master-tool-button${activeViewId !== null ? ' is-active' : ''}`} aria-expanded={viewsOpen} aria-haspopup="dialog" onClick={() => { setViewsOpen((open) => !open); setFilterOpen(false) }}><Bookmark size={14} /> Saved views</button>
           {viewsOpen ? (
             <div className="master-views-popover" role="dialog" aria-label="Saved task views">
-              <div className="master-popover-head"><span>Saved views</span><button type="button" aria-label="Close saved views" onClick={() => setViewsOpen(false)}><X size={14} /></button></div>
+              <div className="master-popover-head"><span>Saved views</span><button type="button" aria-label="Close saved views" onClick={closeViews}><X size={14} /></button></div>
               <form className="master-save-view" onSubmit={(event) => { event.preventDefault(); void saveView() }}>
-                <input value={viewName} maxLength={48} placeholder="View name" aria-label="Saved view name" onChange={(event) => setViewName(event.target.value)} />
+                <input value={viewName} maxLength={48} placeholder="View name" aria-label="Saved view name" onChange={(event) => { setViewName(event.target.value); setViewError(null) }} />
                 <button type="submit" disabled={viewName.trim() === ''}>Save</button>
               </form>
+              {viewError !== null ? <span className="master-view-error" role="alert">{viewError}</span> : null}
               <div className="master-saved-list">
-                {savedViews.map((saved) => (
-                  <div key={saved.id} className={saved.id === activeViewId ? 'is-active' : ''}>
-                    <button type="button" className="master-saved-apply" onClick={() => { setRules(saved.rules); setActiveViewId(saved.id); setViewsOpen(false) }}><span>{saved.name}</span><span className="tnum">{saved.rules.length}</span></button>
-                    <button type="button" className="master-saved-delete" aria-label={`Delete ${saved.name}`} onClick={() => { void onDeleteView(saved.id); if (activeViewId === saved.id) setActiveViewId(null) }}><Trash2 size={13} /></button>
-                  </div>
-                ))}
+                {savedViews.map((saved) =>
+                  deleteCandidateId === saved.id ? (
+                    <div key={saved.id} className="master-saved-confirm">
+                      <span>Delete {saved.name}?</span>
+                      <button type="button" onClick={() => setDeleteCandidateId(null)}>Cancel</button>
+                      <button type="button" className="is-danger" onClick={() => void deleteView(saved.id)}>Delete</button>
+                    </div>
+                  ) : (
+                    <div key={saved.id} className={saved.id === activeViewId ? 'is-active' : ''}>
+                      <button type="button" className="master-saved-apply" onClick={() => { setRules(saved.rules); setActiveViewId(saved.id); closeViews() }}><span>{saved.name}</span><span className="tnum">{saved.rules.length}</span></button>
+                      <button type="button" className="master-saved-delete" aria-label={`Delete ${saved.name}`} onClick={() => setDeleteCandidateId(saved.id)}><Trash2 size={13} /></button>
+                    </div>
+                  )
+                )}
                 {savedViews.length === 0 ? <p>No saved views yet.</p> : null}
               </div>
             </div>
@@ -350,13 +383,19 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
                 onQuickActions={onQuickActions}
               />
             ))
-          : contextGroups.map(([contextName, groupTasks]) => (
+          : contextGroups.map(([contextName, groupTasks]) => {
+              const context = contextDefinitionFor(contextName, contexts)
+              return (
               <Fragment key={contextName}>
                 <div className="master-group-head" role="row">
                   <span className="master-group-cell" role="cell">
-                    <ContextGlyph icon={contextDefinitionFor(contextName, contexts).icon} size={13} />
-                    <span className="master-group-name">{contextName}</span>
-                    <span className="master-group-count tnum">{groupTasks.length}</span>
+                    <Pill
+                      variant="group"
+                      colorway={context.color}
+                      label={context.name}
+                      icon={<ContextGlyph icon={context.icon} size={12} />}
+                      count={groupTasks.length}
+                    />
                   </span>
                 </div>
                 {groupTasks.map((task) => (
@@ -371,8 +410,28 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
                   />
                 ))}
               </Fragment>
-            ))}
-        {visible.length === 0 ? <div className="master-empty">No tasks match these filters.</div> : null}
+              )
+            })}
+        {visible.length === 0 ? (
+          tasks.length === 0 ? (
+            <div className="master-empty">No tasks yet.</div>
+          ) : (
+            <div className="master-empty">
+              <span>{rules.length > 0 ? 'No tasks match these filters.' : 'No tasks match this search.'}</span>
+              <button
+                type="button"
+                className="master-empty-clear"
+                onClick={() => {
+                  setRules([])
+                  setQuery('')
+                  setActiveViewId(null)
+                }}
+              >
+                {rules.length > 0 ? 'Clear filters' : 'Clear search'}
+              </button>
+            </div>
+          )
+        ) : null}
       </div>
     </section>
   )

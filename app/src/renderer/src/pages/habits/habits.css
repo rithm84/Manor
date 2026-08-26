@@ -223,8 +223,8 @@
 }
 
 .habit-detail-goldflame {
-  color: var(--primary);
-  fill: currentColor;
+  display: inline-flex;
+  align-items: center;
 }
 
 .habit-row-completion {
@@ -246,15 +246,6 @@
 .habit-row-completion .ui-checkbox--round.is-checked .ui-checkbox-box {
   border-color: var(--completion);
   background: var(--completion);
-}
-
-.habit-row-completion.is-gold .ui-checkbox--round .ui-checkbox-box {
-  border-color: var(--primary);
-}
-
-.habit-row-completion.is-gold .ui-checkbox--round.is-checked .ui-checkbox-box {
-  border-color: var(--primary);
-  background: var(--primary);
 }
 
 .habit-row-iconbtn {
@@ -287,7 +278,7 @@
 
 .habit-quantized-control {
   --habit-quarter-angle: 0deg;
-  --habit-quarter-color: var(--primary);
+  --habit-quarter-color: var(--completion);
   --habit-quarter-track: var(--surface-soft);
   position: relative;
   display: inline-flex;
@@ -301,7 +292,7 @@
     var(--habit-quarter-color) var(--habit-quarter-angle),
     var(--habit-quarter-track) var(--habit-quarter-angle)
   );
-  color: var(--primary);
+  color: var(--completion);
   transition: transform var(--duration-press) var(--ease-out);
 }
 
@@ -334,13 +325,6 @@
   --habit-quarter-color: var(--completion);
   border-color: var(--completion);
   color: var(--completion);
-}
-
-.habit-quantized-control.is-gold {
-  --habit-quarter-color: var(--primary);
-  --habit-quarter-track: var(--primary-tint);
-  border-color: var(--primary);
-  color: var(--primary);
 }
 
 .habit-quantized-control-value {
@@ -401,8 +385,8 @@
 }
 
 .habit-week-segment.is-partial {
-  border-color: var(--primary);
-  background: linear-gradient(90deg, var(--primary) 50%, var(--primary-tint) 50%);
+  border-color: var(--completion);
+  background: linear-gradient(90deg, var(--completion) 50%, var(--completion-tint) 50%);
 }
 
 .habit-week-segment.is-missed {
@@ -427,22 +411,12 @@
   font-weight: 600;
 }
 
+/* Today carries only a neutral ring until it is logged; state never
+   pre-fills (2026-08-24 — the violet at-risk fill read as already done). */
 .habit-week-day.is-selected .habit-week-segment {
   box-shadow:
     0 0 0 1px var(--surface-card),
     0 0 0 2px var(--ink-muted);
-}
-
-.habit-week-progress.is-atrisk .habit-week-day.is-selected .habit-week-label {
-  color: var(--primary);
-}
-
-.habit-week-progress.is-atrisk .habit-week-day.is-selected .habit-week-segment {
-  border-color: var(--primary);
-  background: var(--primary);
-  box-shadow:
-    0 0 0 1px var(--surface-card),
-    0 0 0 2px var(--primary);
 }
 
 .habit-week-streak,
@@ -454,14 +428,92 @@
 
 .habit-week-streak,
 .habit-row-pausedstreak {
-  gap: 3px;
-  color: var(--ink-body);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  gap: 4px;
+  min-width: 44px;
+  justify-content: flex-end;
+  color: var(--ink-muted);
+  font-size: var(--text-emphasis);
+  font-weight: 700;
 }
 
-.habit-week-progress.is-atrisk .habit-week-streak {
-  color: var(--primary);
+.habit-row-pausedstreak {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  min-width: 0;
+}
+
+.habit-week-streak.is-lit,
+.habit-week-streak.is-blazing {
+  color: var(--streak-deep);
+}
+
+/* --- Streak flame ----------------------------------------------------------- */
+
+.streak-flame {
+  display: block;
+  flex-shrink: 0;
+}
+
+.streak-flame-body,
+.streak-flame-core {
+  transform-origin: 50% 88%;
+}
+
+.streak-flame.is-ember .streak-flame-body {
+  color: var(--surface-strong);
+}
+
+.streak-flame.is-ember .streak-flame-core {
+  fill: var(--surface-soft);
+}
+
+/* At risk: the fire is nearly out, only the core still burns. */
+.streak-flame.is-dim .streak-flame-body {
+  color: var(--surface-strong);
+}
+
+.streak-flame.is-dim .streak-flame-core {
+  fill: var(--streak-glow);
+}
+
+.streak-flame.is-lit .streak-flame-core {
+  fill: var(--streak-core);
+}
+
+.streak-flame.is-blazing .streak-flame-core {
+  fill: var(--streak-core);
+}
+
+/* A live flame flickers, gently. Never on dim/ember states. */
+@keyframes streak-flame-flicker {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scaleY(1.06) scaleX(0.95) rotate(-1.6deg);
+  }
+  75% {
+    transform: scaleY(0.95) scaleX(1.04) rotate(1.4deg);
+  }
+  100% {
+    transform: scaleY(1.03) scaleX(0.98);
+  }
+}
+
+.streak-flame.is-lit .streak-flame-core,
+.streak-flame.is-blazing .streak-flame-core {
+  animation: streak-flame-flicker 1.4s ease-in-out infinite alternate;
+}
+
+.streak-flame.is-blazing .streak-flame-body {
+  animation: streak-flame-flicker 2.2s ease-in-out infinite alternate-reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-flame .streak-flame-body,
+  .streak-flame .streak-flame-core {
+    animation: none;
+  }
 }
 
 .habit-week-chevron {
@@ -610,9 +662,14 @@
 }
 
 .habits-freeze-hint:hover .habits-freeze-pop,
-.habits-freeze-hint:focus-within .habits-freeze-pop {
+.habits-freeze-hint:focus-within .habits-freeze-pop,
+.habits-freeze-hint.is-open .habits-freeze-pop {
   opacity: 1;
   transform: scale(1) translateY(0);
+}
+
+.habits-freeze-hint.is-open .habits-freeze-pop {
+  pointer-events: auto;
 }
 
 .habit-detail {
@@ -669,7 +726,7 @@
 }
 
 .habit-detail-stat-value.is-gold {
-  color: var(--primary);
+  color: var(--streak);
 }
 
 .habit-detail-stat-label {
@@ -732,9 +789,9 @@
 }
 
 .habit-month-cell.is-partial {
-  border: 1px solid var(--primary);
-  background: var(--primary-tint);
-  color: var(--primary);
+  border: 1px solid var(--completion);
+  background: var(--completion-tint);
+  color: var(--completion);
 }
 
 .habit-month-cell.is-missed {

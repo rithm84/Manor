@@ -120,6 +120,15 @@ export function historyMonthAfterNavigation(
   return candidate > today.slice(0, 7) ? month : candidate
 }
 
+/** The first month with any habit data: the earliest creation date or entry. */
+export function earliestHistoryMonth(state: HabitsState): string {
+  const earliestDate = [
+    ...state.habits.map((habit) => habit.createdOn),
+    ...state.entries.map((entry) => entry.date)
+  ].reduce((earliest, date) => (date < earliest ? date : earliest), state.today)
+  return earliestDate.slice(0, 7)
+}
+
 export function daysInMonth(month: string): number {
   const date = utcDate(`${month}-01`)
   date.setUTCMonth(date.getUTCMonth() + 1)
@@ -183,6 +192,11 @@ export function stepAmountLabel(targetLabel: string, value: number): string {
   return `${amount}${suffix === '' ? '' : ` ${suffix}`} / ${targetLabel}`
 }
 
+/** Retiring a habit erases its history, so it drops out of every summary. */
+function retiredNow(state: HabitsState, habitId: string): boolean {
+  return statusOn(habitId, state.today, state.lifecycle) === 'retired'
+}
+
 export function monthSummary(state: HabitsState, month: string): HabitMonthSummary {
   const dayCount = daysInMonth(month)
   const dates = Array.from(
@@ -194,7 +208,7 @@ export function monthSummary(state: HabitsState, month: string): HabitMonthSumma
     throw new Error(`Month ${month} has no dates`)
   }
   const rows = state.habits
-    .filter((habit) => habit.createdOn <= lastDate)
+    .filter((habit) => habit.createdOn <= lastDate && !retiredNow(state, habit.id))
     .map((habit): HabitMonthRow => {
       const days = dates.map((date) => markForDate(state, habit, date))
       const trackedDays = days.filter(
@@ -215,7 +229,7 @@ export function monthSummary(state: HabitsState, month: string): HabitMonthSumma
     })
   const pastDates = dates.filter((date) => date < state.today)
   const perfectDays = pastDates.filter((date) => {
-    const active = activeOnDate(state, date)
+    const active = activeOnDate(state, date).filter((habit) => !retiredNow(state, habit.id))
     return active.length > 0 && active.every((habit) => markForDate(state, habit, date) === 'complete')
   }).length
   const trackedMarks = rows

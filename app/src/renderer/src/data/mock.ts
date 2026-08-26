@@ -425,7 +425,12 @@ export const taskBuckets: readonly TaskBucketMeta[] = [
 // Calendar
 // ---------------------------------------------------------------------------
 
-export type CalendarId = 'google-personal' | 'ucla' | 'manor-scratch'
+export type CalendarId =
+  | 'google-personal'
+  | 'google-family'
+  | 'ucla'
+  | 'ucla-clubs'
+  | 'manor-scratch'
 
 export interface CalendarSource {
   id: CalendarId
@@ -439,8 +444,33 @@ export interface CalendarSource {
 
 export const calendars: readonly CalendarSource[] = [
   { id: 'google-personal', name: 'Personal', color: '#4576b5', scratch: false, enabled: true },
+  { id: 'google-family', name: 'Family', color: '#5f7d54', scratch: false, enabled: true },
   { id: 'ucla', name: 'UCLA', color: '#a8761c', scratch: false, enabled: true },
+  { id: 'ucla-clubs', name: 'Clubs', color: '#8a5a83', scratch: false, enabled: false },
   { id: 'manor-scratch', name: 'Scratch blocks', color: '#48708e', scratch: true, enabled: true }
+]
+
+export type CalendarAccountId = 'google-user' | 'google-ucla'
+
+/** A connected Google account; read-only source of Today timeline events. */
+export interface CalendarAccount {
+  id: CalendarAccountId
+  email: string
+  /** Calendars this account contributes (never the Manor-only scratch calendar). */
+  calendarIds: readonly CalendarId[]
+}
+
+export const calendarAccounts: readonly CalendarAccount[] = [
+  {
+    id: 'google-user',
+    email: 'user@example.com',
+    calendarIds: ['google-personal', 'google-family']
+  },
+  {
+    id: 'google-ucla',
+    email: 'user@example.com',
+    calendarIds: ['ucla', 'ucla-clubs']
+  }
 ]
 
 export interface CalendarEvent {
