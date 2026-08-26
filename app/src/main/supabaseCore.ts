@@ -43,7 +43,14 @@ export function envValueFrom(envRoot: string, name: string): string | null {
   const fromProcess = process.env[name]
   if (fromProcess !== undefined && fromProcess !== '') return fromProcess
   const envPath = join(envRoot, '.env.local')
-  if (existsSync(envPath)) return parseEnvFile(envPath).get(name) ?? null
+  if (existsSync(envPath)) {
+    const fromFile = parseEnvFile(envPath).get(name)
+    if (fromFile !== undefined) return fromFile
+  }
+  // Packaged builds carry the client-safe values baked in at build time.
+  if (typeof __MANOR_BAKED_ENV__ !== 'undefined') {
+    return __MANOR_BAKED_ENV__[name] ?? null
+  }
   return null
 }
 
