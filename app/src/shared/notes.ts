@@ -82,13 +82,12 @@ export interface NoteAttachmentUpload {
 }
 
 export interface NotesApi {
-  load: (seed: NotesSeed) => Promise<NotesState>
+  load: () => Promise<NotesState>
   createFolder: (draft: NoteFolderDraft) => Promise<NotesState>
   renameFolder: (mutation: NoteFolderRename) => Promise<NotesState>
   deleteFolder: (folderId: string) => Promise<NotesState>
   createPage: (draft: NotePageDraft) => Promise<NotesState>
   updatePage: (mutation: NotePageContentUpdate) => Promise<NotePage>
-  flushPage: (mutation: NotePageContentUpdate) => NotePage
   touchPage: (pageId: string) => Promise<NotePage>
   movePage: (mutation: NotePageMove) => Promise<NotesState>
   duplicatePage: (pageId: string) => Promise<NotesState>

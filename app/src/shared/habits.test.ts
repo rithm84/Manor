@@ -31,6 +31,11 @@ function stateWith(today: string, completedDates: readonly string[], frozenDates
       createdAt: `${date}T20:00:00.000Z`,
       updatedAt: `${date}T20:00:00.000Z`
     })),
+    intents: frozenDates.map((date) => ({
+      habitId: HABIT.id,
+      date,
+      createdAt: `${date}T22:00:00.000Z`
+    })),
     freezes: frozenDates.map((date) => ({ habitId: HABIT.id, date })),
     grants: [],
     pools: []

@@ -1,0 +1,1062 @@
+/* Manor shared UI components. Tokens only; no raw colors except alpha mixes. */
+
+/* --- Button ------------------------------------------------------------- */
+
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    transform var(--duration-press) var(--ease-out),
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+}
+
+.ui-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ui-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ui-button--primary {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.ui-button--primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.ui-button--primary:active:not(:disabled) {
+  background: var(--primary-active);
+}
+
+.ui-button--ghost {
+  background: transparent;
+  border: 1px solid var(--hairline);
+  color: var(--ink-body);
+}
+
+.ui-button--ghost:hover:not(:disabled) {
+  background: var(--surface-soft);
+  border-color: var(--surface-strong);
+}
+
+.ui-button--subtle {
+  background: transparent;
+  color: var(--ink-muted);
+}
+
+.ui-button--subtle:hover:not(:disabled) {
+  background: var(--surface-soft);
+  color: var(--ink-body);
+}
+
+/* --- Pill ---------------------------------------------------------------- */
+
+.ui-pill-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ui-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: var(--radius-chip);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ui-pill-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Group pill: small filled chip with cream text (the kanban signature). */
+.ui-pill--group {
+  height: 22px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--pill-text);
+}
+
+.ui-pill--group.is-overdue {
+  background: var(--pill-overdue);
+}
+.ui-pill--group.is-today {
+  background: var(--pill-today);
+}
+.ui-pill--group.is-tomorrow {
+  background: var(--pill-tomorrow);
+}
+.ui-pill--group.is-week {
+  background: var(--pill-week);
+}
+.ui-pill--group.is-neutral {
+  background: var(--ink-muted);
+}
+.ui-pill--group.is-success {
+  background: var(--success);
+}
+.ui-pill--group.is-gold {
+  background: var(--gold);
+}
+.ui-pill--group.is-info {
+  background: var(--frozen-info);
+}
+.ui-pill--group.is-plum {
+  background: var(--this-week-plum);
+}
+.ui-pill--group.is-forest {
+  background: var(--forest);
+}
+
+.ui-pill-count {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tag chip: tinted background, colored text. */
+.ui-pill--tag {
+  height: 20px;
+  padding: 0 7px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.ui-pill--tag.is-overdue {
+  background: var(--pill-overdue-tint);
+  color: var(--pill-overdue);
+}
+.ui-pill--tag.is-today {
+  background: var(--pill-today-tint);
+  color: var(--pill-today);
+}
+.ui-pill--tag.is-tomorrow {
+  background: var(--pill-tomorrow-tint);
+  color: var(--pill-tomorrow);
+}
+.ui-pill--tag.is-week {
+  background: var(--pill-week-tint);
+  color: var(--pill-week);
+}
+.ui-pill--tag.is-neutral {
+  background: var(--surface-soft);
+  color: var(--ink-muted);
+}
+.ui-pill--tag.is-success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.ui-pill--tag.is-gold {
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+.ui-pill--tag.is-info {
+  background: var(--frozen-info-tint);
+  color: var(--frozen-info);
+}
+.ui-pill--tag.is-plum {
+  background: var(--this-week-plum-tint);
+  color: var(--this-week-plum);
+}
+.ui-pill--tag.is-forest {
+  background: var(--forest-soft);
+  color: var(--forest);
+}
+
+/* --- Card ---------------------------------------------------------------- */
+
+.ui-card {
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+}
+
+.ui-card--warm {
+  background: var(--surface-card-warm);
+}
+
+.ui-card--interactive {
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    transform var(--duration-press) var(--ease-out);
+  cursor: pointer;
+}
+
+.ui-card--interactive:hover {
+  border-color: var(--surface-strong);
+  box-shadow: var(--shadow-hover);
+}
+
+.ui-card--interactive:active {
+  transform: scale(0.99);
+}
+
+/* --- Checkbox ------------------------------------------------------------ */
+
+.ui-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* 18px visual box, 24px hit target; negative margin keeps layout unchanged. */
+  padding: 3px;
+  margin: -3px;
+}
+
+.ui-checkbox-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--surface-strong);
+  background: var(--surface-card);
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    transform var(--duration-press) var(--ease-out);
+}
+
+.ui-checkbox:active .ui-checkbox-box {
+  transform: scale(0.92);
+}
+
+.ui-checkbox--square .ui-checkbox-box {
+  border-radius: 5px;
+}
+
+.ui-checkbox--round .ui-checkbox-box {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.ui-checkbox:hover .ui-checkbox-box {
+  border-color: var(--ink-muted);
+}
+
+.ui-checkbox.is-checked .ui-checkbox-box {
+  border-color: transparent;
+}
+
+.ui-checkbox--square.is-checked .ui-checkbox-box {
+  background: var(--completion);
+}
+
+.ui-checkbox--round.is-checked .ui-checkbox-box {
+  background: var(--success);
+}
+
+.ui-checkbox-check {
+  stroke: #ffffff;
+  stroke-width: 2.2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  transition: stroke-dashoffset var(--duration-base) var(--ease-out);
+}
+
+.ui-checkbox.is-checked .ui-checkbox-check {
+  stroke-dashoffset: 0;
+}
+
+.ui-checkbox-label {
+  font-size: var(--text-body);
+  color: var(--ink-body);
+}
+
+.ui-checkbox.is-checked .ui-checkbox-label {
+  color: var(--ink-muted);
+}
+
+/* --- The hand voice --------------------------------------------------------
+   Actions and section voices are written by hand; data stays printed.
+   (Charter: "the printed page you write on".) */
+.ui-button,
+.ui-pill--group,
+.home-view-toggle button,
+.habits-viewtabs button,
+.jobs-viewtabs button,
+.mf-viewtabs button,
+.today-day-toggle button,
+.set-segment-btn,
+.set-section-title,
+.jobs-section-title,
+.lc-panel-title {
+  font-family: var(--font-hand);
+  letter-spacing: 0;
+}
+
+/* --- Select -------------------------------------------------------------- */
+
+.ui-select {
+  position: relative;
+  display: inline-block;
+}
+
+.ui-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  font-size: var(--text-body);
+  color: var(--ink-body);
+  transition:
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+
+.ui-select-trigger:hover:not(:disabled) {
+  border-color: var(--surface-strong);
+  background: var(--surface-soft);
+}
+
+.ui-select-trigger:disabled {
+  opacity: 0.45;
+}
+
+.ui-select-placeholder {
+  color: var(--ink-muted);
+}
+
+.ui-select-menu {
+  /* Fixed + inline left/top/min-width from Select.tsx: escapes overflow-hidden
+     dialog bodies; clamped and flipped against the viewport like the pickers. */
+  position: fixed;
+  z-index: 70;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-overlay);
+  transform-origin: top left;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96) translateY(-2px);
+  }
+}
+
+.ui-select-menu--semantic {
+  width: max-content;
+  min-width: 120px;
+}
+
+.ui-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-chip);
+  font-size: var(--text-body);
+  color: var(--ink-body);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ui-select-option-label {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-select-option:hover {
+  background: var(--surface-soft);
+}
+
+.ui-select-option.is-selected {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* --- Date picker --------------------------------------------------------- */
+
+.ui-datepicker {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.ui-datepicker-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  width: 100%;
+  height: 34px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-body);
+  text-align: left;
+  transition:
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    transform var(--duration-press) var(--ease-out);
+}
+
+.ui-datepicker-trigger svg {
+  flex-shrink: 0;
+  color: var(--ink-muted);
+}
+
+.ui-datepicker-trigger:active {
+  transform: scale(0.985);
+}
+
+.ui-datepicker-trigger[aria-expanded='true'] {
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-ring);
+}
+
+.ui-datepicker-empty {
+  color: var(--ink-muted);
+}
+
+.ui-datepicker-menu {
+  position: fixed;
+  z-index: 70;
+  width: 260px;
+  padding: var(--space-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  transform-origin: top left;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.97) translateY(-2px);
+  }
+}
+
+.ui-datepicker-presets,
+.ui-datepicker-monthbar,
+.ui-datepicker-nav {
+  display: flex;
+  align-items: center;
+}
+
+.ui-datepicker-presets {
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.ui-datepicker-presets button {
+  flex: 1;
+  min-height: 28px;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-chip);
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: left;
+}
+
+.ui-datepicker-presets button:last-child {
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.ui-datepicker-presets button:disabled,
+.ui-datepicker-day:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.ui-datepicker-monthbar {
+  justify-content: space-between;
+  min-height: 26px;
+  padding: 0 var(--space-1) var(--space-1);
+  color: var(--ink);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.ui-datepicker-nav {
+  gap: 2px;
+}
+
+.ui-datepicker-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-chip);
+  color: var(--ink-muted);
+}
+
+.ui-datepicker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.ui-datepicker-dow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.ui-datepicker-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  border-radius: var(--radius-chip);
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-press) var(--ease-out);
+}
+
+.ui-datepicker-day:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.ui-datepicker-day.is-today {
+  box-shadow: inset 0 0 0 1px var(--today-warning);
+}
+
+.ui-datepicker-day.is-selected {
+  background: var(--primary);
+  box-shadow: none;
+  color: #ffffff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-datepicker-trigger:hover,
+  .ui-datepicker-presets button:hover:not(:disabled),
+  .ui-datepicker-nav button:hover,
+  .ui-datepicker-day:hover:not(:disabled) {
+    border-color: var(--surface-strong);
+    background: var(--surface-soft);
+  }
+
+  .ui-datepicker-day.is-selected:hover {
+    background: var(--primary-hover);
+    color: #ffffff;
+  }
+}
+
+/* --- Time picker --------------------------------------------------------- */
+
+.ui-timepicker { position: relative; width: 100%; }
+.ui-timepicker-control {
+  width: 100%;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.ui-timepicker-control:focus-within,
+.ui-timepicker-control.is-open { border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+.ui-timepicker-control.is-invalid { border-color: var(--overdue-error); }
+.ui-timepicker-control input {
+  min-width: 0;
+  height: 100%;
+  flex: 1;
+  padding: 0 var(--space-3);
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink-body);
+  font: 500 var(--text-body)/1 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+.ui-timepicker-control button {
+  width: 32px;
+  height: 100%;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border-left: 1px solid var(--hairline);
+  color: var(--ink-muted);
+}
+.ui-timepicker-control button:hover { background: var(--surface-soft); color: var(--ink); }
+.ui-timepicker-error { display: block; margin-top: 4px; color: var(--overdue-error); font-size: var(--text-xs); }
+.ui-timepicker-menu {
+  position: fixed;
+  z-index: 70;
+  width: 220px;
+  max-height: 280px;
+  padding: 5px;
+  overflow-y: auto;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+}
+.ui-timepicker-menu button {
+  width: 100%;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-chip);
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+  text-align: left;
+}
+.ui-timepicker-menu button.is-active { background: var(--surface-soft); }
+.ui-timepicker-menu button.is-selected { color: var(--primary); font-weight: 650; }
+
+/* --- Modal / Overlay ------------------------------------------------------ */
+
+.ui-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27, 25, 29, 0.32);
+  overscroll-behavior: contain;
+  transition: opacity var(--duration-base) ease;
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+.ui-overlay.is-closing {
+  opacity: 0;
+}
+
+.ui-modal {
+  background: var(--surface-canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card-lg);
+  box-shadow: var(--shadow-overlay);
+  max-height: calc(100vh - 96px);
+  max-width: calc(100vw - 32px);
+  overflow: auto;
+  /* The modal is the actual scroll container; stop wheel chaining to the page. */
+  overscroll-behavior: contain;
+  transform-origin: center;
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-overlay,
+  .ui-modal {
+    transition-duration: 0.01ms;
+  }
+}
+
+.ui-overlay.is-closing .ui-modal {
+  opacity: 0;
+  transform: scale(0.97);
+  transition-duration: var(--duration-press);
+}
+
+/* Quiet transient hint pill, bottom-center of a positioned page container.
+   Announces an undoable action for the length of the undo window. */
+.ui-undo-hint {
+  position: absolute;
+  z-index: 40;
+  bottom: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+/* Small confirmation dialog body shared by destructive and discard prompts. */
+.ui-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  font-family: var(--font-ui);
+}
+
+.ui-confirm h2 {
+  color: var(--ink);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.ui-confirm p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-body);
+  line-height: 1.45;
+}
+
+.ui-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.ui-detail-dialog {
+  display: flex;
+  max-height: calc(100vh - 96px);
+  flex-direction: column;
+  font-family: var(--font-ui);
+}
+
+.ui-detail-dialog-header {
+  display: flex;
+  min-height: 52px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.ui-detail-dialog-title {
+  min-width: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--text-emphasis);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* An editable title (click-to-edit input) takes the full header width. */
+.ui-detail-dialog-title:has(input) {
+  flex: 1;
+}
+
+.ui-detail-dialog-close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-press) var(--ease-out);
+}
+
+.ui-detail-dialog-close:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.ui-detail-dialog-close:active {
+  transform: scale(0.97);
+}
+
+.ui-detail-dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-5);
+}
+
+/* --- Quick actions ------------------------------------------------------- */
+
+.ui-quick-actions {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  transform-origin: top left;
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.ui-quick-actions.is-keyboard {
+  transition: none;
+}
+
+.ui-quick-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: 6px;
+  color: var(--ink-body);
+  font-size: var(--text-body);
+  font-weight: 500;
+  text-align: left;
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+}
+
+.ui-quick-action:hover,
+.ui-quick-action:focus-visible {
+  background: var(--surface-soft);
+  box-shadow: none;
+  color: var(--ink);
+}
+
+.ui-quick-action.is-danger {
+  color: var(--error);
+}
+
+.ui-quick-action.is-danger:hover,
+.ui-quick-action.is-danger:focus-visible {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+/* --- Tooltip -------------------------------------------------------------- */
+
+.ui-tooltip-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.ui-tooltip {
+  position: absolute;
+  z-index: 60;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: var(--radius-chip);
+  background: var(--ink);
+  color: var(--surface-canvas);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  transform-origin: bottom center;
+  transition:
+    opacity 125ms var(--ease-out),
+    transform 125ms var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.97);
+  }
+}
+
+.ui-tooltip--below {
+  bottom: auto;
+  top: calc(100% + 6px);
+  transform-origin: top center;
+}
+
+/* --- EmptyState ----------------------------------------------------------- */
+
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+}
+
+.ui-empty-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--ink-muted);
+  margin-bottom: var(--space-2);
+}
+
+.ui-empty-title {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+.ui-empty-ring {
+  position: absolute;
+  inset: -7px;
+  width: calc(100% + 14px);
+  height: calc(100% + 14px);
+  stroke: var(--ink-muted);
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  opacity: 0.5;
+  transform: rotate(-4deg);
+}
+
+.ui-empty-squiggle {
+  width: min(120px, 100%);
+  height: 8px;
+  margin-top: 2px;
+  stroke: var(--primary);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+
+.ui-empty-message {
+  font-size: var(--text-body);
+  color: var(--ink-muted);
+  max-width: 360px;
+}
+
+.ui-empty-action {
+  margin-top: var(--space-3);
+}
+
+/* --- Input ---------------------------------------------------------------- */
+
+.ui-input-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+}
+
+.ui-input-icon {
+  position: absolute;
+  left: 10px;
+  display: flex;
+  color: var(--ink-muted);
+  pointer-events: none;
+}
+
+.ui-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  font-size: var(--text-body);
+  color: var(--ink);
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.ui-input--with-icon {
+  padding-left: 32px;
+}
+
+.ui-input::placeholder {
+  color: var(--ink-muted);
+}
+
+.ui-input:hover {
+  border-color: var(--surface-strong);
+}
+
+.ui-input:focus {
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-ring);
+}
+
+/* --- Kbd ------------------------------------------------------------------ */
+
+.ui-kbd-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ui-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--hairline);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--surface-card);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ink-muted);
+}

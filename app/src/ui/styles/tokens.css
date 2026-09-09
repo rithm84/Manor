@@ -1,0 +1,187 @@
+/* Manor design tokens — Paper Violet. Single source of truth.
+   Never write color/radius/shadow/font-size literals in page CSS;
+   if a value is missing here, add a token first (see docs/DESIGN.md). */
+
+:root {
+  /* Surfaces — content on white, chrome on paper */
+  --surface-canvas: #ffffff;
+  --surface-paper: #fafaf8;
+  --surface-soft: #f5f4f1;
+  --surface-card: #ffffff;
+  --surface-card-warm: #f5f4f1;
+  --surface-strong: #eae8e3;
+
+  /* Ink */
+  --ink: #1b191d;
+  --ink-body: #3f3b44;
+  --ink-muted: #6e6975;
+
+  /* Hairline borders are the elevation system */
+  --hairline: #e8e6e1;
+  --hairline-strong: #dcd9d3;
+  --shadow-overlay: 0 16px 40px rgba(27, 25, 29, 0.12), 0 2px 6px rgba(27, 25, 29, 0.05);
+  --shadow-hover: 0 1px 3px rgba(27, 25, 29, 0.07);
+
+  /* Violet — the single interaction accent */
+  --primary: #71549e;
+  --primary-hover: #654a8d;
+  --primary-active: #57407b;
+  --primary-tint: #f2edf9;
+
+  /* Grounding — forest (legacy; prefer violet for selection states) */
+  --forest: #2f4127;
+  --forest-soft: var(--completion-tint);
+
+  /* Semantic strong/tint pairs — used only when they mean something */
+  --completion: #3d7a52;
+  --completion-soft: color-mix(in srgb, #3d7a52 55%, white);
+  --completion-tint: #e6f2ea;
+  --today-warning: #8f6a0e;
+  --today-warning-tint: #f8efd8;
+  --tomorrow-gold: #6f671f;
+  --tomorrow-gold-tint: #f1eeda;
+  --overdue-error: #b0434b;
+  --overdue-error-tint: #f9e6e7;
+  --frozen-info: #48708e;
+  --frozen-info-tint: #e8eff5;
+  --this-week-plum: #6f5680;
+  --this-week-plum-tint: #efe9f4;
+
+  /* Streak fire — the classic flame ladder, reserved for the streak
+     indicator alone (2026-08-24; completion marks are green everywhere) */
+  --streak: #e8590c;
+  --streak-deep: #d9480f;
+  --streak-glow: #ff922b;
+  --streak-core: #ffd43b;
+  --streak-tint: #fff4e6;
+
+  /* Mood & Focus scale (strong / tint) — the one sanctioned multi-hue ladder */
+  --scale-awful: #a63d4c;
+  --scale-awful-tint: #f8e3e7;
+  --scale-bad: #a05a3a;
+  --scale-bad-tint: #f7e9e0;
+  --scale-neutral: #6e6975;
+  --scale-neutral-tint: #efedea;
+  --scale-good: #5e7a35;
+  --scale-good-tint: #ecf1df;
+  --scale-great: #2f7a50;
+  --scale-great-tint: #e3efe8;
+  --scale-lockedout: #7b5686;
+  --scale-lockedout-tint: #f0e7f2;
+  --scale-low: #5e6092;
+  --scale-low-tint: #e9e9f4;
+  --scale-medium: #4e6e91;
+  --scale-medium-tint: #e5ecf4;
+  --scale-high: #39728b;
+  --scale-high-tint: #e2edf2;
+  --scale-lockedin: #245f70;
+  --scale-lockedin-tint: #deeaee;
+  --scale-resting: #6c676f;
+  --scale-resting-tint: #eceaee;
+
+  /* Compatibility aliases for established module roles */
+  --teal: var(--frozen-info);
+  --amber: var(--today-warning);
+  --gold: var(--tomorrow-gold);
+  --gold-soft: var(--tomorrow-gold-tint);
+  --success: var(--completion);
+  --success-soft: var(--completion-tint);
+  --warning: var(--today-warning);
+  --warning-soft: var(--today-warning-tint);
+  --error: var(--overdue-error);
+  --error-soft: var(--overdue-error-tint);
+
+  /* Interaction roles — violet owns interaction; red owns "now" */
+  --link: var(--primary);
+  --link-hover: var(--ink);
+  --focus-border: var(--primary);
+  --selection: var(--primary-tint);
+  --scratch: var(--tomorrow-gold);
+  --scratch-tint: var(--sticky-note);
+  --timeline-now: var(--primary);
+
+  /* Kanban group pills (the signature): dark fill, white text.
+     Column washes mix the tint toward white so boards read as paper.
+     The due ladder is its own palette, decoupled from the error/warning
+     inks (2026-08-26): hot red for late, warm amber for today, fresh teal
+     for tomorrow, cool plum for the week beyond. White text stays >=4.3:1
+     on every fill. */
+  --pill-overdue: #c43b48;
+  --pill-overdue-tint: #fbe4e6;
+  --pill-today: #b06712;
+  --pill-today-tint: #fbecd3;
+  --pill-tomorrow: #22857a;
+  --pill-tomorrow-tint: #def0ec;
+  --pill-week: #7857a0;
+  --pill-week-tint: #eee7f8;
+  --pill-text: #ffffff;
+
+  /* Sidebar — paper chrome; selection carries a faint violet cast */
+  --sidebar-background: var(--surface-paper);
+  --sidebar-border: var(--hairline);
+  --sidebar-hover: #f1efec;
+  --sidebar-selected: #edeaf2;
+
+  /* Typography — the hand face owns every display role (charter: "the
+     printed page you write on"; Inter is the print, Shantell is the hand) */
+  --font-ui: 'Inter', -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font-display: 'Shantell Sans Variable', 'Bradley Hand', 'Segoe Print', cursive;
+  --font-hand: var(--font-display);
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+
+  /* Scale floor is --text-xs; --text-gutter is the one sanctioned
+     exception for dense time-grid gutters and mini-month letters. */
+  --text-gutter: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-body: 14px;
+  --text-md: 15px;
+  --text-emphasis: 16px;
+  --text-lg: 17px;
+  --display-md: 28px;
+  /* Sits clearly above BlockNote's 3em document H1 (45px at the 15px base):
+     a note's title must outrank every heading inside it. */
+  --display-lg: 54px;
+
+  /* Spacing — 4px base scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radii — the complete set; nothing else ships */
+  --radius-chip: 6px;
+  --radius-control: 8px;
+  --radius-card: 10px;
+  --radius-card-lg: 12px;
+
+  /* Focus is violet, like every interaction state */
+  --focus-ring: 0 0 0 3px #e5dcf3;
+
+  /* Motion — spring-feel, interruptible (emil bar) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-press: 140ms;
+  --duration-fast: 160ms;
+  --duration-base: 200ms;
+  --duration-panel: 240ms;
+
+  /* Paper stock — the PaperBackdrop shader overlay (Paper Shaders), one
+     static canvas over the whole window, dimmed here */
+  --paper-texture-opacity: 0.14;
+
+  /* Sticky note — the one sanctioned full skeuomorph (scratch blocks are
+     disposable paper); text on it uses --tomorrow-gold ink */
+  --sticky-note: #fbf3c2;
+  --sticky-note-edge: #e9dd9f;
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --topbar-height: 52px;
+}

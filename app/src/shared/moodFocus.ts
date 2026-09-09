@@ -4,8 +4,8 @@ export type Mood = (typeof MOOD_SCALE)[number]
 export const FOCUS_SCALE = ['Locked In', 'High', 'Medium', 'Low', 'Locked Out', 'Resting'] as const
 export type Focus = (typeof FOCUS_SCALE)[number]
 
-export type MoodFocusNoteSource = 'manual' | 'alfred'
-export type MoodFocusNoteWriteSource = 'alfred'
+export type MoodFocusNoteSource = 'manual' | 'codex'
+export type MoodFocusNoteWriteSource = 'codex'
 
 export interface MoodFocusEntry {
   date: string
@@ -44,7 +44,7 @@ export interface MoodFocusNoteMutation {
 }
 
 export interface MoodFocusApi {
-  load: (seed: MoodFocusSeed) => Promise<MoodFocusState>
+  load: () => Promise<MoodFocusState>
   setMood: (mutation: MoodMutation) => Promise<MoodFocusState>
   setFocus: (mutation: FocusMutation) => Promise<MoodFocusState>
   setNote: (mutation: MoodFocusNoteMutation) => Promise<MoodFocusState>
@@ -122,8 +122,8 @@ function noteSourceValue(value: unknown, nullable: boolean): MoodFocusNoteSource
   if (nullable && value === null) {
     return null
   }
-  if (value !== 'manual' && value !== 'alfred') {
-    throw new TypeError('note source must be manual or alfred')
+  if (value !== 'manual' && value !== 'codex') {
+    throw new TypeError('note source must be manual or codex')
   }
   return value
 }
@@ -132,8 +132,8 @@ function noteWriteSourceValue(value: unknown, nullable: boolean): MoodFocusNoteW
   if (nullable && value === null) {
     return null
   }
-  if (value !== 'alfred') {
-    throw new TypeError('new mood and focus context must come from Alfred')
+  if (value !== 'codex') {
+    throw new TypeError('new mood and focus context must come from Codex')
   }
   return value
 }

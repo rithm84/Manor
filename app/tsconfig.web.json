@@ -14,5 +14,5 @@
     "noEmit": true,
     "useDefineForClassFields": true
   },
-  "include": ["src/renderer/src/**/*", "src/renderer/src/**/*.tsx", "src/shared/**/*", "src/env.d.ts"]
+  "include": ["src/ui/**/*", "src/ui/**/*.tsx", "src/shared/**/*", "src/env.d.ts"]
 }
