@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Manor diagram export</title>
+<style>body {margin:0;background:white} #preview svg {display:block;max-width:1500px;height:auto}</style>
+<div id="preview"></div><script type="module">
+import { exportToSvg, restoreElements } from '@excalidraw/excalidraw'
+window.renderScene = async (scene) => {
+  const elements = restoreElements(scene.elements, null, { repairBindings: true })
+  const svg = await exportToSvg({ elements, appState: { ...scene.appState, exportBackground: true, exportWithDarkMode: false, exportEmbedScene: false }, files: scene.files, exportPadding: 35 })
+  svg.setAttribute('role', 'img')
+  const title = document.createElementNS('http://www.w3.org/2000/svg', 'title')
+  title.textContent = scene.elements.find((element) => element.type === 'text')?.text ?? 'Manor architecture'
+  svg.prepend(title)
+  document.querySelector('#preview').replaceChildren(svg)
+  return { svg: svg.outerHTML, scene: { ...scene, elements } }
+}
+</script></html>

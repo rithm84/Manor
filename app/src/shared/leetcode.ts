@@ -19,6 +19,14 @@ export interface LeetCodeAttempt {
   updatedAt: string
 }
 
+/** A quick jot about a mistake or pattern, kept beside the curriculum. */
+export interface LeetCodeNote {
+  id: string
+  text: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface LeetCodeLegacyProgress {
   topic: string
   solvedCount: number
@@ -36,6 +44,7 @@ export interface LeetCodeSummary {
 export interface LeetCodeSeed {
   problems: readonly LeetCodeProblem[]
   attempts: readonly LeetCodeAttempt[]
+  notes: readonly LeetCodeNote[]
   summary: LeetCodeSummary
 }
 
@@ -53,11 +62,19 @@ export interface UpdateLeetCodeAttemptMutation {
   solution: string
 }
 
+export interface UpdateLeetCodeNoteMutation {
+  noteId: string
+  text: string
+}
+
 export interface LeetCodeApi {
-  load: (seed: LeetCodeSeed) => Promise<LeetCodeState>
+  load: () => Promise<LeetCodeState>
   addAttempt: (mutation: AddLeetCodeAttemptMutation) => Promise<LeetCodeState>
   updateAttempt: (mutation: UpdateLeetCodeAttemptMutation) => Promise<LeetCodeState>
   deleteAttempt: (attemptId: string) => Promise<LeetCodeState>
+  addNote: (text: string) => Promise<LeetCodeState>
+  updateNote: (mutation: UpdateLeetCodeNoteMutation) => Promise<LeetCodeState>
+  deleteNote: (noteId: string) => Promise<LeetCodeState>
 }
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
@@ -150,6 +167,37 @@ export function parseLeetCodeAttempt(value: unknown): LeetCodeAttempt {
   }
 }
 
+const NOTE_MAX_LENGTH = 2000
+
+export function parseLeetCodeNoteText(value: unknown): string {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new TypeError('A LeetCode note needs some text')
+  }
+  const text = value.trim()
+  if (text.length > NOTE_MAX_LENGTH) {
+    throw new RangeError(`A LeetCode note must stay under ${NOTE_MAX_LENGTH} characters`)
+  }
+  return text
+}
+
+export function parseLeetCodeNote(value: unknown): LeetCodeNote {
+  const note = recordValue(value, 'LeetCode note')
+  return {
+    id: stringValue(note.id, 'note.id'),
+    text: parseLeetCodeNoteText(note.text),
+    createdAt: timestampValue(note.createdAt, 'note.createdAt'),
+    updatedAt: timestampValue(note.updatedAt, 'note.updatedAt')
+  }
+}
+
+export function parseUpdateLeetCodeNoteMutation(value: unknown): UpdateLeetCodeNoteMutation {
+  const mutation = recordValue(value, 'update LeetCode note mutation')
+  return {
+    noteId: stringValue(mutation.noteId, 'mutation.noteId'),
+    text: parseLeetCodeNoteText(mutation.text)
+  }
+}
+
 function parseLegacyProgress(value: unknown): LeetCodeLegacyProgress {
   const progress = recordValue(value, 'legacy LeetCode progress')
   return {
@@ -185,25 +233,30 @@ export function parseLeetCodeSummary(value: unknown): LeetCodeSummary {
 
 export function parseLeetCodeSeed(value: unknown): LeetCodeSeed {
   const seed = recordValue(value, 'LeetCode seed')
-  if (!Array.isArray(seed.problems) || !Array.isArray(seed.attempts)) {
-    throw new TypeError('LeetCode seed problems and attempts must be arrays')
+  if (!Array.isArray(seed.problems) || !Array.isArray(seed.attempts) || !Array.isArray(seed.notes)) {
+    throw new TypeError('LeetCode seed problems, attempts, and notes must be arrays')
   }
   const problems = seed.problems.map(parseLeetCodeProblem)
   const attempts = seed.attempts.map(parseLeetCodeAttempt)
+  const notes = seed.notes.map(parseLeetCodeNote)
   const problemIds = new Set(problems.map((problem) => problem.id))
   const attemptIds = new Set(attempts.map((attempt) => attempt.id))
+  const noteIds = new Set(notes.map((note) => note.id))
   if (problemIds.size !== problems.length) {
     throw new TypeError('LeetCode seed problem ids must be unique')
   }
   if (attemptIds.size !== attempts.length) {
     throw new TypeError('LeetCode seed attempt ids must be unique')
   }
+  if (noteIds.size !== notes.length) {
+    throw new TypeError('LeetCode seed note ids must be unique')
+  }
   attempts.forEach((attempt) => {
     if (!problemIds.has(attempt.problemId)) {
       throw new TypeError(`LeetCode attempt ${attempt.id} references an unknown problem`)
     }
   })
-  return { problems, attempts, summary: parseLeetCodeSummary(seed.summary) }
+  return { problems, attempts, notes, summary: parseLeetCodeSummary(seed.summary) }
 }
 
 export function parseAddLeetCodeAttemptMutation(value: unknown): AddLeetCodeAttemptMutation {

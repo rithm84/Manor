@@ -1,8 +1,8 @@
-# Manor — Design Charter (hi-fi Electron shell)
+# Manor Design Charter
 
-_Last updated: 2026-08-24_
+_Last updated: 2026-09-09_
 
-The binding design reference for everyone building `app/`. Read fully before writing any UI. The product-mechanics truth is `docs/PRD.md`; the canonical mock-data story is `app/src/renderer/src/data/mock.ts` (mirrored in `docs/design/canvas/SPEC.md` §B — one story everywhere). The anti-patterns in `AGENTS.md` are hard rules; violating them is a failed deliverable.
+The binding design reference for everyone building `app/`. Read fully before writing any UI. Product behavior lives in [PRD.md](PRD.md); the canonical mock-data story is [data/mock.ts](../app/src/ui/data/mock.ts). The anti-patterns in [AGENTS.md](../AGENTS.md) are hard rules; violating them is a failed deliverable.
 
 ## Direction
 
@@ -10,13 +10,16 @@ The binding design reference for everyone building `app/`. Read fully before wri
 
 **The printed page you write on (2026-08-23, second pass).** Manor is a printed instrument: Inter is the *print*, a faint paper grain is the *stock*, and the hand face plus rough ink marks are *your marks on it*. Handwriting appears only where a person would plausibly write on a printed page — greetings, titles, empty-state headlines, celebrations, marginalia. Data is always print. Texture is always felt, never seen first.
 
+**Scope:** this is the current visual baseline while the Mobbin-informed web redesign is developed. Product surfaces follow the PRD.
+
 **Blueprints, in order of authority:**
+
 1. **Notion** (via Mobbin — pull flows before designing your surface): board/kanban UX (group pills with counts, softly tinted columns, card chips, "+ New" affordances), sidebar behavior, property editors, settings anatomy. Object details adapt those property patterns into Manor's centered dialogs.
 2. **The tokens below** as the base coat. When a value is not here, derive it from a token (`color-mix`), never invent a literal.
 
 ## Tokens (Paper Violet)
 
-Defined in `app/src/renderer/src/styles/tokens.css` — the single source of truth. Never write a color, radius, shadow, or font-size literal in page CSS; if a needed value is missing, add a token first.
+Defined in `app/src/ui/styles/tokens.css` — the single source of truth. Never write a color, radius, shadow, or font-size literal in page CSS; if a needed value is missing, add a token first.
 
 **Surfaces:** canvas `#ffffff` (all content areas), paper `#fafaf8` (app chrome: sidebar, rails), soft `#f5f4f1` (hover wells, banners), strong `#eae8e3` (pressed wells); card = canvas + hairline border (cards are delineated by border and shadow, not by a different fill).
 **Ink:** ink `#1b191d`, body `#3f3b44`, muted `#6e6975`. Muted is for secondary text at ≥12px only — never for primary content.
@@ -24,8 +27,9 @@ Defined in `app/src/renderer/src/styles/tokens.css` — the single source of tru
 **Shadows (one black, tokenized):** hover `0 1px 3px rgba(27,25,29,0.07)`; overlay `0 16px 40px rgba(27,25,29,0.12), 0 2px 6px rgba(27,25,29,0.05)`. No other shadow recipes.
 **Violet (the accent):** primary `#71549e`, hover `#654a8d`, active `#57407b`, tint `#f2edf9`. Violet owns: primary buttons, links, focus rings, selected states, active filters, and progress accents. If an accent is not semantic, it is violet.
 **Streak fire (2026-08-24):** habit completion marks (checkboxes, quantized quarters, week segments) are **completion green**; achievement lives only in the streak indicator, a classic fire flame on the `--streak` ladder (`#e8590c` / deep `#d9480f` / glow `#ff922b` / core `#ffd43b`). Flame states: ember (no streak), dim (streak at risk today — gray body, live core), lit, blazing (freeze-free week). Live flames flicker subtly (reduced-motion: static). Today's week segment never pre-fills with state.
-**Semantic pairs (strong / tint):** completion `#3d7a52` / `#e6f2ea`; today amber `#8f6a0e` / `#f8efd8`; tomorrow gold `#6f671f` / `#f1eeda`; overdue red `#b0434b` / `#f9e6e7`; info blue `#48708e` / `#e8eff5`; this-week plum `#6f5680` / `#efe9f4`. The Today timeline's now-line is violet (`--timeline-now` → `--primary`; 2026-08-23 decision).
-**Kanban (the signature, kept):** group pills use the dark semantic strong color with white text; columns use a *light* wash of the matching tint (mixed toward white) so boards read as paper, not slabs.
+**Semantic pairs (strong / tint):** completion `#3d7a52` / `#e6f2ea`; warning amber `#8f6a0e` / `#f8efd8`; sticky-ink gold `#6f671f` / `#f1eeda`; error red `#b0434b` / `#f9e6e7`; info blue `#48708e` / `#e8eff5`; plum `#6f5680` / `#efe9f4`. The Today timeline's now-line is violet (`--timeline-now` → `--primary`; 2026-08-23 decision).
+**Due ladder (2026-08-26):** the kanban buckets carry their own brighter palette (`--pill-*`), decoupled from the error/warning inks: overdue `#c43b48`, today `#b06712`, tomorrow teal `#22857a`, week plum `#7857a0`, each with a matching tint. It reads as temperature: hot red for late, warm amber for now, fresh teal for next, cool plum for later.
+**Kanban (the signature, kept):** group pills use the dark strong color with white text; columns use a *light* wash of the matching tint (mixed toward white) so boards read as paper, not slabs.
 **Spacing:** 4px base scale. **Radii:** 6px chips, 8px controls, 10px cards, 12px overlays/dialogs. Nothing else — no 3/5/7/9/15/16px.
 
 ## Typography (roles are law)
@@ -40,24 +44,23 @@ Defined in `app/src/renderer/src/styles/tokens.css` — the single source of tru
 
 - **Grain:** one pre-baked feTurbulence tile (`--paper-grain`, opacity `--paper-grain-opacity` ≈ 5%) rendered as a single static fixed overlay (`body::after`) — the whole window shares one paper stock. Never a live SVG filter, never a per-element grain layer on scrolling content, never an opacity that reads as noise before it reads as paper.
 - **Ink marks (rough-notation / hand-drawn SVG):** the `HandCircle` around a perfect day's count, the drawn-on checkbox stroke, the sketched rings behind empty-state icons and around selected Mood & Focus chips, the squiggle under empty-state titles. Animated marks stay reserved for rare moments (never hover, never keyboard-driven or 100+/day actions, reduced-motion fallback always). Ink marks are single fitted SVGs — never a `repeat-x` tile (tiled squiggles read as broken dashes; tried and retired 2026-08-23).
-- **The hand voice (beyond display):** buttons, segmented view toggles, kanban group pills, and section titles write in the hand face (`ui.css` "hand voice" block). Data still prints — tables, chips, stats, times, form values never go hand.
-- **Sticky notes:** scratch blocks are disposable paper and get the full skeuomorph — `--sticky-note` stock, hair-of-rotation, dog-ear fold, handwritten note text. They are direct-manipulation paper: drag a sticky to move it in the Today timeline; drag on empty timeline to write a new one. Kanban task cards are the second sanctioned paper prop (2026-08-23): white note stock, 3px corners, a dog-ear showing the column wash, ±0.3° tilt. Nothing else gets rotation or literal paper props.
+- **Sticky notes:** scratch blocks are disposable paper and get the full skeuomorph — `--sticky-note` stock, hair-of-rotation, dog-ear fold, handwritten note text. They are direct-manipulation paper: drag a sticky to move it in the Today timeline; drag on empty timeline to write a new one. Other components do not get rotation or literal paper props.
 
 ## Sound (tasteful, sparse)
 
-A single quiet sound layer (`renderer/src/sound/`) synthesized via WebAudio — no audio assets. The voice is **tactile, not tonal**: band-passed noise taps with a low thump (a pen landing on paper), never pure sine beeps. Sounds exist for **completion moments only**: checking off a task or habit (soft felt tap), a perfect-day/streak celebration (three soft mallet strikes). Nothing on navigation, hover, typing, or errors. Master toggle in Settings → Appearance; default on; volume well under system alert level. If a sound calls attention to itself, it is too loud or too long.
+A single quiet sound layer (`app/src/ui/sound/`) synthesized via WebAudio — no audio assets. The voice is **tactile, not tonal**: band-passed noise taps with a low thump (a pen landing on paper), never pure sine beeps. Sounds exist for **completion moments only**: checking off a task or habit (soft felt tap), a perfect-day/streak celebration (three soft mallet strikes). Nothing on navigation, hover, typing, or errors. Master toggle in Settings → Appearance; default on; volume well under system alert level. If a sound calls attention to itself, it is too loud or too long.
 
 ## Copy voice (read twice)
 
 Product voice: confident, terse, human. **Never** system-documentation captions in the UI ("nightly ingestion", "parsed daily from SimplifyJobs", "no Earn-Back", "fades 48h" as scattered annotations). If behavior needs explaining, it lives in Settings or an (i) popover written in product voice ("Blocks tidy themselves up two days after they end"). **No em-dashes anywhere in UI copy.** No exclamation-mark spam. Microcopy warmth is welcome ("Two left. The evening is yours.") but sparingly and never explaining mechanics.
 
-## Structure (locked)
+## Structure
 
-- **Sidebar:** Notion-style. Pinned state = fixed column. Collapsed state = fully hidden; hovering the left screen edge slides it in as a floating overlay; leaving dismisses it; a pin control re-docks it. Selected item = soft fill + weight change. **No left-edge accent bar/curve on selection.** Items: Home, Habits, Mood & Focus, LeetCode, Jobs, Notes, Bookmarks, Journal; bottom: the account row, which opens an upward menu holding Alfred activity and Settings (2026-08-24).
+- **Navigation:** follow [PRD §8](PRD.md#8-surfaces) for sidebar behavior and surfaces. Selected item = soft fill + weight change, with no left-edge accent bar. Historical desktop agent and Activity surfaces are retired.
 - **Home = tasks kanban + Today panel. Nothing else.**
 - **Habit logging lives on its own surface.**
 - **Object details = centered dialogs, always.** Side peeks, drawers, sheets, right-edge detail panels, and detail rails are prohibited. The rule does not convert primary page layouts, the app sidebar, inline popovers, menus, or tooltips. Dialog anatomy follows Notion's property-row pattern: borderless click-to-edit fields in an icon-gutter grid, hairline section dividers, generous padding — not boxed form inputs.
-- **Alfred = modal via the global hotkey (⌥M)** with the **thinking orb** (no characters, ever). Orb = small animated particle-sphere (reference orbs.jakubantalik.com), violet-warm dots, states: idle / listening / thinking. Below the orb and voice controls sits a Notion-style page search (type, arrow, Enter to jump); it replaced the completion glance 2026-08-24 and is also why the sidebar carries no search field.
+- **Agent operations:** Codex supplies conversation outside Manor. The UI reflects committed operations immediately and makes drafts, failures, and genuine conflicts clear; see [PRD §5](PRD.md#5-codex-webmcp-and-background-work).
 - **Proper product, not a personal hack:** sign-in + onboarding, Settings, real empty states on every module.
 - **Density rule:** high-volume collections (bookmarks, logs, to-apply lists) are compact rows/tables. Card grids only for genuinely small, rich sets.
 - **Workflows are the deliverable.** Every surface ships its flows clickable.

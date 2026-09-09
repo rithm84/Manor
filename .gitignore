@@ -1,6 +1,9 @@
 .env.local
+.env.*
+!.env.example
+node_modules/
+.DS_Store
 /output/
-
-# Regenerable seeded design-canvas artifact (rebuild with the /design helper from canvas/ files)
-docs/design/canvas/manor-shell-explorations.html
+app/dist/
+*.tsbuildinfo
 /docs/NOTION-REPORT.md

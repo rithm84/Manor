@@ -12,7 +12,7 @@ export interface ResumeVersion {
 export interface ResumeUpload {
   label: string
   fileName: string
-  /** File bytes, base64-encoded (JSON-safe across IPC and the dev bridge). */
+  /** File bytes, base64-encoded (JSON-safe for uploads). */
   base64: string
 }
 

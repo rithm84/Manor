@@ -1,43 +1,20 @@
-# Manor
+# Manor UI Foundation
 
-_Last updated: 2026-08-23_
+_Last updated: 2026-09-09_
 
-The Electron app for Manor. Design charter: `docs/DESIGN.md` at the repo
-root. Product truth: `../docs/PRD.md`.
+Reusable React routes, module components, rich Notes editor, styles, pure domain calculations, and validation tests for the web rebuild. This package builds a UI library; it is not a deployable Manor application yet.
 
-## Run
+`App` requires implemented `ManorServices`. These are view dependencies, not the final server or WebMCP contracts. There is no default adapter or mock backend. Individual components can receive their required services through `ManorServicesProvider`; missing services fail explicitly. Keep service instances stable for a mounted account session and remount the application when the account changes.
 
-```sh
-npm install
-npm run dev        # boots the Electron app (1520x940, hiddenInset titlebar)
-```
+The future web entry point must supply authentication and signup gating, transactional commands and revisions, TanStack Query refresh, durable IndexedDB drafts and queued attachments, safe navigation/sign-out, Trash/purge, and the separate Journal link. The retained Notes screen's in-memory save queue does not supply offline or navigation durability. Do not deploy it before the [architecture acceptance checks](../docs/ARCHITECTURE.md#11-migration-and-verification) pass.
 
-While `npm run dev` is running, the renderer is also served at
-`http://localhost:5173/` for visual browser preview. Functional Home testing
-must use Electron because task persistence is exposed through the preload
-bridge.
+Run from the repository root:
 
 ```sh
-npm run typecheck  # tsc over main/preload and renderer
-npm test           # task/domain and persistence tests
-npm run build      # electron-vite production build into out/
+npm --prefix app ci
+npm --prefix app run typecheck
+npm --prefix app test
+npm --prefix app run build
 ```
 
-## Data state
-
-`src/renderer/src/data/mock.ts` remains the single typed seed story. Home is
-the first functional vertical slice: tasks, contexts, scratch blocks, and
-saved Master views are persisted in SQLite from the Electron main process after first launch. The
-remaining modules still use the canonical mock story.
-
-## Layout
-
-- `src/main/` window bootstrap and main-process stores; `src/preload/` the
-  typed renderer bridge.
-- `src/renderer/src/styles/` design tokens (Paper Violet) + base styles.
-- `src/renderer/src/components/ui/` shared primitives (Button, Pill, Card,
-  Checkbox, Select, Modal, DetailDialog, Tooltip, EmptyState, Input, Kbd).
-- `src/renderer/src/app/` the frame: sidebar, titlebar strip, Alfred modal
-  (Option+Space, thinking orb in `components/orb/`).
-- `src/renderer/src/pages/` one file per route; placeholders until page
-  agents land. Routes are registered in `src/renderer/src/App.tsx`.
+The build writes `app/dist/`. Anonymous fixtures are in `src/ui/data/mock.ts`; account loaders never receive those fixtures. Database migrations are historical schema records, not evidence that the target backend is implemented. Existing cloud data and local user data are preserved; source cleanup does not alter either.

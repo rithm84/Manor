@@ -1,3 +1,5 @@
+import type { JobFeedPage } from './jobFeed'
+
 export const JOB_STAGES = [
   'to_apply',
   'applied',
@@ -27,6 +29,9 @@ export interface JobRoleFields {
   /** ResumeVersion id the application was sent with. Optional on input so
       pre-resume rows and seeds stay valid; parsing always emits null. */
   resumeId?: string | null
+  /** Hiring cycle the posting is for, e.g. "Summer 2027". Optional on input
+      so pre-feed rows and seeds stay valid; parsing always emits null. */
+  term?: string | null
 }
 
 export interface JobRole extends JobRoleFields {
@@ -66,11 +71,15 @@ export interface JobStageMutation {
 }
 
 export interface JobsApi {
-  load: (seed: JobsSeed) => Promise<JobsState>
+  load: () => Promise<JobsState>
   createRole: (fields: JobRoleFields) => Promise<JobsState>
   updateRole: (mutation: JobRoleUpdate) => Promise<JobsState>
   setStage: (mutation: JobStageMutation) => Promise<JobsState>
   deleteRole: (roleId: string) => Promise<JobsState>
+  /** Browse the SimplifyJobs catalog. */
+  feedList: () => Promise<JobFeedPage>
+  /** Add one catalog listing to the pipeline as a to_apply role. */
+  feedAdd: (listingId: string) => Promise<JobsState>
 }
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
@@ -159,6 +168,12 @@ function nullableResumeId(value: unknown): string | null {
   return stringValue(value, 'job.resumeId')
 }
 
+function nullableTerm(value: unknown): string | null {
+  if (value === undefined || value === null) return null
+  const term = optionalString(value, 'job.term', MAX_NAME_LENGTH)
+  return term === '' ? null : term
+}
+
 function postingLink(value: unknown): string {
   const link = optionalString(value, 'job.postingLink', 2000)
   if (link === '') {
@@ -191,8 +206,19 @@ export function parseJobRoleFields(value: unknown): JobRoleFields {
     interview2Date: nullableDate(fields.interview2Date, 'job.interview2Date'),
     interview3Date: nullableDate(fields.interview3Date, 'job.interview3Date'),
     decisionDate: nullableDate(fields.decisionDate, 'job.decisionDate'),
-    resumeId: nullableResumeId(fields.resumeId)
+    resumeId: nullableResumeId(fields.resumeId),
+    term: nullableTerm(fields.term)
   }
+}
+
+/** Sortable key for a hiring cycle: "Summer 2027" → 2027.2. Unknown terms
+    sort last so a filled cycle always beats a blank one. */
+export function termSortKey(term: string | null): number {
+  if (term === null) return Number.POSITIVE_INFINITY
+  const year = Number.parseInt(term.replace(/\D+/g, ''), 10)
+  if (Number.isNaN(year)) return Number.POSITIVE_INFINITY
+  const season = /spring/i.test(term) ? 1 : /summer/i.test(term) ? 2 : /fall|autumn/i.test(term) ? 3 : /winter/i.test(term) ? 4 : 0
+  return year + season / 10
 }
 
 export function parseJobRole(value: unknown): JobRole {

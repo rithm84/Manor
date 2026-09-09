@@ -1,5 +1,4 @@
-/** X (Twitter) bookmark sync: OAuth connection state and the bridge API
-    served by main/xChannels.ts (renderer reaches it as window.manor.x). */
+/** X bookmark connection state. */
 
 export interface XConnectionStatus {
   connected: boolean
@@ -10,13 +9,6 @@ export interface XConnectionStatus {
 }
 
 export interface XApi {
-  /** Starts an OAuth flow: boots the loopback listener and returns the URL to open. */
-  beginConnect: () => Promise<{ authorizeUrl: string }>
-  /**
-   * Resolves once the browser callback lands and tokens are stored, or rejects
-   * after about 120 seconds when the sign in never completes.
-   */
-  completeConnect: () => Promise<XConnectionStatus>
   /** Current connection state; reports disconnected when signed out of Manor. */
   status: () => Promise<XConnectionStatus>
   disconnect: () => Promise<void>

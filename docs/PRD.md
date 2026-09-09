@@ -1,188 +1,210 @@
 # Manor PRD
 
-_Last updated: 2026-08-26_
+_Last updated: 2026-09-09_
+
+This document owns product behavior, business rules, and scope. [ARCHITECTURE.md](ARCHITECTURE.md) owns the technical design, storage, execution, deployment, and recovery mechanisms.
 
 ## 1. Product Thesis
 
-Manor is a personal productivity OS: habit, mood, focus, fitness, LeetCode, and job-search tracking, a merged task system, markdown notes, an X bookmarks knowledge base, an encrypted journal, and a voice agent (Alfred) that can act on the user's behalf.
+Manor is a personal productivity web app: habits, mood and focus, tasks, LeetCode, job applications, notes, a knowledge base, and a private encrypted Journal. Fitness ingestion is planned. Codex supplies interactive reasoning and conversation, using Manor's WebMCP tools to read and act on the same data as the UI.
 
-It replaces user's legacy Notion system ("the legacy Notion system", documented in `NOTION-REPORT.md`), whose §5 catalog of workarounds — single-row formula-host databases, a hand-maintained join row, pre-linked month buckets, styled-text pseudo-widgets — is the negative space this product is designed against. Manor's core bet: when logging is frictionless, streaks are first-class, and an agent absorbs the work-about-work, a personal system gets *used* instead of maintained.
-
-Manor is personal software with a product bar: although it has one primary user, it is built as a proper product anyone could adopt — real sign-in and onboarding, settings, empty states, cloud sync — not a hardcoded dashboard.
+It replaces the user’s legacy Notion system (private reference: [workflow workarounds](NOTION-REPORT.md#5-workflow-workarounds)). Logging and maintaining the system should take little effort. Manor has a product bar: account isolation, sign-in, onboarding, settings, empty states, and durable data, even with one primary user.
 
 ## 2. Positioning
 
-Manor is not purely:
+Manor provides the productivity interface and domain logic; Codex provides the general agent capabilities and connected knowledge sources. Users can work directly in Manor or ask Codex to operate it. Manor does not embed a second conversational agent.
 
-- a Notion clone, because structured tracking, streak mechanics, and an acting agent are the core, and documents are second-class
-- a habit tracker, because tasks, knowledge, and job pipeline live in the same modular system
-- a chat-AI wrapper, because Alfred is voice-only, tool-wielding, and scoped by an explicit authority model
-
-It is best understood as a tailored, unbloated personal agent-OS with a dashboard: composable modules over one data layer, with the agent as a first-class user of the same system.
-
-**Modularity model (Vim-like):** a **module** is a tracker/feature unit that can be added, swapped, or removed. Simple trackers are **config-defined** (creatable in-app: name, fields, cadence, streak participation, card type); complex modules (Jobs, LeetCode, Fitness) are **code-defined**. Mood and Focus are the reference config-defined modules.
+A **module** is a tracker or feature unit. Simple trackers are config-defined (name, fields, cadence, streak participation, presentation); complex modules such as Jobs, LeetCode, and Fitness are code-defined. Mood and Focus are the reference simple trackers. Each account owns its data; collaboration and shared workspaces are outside scope.
 
 ## 3. Product Principles
 
-1. **Frictionless logging above all.** the legacy Notion system's multi-tap flows died; every Manor flow must be one-tap or one-utterance. Voice logging is a first-class path.
-2. **Work-about-work ≈ zero.** No manual syncing, filter rotation, or plumbing upkeep, ever.
-3. **Streaks are load-bearing** (§6). Motivation and accountability are features, not decoration.
-4. **AI insight over long-term data** via background analysis (§5), surfaced as briefings, never as interruptions.
-5. **Consistency by design, not backfill.** Backfill is limited to one day everywhere; the system nudges same-day logging.
-6. **Emotional design and great UX outrank minimalist elegance.** The right treatment is judged per interface and per flow. Celebration and urgency are designed states, executed with restraint.
-7. **Space efficiency.** Content runs edge-to-edge; padded-card page framing and "page inside a page" layouts are failures (see AGENTS.md anti-patterns).
-8. **Memory discipline within Electron's reality.** Study and apply the optimization practices of the serious Electron apps: few processes, lazy windows, virtualized lists, V8 heap hygiene.
+1. **Frictionless logging.** Direct UI actions and Codex requests should complete with minimal steps.
+2. **Little maintenance.** No manual syncing, filter rotation, or bookkeeping to keep the system usable.
+3. **Streaks are core behavior.** Preserve the mechanics in §6 through the migration.
+4. **Useful synthesis.** Daily debriefs and scheduled weekly reviews make accumulated data useful without unsolicited changes to the user's work.
+5. **Consistency by design.** Habits and mood/focus allow today and yesterday; LeetCode attempts may record any past date, never a future date.
+6. **Expressive, efficient design.** Celebration and urgency are restrained; content uses space well. Follow the design charter while exploring the chosen UI redesign.
+7. **Fast, truthful state.** Tool results and visible UI agree with committed data. Unsaved work, conflicts, and failures must remain visible.
 
-## 4. Platform and Stack
+## 4. Platform and Data Policies
 
-- **Electron on macOS ships first.** The iOS app is definitely planned and begins only after the Mac app is finished (separate stack, chosen then; Electron has no iOS target). Decision record: native Swift/SwiftUI was prototyped, evaluated, and rejected in favor of web-stack velocity; do not re-litigate (also rejected: Tauri).
-- **Backend: Supabase — live since 2026-08-25** (Postgres, Auth, Edge Functions, Realtime, pgvector) via `supabase-js`. Schema, owner-only RLS, and the private `resumes`/`captures` buckets are migrated from `supabase/migrations/` (project `pxdxqueevzttpmxjsqes`; direct db host is IPv6-only, use the us-east-2 session pooler; env in repo-root `.env.local`, synthetic test account under `MANOR_TEST_*`). Server-side compute is embraced — scrapers, cron, webhooks, and background AI jobs run in Edge Functions (`normalize-capture` is the first).
-- **Sync posture: online-required with a local read cache** (SQLite in the main process), implemented 2026-08-25: session-start pull replaces local state, every store mutation schedules a debounced full-module push (retries then structured error; signed-out stays local-only; note attachment binaries stay local for now). One carve-out remains planned: the Notes module gets a local write-queue so lecture notes survive dead wifi; quick habit check-offs may share it.
-- **Models:** `gpt-realtime-2.1` for all voice (WebRTC from the renderer, official JS SDK); `GPT-5.6-terra` for everything non-voice, reasoning effort medium or higher, always; `text-embedding-3-small` (1536 dims, fits pgvector HNSW) for embeddings.
-- **Calendar sync (Today timeline feed only):** direct Google Calendar API with `syncToken` incremental polling (~60s freshness) feeds the Home Today timeline; `events.watch` push via an Edge Function webhook is the later upgrade. The standalone calendar workspace was removed 2026-08-23.
-- **macOS surfaces from Electron:** the global summon panel is a frameless `type: 'panel'` non-activating window + `globalShortcut` (the verified Notion/Claude-Desktop/1Password pattern). Touch ID via `systemPreferences.promptTouchID`; Keychain-backed secrets via `safeStorage`. OS desktop widgets are out of scope (impossible from Electron; widgets are an iOS-phase, native concern).
+### Platform
 
-## 5. Alfred (the Agent)
+Manor is a WebMCP-native web app intended to remain open in the ChatGPT/Codex built-in browser. Codex supplies interactive conversation and agent capabilities. Remove Electron support and embedded Alfred; recreating native summon UI, desktop hotkeys, permission onboarding, or notifications is not required. The technical migration and current implementation status live in [ARCHITECTURE.md](ARCHITECTURE.md).
 
-One persona, voice-only (the user never types to Alfred), three mechanisms:
+### Reliable data and offline work
 
-1. **Voice sessions — ephemeral.** Summoned by one global hotkey (⌥M): outside Manor it raises the summon panel over any app or full-screen Space; inside Manor it opens the Alfred modal. Mic is hot on summon. A WebRTC session starts with an injected memory preamble, auto-minimizes when the exchange ends, and dies on dismissal or the 60-minute API cap. Nothing runs between sessions.
-2. **Background jobs — scheduled terra runs** (server-side): nightly insight pass (cross-module correlations), weekly review, jobs-feed digest, X ingestion, hygiene checks. Jobs write findings; they never speak. The **morning briefing** is prepared and waiting behind a badge — it never auto-pops.
-3. **Shared memory and audit.** A Supabase store (facts, session summaries, embeddings) gives continuity; a visible audit trail records every agent action, with undo on recent entries.
+UI actions and agent actions obey the same business rules. Results must reflect persisted outcomes, without duplicate changes on retry or silent overwriting of concurrent edits. Relevant views update promptly; unsaved work and failures remain visible.
 
-**Escalation:** the realtime model handles conversation and simple tools; cognitively heavy requests route to terra via the supervisor-tool pattern (say a filler line, call `consult`, rephrase the answer speech-first). Insight queries and document Q&A are terra calls by construction.
+Notes preserve drafts and pending attachments through connection loss and reloads. Distinguish local protection from cloud saving. Other modules require connectivity to save. **Explicit sign-out automatically cancels while unsynced Notes work remains**, keeping the session and drafts intact with a clear explanation. There is no download, discard, or forced-sign-out alternative in that flow. Ordinary session expiry preserves drafts for the same account to recover after signing in again.
 
-**Authority:** full read/write across all modules **except the Journal (zero access, architectural — §7.9)**. Logging, check-offs, and creation need no confirmation; historical edits, deletions, and anything external require a verbal confirm-back (flexible phrasing).
+### Accounts and dates
 
-**Presence: the thinking orb.** No mascots or characters, ever (a Rive-character direction was explored and killed). Alfred renders as an animated particle-sphere orb (reference: orbs.jakubantalik.com) with idle/listening/thinking states, inline beside status text and scaled up in the modal.
+Signup requires the normal account details, then a shared signup password before the account is created. That gate is separate from the account login password. New users verify their email before using Manor; existing-account login does not require the shared gate password. Account data remains private to its owner.
 
-**Current local surface boundary.** The Electron build implements the real summon lifecycle before cloud voice is connected: one registered ⌥M shortcut, a centered in-app modal, a single global panel across Spaces that takes key focus on summon, immediate local microphone capture with live orb energy, mute/end/error states, cleanup on every dismissal, and a Notion-style page search that filters every page and navigates the main window. Journal stays excluded from anything Alfred reads, by type and architecture. No transcript or simulated response is shown. The later cloud step adds the ephemeral Realtime WebRTC transport and tool loop without changing this local surface contract; client authentication must use a server-minted ephemeral secret rather than exposing a standard API key.
+Each account saves a timezone, initially taken from the system. Travel does not silently change it. Use it consistently for today/yesterday, streak boundaries, recurrence, and scheduled reviews. Changing timezone does not relabel existing daily history; calendar events preserve their intended instants.
 
-**Summon panel contract:** the panel is the thinking orb, voice controls, a page search that jumps straight to any page (2026-08-24; the previously locked "today's completion at a glance" is retired), and a Capture screen action (2026-08-25) that screenshots the display, reads the frontmost browser tab, and files the result into the knowledge base for terra normalization. The panel replaced both the earlier notch-UI and menu-bar-dropdown concepts (retired; do not resurrect).
+### Recovery and retention
+
+Tasks, job applications, and Notes share recoverable Trash for seven days, then automatic purge. Deleting a note includes its subpages; restoration preserves their relationships. Archiving is distinct from Trash. Habit retirement remains archival under §6. Journal has its separate lifecycle (§7.9).
+
+Attached files follow the parent lifecycle, but purging one record must not delete a file still used elsewhere. After purge, ordinary application data and tools must not recover the deleted content through history, old versions, search, or derived outputs. Structural behavioral history may remain (§5). Stale clients must not resurrect deleted records.
+
+Disaster recovery uses daily database and file backups with seven-day retention; up to a day of recent changes may be lost after a failure. Restricted backups can retain subsequently deleted content until they expire. They are not an additional user-visible archive. See ARCHITECTURE for [purge enforcement](ARCHITECTURE.md#7-files-history-and-purge) and [disaster recovery](ARCHITECTURE.md#10-backups-and-disaster-recovery).
+
+### Existing data
+
+Preserve ordinary module records and files through migration. A read-only cutover window is acceptable; the user does not plan to use Manor until the web release. The user reports no Journal content to preserve and authorizes discarding its legacy data. This exception does not apply to other modules.
+
+## 5. Codex, WebMCP, and Background Work
+
+### Authority and tool coverage
+
+Explicitly requested reads, creates, edits, archiving, deletion, and restoration execute directly, subject to domain rules and account authorization. Manor adds no blanket confirm-back or approval screen. Codex operates when invoked by the user; it is not independently rewriting notes. Real ambiguity or conflicting edits can require clarification. Host-level permissions remain outside Manor's control.
+
+Tools must offer comprehensive reads, search, filters, summaries, aggregates, precise edits, useful bulk actions, lifecycle operations, and meaningful action history across permitted modules. The agent should not need to navigate to each page before acting. It should understand the open object, selection, and unsaved state where relevant. No unrestricted database access.
+
+Authorized note edits apply directly, preserving unsaved user text and surfacing genuine conflicts. Fast execution and accurate UI reflection are acceptance requirements. Tool contracts and state coordination belong in [ARCHITECTURE §5](ARCHITECTURE.md#5-queries-realtime-and-webmcp).
+
+### Integration boundary
+
+Codex may read Gmail, Slack, calendar, or other connected sources through its own integrations and call ordinary Manor tools to update tasks or other records. Manor's domain tools are source-independent. Optional provenance can reference the source that motivated a change; do not build a separate task tool for each provider.
+
+Manor maintains the Home calendar feed, X bookmark ingestion, and jobs catalog ingestion independently of Codex conversations. Google Calendar remains read-only, with multiple accounts and per-calendar visibility; scratch blocks never write back. Codex supplies captures and processed content; Manor stores them without requiring a second AI normalization pass (§7.8).
+
+### Daily synthesis and weekly review
+
+A debrief through **voice or typed Codex conversation** updates the same daily synthesis (§7.2). Do not store a separate summary per session or a transcript in Manor. Preserve relevant earlier context while incorporating additions and corrections.
+
+An automatically scheduled weekly review uses stored, AI-accessible Manor data and meaningful action history. Backend generation uses a separately billed model API call. It writes to a **dedicated weekly-review surface in Manor**. Reviews summarize and suggest; task or note changes happen when requested, not merely because a review suggested them. The schedule, report sections, and review interaction details remain open. Generation must work without an open browser or Codex conversation. The job design lives in [ARCHITECTURE §8](ARCHITECTURE.md#8-background-work-and-integrations).
+
+### Action history
+
+Keep account-scoped, durable history of meaningful state changes by the user, Codex, and background operations. Expose it through WebMCP; **do not provide an Activity/history page in Manor**. Record field changes and useful provenance for analysis, not navigation, clicks, keystrokes, reads, or no-op writes. History survives sign-out and is retained until explicitly cleared, subject to content scrubbing on purge (§4).
+
+After an object is purged, keep only structural information useful for behavior analysis, such as that an unidentified task was postponed or an application changed stage. Remove identifying titles, document contents, old text values, source excerpts, and other recoverable deleted content. Journal operations never enter this history.
+
+### Notifications
+
+Proactive Manor notifications are deferred to the future native iOS companion, intended as the primary delivery channel. Keep useful due and at-risk states inside Manor. Do not recreate Electron reminders or treat Codex's own completion/attention notifications as a Manor notification API.
 
 ## 6. Streak System (Duolingo-derived, adapted)
 
 - **Per-habit streaks.** No single global streak.
-- **Perfect day:** every *active* habit completed (paused habits excluded; LeetCode excluded). Perfect days are the only way to earn freezes.
-- **Freeze pool:** a shared monthly pool sized ≈ the number of active habits. Freezes **auto-apply** to whichever habit misses a day, capped at one per habit per day.
+- **Perfect day:** every *active* habit completed (paused habits excluded; LeetCode excluded). Perfect days earn spent freezes back.
+- **Freeze pool:** a shared monthly pool sized to the number of habits in play (a new habit adds one, retiring removes one; the count resets from the active roster each month). **Every month opens with a full pool** (2026-08-27); perfect days earn spent freezes back, capped at capacity. Freezes are **spent by hand, never automatically** (2026-08-26): a freeze covers one habit on one day, never a whole day. Missing a habit breaks that habit's streak, and the next day you either backfill its check-off or spend a freeze on it. Any number of habits can be covered on one day while the pool lasts, one freeze per habit per day. Breaking a day forfeits the grant that day would have earned, so covering two misses on one day needs a freeze banked earlier. Freezes reach exactly as far back as habit backfill: yesterday only. Spending a freeze and then backfilling the real check-off refunds it automatically.
 - **Earn-Back:** when a streak breaks with an empty pool, two clean days within 48 hours restore it — once per habit per month. The only recovery path.
 - **Gold state:** seven freeze-free days per habit. Communicated by design (gilded flame/number), never by text chips.
-- **Habit shape:** binary, or quantized to exactly 0/25/50/75/100% (decision-paralysis guard — no finer granularity). Habits can be added, retired, or paused any time; a mid-month habit starts at streak 0 and immediately counts toward perfect day.
+- **Habit shape:** binary, or quantized with a step ladder derived from the target label (decision-paralysis guard — a fixed ladder, no free-form amounts). A target reading "N units" with N up to 8 logs one step per unit ("3 tablets" cycles 0/33/66/100); larger or unitless targets log in quarters. Entries store integer percents 1-100; only 100 counts as complete. Habits can be added, retired, or paused any time; a mid-month habit starts at streak 0 and immediately counts toward perfect day. **Retire is the only removal path** (2026-08-26): it archives the habit, keeping every entry, streak and spent freeze, and it can be reactivated from the archive at any time (the gap days count as misses; the old streak does not resume). There is no permanent delete.
 - **LeetCode is separate:** its own streak (≥1 problem logged that day), its own pool of 5/month, no Earn-Back, excluded from perfect day.
-- **Backfill:** one day, everywhere; same-day edits allowed.
-- **Urgency surfaces (macOS):** an evening "log your day" batch nudge (matches the user's real night-logging behavior — never per-habit nagging), task reminders as a distinct notification class, at-risk emphasis on the habit surface itself. iOS later adds Duolingo-style lock/home widgets.
+- **Backfill:** one day for habits and mood/focus; same-day edits allowed. LeetCode attempts backfill freely into the past (curriculum history, not a daily rhythm).
+- **Urgency:** at-risk emphasis on the habit surface; proactive notification delivery follows §5.
 
 ## 7. Modules (v1)
 
 ### 7.1 Habits
-Daily check-off and streak home (check-off lives here, not on Home). Full-fidelity views: per-habit month grid, week strips, best/current streaks, freeze pool as a first-class object. Add/pause/retire flows. Freeze-management mechanics UI is still an open design area.
+Daily check-off and streak home (check-off lives here, not on Home). Full-fidelity views: per-habit month grid, week strips, best/current streaks, freeze pool as a first-class object. Add/pause/retire flows, plus an Archived section on the daily view that reactivates a retired habit. Freezes are spent from the habit's row on the Yesterday view: a missed row offers a Freeze control that toggles back off, and the pool balance moves with it.
 
 ### 7.2 Mood & Focus (reference config-defined trackers)
-One date-keyed record per day with two independently loggable signals: Mood (Great/Good/Neutral/Bad/Awful) and Focus (Locked In/High/Medium/Low/Locked Out/Resting). Either signal saves in one tap; a missing signal remains distinct from `Resting`. Typed context is not available on this page. Context can be attached only as a terra summary from a combined **voice debrief** with Alfred. Historical typed notes remain readable with their original provenance, but no new manual context can be written. Today and yesterday are directly editable; older records remain read-only. History supports navigable months, a compact daily record, and a shared longer-range view of how Mood and Focus move together. Debrief content is AI-visible by design (deliberate contrast with the Journal).
+
+One date-keyed record per day with independently loggable Mood (Great/Good/Neutral/Bad/Awful) and Focus (Locked In/High/Medium/Low/Locked Out/Resting). Either signal saves in one tap; a missing signal differs from Resting. Save explicitly stated ratings directly; ask before saving an inferred rating. Narrative synthesis may be inferred from the conversation without inventing explicit ratings.
+
+Each day has one evolving synthesis updated through Codex (§5). The page has no manual typed-context composer; typed debriefs happen in Codex. Existing manually written context remains readable with its original provenance. Today and yesterday are editable; older records are read-only. History supports navigable months, compact daily records, and a shared longer-range Mood/Focus view. Debrief content is AI-accessible; private journaling belongs in §7.9.
 
 ### 7.3 Tasks
-- **One merged task system** (the legacy Notion system's academic/personal split is dead) with contexts (Uni, Personal, Leetcode, Apps, Hackathons). Contexts carry a user-chosen icon and semantic color that persist anywhere the context is shown. Fields: status, due, context, difficulty (time-estimate), priority, recurrence with full rule granularity (specific weekdays, intervals, end dates).
+- **One merged task system** for academic and personal work with contexts (Uni, Personal, Leetcode, Apps, Hackathons). Contexts carry a user-chosen icon and semantic color that persist anywhere the context is shown. Fields: status, due, context, difficulty (time-estimate), priority, recurrence with full rule granularity (specific weekdays, intervals, end dates).
 - **Due buckets are computed** (Overdue/Today/Tomorrow/This Week) — never a hand-maintained select. The Home kanban groups by bucket, Notion-board DNA.
-- **Weekly and Master task views.** Weekly is the computed due-bucket board, ordered by exact due date and then High → Medium → Low priority. Master is the longer-horizon task table with title search, a fixed due-first ordering, and an additive property-filter builder for Context, Status, Priority, and Due date. Applied filters clear in one action without deleting saved views; filter sets can be named and saved as reusable views. Overdue has no creation path; Today and Tomorrow create on their exact date; This Week requires an exact date within the remaining seven-day board horizon before creation. New-task Context begins unset and must be selected or created. Dragging between exact-date buckets changes the due date; dropping onto This Week opens the due-date editor because a range is not a date. Single click opens centered task detail with one directly editable title; double-click, right-click, or Shift+F10 opens a compact task action menu with detail, completion, and deletion actions.
-- **No calendar workspace (removed 2026-08-23).** Manor does not ship its own calendar surface; Notion Calendar (the app) covers calendaring. Day events from connected calendars appear only in the Home Today timeline, and scratch blocks remain Manor-only Home objects.
-- **Today timeline is direct-manipulation paper:** scratch blocks (sticky notes) drag vertically to reschedule (15-minute snap), and dragging on empty timeline creates a new sticky over that range and opens its dialog. Stickies may be freestanding notes (`taskId: null`) or time-block a task; freestanding note text lives in `portion`.
+- **Weekly and Master task views.** Weekly is the computed due-bucket board, ordered by exact due date and then High → Medium → Low priority. Master is the longer-horizon task table with title search, a fixed due-first ordering, and an additive property-filter builder for Context, Status, Priority, and Due date. Applied filters clear in one action without deleting saved views; filter sets can be named and saved as reusable views. Overdue has no creation path; Today and Tomorrow create on their exact date; This Week requires an exact date within the remaining seven-day board horizon before creation. New-task Context begins unset and must be selected or created. Dragging between exact-date buckets changes the due date; dropping onto This Week opens the due-date editor because a range is not a date. Single click opens centered task detail. Edits form a local draft with Save changes; closing commits the draft, and a failed save must retain it. Completion stays on the card checkbox. The Master view has By context grouping and a Completed toggle; the working view excludes completed tasks. Keep duplication and accessible task action menus without delaying single-click opening.
+- **Recurrence:** each scheduled occurrence is independently tracked. A missed occurrence stays overdue until completed or explicitly skipped. Completing one occurrence does not erase missed ones.
+- **Contexts:** names, icons, and colors are editable. Renames preserve task and saved-view references; reject duplicate names. Refuse removal while tasks reference the context or when it is the last available context.
+- **No calendar workspace.** Manor does not ship its own calendar surface; Notion Calendar (the app) covers calendaring. Day events from connected calendars appear only in the Home Today timeline, and scratch blocks remain Manor-only Home objects.
+- **Today timeline is direct-manipulation paper:** scratch blocks (sticky notes) drag vertically to reschedule (15-minute snap), and dragging on empty timeline creates a new sticky over that range and opens its dialog. Stickies may be freestanding notes or time-block a task.
 - **Scratch blocks:** tasks (or parts of tasks) drag onto the Today or Tomorrow schedule as Manor-only time blocks — never written to Google. The visible scheduling range is 6 AM through midnight. Placement snaps to 15 minutes; the task estimate supplies the initial duration (one hour when unset), then date, start, duration, and the portion label can be edited independently. No auto-capture of progress (plans are scratch); blocks self-delete 48 hours after their scheduled end; the task is untouched.
 
 ### 7.4 Fitness
-Fed nightly by a deliberately low-tech pipeline: the user screen-records the Bevel iPhone app (10–20s) and Manor runs a terra **ingestion + normalization job** (schemas to be locked before build). Minimum outputs: calories in/out/deficit and the 9 muscle groups worked. There is no standalone Fitness page; the normalized data remains available to the system. Sleep remains a manual habit until the iOS app unlocks HealthKit relay.
+Fed nightly by a deliberately low-tech pipeline: the user screen-records the Bevel iPhone app (10–20s) and Manor runs a backend **ingestion + normalization job** (schemas to be locked before build). Minimum outputs: calories in/out/deficit and the 9 muscle groups worked. There is no standalone Fitness page; the normalized data remains available to the system. Sleep remains a manual habit until the iOS app unlocks HealthKit relay.
 
 ### 7.5 LeetCode
-Manual logging against the Neetcode 150 curriculum: topic progress with real problem lists, own streak and pool (§6), daily solve intensity. A curriculum problem is a stable record, separate from its attempt history. Every solve or review appends a durable attempt with an editable date and the exact pasted solution source; repeating a problem never overwrites an earlier attempt or creates a duplicate problem. Distinct-solved progress counts each problem once, while attempt totals and daily intensity count every solve/review. Any attempt logged that day satisfies the LeetCode streak day. Plotting/chart treatment is still an open design area.
+Manual logging against the Neetcode 150 curriculum: topic progress with real problem lists, own streak and pool (§6), daily solve intensity. A curriculum problem is a stable record, separate from its attempt history. Every solve or review appends a durable attempt with an editable date and the exact pasted solution source; repeating a problem never overwrites an earlier attempt or creates a duplicate problem. Distinct-solved progress counts each problem once, while attempt totals and daily intensity count every solve/review. Any attempt logged that day satisfies the LeetCode streak day. A synced mistakes log supports creating, editing, and deleting short notes (up to 2,000 characters), newest first. Plotting/chart treatment is still an open design area.
 
 ### 7.6 Jobs
-Two lists: **To apply** (parsed daily from the SimplifyJobs `listings.json` on the `dev` branch via an ETag-polled Edge Function; filter `active && is_visible`; applied/seen auto-hide) and the **Pipeline** (Applied → OA → Interview 1 → Interview 2 → Interview 3 → Offer/Rejected). Every role uses one property schema at every stage: company, role, location, posting link, date posted, stage, applied date, OA due date, three interview dates, and decision date; unset values remain blank. The generic Notes field is removed. Manual add collects company, role, posting link, location, a user-selected date posted, and an initial stage. Role details open in a centered modal and every date is directly editable. Roles and append-only stage transitions persist locally through typed SQLite/IPC. Board cards show only the current meaningful update. The Pipeline toggles between a drag-and-drop board and a responsive Sankey flow derived from persisted transition history. The flow begins at Applied, omits the To apply queue, and exposes its values to assistive technology without a separate visible transition table. No push notifications. Non-Simplify roles can be added manually; other scraped sources are a later expansion. **Resume versions (2026-08-25):** resume PDFs upload to the private cloud bucket as named versions, and every role records which version it was applied with (a Resume property in the role dialogs; version metadata lives in the `resumes` table).
+
+**Board, Flow, and Browse** are separate views. The board begins at To apply, then Applied → OA → Interview 1 → Interview 2 → Interview 3 → Offer/Rejected. Browse is the SimplifyJobs catalog; a listing joins the user's pipeline only when explicitly added. No automatic pipeline imports. Search and additive AND filters cover hiring cycle, category, company, location, posted date, and added date; view state survives navigation within the session.
+
+Ingestion polls the structured `listings.json` source and deduplicates entries. Preserve the current standing filters: visible, open, non-hardware, at least one US location, and Fall 2026 or later when a cycle is specified; unspecified cycles remain eligible. Revising the cycle cutoff is an open catalog-policy detail, not an automatic consequence of migration. Page through all eligible listings. Group equivalent company/role/location/cycle listings with an openings count.
+
+Roles share one editable schema: company, role, location, posting link, hiring cycle, posting date, stage, applied date, OA due date, three interview dates, decision date, and applied resume version. Unset values stay blank; there is no generic role Notes field. Manual creation supports non-feed roles. Details use centered dialogs with directly editable dates.
+
+Persist stage transitions. Board cards show the current meaningful update. Flow begins at Applied and derives the role's path from history; a backwards stage correction removes the undone hops from the displayed path so repeated dragging cannot inflate progress. Expose chart values to assistive technology. Resume PDFs are private cloud files with named versions; roles reference the version used, without deleting a shared file when one role is purged.
 
 ### 7.7 Notes
-Notes is a local-first document workspace backed by typed SQLite/IPC. Pages support folders, nested page hierarchy, favorites, recents, archive, Trash, full-text search, duplication, movement, Markdown import/export, and durable app-owned attachments. Native BlockNote JSON is the lossless source format; Markdown is an explicitly lossy interchange format. The editor covers paragraphs, three heading levels, bulleted and numbered lists, toggles, quotes, dividers, callouts, code with language-aware highlighting, inline formatting and links, text/background colors, tables, images, audio, video, files, block selection/reordering, slash commands, Markdown shortcuts, internal page mentions, inline and block equations, a live heading-based table of contents, web bookmarks, sandboxed web embeds, and resizable two-column document layouts that stack responsively. Markdown import recognizes inline and block LaTeX; export converts live contents to anchor links, bookmark/embed blocks to ordinary links, and columns to sequential sections because Markdown has no lossless equivalents for those layouts. Checklists, databases, and timeline views are task/project-management features and do not belong in Notes. Autosave failures remain visible and retryable; cloud sync and embeddings remain later backend work. **AFFiNE and BlockSuite remain the interaction reference; BlockNote is the embedded editor engine selected for the Electron implementation.**
+Notes is a cloud-backed document workspace with protected browser-local drafts and queued saves (§4). Pages support folders, nested page hierarchy, favorites, recents, archive, Trash, full-text search, duplication, movement, Markdown import/export, and durable app-owned attachments. Documents preserve their full native structure; Markdown is an explicitly lossy interchange format. The editor covers paragraphs, three heading levels, bulleted and numbered lists, toggles, quotes, dividers, callouts, code with language-aware highlighting, inline formatting and links, text/background colors, tables, images, audio, video, files, block selection/reordering, slash commands, Markdown shortcuts, internal page mentions, inline and block equations, a live heading-based table of contents, web bookmarks, sandboxed web embeds, and resizable two-column document layouts that stack responsively. Markdown import recognizes inline and block LaTeX; export converts live contents to anchor links, bookmark/embed blocks to ordinary links, and columns to sequential sections because Markdown has no lossless equivalents for those layouts. Checklists, databases, and timeline views are task/project-management features and do not belong in Notes. Autosave failures remain visible and retryable. AFFiNE and BlockSuite remain interaction references; the editor and persistence design live in [ARCHITECTURE §6](ARCHITECTURE.md#6-notes-drafts-and-editing). Find-in-note highlights matching text and supports next/previous navigation without changing document contents. Moving a page to Trash includes its subpages; recovery and purge follow §4. Agent editing follows §5.
 
-### 7.8 Knowledge Base (X bookmarks + screen captures)
-Generalized 2026-08-25: besides X bookmarks, the knowledge base holds **Alfred screen captures** — the ⌥M panel's Capture screen action screenshots the active display, reads the frontmost browser tab's URL and title (Chrome/Arc/Safari via AppleScript), stores the shot in the private `captures` bucket, and a terra Edge Function (`normalize-capture`) extracts title/author/summary/clean Markdown and embeds the entry (`kb_entries`, pgvector). Captures surface on the Bookmarks page beside the X list with pending/failed states and retry. X ingestion itself: bookmarks only (not likes), ingested every ~15–30 minutes by Edge Function cron (X pay-per-use "Owned Reads" at $0.001/post with daily dedup makes this ≈ free; OAuth2+PKCE user context). A bookmarked post's linked article is captured into the same entry; a bookmarked bare article is its own entry. Everything embedded for semantic retrieval; primary interface is asking Alfred. Compact list surface; no read/unread state.
+### 7.8 Knowledge Base (X bookmarks and captures)
+
+X bookmarks and Codex-supplied captures share the knowledge base. Codex or the user supplies source links, screenshots/media, and processed content; Manor saves it for retrieval without a second mandatory normalization-model pass. Existing capture assets remain available. Embedding captured content is separate background work.
+
+X bookmarks (not likes) are ingested periodically, including linked article content where available. Preserve source bookmark order. Captures show meaningful pending/failed states and retry. Text and semantic retrieval are available through Manor tools. The page uses compact rows, with no read/unread state; capture screenshots need not appear in the list. See [ARCHITECTURE §8](ARCHITECTURE.md#8-background-work-and-integrations) for ingestion and model boundaries.
 
 ### 7.9 Journal
-E2E encrypted, Touch ID/password locked. Random master key in Keychain; one-time recovery key, changeable by entering the current key. Server stores ciphertext only. **Zero AI access of any kind — no embeddings, no insight pass; signal loss accepted.** The one module Alfred cannot see, architecturally.
+
+The Journal remains part of Manor, with Manor branding, on a separate browser surface outside Codex. It is **end-to-end encrypted and unlocked with a separate Journal passphrase**. There is **no recovery key**. Losing the passphrase means losing access; account-password reset and backups do not bypass encryption.
+
+Zero AI access remains binding: no Journal content in tools, embeddings, search, daily synthesis, reviews, or action history. Keep it outside Computer History and screen sharing. It must not decrypt inside the agent's browser. The technical privacy boundary and its limits live in [ARCHITECTURE §9](ARCHITECTURE.md#9-journal-encryption-boundary).
+
+Retain one entry per day and explicit confirmed permanent deletion within the Journal. Journal entries do not use ordinary Manor Trash. The legacy Journal can be discarded as specified in §4.
 
 ## 8. Surfaces
 
-- **Home = the tasks kanban + the Today timeline. Nothing else.** The Today panel is an hour-axis timeline (events, scratch blocks, now-line, drop-to-block). Habits, streak chips, and agent strips do not live on Home.
-- **Sidebar:** Notion-exact model. Docked by default; one toggle (no pin concept); collapsed mode reveals a floating overlay on left-edge hover and dismisses on leave; clicking the toggle docks it; choice persists.
-- **Proper-product surfaces:** sign-in + first-run onboarding (welcome, sign-in, calendar connect, habit picker, hotkey intro), Settings (account, connections, Alfred, notifications, appearance), designed empty states on every module.
-- **Global summon panel** (§5) with the thinking orb, voice controls, and page search. Its renderer is shared with the centered in-app Alfred modal, while Electron owns which surface appears.
-- **Object details:** every object/detail view opens in an appropriately sized centered modal. Side peeks, drawers, sheets, right-edge detail panels, and detail rails are prohibited. This does not change primary page layouts, the sidebar, inline popovers, menus, or tooltips.
-- **iOS (later, native):** capture-first app, lock/home widgets (static timeline snapshots by OS design), HealthKit relay unlocking sleep auto-capture and richer fitness.
+- **Home = tasks kanban + Today timeline.** Events, scratch blocks, now-line, and scheduling live here; habit logging lives on Habits.
+- **Sidebar:** docked by default; one toggle, no pin concept. Collapsed mode reveals a floating overlay on left-edge hover and dismisses on leave; toggling docks it. Persist the choice. Provide navigation to the modules and dedicated weekly reviews. The Journal entry opens its separate external surface (§7.9).
+- **Product surfaces:** gated signup, login, onboarding, Settings, account and integration management, appearance preferences, recovery/Trash, and designed empty states. Remove desktop hotkey/permission onboarding and embedded-agent settings. No Activity page.
+- **Object details:** centered dialogs. Side peeks, drawers, sheets, right-edge detail panels, and detail rails are prohibited. This does not change primary page layouts, the sidebar, inline popovers, menus, or tooltips.
+- **iOS, later:** native companion, primarily for notifications, with capture, widgets, and HealthKit relay to be scoped after the web work.
 
 ## 9. Design System
 
-Direction: **Paper** — light, paper-white, editorial, violet-accented (tokens, typography roles, sound, and copy voice live in `DESIGN.md`, the binding design charter). The original heavy-cream **Atelier** surfaces were retired 2026-08-23: beige-dominant chrome hurt readability and made the app read inconsistently; the warm undertone survives only in near-white paper neutrals. Violet is the single interaction accent; mono type is restricted to code; the app-wide type floor is 12px. Dark mode was evaluated in hi-fi and **rejected**: harder element distinction, worse for productive work. Gamified-colorful (Duolingo-forward) was likewise rejected as too much for a life OS; Duolingo survives in mechanics, not in pixels. The design anti-patterns in `AGENTS.md` are hard rules. Structural reference apps: Notion (boards, property editing, sidebar), Notion Calendar/Cron (historical reference for the removed calendar workspace) — pulled as real flows via the Mobbin MCP.
+Redesign the UI using real Mobbin flows. The existing UX is broadly satisfactory; visual direction and specific workflow changes are chosen during design work. The current light Paper/violet charter in [DESIGN.md](DESIGN.md) remains the baseline until those choices are made. No mascots or characters. Typography, component treatments, copy, and motion rules have one home in the charter and the operational constraints in [AGENTS.md](../AGENTS.md).
 
-## 10. Verified Technical Constraints
+The application mock data is the single canonical showroom story. Signed-in surfaces must use real account data, including honest empty states; they never substitute showroom records.
 
-| Fact | Consequence |
-|---|---|
-| HealthKit is iPhone-only; Bevel and Zepp expose no APIs | Fitness arrives via the Bevel-clip ingestion; HealthKit relay waits for iOS |
-| `gpt-realtime-2.1`: 60-min session cap, no resume; prompt caching favors a stable preamble | Ephemeral sessions + injected memory (§5) |
-| Realtime supervisor-delegation and tool calling are documented first-class patterns | Terra escalation as designed |
-| Electron `type:'panel'` + `globalShortcut` verifiably powers Notion/Claude/1Password summon panels | Summon panel architecture (§4) |
-| Electron has no iOS target and no OS-widget capability | iOS is a separate later codebase; no desktop widgets |
-| Google Calendar `syncToken` polling is quota-free at personal scale; push needs an HTTPS webhook | §4 calendar sync design (Today timeline feed) |
-| X API is pay-per-use; Owned Reads $0.001/post with daily dedup; archives exclude bookmarks | §7.8 ingestion design |
-| SimplifyJobs `listings.json` (`dev` branch) is the maintained structured source | Poll with ETag; never parse the README |
-| pgvector HNSW ≤ 2000 dims | `text-embedding-3-small` @ 1536 |
-| Duolingo research: auto-applied freezes raise retention; Earn-Back beats paid repair; gold/perfect states let flexibility and perfectionism coexist | Streak system (§6) |
+## 10. Delivery Priorities
+
+**P0: correct, complete web foundation.** Account gating and isolation; authoritative data and shared operations; preservation and migration of existing data; robust WebMCP coverage; cache consistency and conflict handling; offline note protection; file storage; seven-day Trash and purge; saved timezone; existing module mechanics; daily synthesis; durable tool-accessible action history; the separate encrypted Journal boundary. The retained UI must be connected to the web foundation before release.
+
+**P1: synthesis and refinement.** Scheduled weekly reviews with their dedicated surface, richer retrieval and analysis over retained history, and the Mobbin-informed UI redesign. Essential tool reads, writes, search, and useful bulk operations are P0; P1 must not become a reason to ship a narrow toolset. Final design sequencing can run alongside the foundation once data contracts are stable.
+
+This is planned delivery scope, not a claim that the features already exist. Technical acceptance and migration checks live in [ARCHITECTURE §11](ARCHITECTURE.md#11-migration-and-verification).
 
 ## 11. Non-Goals and Deferred
 
-**Non-goals:** multi-user collaboration, teams, sharing; a general-purpose Notion competitor; typed chat with Alfred; mascots/characters; OS desktop widgets; dark mode as the primary theme.
+**Non-goals:** Electron support; an embedded conversational/voice agent; recreating native summon UI; unrestricted agent database access; any AI access to the Journal; a user-facing action log; multi-user collaboration, teams, or sharing; a general-purpose Notion competitor; a standalone calendar workspace; mascots or characters.
 
-**Deferred, explicitly:** finance module (genuinely wanted, later); media tracking (cut); additional job sources; `events.watch` real-time calendar push; iCloud CalDAV; wake-word summoning; GPT-Live migration when its API ships; Notes cloud sync and embeddings; freeze-management UI mechanics; per-component design drill-downs (colors and chart language) — the declared next phase.
+**Deferred:** native iOS and proactive notification delivery; finance and media modules; additional jobs sources; Google Calendar push updates and iCloud CalDAV; fitness ingestion until its schemas are agreed. Notes cloud storage is part of the web foundation, not deferred.
 
 ## 12. Decision Log
 
+This is a concise record of decisions that govern the current target; superseded desktop requirements and implementation-fix chronology have been removed. Current behavior is specified in the sections above.
+
 | Date | Decision |
 |---|---|
-| 2026-08-19 | Product mechanics locked over four brainstorm rounds; name **Manor** chosen |
-| 2026-08-20 | Platform pivot: native Swift/SwiftUI prototypes evaluated and rejected → **Electron**; memory principle restated as Electron-discipline |
-| 2026-08-20 | Notch UI and menu-bar dropdown retired → one **global summon panel**; completion glance locked into it |
-| 2026-08-21 | Fitness reinstated in v1 via nightly Bevel-clip → terra ingestion |
-| 2026-08-21 | Hi-fi direction: **Atelier** wins; dark mode and gamified-colorful rejected; design anti-patterns codified |
-| 2026-08-21 | Agent character (Rive/Archie) killed → **thinking orb**; persona is voice-only |
-| 2026-08-21 | Home reduced to kanban + Today timeline; habits logging moved to Habits; **Calendar became a workspace toggle**; sidebar = Notion-exact docked-default model |
-| 2026-08-21 | Hi-fi Electron shell (`app/`) shipped: all v1 surfaces clickable on mock data |
-| 2026-08-22 | Home task workspace semantics locked: Weekly + Master views; Master property filters can be saved and the visible sort control is omitted; Overdue is non-creatable, Today/Tomorrow creation uses exact dates, This Week creation requires an exact date, and new-task Context begins unset; task double-click opens reusable quick actions; exact-date bucket drops update due dates while This Week routes to the date editor; Today/Tomorrow scratch blocks schedule from 6 AM to midnight, snap to 15 minutes, inherit task estimate initially, remain independent from task progress, and delete 48h after scheduled end |
-| 2026-08-22 | Home task presentation refined: contexts persist a chosen icon/color, difficulty uses semantic tones, Weekly ordering is due then priority, Master filters clear without affecting saved views, and task detail is centered with one editable title |
-| 2026-08-22 | Standalone Fitness page removed; normalized fitness data remains available without a sidebar module surface |
-| 2026-08-22 | Mood & Focus context is Alfred-only: the Daily page has no typed note path, new context mutations accept Alfred provenance only, and historical manual notes remain readable without destructive migration |
-| 2026-08-22 | LeetCode problem identity separated from attempt history: repeat solves/reviews append dated, source-preserving attempts; distinct-solved progress counts problems once, while attempt totals, intensity, and streak days count every logged attempt |
-| 2026-08-22 | Object and detail views are centered modal dialogs app-wide; side peeks, drawers, sheets, right-edge detail panels, and detail rails are prohibited |
-| 2026-08-22 | Jobs moved from mock-only state to typed local SQLite/IPC persistence with one consistent editable role schema, append-only stage-transition history, current-update-only board labels, and Board/Flow views; generic role Notes were removed |
-| 2026-08-22 | Jobs refinement: custom clearable date controls replace native pickers, Stage sits with editable role properties, Flow begins at Applied with a hidden accessible summary, and the board owns its column scrolling |
-| 2026-08-22 | Alfred's local surface contract resolved: ⌥Space opens the centered modal inside Manor or one non-activating panel outside; local microphone capture, mute/end/error cleanup, the thinking orb, and a Journal-excluding completion glance ship before the cloud Realtime transport |
-| 2026-08-22 | Notes moved from the interim shell to a local-first BlockNote document workspace with lossless native block persistence, offline-safe app-owned attachments, hierarchy/search/lifecycle flows, visible autosave state, and lossy Markdown import/export; AFFiNE remains the interaction reference while cloud sync and embeddings remain deferred |
-| 2026-08-22 | Notes document parity expanded with equations, live heading contents, web bookmark/embed blocks, and a project-owned resizable column layout; the GPL/commercial BlockNote column add-on was rejected in favor of code with no new licensing obligation |
-| 2026-08-22 | Calendar moved from the interim shell to a local-first FullCalendar workspace with persisted calendars, occurrence-scoped recurrence exceptions, view settings, commands, Notes attachments, creation/editing, drag/resize, and linked Home/Jobs overlays; Google/Notion sync, invitations, scheduling links, shared availability, provider conferencing, and menu-bar integrations remain honest cloud-only deferments |
-| 2026-08-23 | Design direction revised: **Atelier → Paper.** Cream/beige surfaces retired for white content + near-white paper chrome; violet becomes the single interaction accent (replacing scattered slate-blue/olive accents); app-wide type floor raised to 12px (11px gutter exception); mono type restricted to code; one shared recipe per UI pattern; tasteful completion sounds added. Calendar rebuilt to Notion Calendar anatomy: true 7-day week (14-day continuous view and horizontal grid scrolling removed), white rail, tinted events with left accent bars, red today/now markers, Notion-style property-row event dialog |
-| 2026-08-23 | Calendar event editor: centered dialog replaced by an **event-anchored popover** (Notion Calendar parity; centered fallback only without an anchor) — recorded in DESIGN.md as the one exception to the centered-dialog rule. Trackpad horizontal panning navigates the grid (day view slides by day; week/month step a period); the grid itself never scrolls horizontally |
-| 2026-08-23 | **Paper, second pass — "the printed page you write on."** Faint app-wide feTurbulence grain (the stock); EB Garamond retired and **Shantell Sans Variable** becomes the hand face owning all display roles (greetings, page titles, empty states, celebrations, Journal dates); rough ink marks for rare moments (hand-drawn checkbox stroke, perfect-day circle, empty-state squiggle); scratch blocks render as sticky notes (the one sanctioned skeuomorph). Handwriting never renders data; Journal body stays in the print face |
-| 2026-08-23 | **Analog, second order.** Paper stock switched to the Paper Shaders PaperTexture overlay (tuned for readability); the hand voice expanded to buttons, view toggles, kanban pills, and section titles with squiggle underlines and sketched empty-state rings; scratch blocks became draggable sticky notes with drag-on-timeline creation, backed by a nullable `taskId` (freestanding notes) and a scratch_blocks migration |
-| 2026-08-23 | Feedback pass on the analog system: habit "gold" streak state renders violet (achievement = brand, not gold); tiled squiggle underlines retired (broken-dash look); Notes code blocks map shiki dual-theme variables to github-light (were unreadable); Mood & Focus capture redesigned from scratch (hand-face prompts + floating tinted chips with drawn ink-ring selection, bordered option grid deleted); sticky-note dialog stripped of icon and mechanics caption; sticky click-to-open fixed (pointer capture ate the click); kanban task cards restyled as white note cards (dog-ear, tilt); LeetCode rail replaced by a 7-day attempt-count status row; Jobs Sankey sized from data so it always fits its box |
-| 2026-08-24 | Second feedback pass, delegated: sticky-note dialog reduced to Starts/Duration/Note; task Duplicate action (card menu + detail dialog); New-task due-date bug fixed (explicit picker choice wins over bucket default); Master view gains a "By context" grouping toggle (context headers, Context column removed); kanban dog-ear made clearly visible (two-tone cut + flap); remaining Habits gold/amber and misused frozen-blue partial states → violet; Today timeline now-line → violet; LeetCode rail v2: labeled per-day bars ("Mon, Aug 18" … "Today"); last non-code mono removed and Mood & Focus record chips de-slopped (sentence case, no fake-mono tracking) |
-| 2026-08-23 | **Calendar workspace removed entirely** (page, Workspace↔Calendar toggle, FullCalendar dependency, calendar store/IPC/shared model). Notion Calendar the app covers calendaring; Manor keeps only the Home Today timeline's day-event feed (mock calendars/events in mock.ts) plus the Google Calendar connection surfaces in Settings and onboarding that feed it |
-| 2026-08-24 | **Streak fire, green completion.** Violet-as-earned on Habits reversed: every completion mark (checkboxes, quantized quarters, week-strip segments incl. partial) is completion green, and the streak indicator alone carries achievement as a classic fire flame (gradient `--streak` ladder; ember → dim/at-risk → lit → blazing for a freeze-free week, subtle flicker on live flames). Today's week-strip segment never pre-fills (the violet at-risk fill read as already done). Violet stays the interaction accent everywhere else |
-| 2026-08-24 | Sidebar utility rows collapsed into the account section: the account row opens an upward menu (email header, Alfred activity, Settings), Claude-desktop style. Notes titles and headings adopt the hand face. Task-card hover loses its box-shadow (it traced the uncut corner as a ghost); sticky-note dog-ears are cut via clip-path with an editable-title dialog and any-duration select. Completion sounds re-voiced tactile (noise-tap + thump) instead of sine beeps. Dock icon rebalanced to paper white |
-| 2026-08-24 | **Summon panel v2.** Global hotkey rebound ⌥Space → **⌥M**. The locked "today's completion at a glance" is retired; the panel/modal is the thinking orb, voice controls, and a Notion-style page search covering every page (whitelist widened accordingly; the outside-app panel now takes key focus on summon so search is typeable). The sidebar's mocked search bar was removed: ⌥M is the search entry point. Orb spasm-on-open fixed (oscillator phase now accumulates per frame instead of multiplying absolute uptime by easing frequencies) |
-| 2026-08-24 | **Micro-interaction pass** (audit + fixes): creating a task or habit no longer bounces into the edit dialog, and duplicating from the task dialog closes it; completion ticks and Jobs "Mark applied" persist immediately (previously lost if the page unmounted mid-animation); checking off or deleting a task is undoable via ⌘Z for a short window (task delete confirm dropped in its favor; a quiet hint pill announces it), while job-role and notes-folder deletes gain confirms and Jobs/LeetCode modals guard dirty closes; the 180ms click delay and double-click-menu on task cards removed; notes Duplicate saves pending edits and selects the copy, new notes focus their title, Restore keeps selection; **retiring a habit now erases its entire history** (reverses 2026-08-22 "entries stay intact"; History hides retired habits). Also: Jobs Sankey bottom-clip fixed (link renderer double-added ribbon offsets); Settings supports multiple Google Calendar accounts (read only, per-calendar toggles, feeds the Today timeline; scratch blocks never sync back) |
-| 2026-08-25 | **Supabase backend live.** Project provisioned and wired end to end: full Postgres schema with owner-only RLS and per-user storage policies (`supabase/migrations/`), private `resumes` and `captures` buckets, email/password auth with real sign-in in Welcome and Settings (file-persisted session in main; synthetic test account in `.env.local`), and the PRD §4 sync posture implemented — session-start pull, debounced full-module push from every store mutation, signed-out stays local-only; slug-style local ids drove a text-id follow-up migration; note attachment binaries stay local for now. Dev quirks recorded: direct db host is IPv6-only (use the us-east-2 session pooler), and the browser-preview dev bridge serves the same auth/sync/cloud channels so the whole pipeline is testable outside Electron |
-| 2026-08-25 | **Resume versions on Jobs** (uploaded PDFs as labeled versions in the cloud; each role records the version applied with) and **knowledge base generalized beyond X**: the ⌥M panel gains a Capture screen action — screenshot + frontmost browser tab via AppleScript into `kb_entries`, normalized and embedded by the `normalize-capture` terra Edge Function; captures surface on the Bookmarks page with pending/failed/retry states |
-| 2026-08-25 | Second interaction audit (32 findings) fixed: LIFO Escape ownership via a shared dismiss-layer stack (open pickers close before their dialog), Select menus get fixed positioning + scroll + flip, modals lock scroll and inert the background, jobs rows/cards keyboard-reachable, jobs/leetcode dialogs guard dirty closes and only close on successful saves, custom recurrence editor reads and edits the saved rule (was silently overwriting it), cleared time inputs no longer throw, kanban only highlights legal drop targets and cancelled drags settle home while landed drops place instantly with a click sound, habit check-offs use the click voice (celebration chime stays), timeline drags are cancellable and overlap-checked, collapsed sidebar leaves the tab order, Settings/frame sidebar preference share one owner, hover-only controls get focus-visible states, hit targets reach 24px, onboarding gains a real email form and Back control |
-| 2026-08-26 | **Connections + Alfred voice backends built and deployed.** X bookmarks: OAuth 2.0 PKCE connect flow in Settings, tokens in `x_connections`, `x-ingest` Edge Function on a 20-minute pg_cron schedule (newest-page reads with stop-at-known and 24h dedup keep cost at cents; posts with linked articles route through normalize-capture per §7.8); Bookmarks page swaps to real entries when connected. Google Calendar: desktop-client OAuth with loopback redirect in the app, per-account calendars with enable toggles, syncToken incremental polling feeding the Today timeline (mock feed remains the signed-out/dev fallback). Alfred: `alfred-session` mints ephemeral gpt-realtime-2.1 keys with a memory preamble, WebRTC session + data-channel tool loop in the renderer with full PRD tool authority and spoken confirm-backs for destructive actions, `alfred-consult` terra supervisor over kb + `alfred_memories` embeddings, every action audited to `alfred_actions`. All four Edge Functions deployed with secrets; verified live: session minting, remember-then-consult semantic round trip, URL normalization. Awaiting real X and Google credentials for the OAuth flows themselves |
+| 2026-08-19 | Manor product and core tracker mechanics selected (§§1–3, 6). |
+| 2026-08-22 | Merged task workspace, attempt-based LeetCode history, rich Notes, and centered object details established (§§7–8). |
+| 2026-08-23 | Paper design baseline selected; standalone calendar workspace removed (§§7.3, 9). |
+| 2026-08-26 | Manual habit freezes and non-destructive retirement selected; Jobs Browse requires explicit pipeline addition (§§6, 7.6). |
+| 2026-08-27 | Monthly freeze pool starts full (§6). |
+| 2026-08-29 | Editable contexts, LeetCode mistakes log, and note finding/lifecycle refinements established (§7). |
+| 2026-09-09 | Full WebMCP web migration, Codex as interactive agent, and UI redesign chosen (§§4–5, 9); technical design is owned by ARCHITECTURE.md. |
+| 2026-09-09 | Signup gate, direct requested operations, saved timezone, seven-day Trash, recurrence occurrences, daily synthesis, and private tool-accessible history resolved (§§4–7). |
+| 2026-09-09 | Final follow-up: separate encrypted external-browser Journal; Notes included in Trash; structural history survives content purge; dedicated weekly-review surface; voice and typed Codex debriefs (§§4–8). |
+| 2026-09-09 | Email verification, passphrase-only Journal without recovery key, automatic cancellation of sign-out with unsynced drafts, separately billed backend reviews, and daily database/file backups selected (§§4–5, 7.9). |
 
-## 13. Open Questions
+## 13. Open Product Decisions
 
-- Freeze-management mechanics UI; chart language; per-component color system.
-- Config-defined tracker field-type catalog; jobs standing filters; task-reminder semantics.
-- Bevel-clip ingestion schemas (to be locked before build).
-- iOS app scope and stack (decided when the Mac app is finished).
+- Weekly review schedule, report sections, and interaction details. Automatic backend generation and a dedicated Manor surface are selected.
+- Mobbin-informed visual direction, chart language, and component details.
+- Config-defined tracker field catalog; jobs standing-filter maintenance; Bevel-clip ingestion schemas.
+- Recurring-series edit scope: how users distinguish an individual occurrence from future occurrences while preserving history.
+- Native iOS scope, including notifications and HealthKit relay.
+
+Remaining technical configuration and verification are tracked only in [ARCHITECTURE §12](ARCHITECTURE.md#12-implementation-details-still-to-finalize).

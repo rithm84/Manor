@@ -27,8 +27,8 @@ describe('mood and focus validation', () => {
     expect(() => parseMoodFocusEntry({ ...ENTRY, mood: null, focus: null })).toThrow(/mood or focus/)
     expect(() => parseMoodFocusEntry({ ...ENTRY, noteSource: null })).toThrow(/both be set/)
     expect(() => parseMoodFocusNoteMutation({ date: ENTRY.date, note: 'Context', source: null })).toThrow(/both be set/)
-    expect(() => parseMoodFocusNoteMutation({ date: ENTRY.date, note: 'Context', source: 'manual' })).toThrow(/must come from Alfred/)
-    expect(parseMoodFocusNoteMutation({ date: ENTRY.date, note: 'Context', source: 'alfred' })).toMatchObject({ source: 'alfred' })
+    expect(() => parseMoodFocusNoteMutation({ date: ENTRY.date, note: 'Context', source: 'manual' })).toThrow(/must come from Codex/)
+    expect(parseMoodFocusNoteMutation({ date: ENTRY.date, note: 'Context', source: 'codex' })).toMatchObject({ source: 'codex' })
   })
 
   it('rejects invalid scales and duplicate seed dates', () => {

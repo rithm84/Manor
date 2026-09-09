@@ -1,6 +1,6 @@
 {
   "lockfileVersion": 1,
-  "generated": "2026-08-21T05:22:25+00:00",
+  "generated": "2026-09-09T20:50:17+00:00",
   "sources": {
     "emilkowalski/skills": {
       "repo": "https://github.com/emilkowalski/skills",
@@ -50,6 +50,78 @@
           "path": ".agents/skills/emilkowalski-design/animation-vocabulary",
           "files": {
             "SKILL.md": "sha256:d718b48fe3c7898804d588f050a2e266d82c9f5ef51da256c8cb8b5951527757"
+          }
+        }
+      }
+    },
+    "local-skills": {
+      "sourceKind": "local-repository-copy",
+      "ref": "HEAD",
+      "commit": "6caaa20c789fe4acc28d29e367ba9489db6f1a36",
+      "workingTreeModified": false,
+      "skills": {
+        "browser-related/agent-browser": {
+          "path": ".agents/skills/browser-related/agent-browser",
+          "files": {
+            "SKILL.md": "sha256:268feb796ace9927d54310ffda8f72bac63cd1c0d88a0506294beab6472a611b",
+            "agents/openai.yaml": "sha256:af04c1bbddc77978a371af47afdb87fe331bc08004620a5b6f15e4e19d02d483"
+          }
+        },
+        "browser-related/chrome-devtools-mcp/a11y-debugging": {
+          "path": ".agents/skills/browser-related/chrome-devtools-mcp/a11y-debugging",
+          "files": {
+            "SKILL.md": "sha256:f2ee15c98641fd101275fcfe25083de0fe38f0d2145c17d6fcbe11d454b1d286",
+            "references/a11y-snippets.md": "sha256:93a02d8889738300461b63da77c1647d4d0156fd9b75107574fbed0a931c20ab"
+          }
+        },
+        "browser-related/chrome-devtools-mcp/chrome-devtools": {
+          "path": ".agents/skills/browser-related/chrome-devtools-mcp/chrome-devtools",
+          "files": {
+            "SKILL.md": "sha256:9878a3260c5d73caa8448606cfcaf1d73db53d76c7cbb903e6c716e8c2510e3c"
+          }
+        },
+        "browser-related/chrome-devtools-mcp/debug-optimize-lcp": {
+          "path": ".agents/skills/browser-related/chrome-devtools-mcp/debug-optimize-lcp",
+          "files": {
+            "SKILL.md": "sha256:3617cbbc6437865295b48b30a250bcb3d5a989eef97fc8a6552b2783ea9d6bad",
+            "references/elements-and-size.md": "sha256:a99e9e5f93ad2e5b5b65e84abd2bb220e0560be66cc87059361f1d5f7ef2aed7",
+            "references/lcp-breakdown.md": "sha256:c63bb071fa465c41464446100f4afc069118eab9092cbec0b284dd452404a947",
+            "references/lcp-snippets.md": "sha256:b54d0c26e9df7eea1e58cc118bbbe1ef2037d097a146603ef31c17fe47a6b8b8",
+            "references/optimization-strategies.md": "sha256:786691daf6216f1aacb0e2bafdc08ef8450067a392ab26814337ac9837c048c1"
+          }
+        },
+        "browser-related/chrome-devtools-mcp/memory-leak-debugging": {
+          "path": ".agents/skills/browser-related/chrome-devtools-mcp/memory-leak-debugging",
+          "files": {
+            "SKILL.md": "sha256:d0c5a08e3189ae28a61bd5964d48e5b0dd6253dd30679187733f9c8a6b31c2b6",
+            "references/common-leaks.md": "sha256:3e0fb7c7c7987eac919740fdf36a0d2af02a6d2dfc0aeeece4268ed64e75024c",
+            "references/compare_snapshots.js": "sha256:9de364f064b9b8c970b172e09c4be60a6cdc46e80060f9177b223ee3e8f2a781",
+            "references/memlab.md": "sha256:048d3f1f733e036a0db513470cbbc22247884cf14e5b473f08977ba61b761b44"
+          }
+        },
+        "browser-related/chrome-devtools-mcp/troubleshooting": {
+          "path": ".agents/skills/browser-related/chrome-devtools-mcp/troubleshooting",
+          "files": {
+            "SKILL.md": "sha256:f7deca2af0ea0f6519b350a0fcb1e05d948228eac86f23d71ff3985508cf331f"
+          }
+        },
+        "general/excalidraw-toolkit/auto-diagram": {
+          "path": ".agents/skills/general/excalidraw-toolkit/auto-diagram",
+          "files": {
+            "SKILL.md": "sha256:b8abecd8b05bbf72806001ed4e3b854ae68acdd9c203fd1bbf3f6295c4932b9b"
+          }
+        },
+        "general/excalidraw-toolkit/excalidraw": {
+          "path": ".agents/skills/general/excalidraw-toolkit/excalidraw",
+          "files": {
+            "SKILL.md": "sha256:47e33495c423374b91fe79b40052f735681534389a10d5cdbc0527da3afd5873",
+            "references/colors.md": "sha256:a9e5333dbddc62c4e7c4ae58fda0dbbe7ae714b4b525dc148e94acf671bdc0dc"
+          }
+        },
+        "general/gh-cli": {
+          "path": ".agents/skills/general/gh-cli",
+          "files": {
+            "SKILL.md": "sha256:18e53a9f4c154406a072ed4cfbc524d40f9a4734ef25102086c1ef5e24113a76"
           }
         }
       }

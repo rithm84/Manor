@@ -15,7 +15,8 @@ const FIELDS = {
   interview2Date: '2026-08-29',
   interview3Date: null,
   decisionDate: null,
-  resumeId: null
+  resumeId: null,
+  term: null
 } as const
 
 describe('jobs validation', () => {

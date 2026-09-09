@@ -52,6 +52,7 @@ describe('LeetCode validation', () => {
     expect(() =>
       parseLeetCodeSeed({
         problems: [],
+        notes: [],
         attempts: [
           {
             id: 'attempt-one',

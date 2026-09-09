@@ -104,10 +104,12 @@ export interface HomeSeed {
 }
 
 export interface HomeApi {
-  load: (seed: HomeSeed) => Promise<HomeState>
+  load: () => Promise<HomeState>
   upsertTask: (task: Task) => Promise<Task>
   deleteTask: (taskId: string) => Promise<void>
   addContext: (context: ContextDraft) => Promise<ContextDefinition>
+  updateContext: (originalName: string, context: ContextDraft) => Promise<ContextDefinition>
+  deleteContext: (name: string) => Promise<void>
   upsertScratchBlock: (block: ScratchBlock) => Promise<ScratchBlock>
   deleteScratchBlock: (blockId: string) => Promise<void>
   upsertSavedTaskView: (view: SavedTaskView) => Promise<SavedTaskView>
@@ -256,9 +258,10 @@ export function parseContext(value: unknown): string {
   return context
 }
 
-const CONTEXT_COLORS: readonly ContextColor[] = [
+export const CONTEXT_COLOR_VALUES: readonly ContextColor[] = [
   'forest', 'success', 'gold', 'info', 'plum', 'today'
 ]
+const CONTEXT_COLORS = CONTEXT_COLOR_VALUES
 function contextColorValue(value: unknown): ContextColor {
   if (typeof value !== 'string' || !CONTEXT_COLORS.includes(value as ContextColor)) {
     throw new TypeError('context.color must be forest, success, gold, info, plum, or today')

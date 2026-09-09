@@ -1,17 +1,12 @@
 {
   "name": "manor",
-  "productName": "Manor",
   "version": "0.1.0",
-  "description": "Manor personal productivity desktop app",
-  "main": "./out/main/index.js",
+  "description": "Manor reusable web UI and domain logic",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
-    "package:mac": "electron-vite build && electron-builder --mac",
-    "start": "electron-vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run"
   },
   "devDependencies": {
@@ -19,39 +14,10 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^5.2.0",
-    "electron": "^43.4.1",
-    "electron-builder": "^26.15.3",
-    "electron-vite": "^5.0.0",
     "happy-dom": "^20.11.6",
     "typescript": "^7.0.2",
     "vite": "^7.3.6",
     "vitest": "^4.1.11"
-  },
-  "build": {
-    "appId": "com.user.manor",
-    "productName": "Manor",
-    "asar": true,
-    "directories": {
-      "buildResources": "resources",
-      "output": "release"
-    },
-    "files": [
-      "out/**/*",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "resources/icon.png",
-        "to": "icon.png"
-      }
-    ],
-    "mac": {
-      "icon": "icon.icns",
-      "category": "public.app-category.productivity",
-      "extendInfo": {
-        "NSMicrophoneUsageDescription": "Manor uses the microphone only while an Alfred voice session is open."
-      }
-    }
   },
   "dependencies": {
     "@blocknote/ariakit": "^0.54.0",
@@ -66,7 +32,6 @@
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@paper-design/shaders-react": "^0.0.80",
-    "@supabase/supabase-js": "^2.112.4",
     "lucide-react": "^1.33.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

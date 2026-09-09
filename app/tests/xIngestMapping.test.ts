@@ -10,8 +10,8 @@ import {
   needsRefresh,
   postUrlOf,
   titleOf
-} from '../../supabase/functions/x-ingest/mapping'
-import type { XPost, XUser } from '../../supabase/functions/x-ingest/mapping'
+} from '../../supabase/functions/_shared/xBookmarks'
+import type { XPost, XUser } from '../../supabase/functions/_shared/xBookmarks'
 
 const author: XUser = { id: 'u1', username: 'karpathy', name: 'Andrej Karpathy' }
 

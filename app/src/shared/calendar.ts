@@ -1,7 +1,4 @@
-/** Google Calendar connection model. Read-only: connected calendars feed the
-    Home Today timeline and nothing ever writes back (scratch blocks stay
-    Manor-only). The main-process service lives in `main/gcalService.ts`; the
-    orchestrator wires `CalendarApi` onto `window.manor.gcal`. */
+/** Read-only calendar events for the Home timeline. */
 
 /** A connected Google account. `id` is the Google account email. */
 export interface CalendarAccount {
@@ -36,17 +33,9 @@ export interface CalendarDayEvent {
 }
 
 export interface CalendarApi {
-  beginConnect: () => Promise<{ authorizeUrl: string }>
-  completeConnect: () => Promise<CalendarAccount>
   accounts: () => Promise<readonly CalendarAccount[]>
   calendars: () => Promise<readonly GoogleCalendar[]>
   setCalendarEnabled: (calendarId: string, accountId: string, enabled: boolean) => Promise<void>
   disconnect: (accountId: string) => Promise<void>
   eventsFor: (dates: readonly string[]) => Promise<readonly CalendarDayEvent[]>
-}
-
-/** Window bridge shape until env.d.ts declares `gcal` on window.manor.
-    Renderer files cast through this so the typing lives in one place. */
-export interface CalendarBridgeHost {
-  gcal: CalendarApi
 }

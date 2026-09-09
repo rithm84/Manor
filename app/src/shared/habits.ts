@@ -29,9 +29,18 @@ export interface HabitLifecycleEvent {
 export interface HabitEntry {
   habitId: string
   date: string
-  value: 25 | 50 | 75 | 100
+  /** Percent complete, 1-100; 100 is the only value that counts as done. */
+  value: number
   createdAt: string
   updatedAt: string
+}
+
+/** A freeze the user chose to spend. Intent is input; usage is what the
+    reconciler derived from it, so the two can differ when the pool ran dry. */
+export interface HabitFreezeIntent {
+  habitId: string
+  date: string
+  createdAt: string
 }
 
 export interface HabitFreezeUsage {
@@ -56,6 +65,7 @@ export interface HabitsState {
   habits: readonly HabitDefinition[]
   lifecycle: readonly HabitLifecycleEvent[]
   entries: readonly HabitEntry[]
+  intents: readonly HabitFreezeIntent[]
   freezes: readonly HabitFreezeUsage[]
   grants: readonly HabitFreezeGrant[]
   pools: readonly HabitMonthPool[]
@@ -66,6 +76,7 @@ export interface HabitSeed {
   habits: readonly HabitDefinition[]
   lifecycle: readonly HabitLifecycleEvent[]
   entries: readonly HabitEntry[]
+  intents: readonly HabitFreezeIntent[]
   freezes: readonly HabitFreezeUsage[]
   grants: readonly HabitFreezeGrant[]
   finalizedDays: readonly string[]
@@ -81,7 +92,8 @@ export interface HabitDraft {
 export interface HabitLogMutation {
   habitId: string
   date: string
-  value: 0 | 25 | 50 | 75 | 100
+  /** Percent complete, 0-100; 0 clears the day's entry. */
+  value: number
 }
 
 export interface HabitStatusMutation {
@@ -90,13 +102,20 @@ export interface HabitStatusMutation {
   status: HabitLifecycleStatus
 }
 
+export interface HabitFreezeMutation {
+  habitId: string
+  date: string
+}
+
 export interface HabitsApi {
-  load: (seed: HabitSeed) => Promise<HabitsState>
+  load: () => Promise<HabitsState>
   createHabit: (draft: HabitDraft) => Promise<HabitsState>
   updateHabit: (habitId: string, draft: HabitDraft) => Promise<HabitsState>
   setEntry: (mutation: HabitLogMutation) => Promise<HabitsState>
   setStatus: (mutation: HabitStatusMutation) => Promise<HabitsState>
-  deleteHabit: (habitId: string) => Promise<HabitsState>
+  applyFreeze: (mutation: HabitFreezeMutation) => Promise<HabitsState>
+  clearFreeze: (mutation: HabitFreezeMutation) => Promise<HabitsState>
+  reorder: (habitIds: readonly string[]) => Promise<HabitsState>
 }
 
 export interface HabitMetrics {
@@ -113,7 +132,6 @@ export interface HabitMetrics {
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const MONTH_PATTERN = /^\d{4}-\d{2}$/
-const ENTRY_VALUES = [25, 50, 75, 100] as const
 const KINDS: readonly HabitKind[] = ['binary', 'quantized']
 const STATUSES: readonly HabitLifecycleStatus[] = ['active', 'paused', 'retired']
 
@@ -172,14 +190,16 @@ function statusValue(value: unknown): HabitLifecycleStatus {
   return value as HabitLifecycleStatus
 }
 
-function entryValue(value: unknown, allowZero: boolean): 0 | 25 | 50 | 75 | 100 {
+function entryValue(value: unknown, allowZero: boolean): number {
   if (allowZero && value === 0) {
     return 0
   }
-  if (typeof value !== 'number' || !ENTRY_VALUES.includes(value as 25 | 50 | 75 | 100)) {
-    throw new TypeError('habit entry value must be 0, 25, 50, 75, or 100')
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 100) {
+    throw new TypeError(
+      `habit entry value must be an integer percent from ${allowZero ? 0 : 1} to 100`
+    )
   }
-  return value as 25 | 50 | 75 | 100
+  return value
 }
 
 function integerValue(value: unknown, label: string): number {
@@ -269,12 +289,41 @@ export function parseHabitStatusMutation(value: unknown): HabitStatusMutation {
   }
 }
 
+export function parseHabitFreezeMutation(value: unknown): HabitFreezeMutation {
+  const mutation = recordValue(value, 'habit freeze mutation')
+  return {
+    habitId: stringValue(mutation.habitId, 'mutation.habitId'),
+    date: parseIsoDate(mutation.date, 'mutation.date')
+  }
+}
+
+export function parseHabitFreezeIntent(value: unknown): HabitFreezeIntent {
+  const intent = recordValue(value, 'habit freeze intent')
+  return {
+    habitId: stringValue(intent.habitId, 'intent.habitId'),
+    date: parseIsoDate(intent.date, 'intent.date'),
+    createdAt: timestampValue(intent.createdAt, 'intent.createdAt')
+  }
+}
+
+export function parseHabitOrder(value: unknown): readonly string[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new TypeError('habit order must be a non-empty array of habit ids')
+  }
+  const ids = value.map((id, index) => stringValue(id, `habitOrder[${index}]`))
+  if (new Set(ids).size !== ids.length) {
+    throw new TypeError('habit order must not repeat a habit id')
+  }
+  return ids
+}
+
 export function parseHabitSeed(value: unknown): HabitSeed {
   const seed = recordValue(value, 'habit seed')
   if (
     !Array.isArray(seed.habits) ||
     !Array.isArray(seed.lifecycle) ||
     !Array.isArray(seed.entries) ||
+    !Array.isArray(seed.intents) ||
     !Array.isArray(seed.freezes) ||
     !Array.isArray(seed.grants) ||
     !Array.isArray(seed.finalizedDays)
@@ -294,6 +343,7 @@ export function parseHabitSeed(value: unknown): HabitSeed {
     habits: seed.habits.map(parseHabitDefinition),
     lifecycle: seed.lifecycle.map(parseHabitLifecycleEvent),
     entries: seed.entries.map(parseHabitEntry),
+    intents: seed.intents.map(parseHabitFreezeIntent),
     freezes: seed.freezes.map((raw) => {
       const usage = recordValue(raw, 'freeze usage')
       return {
@@ -310,6 +360,47 @@ export function parseHabitSeed(value: unknown): HabitSeed {
     ),
     monthCapacities
   }
+}
+
+const QUARTER_STEPS: readonly number[] = [25, 50, 75, 100]
+/** Unit counts above this log in quarters; tapping through more is unusable. */
+const MAX_UNIT_STEPS = 8
+const TARGET_COUNT_PATTERN = /(\d+(?:\.\d+)?)/
+
+/** Unit count in a "3 tablets"-style target label: the first whole number,
+    wherever it sits ("Take 2 tablets" reads as 2). Fractional targets like
+    "1.5 miles" have no clean per-unit ladder, so they read as none. */
+export function targetUnitCount(targetLabel: string | null): number | null {
+  if (targetLabel === null) return null
+  const match = TARGET_COUNT_PATTERN.exec(targetLabel.trim())
+  if (match === null) return null
+  const count = Number.parseFloat(match[1])
+  return Number.isInteger(count) && count >= 1 ? count : null
+}
+
+/**
+ * Ascending percent ladder for a quantized habit's logging control: one step
+ * per unit when the target reads "N units" with N up to 8 ("3 tablets" gives
+ * 33, 66, 100), quarters otherwise. The last step is always exactly 100.
+ */
+export function habitSteps(targetLabel: string | null): readonly number[] {
+  const count = targetUnitCount(targetLabel)
+  if (count === null || count > MAX_UNIT_STEPS) return QUARTER_STEPS
+  return Array.from({ length: count }, (_, index) =>
+    index === count - 1 ? 100 : Math.floor(((index + 1) * 100) / count)
+  )
+}
+
+/** Nearest value on a step ladder; keeps entries written under an older
+    ladder (or free-form voice values) on solid steps. */
+export function nearestStep(steps: readonly number[], value: number): number {
+  let nearest = steps[0]
+  for (const step of steps) {
+    if (Math.abs(step - value) < Math.abs(nearest - value)) {
+      nearest = step
+    }
+  }
+  return nearest
 }
 
 export function addDays(date: string, amount: number): string {
@@ -439,11 +530,12 @@ export function markForDate(
   if (entry?.value === 100) {
     return 'complete'
   }
-  if (entry !== undefined) {
-    return 'partial'
-  }
+  // A freeze covers the day whatever partial progress it holds.
   if (state.freezes.some((freeze) => freeze.habitId === habit.id && freeze.date === date)) {
     return 'frozen'
+  }
+  if (entry !== undefined) {
+    return 'partial'
   }
   return date === state.today ? 'pending' : 'missed'
 }
