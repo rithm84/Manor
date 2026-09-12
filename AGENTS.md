@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-09-09_
+_Last updated: 2026-09-12_
 
 Operational guide for coding agents working on Manor.
 
@@ -9,12 +9,13 @@ Operational guide for coding agents working on Manor.
 Manor is a personal productivity web app replacing the legacy Notion system. The accepted
 product behavior, business rules, and scope are in [docs/PRD.md](docs/PRD.md).
 Technical design lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-Codex operates Manor through WebMCP; backend jobs own asynchronous work.
+Codex operates Manor through WebMCP and remote MCP. Backend jobs own ingestion, embeddings, and maintenance; hosted ChatGPT Work owns scheduled review generation.
 The Journal has a separate encrypted, non-agent-accessible browser surface.
-The UI redesign uses Mobbin references; the current charter remains the
-baseline until new design choices are made.
+The UI redesign uses Mixpanel aesthetics and Notion editing UX, with
+deliberately designed light and dark modes. See docs/DESIGN.md and the
+evidence in docs/REDESIGN-REPORT.md; retained Paper styles are superseded.
 
-**Implementation status:** `app/` is a buildable React UI library with explicit view-service dependencies. The web entry point, transactional backend, WebMCP tools, durable Notes drafts, and separate Journal remain unimplemented. See ARCHITECTURE §11 for acceptance checks. Preserve existing user data and unrelated uncommitted work.
+**Implementation status:** `app/` is a runnable Vite web app with real Supabase adapters, transactional commands, shared agent tools, and durable Notes editing. `journal/` builds separately. The production backend and `mymanor.vercel.app` are deployed with the preserved user data; release acceptance items remain in ARCHITECTURE §1. See ARCHITECTURE §1 for precise verification limits and §11 for acceptance checks. Preserve existing user data and unrelated uncommitted work.
 
 Supabase configuration lives in repo-root `.env.local` (never commit or print
 it). Migrations live in `supabase/migrations/`; the existing deployment uses
@@ -28,8 +29,11 @@ manor/
 │   └── diagrams/            # Editable Excalidraw scenes and exported SVGs
 ├── app/src/
 │   ├── ui/                  # React components, view services, styles, fixtures
-│   └── shared/              # Domain types, validation, and calculations
-├── supabase/                # Historical migrations and retained ingestion parsing
+│   ├── shared/              # Domain types, validation, and calculations
+│   └── web/                 # Authentication, Supabase adapters, drafts, WebMCP
+├── journal/                 # Separate encrypted browser app
+├── supabase/                # Migrations, remote MCP, ingestion, and workers
+├── tools/recovery/          # Encrypted backup and isolated restore operations
 ├── tools/diagrams/          # Official Excalidraw SVG export tooling
 ├── .agents/skills/          # Vendored skill groups and canonical inventory
 └── .claude/skills/          # Discovery symlinks into .agents/skills/
@@ -40,11 +44,14 @@ manor/
 Run from the repository root:
 
 - `npm --prefix app run typecheck` — required after code changes.
-- `npm --prefix app test` — retained domain and UI checks.
-- `npm --prefix app run build` — build the reusable UI library.
+- `npm --prefix app test` — domain and UI checks.
+- `npm --prefix app run dev` — local web app on port 5173.
+- `npm --prefix journal run dev` — isolated Journal on port 5180.
+- `npm --prefix journal run typecheck` and `npm --prefix journal test` — Journal checks.
+- `npm --prefix app run build` — build the Vite web application.
 - `npm --prefix tools/diagrams run render` — export documentation SVGs.
 
-There is no development app server until the web entry point and backend are implemented.
+Local dev servers cover unauthenticated UI work, typecheck, and tests only; localhost is not an authorized staging origin, so signed-in and end-to-end testing happens on the hosted staging site. Never substitute showroom fixtures for signed-in data. Setup is in app/README.md. Recovery tooling and its provisioning requirements are in tools/recovery/README.md.
 
 ## Required Read Order
 
@@ -113,15 +120,11 @@ Notion, Cron Calendar, Obvious).
   voice: concise labels and human sentences. Mechanics belong in Settings
   or a help surface, not scattered captions.
 - **No em-dashes in UI copy.** Rewrite the sentence instead.
-- **Fonts stay in their roles.** The hand face (Shantell Sans, all display
-  roles) never appears inside data components (stats, chips, tables,
-  forms) and never carries body paragraphs; don't mix faces within a
-  component. **Mono is for code only** — never times, dates, hour axes,
-  IDs, or kbd hints (scattered mono reads as AI slop).
-- **Texture is felt, never seen first.** One shared grain overlay; no
-  per-surface noise, no rotation or paper props outside scratch-block
-  sticky notes; ink marks (rough strokes) only on rare celebration
-  moments.
+- **Use the current design charter.** Mixpanel-informed sans-serif typography,
+  smooth surfaces, and intentional light/dark modes replace paper grain,
+  handwritten display type, sketched ink marks, and sticky-note decoration.
+  Use Outfit headings, DM Sans body/interface text, and the plum/gray direction in DESIGN.md; final theme tokens still require visual and contrast verification.
+  Monospace is for code, and comparable numbers use tabular numerals.
 - **No UI text below 12px.** The one exception is dense time-grid gutters
   at 11px (`--text-gutter`).
 - **No left-edge accent bar/curve on selected sidebar items.** Selected
@@ -143,7 +146,7 @@ Notion, Cron Calendar, Obvious).
 
 ## Working Rules
 
-- **Secrets:** `.env.local` holds the OpenAI key (usable for design tooling).
+- **Secrets:** `.env.local` holds server-side credentials, including the OpenAI embedding key and Google web OAuth credentials.
   Never commit it, echo it, or move it.
 - **Mock data:** `app/src/ui/data/mock.ts` is the single canonical
   showroom story. Nobody invents parallel data; extend mock.ts additively

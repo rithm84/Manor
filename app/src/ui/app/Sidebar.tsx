@@ -1,5 +1,6 @@
 import {
   Bookmark,
+  CalendarCheck,
   Briefcase,
   ChevronsUpDown,
   Code2,
@@ -13,9 +14,9 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
-import type { AccountInfo } from '../../shared/account'
+import { ManorLogo } from '../components/brand/ManorLogo'
 import { useDismissLayer } from '../components/ui'
-import { user } from '../data/mock'
+import { useManorAccount } from '../../web/accountContext'
 import { useAvatar, useCurrentAccount } from '../pages/welcome/accountSession'
 
 interface NavEntry {
@@ -31,6 +32,7 @@ const NAV_ITEMS: readonly NavEntry[] = [
   { to: '/leetcode', label: 'LeetCode', icon: <Code2 size={16} /> },
   { to: '/jobs', label: 'Jobs', icon: <Briefcase size={16} /> },
   { to: '/notes', label: 'Notes', icon: <FileText size={16} /> },
+  { to: '/weekly-reviews', label: 'Weekly reviews', icon: <CalendarCheck size={16} /> },
   { to: '/bookmarks', label: 'Bookmarks', icon: <Bookmark size={16} /> },
 ]
 
@@ -51,6 +53,7 @@ function NavItemLink({ entry }: { entry: NavEntry }): ReactNode {
   return (
     <NavLink
       to={entry.to}
+      data-testid={`nav-${entry.to.slice(1)}`}
       className={({ isActive }) => `sidebar-item${isActive ? ' is-active' : ''}`}
     >
       {entry.icon}
@@ -62,25 +65,6 @@ function NavItemLink({ entry }: { entry: NavEntry }): ReactNode {
 function menuItemsOf(menu: HTMLDivElement | null): readonly HTMLElement[] {
   if (menu === null) return []
   return Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-}
-
-/** Real session identity when signed in; the mock persona only carries the
-    signed-out showroom. AccountInfo has no display name, so the email's
-    local part stands in for one. */
-function accountDisplay(account: AccountInfo | null | undefined): {
-  name: string
-  email: string
-  initials: string
-} {
-  if (account === undefined || account === null) {
-    return { name: user.name, email: user.email, initials: user.initials }
-  }
-  const localPart = account.email.split('@')[0]
-  return {
-    name: localPart,
-    email: account.email,
-    initials: localPart.charAt(0).toUpperCase()
-  }
 }
 
 function AccountMenu({ onClose, email }: { onClose: () => void; email: string }): ReactNode {
@@ -135,7 +119,8 @@ export function Sidebar({ mode }: SidebarProps): ReactNode {
   const [accountOpen, setAccountOpen] = useState(false)
   const { account } = useCurrentAccount()
   const avatar = useAvatar(account !== undefined && account !== null)
-  const display = accountDisplay(account)
+  const profile = useManorAccount()
+  const display = { name: profile.name, email: profile.email, initials: profile.name.charAt(0).toUpperCase() }
   const footRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
 
@@ -161,7 +146,7 @@ export function Sidebar({ mode }: SidebarProps): ReactNode {
     <>
       <div className={`sidebar-topspace${mode === 'docked' ? '' : ''}`} />
       <div className="sidebar-head">
-        <span className="sidebar-wordmark">Manor</span>
+        <ManorLogo className="sidebar-wordmark" />
       </div>
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((entry) => (
@@ -185,9 +170,8 @@ export function Sidebar({ mode }: SidebarProps): ReactNode {
             )}
           </span>
           <span className="sidebar-account-id">
-            <span className="sidebar-account-name">{display.name}</span>
-            <br />
-            <span className="sidebar-account-mail">{display.email}</span>
+            <span className="sidebar-account-name" title={display.name}>{display.name}</span>
+            <span className="sidebar-account-mail" title={display.email}>{display.email}</span>
           </span>
           <ChevronsUpDown className="sidebar-account-caret" size={14} aria-hidden="true" />
         </button>

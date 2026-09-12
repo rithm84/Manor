@@ -10,10 +10,12 @@ import type { NotesApi } from '../../shared/notes'
 import type { KbApi } from '../../shared/kb'
 import type { ResumesApi } from '../../shared/resumes'
 import type { CalendarApi } from '../../shared/calendar'
+import type { ReviewsApi } from '../../shared/reviews'
 import type { XApi } from '../../shared/xConnection'
 
-/** View dependencies only; production commands and WebMCP contracts are still to be implemented. */
+/** Typed view services backed by the shared transactional command boundary. */
 export interface ManorServices {
+  reviews: ReviewsApi
   account: AccountApi
   home: HomeApi
   habits: HabitsApi

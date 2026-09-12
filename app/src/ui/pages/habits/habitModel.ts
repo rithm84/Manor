@@ -61,9 +61,13 @@ export interface HabitMonthSummary {
 export interface HabitTrendMonth {
   month: string
   shortLabel: string
-  completionRate: number
+  completionRate: number | null
+  completedDays: number
+  trackedDays: number
   perfectDays: number
 }
+
+export type HabitTrendRange = 3 | 6 | 12
 
 const WEEK_LETTERS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const
 
@@ -182,6 +186,7 @@ export function activeOnDate(state: HabitsState, date: string): readonly HabitDe
 
 export function draftForHabit(habit: HabitDefinition): HabitDraft {
   return {
+    expectedRevision: habit.revision,
     name: habit.name,
     kind: habit.kind,
     targetLabel: habit.targetLabel
@@ -221,7 +226,7 @@ export function monthSummary(state: HabitsState, month: string): HabitMonthSumma
     .map((habit): HabitMonthRow => {
       const days = dates.map((date) => markForDate(state, habit, date))
       const trackedDays = days.filter(
-        (mark) => !['future', 'paused', 'inactive'].includes(mark)
+        (mark) => !['future', 'paused', 'inactive', 'pending'].includes(mark)
       ).length
       const completedDays = days.filter((mark) => mark === 'complete').length
       return {
@@ -256,16 +261,33 @@ export function monthSummary(state: HabitsState, month: string): HabitMonthSumma
   }
 }
 
-export function twelveMonthTrend(state: HabitsState, endingMonth: string): readonly HabitTrendMonth[] {
-  return Array.from({ length: 12 }, (_, index) => {
-    const month = monthShift(endingMonth, index - 11)
+export function habitTrend(
+  state: HabitsState,
+  endingMonth: string,
+  months: HabitTrendRange,
+  habitId: string | null
+): readonly HabitTrendMonth[] {
+  return Array.from({ length: months }, (_, index) => {
+    const month = monthShift(endingMonth, index - (months - 1))
     const summary = monthSummary(state, month)
+    const rows = habitId === null
+      ? summary.rows
+      : summary.rows.filter((row) => row.habit.id === habitId)
+    const completedDays = rows.reduce((total, row) => total + row.completedDays, 0)
+    const trackedDays = rows.reduce(
+      (total, row) => total + row.days.filter(
+        (mark) => ['complete', 'partial', 'frozen', 'missed'].includes(mark)
+      ).length,
+      0
+    )
     return {
       month,
       shortLabel: new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'UTC' }).format(
         utcDate(`${month}-01`)
       ),
-      completionRate: summary.completionRate,
+      completionRate: trackedDays === 0 ? null : Math.round((completedDays / trackedDays) * 100),
+      completedDays,
+      trackedDays,
       perfectDays: summary.perfectDays
     }
   })

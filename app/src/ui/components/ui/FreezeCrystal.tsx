@@ -1,37 +1,9 @@
 import type { ReactNode } from 'react'
-import { useId } from 'react'
-
-export interface FreezeCrystalProps {
-  size: number
-}
-
-/** Faceted ice gem for streak freezes: the frost counterpart to the flame. */
+export interface FreezeCrystalProps { size: number }
+/** Frost seal: a consistent line icon that stays legible at 14px and above. */
 export function FreezeCrystal({ size }: FreezeCrystalProps): ReactNode {
-  const gradientId = useId()
-
-  return (
-    <svg
-      className="freeze-crystal"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stopColor="color-mix(in srgb, var(--frozen-info) 40%, white)" />
-          <stop offset="100%" stopColor="var(--frozen-info)" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M12 2.4 20 7v10l-8 4.6L4 17V7z"
-        fill={`url(#${gradientId})`}
-      />
-      <path
-        d="M12 6.6 16.6 12 12 17.4 7.4 12z"
-        fill="color-mix(in srgb, var(--frozen-info) 22%, white)"
-      />
-      <path d="M12 2.4 20 7l-3.4 1.9L9 4.1z" fill="#ffffff" opacity="0.5" />
-    </svg>
-  )
+  return <svg className="freeze-crystal" width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path className="freeze-crystal-shell" d="m12 2.5 8.2 4.75v9.5L12 21.5l-8.2-4.75v-9.5Z" strokeWidth="1.4" strokeLinejoin="round" />
+    <path d="M12 6v12M6.8 9l10.4 6M6.8 15l10.4-6M10 7.2l2 1.2 2-1.2M10 16.8l2-1.2 2 1.2M7 11.2l2-1.1V7.8M15 16.2v-2.3l2-1.1M7 12.8l2 1.1v2.3M15 7.8v2.3l2 1.1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
 }

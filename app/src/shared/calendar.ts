@@ -33,6 +33,8 @@ export interface CalendarDayEvent {
 }
 
 export interface CalendarApi {
+  connect: () => Promise<void>
+  completeConnection: (code: string, state: string) => Promise<void>
   accounts: () => Promise<readonly CalendarAccount[]>
   calendars: () => Promise<readonly GoogleCalendar[]>
   setCalendarEnabled: (calendarId: string, accountId: string, enabled: boolean) => Promise<void>

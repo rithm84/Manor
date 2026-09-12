@@ -1,11 +1,12 @@
-import { renderToStaticMarkup } from 'react-dom/server'
+// @vitest-environment happy-dom
+import { renderPortalMarkup } from '../../testing/renderPortalMarkup'
 import { describe, expect, it } from 'vitest'
 
 import { DetailDialog } from './DetailDialog'
 
 describe('centered detail dialog foundation', () => {
-  it('exposes modal semantics, an accessible close action, and no side-panel structure', () => {
-    const markup = renderToStaticMarkup(
+  it('exposes modal semantics, an accessible close action, and no side-panel structure', async () => {
+    const markup = await renderPortalMarkup(
       <DetailDialog
         open
         onClose={() => undefined}

@@ -1,3 +1,4 @@
+import { browserSurfaces } from '../../web/browserTools'
 import { useManorService } from '../services/ManorServices'
 import {
   Archive,
@@ -11,7 +12,6 @@ import {
   FileText,
   Folder,
   FolderPlus,
-  Heart,
   Library,
   Move,
   Pencil,
@@ -25,6 +25,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import type { ChangeEvent, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
+import { parseNoteContentJson } from '../../shared/notes'
 import type { NoteFolder, NotePage, NotesState } from '../../shared/notes'
 import { hasOpenDismissLayer, useDismissLayer } from '../components/ui/dismissLayer'
 import { Modal } from '../components/ui/Modal'
@@ -34,14 +35,26 @@ import { formatNoteTime, importedNoteTitle, pagesForScope, scopeTitle, treeRows 
 import type { NotesScope } from './notes/notesModel'
 import { createNoteSaveQueue } from './notes/notesAutosave'
 import { NoteFindBar } from './notes/NoteFindBar'
+import { NotesPaneToggle } from './notes/NotesPaneToggle'
+import { useNotesPaneVisibility } from './notes/useNotesPaneVisibility'
 import './notes/notes.css'
+
+const NoteReviewDialog = lazy(async () => {
+  const module = await import('./notes/NoteReviewDialog')
+  return { default: module.NoteReviewDialog }
+})
+
+const NoteReadOnlyPreview = lazy(async () => {
+  const module = await import('./notes/NoteReadOnlyPreview')
+  return { default: module.NoteReadOnlyPreview }
+})
 
 const RichNoteEditor = lazy(async () => {
   const module = await import('./notes/RichNoteEditor')
   return { default: module.RichNoteEditor }
 })
 
-type SaveState = 'saved' | 'unsaved' | 'saving' | 'error'
+type SaveState = 'saved' | 'unsaved' | 'protecting' | 'protected' | 'unprotected' | 'saving' | 'error'
 
 interface NoteDraft {
   id: string
@@ -52,7 +65,6 @@ interface NoteDraft {
 type DialogState =
   | { kind: 'folder'; folder: NoteFolder | null }
   | { kind: 'move'; page: NotePage }
-  | { kind: 'delete'; page: NotePage }
   | null
 
 const EMPTY_CONTENT = JSON.stringify([{ type: 'paragraph', content: [], children: [] }])
@@ -81,7 +93,7 @@ function SidebarButton({ active, icon, label, count, onClick }: {
   onClick: () => void
 }): ReactNode {
   return (
-    <button type="button" className={`notes-nav-row${active ? ' is-selected' : ''}`} onClick={onClick}>
+    <button type="button" aria-label={label} aria-current={active ? 'page' : undefined} className={`notes-nav-row${active ? ' is-selected' : ''}`} onClick={onClick}>
       {icon}<span>{label}</span>{count > 0 ? <span className="notes-nav-count">{count}</span> : null}
     </button>
   )
@@ -100,26 +112,36 @@ function EmptyEditor({ scope }: { scope: NotesScope }): ReactNode {
 /** Local-first, block-based notes workspace. */
 export function NotesPage(): ReactNode {
   const notesApi = useManorService('notes')
+  const { navigationCollapsed, listCollapsed, setNavigationCollapsed, setListCollapsed } = useNotesPaneVisibility()
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedNoteIdRef = useRef(searchParams.get('note'))
+  const attemptedRouteRef = useRef<string | null>(null)
+  const pendingRouteRef = useRef<string | null | undefined>(undefined)
   const [data, setData] = useState<NotesState>({ folders: [], pages: [] })
   const [loading, setLoading] = useState(true)
   const [scope, setScope] = useState<NotesScope>('all')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draft, setDraft] = useState<NoteDraft | null>(null)
+  const [writerReady, setWriterReady] = useState(false)
+  const [writerError, setWriterError] = useState<string | null>(null)
+  const [writerAttempt, setWriterAttempt] = useState(0)
+  const protectionRef = useRef<Promise<void>>(Promise.resolve())
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [error, setError] = useState<string | null>(null)
+  const [deferredNoteIds, setDeferredNoteIds] = useState<readonly string[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
   const [findOpen, setFindOpen] = useState(false)
+  const [reviewMode, setReviewMode] = useState<'versions' | 'suggestions' | 'conflict' | null>(null)
   const [dialog, setDialog] = useState<DialogState>(null)
   const editorScrollRef = useRef<HTMLDivElement | null>(null)
   const searchRef = useRef<HTMLInputElement | null>(null)
-  const titleRef = useRef<HTMLInputElement | null>(null)
+  const titleRef = useRef<HTMLTextAreaElement | null>(null)
   const pendingTitleFocusRef = useRef(false)
   const importRef = useRef<HTMLInputElement | null>(null)
   const actionsRef = useRef<HTMLDivElement | null>(null)
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const [exportNotice, setExportNotice] = useState<string | null>(null)
   const [exportedFlash, setExportedFlash] = useState(false)
   const exportTimerRef = useRef<number | null>(null)
   const timerRef = useRef<number | null>(null)
@@ -133,10 +155,11 @@ export function NotesPage(): ReactNode {
         if (pendingRef.current === confirmed) pendingRef.current = null
       }
     ),
-    []
+    [notesApi]
   )
 
   const selectNoteRoute = useCallback((pageId: string | null): void => {
+    pendingRouteRef.current = pageId
     setSelectedId(pageId)
     setSearchParams(pageId === null ? {} : { note: pageId }, { replace: true })
   }, [setSearchParams])
@@ -151,6 +174,12 @@ export function NotesPage(): ReactNode {
   )
   const rows = useMemo(() => treeRows(scopedPages), [scopedPages])
 
+  useEffect(() => browserSurfaces.attachNotes({
+    context: () => ({ selected_note_id: selectedPage?.id ?? null, scope, search: query, visible_note_ids: scopedPages.map(page => page.id) }),
+    filter: (nextScope, search) => { setScope(nextScope); setQuery(search) }
+  }), [selectedPage, scope, query, scopedPages])
+
+
   const runPendingSave = useCallback(async (): Promise<boolean> => {
     if (timerRef.current !== null) {
       window.clearTimeout(timerRef.current)
@@ -158,9 +187,20 @@ export function NotesPage(): ReactNode {
     }
     if (pendingRef.current === null) return true
     setSaveState('saving')
+    let protectedLocally = false
     try {
+      protectionRef.current = protectionRef.current.catch(async () => {
+        const current = pendingRef.current
+        if (current !== null) await notesApi.protectDraft(current)
+      })
+      await protectionRef.current
+      protectedLocally = true
+      if (!navigator.onLine) { setSaveState('protected'); return true }
+      // Only flush the note being edited here. Other protected drafts may
+      // legitimately belong to another open tab and must not block routing.
       const savedPages = await saveQueue()
       const savedById = new Map(savedPages.map((saved) => [saved.id, saved] as const))
+      setDeferredNoteIds((current) => current.filter((id) => !savedById.has(id)))
       setData((current) => ({
         ...current,
         pages: current.pages.map((page) => savedById.get(page.id) ?? page)
@@ -169,11 +209,11 @@ export function NotesPage(): ReactNode {
       setError(null)
       return true
     } catch (saveError) {
-      setSaveState('error')
+      setSaveState(protectedLocally ? 'error' : 'unprotected')
       setError(saveError instanceof Error ? saveError.message : String(saveError))
       return false
     }
-  }, [saveQueue])
+  }, [notesApi, saveQueue])
 
   const savePending = runPendingSave
 
@@ -181,7 +221,15 @@ export function NotesPage(): ReactNode {
     setDraft(next)
     draftRef.current = next
     pendingRef.current = next
-    setSaveState('unsaved')
+    setSaveState('protecting')
+    const protection = protectionRef.current.then(() => notesApi.protectDraft(next))
+    protectionRef.current = protection
+    void protection.then(() => {
+      if (pendingRef.current === next) setSaveState('protected')
+    }, (failure: unknown) => {
+      setSaveState('unprotected')
+      setError(failure instanceof Error ? failure.message : String(failure))
+    })
     setData((current) => ({
       ...current,
       pages: current.pages.map((page) => page.id === next.id
@@ -190,10 +238,32 @@ export function NotesPage(): ReactNode {
     }))
     if (timerRef.current !== null) window.clearTimeout(timerRef.current)
     timerRef.current = window.setTimeout(() => void savePending(), 650)
-  }, [savePending])
+  }, [notesApi, savePending])
+
+  const prepareNavigation = useCallback(async (): Promise<boolean> => {
+    if (pendingRef.current === null) return true
+    if (saveState !== 'error' && await savePending()) return true
+    try {
+      await protectionRef.current
+      const pending = pendingRef.current
+      if (pending === null) return true
+      const protectedDraft = (await notesApi.pendingDrafts()).find((item) => item.id === pending.id)
+      if (protectedDraft?.title !== pending.title || protectedDraft.contentJson !== pending.contentJson) {
+        throw new Error('Your latest edit is not saved on this device. Retry saving before leaving this note.')
+      }
+      setDeferredNoteIds((current) => current.includes(pending.id) ? current : [...current, pending.id])
+      pendingRef.current = null
+      setError(null)
+      return true
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : String(failure))
+      return false
+    }
+  }, [notesApi, savePending, saveState])
 
   const openPage = useCallback(async (pageId: string): Promise<void> => {
-    if (!(await savePending())) return
+    if (!(await prepareNavigation())) return
+    pendingRef.current = null
     selectNoteRoute(pageId)
     setMenuOpen(false)
     try {
@@ -205,7 +275,7 @@ export function NotesPage(): ReactNode {
     } catch (openError) {
       setError(openError instanceof Error ? openError.message : String(openError))
     }
-  }, [savePending, selectNoteRoute])
+  }, [prepareNavigation, selectNoteRoute])
 
   useEffect(() => {
     let active = true
@@ -217,7 +287,6 @@ export function NotesPage(): ReactNode {
           ? null
           : state.pages.find((page) => page.id === requestedNoteIdRef.current) ?? null
         const initial = requested
-          ?? state.pages.find((page) => page.id === 'doc-ch14-review')
           ?? state.pages.find((page) => page.status === 'active')
           ?? null
         if (requested !== null) setScope(scopeForPage(requested))
@@ -237,15 +306,103 @@ export function NotesPage(): ReactNode {
   }, [notesApi])
 
   useEffect(() => {
+    let active = true
+    let sequence = 0
+    const refresh = (event: Event): void => {
+      const operation = (event as CustomEvent<{ operation?: string }>).detail?.operation
+      if (operation !== undefined && operation !== 'remote_change' && !operation.includes('note')) return
+      const request = ++sequence
+      void protectionRef.current.then(() => notesApi.load()).then((state) => {
+        if (!active || request !== sequence) return
+        setData((current) => {
+          const pending = pendingRef.current
+          if (pending === null) return state
+          const pages = state.pages.map((page) => page.id === pending.id ? { ...page, title: pending.title, contentJson: pending.contentJson } : page)
+          if (!pages.some((page) => page.id === pending.id)) {
+            const local = current.pages.find((page) => page.id === pending.id)
+            if (local !== undefined) pages.push({ ...local, title: pending.title, contentJson: pending.contentJson })
+          }
+          return { ...state, pages }
+        })
+      }).catch((failure: unknown) => {
+        if (active) setError(failure instanceof Error ? failure.message : String(failure))
+      })
+    }
+    window.addEventListener('manor:committed', refresh)
+    return () => { active = false; window.removeEventListener('manor:committed', refresh) }
+  }, [notesApi])
+
+  useEffect(() => {
+    const requestedId = searchParams.get('note')
+    // A URL update and its React state update can render separately. Ignore
+    // the previous URL until the explicit navigation reaches the router.
+    if (pendingRouteRef.current !== undefined) {
+      if (requestedId !== pendingRouteRef.current) return
+      pendingRouteRef.current = undefined
+    }
+    if (loading || requestedId === null) return
+    if (requestedId === selectedId) { attemptedRouteRef.current = null; return }
+    if (attemptedRouteRef.current === requestedId) return
+    attemptedRouteRef.current = requestedId
+    const requested = data.pages.find((page) => page.id === requestedId)
+    if (requested === undefined) {
+      setError('This note is not available in your account.')
+      return
+    }
+    setScope(scopeForPage(requested))
+    void openPage(requestedId)
+  }, [searchParams, loading, selectedId, data.pages, openPage])
+
+  useEffect(() => {
+    if (selectedId === null) { setWriterReady(false); return }
+    let active = true
+    let release: (() => void) | null = null
+    setWriterReady(false)
+    setWriterError(null)
+    void notesApi.acquireWriter(selectedId).then(async (unlock) => {
+      if (!active) { unlock(); return }
+      release = unlock
+      const recovered = (await notesApi.pendingDrafts()).find((item) => item.id === selectedId)
+      if (!active) return
+      if (recovered !== undefined) {
+        pendingRef.current = recovered
+        draftRef.current = recovered
+        setDraft(recovered)
+        setSaveState('protected')
+      }
+      setWriterReady(true)
+      if (recovered !== undefined && navigator.onLine) void savePending()
+    }).catch((failure: unknown) => { if (active) setWriterError(failure instanceof Error ? failure.message : String(failure)) })
+    return () => {
+      active = false
+      const unlock = release
+      if (unlock !== null) void protectionRef.current.then(unlock, unlock)
+    }
+  }, [notesApi, savePending, selectedId, writerAttempt])
+
+  useEffect(() => {
+    const retry = (): void => { if (pendingRef.current !== null) void savePending() }
+    window.addEventListener('online', retry)
+    return () => window.removeEventListener('online', retry)
+  }, [savePending])
+
+  useEffect(() => {
+    const onBeforeUpdate = (event: Event): void => {
+      if (pendingRef.current !== null && (saveState === 'protecting' || saveState === 'unprotected')) event.preventDefault()
+    }
     const onBeforeUnload = (event: BeforeUnloadEvent): void => {
-      if (pendingRef.current !== null) {
+      if (pendingRef.current !== null && (saveState === 'protecting' || saveState === 'unprotected')) {
         event.preventDefault()
         event.returnValue = ''
       }
     }
     window.addEventListener('beforeunload', onBeforeUnload)
-    return (): void => window.removeEventListener('beforeunload', onBeforeUnload)
-  }, [notesApi])
+    window.addEventListener('manor:before-update', onBeforeUpdate)
+    return (): void => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      window.removeEventListener('manor:before-update', onBeforeUpdate)
+    }
+  }, [notesApi, saveState])
 
   useEffect(() => {
     if (selectedPage === null) {
@@ -286,7 +443,7 @@ export function NotesPage(): ReactNode {
   }, [menuOpen])
 
   const createPage = useCallback(async (parentPageId: string | null): Promise<void> => {
-    if (!(await savePending())) return
+    if (!(await prepareNavigation())) return
     try {
       const previousIds = new Set(data.pages.map((page) => page.id))
       const parent = parentPageId === null
@@ -307,7 +464,7 @@ export function NotesPage(): ReactNode {
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : String(createError))
     }
-  }, [data.pages, savePending, scope, selectNoteRoute])
+  }, [data.pages, prepareNavigation, scope, selectNoteRoute])
 
   // A freshly created page gets its title focused once the editor renders.
   useEffect(() => {
@@ -342,12 +499,14 @@ export function NotesPage(): ReactNode {
       }
       if (key === 'f' && event.shiftKey) {
         event.preventDefault()
-        searchRef.current?.focus()
+        setNavigationCollapsed(false)
+        setListCollapsed(false)
+        window.requestAnimationFrame(() => searchRef.current?.focus())
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return (): void => window.removeEventListener('keydown', onKeyDown)
-  }, [createPage, savePending, selectedId])
+  }, [createPage, savePending, selectedId, setNavigationCollapsed, setListCollapsed])
 
   const replaceState = (promise: Promise<NotesState>): Promise<NotesState | null> =>
     promise.then((state) => {
@@ -360,7 +519,8 @@ export function NotesPage(): ReactNode {
     })
 
   const selectScope = async (nextScope: NotesScope): Promise<void> => {
-    if (!(await savePending())) return
+    if (!(await prepareNavigation())) return
+    setListCollapsed(false)
     setScope(nextScope)
     setQuery('')
     selectNoteRoute(null)
@@ -419,12 +579,26 @@ export function NotesPage(): ReactNode {
         URL.revokeObjectURL(anchor.href)
         anchor.remove()
       }, 1_000)
+      setExportNotice('Markdown turns columns and tabs into sections. Image crops and some formatting are not preserved. Export a native document to keep the full structure.')
       setExportedFlash(true)
       if (exportTimerRef.current !== null) window.clearTimeout(exportTimerRef.current)
       exportTimerRef.current = window.setTimeout(() => setExportedFlash(false), 2_000)
     } catch (exportError) {
       setError(`Export failed: ${exportError instanceof Error ? exportError.message : String(exportError)}`)
     }
+  }
+
+  const exportNative = (): void => {
+    if (selectedPage === null) return
+    const contentJson = draft?.id === selectedPage.id ? draft.contentJson : selectedPage.contentJson
+    const file = JSON.stringify({ format: 'manor-note', version: 1, title: draft?.title || selectedPage.title, content: JSON.parse(contentJson) }, null, 2)
+    const anchor = document.createElement('a')
+    anchor.href = URL.createObjectURL(new Blob([file], { type: 'application/json' }))
+    anchor.download = `${selectedPage.title.replace(/[^a-z0-9]+/gi, '-') || 'note'}.manor.json`
+    anchor.click()
+    window.setTimeout(() => URL.revokeObjectURL(anchor.href), 1000)
+    setMenuOpen(false)
+    setExportNotice('Native document exported with its full block structure.')
   }
 
   const importMarkdown = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -445,9 +619,17 @@ export function NotesPage(): ReactNode {
     }
     for (const file of files) {
       try {
-        const contentJson = module.markdownToContentJson(await file.text())
+        const source = await file.text()
+        let title = importedNoteTitle(file.name)
+        let contentJson: string
+        if (file.name.endsWith('.json')) {
+          const native: unknown = JSON.parse(source)
+          if (typeof native !== 'object' || native === null || !('format' in native) || native.format !== 'manor-note' || !('version' in native) || native.version !== 1 || !('title' in native) || typeof native.title !== 'string' || !('content' in native)) throw new TypeError('Choose a Manor native document or a Markdown file')
+          title = native.title
+          contentJson = parseNoteContentJson(JSON.stringify(native.content))
+        } else contentJson = module.markdownToContentJson(source)
         lastState = await notesApi.createPage({
-          title: importedNoteTitle(file.name),
+          title,
           folderId,
           parentPageId: null,
           contentJson
@@ -516,6 +698,12 @@ export function NotesPage(): ReactNode {
     if (current !== null) queueSave({ ...current, contentJson })
   }, [queueSave])
 
+  const moveEditorBlocks = useCallback(async (blockIds: readonly string[], targetNoteId: string): Promise<void> => {
+    if (selectedId === null) throw new Error('Open a note before moving blocks')
+    if (!(await savePending())) throw new Error('Sync your changes before moving blocks')
+    setData(await notesApi.moveBlocks({ sourceNoteId: selectedId, targetNoteId, blockIds }))
+  }, [notesApi, savePending, selectedId])
+
   const activeCount = data.pages.filter((page) => page.status === 'active').length
   const favoriteCount = data.pages.filter((page) => page.status === 'active' && page.favorite).length
   const archivedCount = data.pages.filter((page) => page.status === 'archived').length
@@ -526,11 +714,14 @@ export function NotesPage(): ReactNode {
 
   return (
     <PageShell title="Notes" fullBleed={true}>
-      <div className="notes-workspace">
-        <nav className="notes-nav" aria-label="Notes navigation">
+      <div className="notes-workspace" data-navigation-collapsed={navigationCollapsed} data-list-collapsed={listCollapsed}>
+        <nav id="notes-navigation" className={`notes-nav${navigationCollapsed ? ' is-collapsed' : ''}`} aria-label="Notes navigation">
           <div className="notes-nav-head">
             <strong>Notes</strong>
-            <button type="button" className="notes-icon-button" aria-label="New note" onClick={() => void createPage(null)}><FilePlus2 size={16} /></button>
+            <div className="notes-pane-actions">
+              {!navigationCollapsed ? <button type="button" className="notes-icon-button" aria-label="New note" onClick={() => void createPage(null)}><FilePlus2 size={16} /></button> : null}
+              <NotesPaneToggle collapsed={navigationCollapsed} panelId="notes-navigation" label="Notes navigation" onToggle={() => setNavigationCollapsed(!navigationCollapsed)} />
+            </div>
           </div>
           <div className="notes-search-wrap">
             <Search size={15} aria-hidden="true" />
@@ -557,22 +748,30 @@ export function NotesPage(): ReactNode {
             })}
           </div>
           <div className="notes-nav-foot">
-            <button type="button" onClick={() => importRef.current?.click()}><Upload size={14} /> Import Markdown</button>
-            <input ref={importRef} type="file" accept=".md,.markdown,text/markdown" multiple onChange={(event) => void importMarkdown(event)} hidden />
+            <button type="button" onClick={() => void notesApi.syncDrafts().then((pages) => {
+              setData((current) => ({ ...current, pages: current.pages.map((page) => pages.find((saved) => saved.id === page.id) ?? page) }))
+              setDeferredNoteIds((current) => current.filter((id) => !pages.some((page) => page.id === id)))
+              setError(null)
+            }).catch((failure: unknown) => setError(failure instanceof Error ? failure.message : String(failure)))}><Upload size={14} />Sync changes</button>
+            <button type="button" onClick={() => importRef.current?.click()}><Upload size={14} /> Import notes</button>
+            <input ref={importRef} type="file" accept=".md,.markdown,.json,text/markdown,application/json" multiple onChange={(event) => void importMarkdown(event)} hidden />
           </div>
         </nav>
 
-        <section className="notes-list" aria-label="Note list">
+        <section id="notes-list" className={`notes-list${listCollapsed ? ' is-collapsed' : ''}`} aria-label="Note list">
           <div className="notes-list-head">
-            <div><strong>{scopeTitle(scope, data.folders)}</strong><span>{rows.length}</span></div>
-            {scope !== 'trash' && scope !== 'archived' ? <button type="button" className="notes-icon-button" aria-label="New note" onClick={() => void createPage(null)}><FilePlus2 size={16} /></button> : null}
+            <div className="notes-list-heading"><strong>{scopeTitle(scope, data.folders)}</strong><span>{rows.length}</span></div>
+            <div className="notes-pane-actions">
+              {!listCollapsed && scope !== 'trash' && scope !== 'archived' ? <button type="button" className="notes-icon-button" aria-label="New note" onClick={() => void createPage(null)}><FilePlus2 size={16} /></button> : null}
+              <NotesPaneToggle collapsed={listCollapsed} panelId="notes-list" label="note list" onToggle={() => setListCollapsed(!listCollapsed)} />
+            </div>
           </div>
           <div className="notes-list-scroll">
             {loading ? <p className="notes-list-empty">Loading notes…</p> : null}
             {!loading && rows.length === 0 ? <p className="notes-list-empty">No notes here.</p> : null}
             {rows.map(({ page, depth }, index) => (
               <div key={page.id} className="notes-list-rowwrap">
-                <button type="button" data-note-index={index} className={`notes-list-row${selectedId === page.id ? ' is-selected' : ''}`} style={{ paddingLeft: `${12 + Math.min(depth, 4) * 14}px` }} onClick={() => void openPage(page.id)} onKeyDown={(event) => moveWithKeyboard(event, index)}>
+                <button type="button" data-note-index={index} data-note-id={page.id} className={`notes-list-row${selectedId === page.id ? ' is-selected' : ''}`} style={{ paddingLeft: `${12 + Math.min(depth, 4) * 14}px` }} onClick={() => void openPage(page.id)} onKeyDown={(event) => moveWithKeyboard(event, index)}>
                   <span className="notes-list-title">{depth > 0 ? <ChevronRight size={12} /> : null}{page.title || 'Untitled'}</span>
                   <span className="notes-list-meta">{formatNoteTime(page.updatedAt)}{page.favorite ? <Star size={11} fill="currentColor" /> : null}</span>
                 </button>
@@ -593,26 +792,33 @@ export function NotesPage(): ReactNode {
         </section>
 
         <main className="notes-editor-pane">
-          {error !== null ? <div className="notes-error" role="alert"><span>{error}</span>{saveState === 'error' ? <button type="button" className="notes-error-retry" onClick={() => void savePending()}>Retry</button> : null}<button type="button" aria-label="Dismiss error" onClick={() => setError(null)}><X size={14} /></button></div> : null}
+          {error !== null ? <div className="notes-error" role="alert"><span>{error}</span>{/changed|conflict/i.test(error) && saveState === 'error' ? <button type="button" onClick={() => setReviewMode('conflict')}>Compare versions</button> : null}{saveState === 'error' || saveState === 'unprotected' ? <button type="button" className="notes-error-retry" onClick={() => void savePending()}>Retry</button> : null}<button type="button" aria-label="Dismiss error" onClick={() => setError(null)}><X size={14} /></button></div> : null}
+          {deferredNoteIds.length > 0 && !deferredNoteIds.includes(selectedId ?? '') ? <p className="notes-export-notice" role="status">
+            {deferredNoteIds.length === 1 ? 'One note has changes saved on this device that still need to sync.' : `${deferredNoteIds.length} notes have changes saved on this device that still need to sync.`}
+            <button type="button" aria-label="Open unsynced note" onClick={() => void openPage(deferredNoteIds[0])}>Open note</button>
+          </p> : null}
+          {exportNotice !== null ? <p className="notes-export-notice" role="status">{exportNotice}<button type="button" aria-label="Dismiss export notice" onClick={() => setExportNotice(null)}><X size={14} /></button></p> : null}
           {selectedPage !== null && draft !== null && draft.id === selectedPage.id ? (
             <>
               <div className="notes-editor-toolbar">
                 <div className="notes-breadcrumb"><span>{folderName}</span><ChevronRight size={13} /><strong>{draft.title || 'Untitled'}</strong></div>
                 <div ref={actionsRef} className="notes-editor-actions">
-                  <span className={`notes-save-state is-${saveState}`}>{saveState === 'unsaved' ? 'Unsaved' : saveState === 'saving' ? 'Saving' : saveState === 'error' ? 'Save failed' : exportedFlash ? 'Exported' : 'Saved'}</span>
-                  <button type="button" className={`notes-favorite-button${selectedPage.favorite ? ' is-active' : ''}`} aria-label={selectedPage.favorite ? 'Remove from favorites' : 'Add to favorites'} onClick={() => void toggleFavorite(selectedPage)}><Heart size={15} fill={selectedPage.favorite ? 'currentColor' : 'none'} /></button>
+                  <span className={`notes-save-state is-${saveState}`}>{saveState === 'unsaved' ? 'Unsaved' : saveState === 'protecting' ? 'Protecting changes…' : saveState === 'protected' ? 'Saved on this device' : saveState === 'unprotected' ? 'Draft protection failed' : saveState === 'saving' ? 'Syncing…' : saveState === 'error' ? 'Saved on device · Sync failed' : exportedFlash ? 'Exported' : 'Saved to cloud'}</span>
+                  <button type="button" className={`notes-favorite-button${selectedPage.favorite ? ' is-active' : ''}`} aria-label={selectedPage.favorite ? 'Remove from favorites' : 'Add to favorites'} onClick={() => void toggleFavorite(selectedPage)}><Star size={15} fill={selectedPage.favorite ? 'currentColor' : 'none'} /></button>
                   <button type="button" ref={menuTriggerRef} className="notes-icon-button" aria-label="Note actions" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><Ellipsis size={17} /></button>
                   {menuOpen ? (
                     <div className="notes-action-menu">
                       {selectedPage.status === 'active' ? <button type="button" onClick={() => void createPage(selectedPage.id)}><FilePlus2 size={14} />Add subpage</button> : null}
                       {selectedPage.status === 'active' ? <button type="button" onClick={() => setDialog({ kind: 'move', page: selectedPage })}><Move size={14} />Move</button> : null}
                       {selectedPage.status === 'active' ? <button type="button" onClick={() => void duplicateSelected(selectedPage.id)}><Copy size={14} />Duplicate</button> : null}
+                      <button type="button" onClick={() => { setReviewMode('versions'); setMenuOpen(false) }}><Clock3 size={14} />Version history</button>
+                      <button type="button" onClick={() => { setReviewMode('suggestions'); setMenuOpen(false) }}><Pencil size={14} />Suggestions</button>
+                      <button type="button" onClick={exportNative}><Download size={14} />Export native document</button>
                       <button type="button" onClick={() => void exportMarkdown()}><Download size={14} />Export Markdown</button>
                       {selectedPage.status === 'active' ? <button type="button" onClick={() => void mutateSelected(() => notesApi.archivePage(selectedPage.id))}><Archive size={14} />Archive</button> : null}
                       {selectedPage.status === 'archived' ? <button type="button" onClick={() => void restoreSelected(selectedPage.id)}><ArchiveRestore size={14} />Restore</button> : null}
                       {selectedPage.status !== 'trash' ? <button type="button" className="is-danger" onClick={() => void mutateSelected(() => notesApi.trashPage(selectedPage.id))}><Trash2 size={14} />Move to Trash</button> : null}
                       {selectedPage.status === 'trash' ? <button type="button" onClick={() => void restoreSelected(selectedPage.id)}><ArchiveRestore size={14} />Restore</button> : null}
-                      {selectedPage.status === 'trash' ? <button type="button" className="is-danger" onClick={() => setDialog({ kind: 'delete', page: selectedPage })}><Trash2 size={14} />Delete permanently</button> : null}
                     </div>
                   ) : null}
                 </div>
@@ -626,9 +832,10 @@ export function NotesPage(): ReactNode {
               ) : null}
               <div className="notes-editor-scroll" ref={editorScrollRef}>
                 <article className="notes-editor-measure">
-                  <input ref={titleRef} className="notes-title-input" value={draft.title} maxLength={300} onChange={(event) => queueSave({ ...draft, title: event.target.value })} onBlur={() => void savePending()} aria-label="Note title" placeholder="Untitled" />
+                  <textarea rows={1} ref={titleRef} className="notes-title-input" disabled={!writerReady || selectedPage.status === 'trash'} value={draft.title} maxLength={300} onChange={(event) => queueSave({ ...draft, title: event.target.value.replace(/\n/g, ' ') })} onBlur={() => void savePending()} aria-label="Note title" placeholder="Untitled" />
                   <Suspense fallback={<div className="notes-editor-loading">Opening editor…</div>}>
-                    <RichNoteEditor key={selectedPage.id} page={{ ...selectedPage, title: draft.title, contentJson: draft.contentJson }} allPages={data.pages} onChange={updateEditorContent} />
+                    {writerError !== null && <div className="notes-writer-notice" role="status"><span>{writerError}</span><button type="button" aria-label="Try editing again" onClick={() => setWriterAttempt(attempt => attempt + 1)}>Try editing again</button></div>}
+                    {writerReady && selectedPage.status !== 'trash' ? <RichNoteEditor key={selectedPage.id} page={{ ...selectedPage, title: draft.title, contentJson: draft.contentJson }} allPages={data.pages} onChange={updateEditorContent} onMoveBlocks={moveEditorBlocks} /> : writerError !== null || selectedPage.status === 'trash' ? <NoteReadOnlyPreview contentJson={draft.contentJson} /> : <p className="notes-editor-loading">Opening editor…</p>}
                   </Suspense>
                 </article>
               </div>
@@ -637,6 +844,14 @@ export function NotesPage(): ReactNode {
         </main>
       </div>
 
+      {reviewMode !== null ? <Suspense fallback={null}><NoteReviewDialog mode={reviewMode} page={selectedPage} onClose={() => setReviewMode(null)} beforeChange={savePending} onApplied={(saved) => {
+        if (pendingRef.current?.id === saved.id) pendingRef.current = null
+        draftRef.current = { id: saved.id, title: saved.title, contentJson: saved.contentJson }
+        setDraft(draftRef.current)
+        setSaveState('saved')
+        setError(null)
+        setData((current) => ({ ...current, pages: current.pages.map((page) => page.id === saved.id ? saved : page) }))
+      }} /></Suspense> : null}
       <FolderDialog value={dialog?.kind === 'folder' ? dialog : null} onClose={() => setDialog(null)} onDelete={async (folderItem) => {
         await replaceState(notesApi.deleteFolder(folderItem.id))
         if (scope === `folder:${folderItem.id}`) setScope('all')
@@ -652,10 +867,6 @@ export function NotesPage(): ReactNode {
       }} />
       <MoveDialog value={dialog?.kind === 'move' ? dialog.page : null} folders={data.folders} pages={data.pages} onClose={() => setDialog(null)} onSubmit={async (page, folderId, parentPageId) => {
         await replaceState(notesApi.movePage({ id: page.id, folderId, parentPageId }))
-        setDialog(null)
-      }} />
-      <DeleteDialog page={dialog?.kind === 'delete' ? dialog.page : null} onClose={() => setDialog(null)} onConfirm={async (page) => {
-        await mutateSelected(() => notesApi.permanentlyDeletePage(page.id))
         setDialog(null)
       }} />
     </PageShell>
@@ -680,7 +891,7 @@ function FolderDialog({ value, onClose, onSubmit, onDelete }: {
       {confirmingDelete && folderItem !== null ? (
         <div className="notes-dialog">
           <div className="notes-dialog-head"><h2>Delete this folder?</h2><button type="button" onClick={onClose}><X size={17} /></button></div>
-          <p>The notes in {folderItem.name} move up one level.</p>
+          <p>Its notes and folders will move up one level.</p>
           <div className="notes-dialog-actions">
             <button type="button" onClick={() => setConfirmingDelete(false)}>Cancel</button>
             <button type="button" className="is-danger" onClick={() => void onDelete(folderItem)}>Delete</button>
@@ -729,22 +940,6 @@ function MoveDialog({ value, folders, pages, onClose, onSubmit }: {
         <label>Parent page<Select value={parentPageId} options={parentOptions} onChange={setParentPageId} placeholder="No parent page" ariaLabel="Parent page" /></label>
         <div className="notes-dialog-actions"><button type="button" onClick={onClose}>Cancel</button><button type="submit" className="is-primary">Move</button></div>
       </form>
-    </Modal>
-  )
-}
-
-function DeleteDialog({ page, onClose, onConfirm }: {
-  page: NotePage | null
-  onClose: () => void
-  onConfirm: (page: NotePage) => Promise<void>
-}): ReactNode {
-  return (
-    <Modal open={page !== null} onClose={onClose} width={420} ariaLabel="Delete note permanently">
-      <div className="notes-dialog">
-        <div className="notes-dialog-head"><h2>Delete permanently?</h2><button type="button" onClick={onClose}><X size={17} /></button></div>
-        <p>This removes “{page?.title}” and its subpages from this Mac.</p>
-        <div className="notes-dialog-actions"><button type="button" onClick={onClose}>Cancel</button><button type="button" className="is-danger" onClick={() => { if (page !== null) void onConfirm(page) }}>Delete</button></div>
-      </div>
     </Modal>
   )
 }

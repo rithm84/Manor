@@ -1,10 +1,11 @@
+import { useCommitVersion } from '../services/useCommitVersion'
 import { useManorService } from '../services/ManorServices'
 import { History, SlidersHorizontal } from 'lucide-react'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { moodFocusPreviousDate } from '../../shared/moodFocus'
-import type { Focus, Mood, MoodFocusState } from '../../shared/moodFocus'
+import type { Focus, Mood, MoodFocusHistoryMutation, MoodFocusState } from '../../shared/moodFocus'
 import { DailyCapture } from './moodfocus/DailyCapture'
 import { createMoodFocusSeed } from './moodfocus/moodFocusSeed'
 import { dayLabel, fullDateLabel, monthKey } from './moodfocus/moodFocusModel'
@@ -23,6 +24,7 @@ function errorMessage(error: unknown): string {
 }
 
 export function MoodFocusPage(): ReactNode {
+  const commitVersion = useCommitVersion()
   const moodFocusApi = useManorService('moodFocus')
   const [state, setState] = useState<MoodFocusState | null>(null)
   const [loading, setLoading] = useState(true)
@@ -41,8 +43,10 @@ export function MoodFocusPage(): ReactNode {
           return
         }
         setState(loaded)
-        setSelectedDate(loaded.today)
-        setHistoryMonth(monthKey(loaded.today))
+        if (state === null) {
+          setSelectedDate(loaded.today)
+          setHistoryMonth(monthKey(loaded.today))
+        }
         setLoading(false)
       })
       .catch((error: unknown) => {
@@ -55,7 +59,7 @@ export function MoodFocusPage(): ReactNode {
     return (): void => {
       cancelled = true
     }
-  }, [])
+  }, [moodFocusApi, commitVersion])
 
   const persist = async (
     operation: string,
@@ -69,6 +73,25 @@ export function MoodFocusPage(): ReactNode {
     } catch (error) {
       console.error('Mood and focus persistence operation failed', { operation, error })
       setPersistError(`${operation}: ${errorMessage(error)}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const saveHistoryRatings = async (mutation: MoodFocusHistoryMutation): Promise<void> => {
+    setSaving(true)
+    try {
+      const next = mutation.date === state?.today
+        ? await moodFocusApi.setRatings(mutation)
+        : await moodFocusApi.correctHistory(mutation)
+      setState(next)
+      setHistoryMonth(monthKey(mutation.date))
+      setPersistError(null)
+    } catch (error) {
+      console.error('Mood and focus history save failed', { date: mutation.date, error })
+      const message = `Could not save history: ${errorMessage(error)}`
+      setPersistError(message)
+      throw new Error(message, { cause: error })
     } finally {
       setSaving(false)
     }
@@ -117,10 +140,7 @@ export function MoodFocusPage(): ReactNode {
             state={state}
             month={historyMonth}
             onMonthChange={setHistoryMonth}
-            onEditDate={(date) => {
-              setSelectedDate(date)
-              setView('daily')
-            }}
+            onSaveRatings={saveHistoryRatings}
           />
         </Suspense>
       ) : (

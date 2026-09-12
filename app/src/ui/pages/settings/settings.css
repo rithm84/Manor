@@ -46,6 +46,9 @@
 .set-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
 }
 
 .set-section {
@@ -229,7 +232,7 @@
   height: 40px;
   border-radius: 50%;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
   font-size: var(--text-md);
   font-weight: 600;
   flex-shrink: 0;
@@ -283,7 +286,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(27, 25, 29, 0.45);
-  color: #ffffff;
+  color: var(--on-primary);
   opacity: 0;
   transition: opacity 120ms ease;
 }
@@ -501,3 +504,5 @@
   font-size: var(--text-body);
   color: var(--ink-muted);
 }
+.set-connected-account { border-top: 1px solid var(--hairline); padding-left: 12px; }
+.set-integration-notice { color: var(--ink-body); background: var(--surface-soft); border-radius: 6px; padding: 10px 12px; font-size: 13px; line-height: 1.5; }

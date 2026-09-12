@@ -1,20 +1,23 @@
-# Manor UI Foundation
+# Manor web app
 
-_Last updated: 2026-09-09_
+_Last updated: 2026-09-11_
 
-Reusable React routes, module components, rich Notes editor, styles, pure domain calculations, and validation tests for the web rebuild. This package builds a UI library; it is not a deployable Manor application yet.
-
-`App` requires implemented `ManorServices`. These are view dependencies, not the final server or WebMCP contracts. There is no default adapter or mock backend. Individual components can receive their required services through `ManorServicesProvider`; missing services fail explicitly. Keep service instances stable for a mounted account session and remount the application when the account changes.
-
-The future web entry point must supply authentication and signup gating, transactional commands and revisions, TanStack Query refresh, durable IndexedDB drafts and queued attachments, safe navigation/sign-out, Trash/purge, and the separate Journal link. The retained Notes screen's in-memory save queue does not supply offline or navigation durability. Do not deploy it before the [architecture acceptance checks](../docs/ARCHITECTURE.md#11-migration-and-verification) pass.
+This package runs the Manor React application with real Supabase services, account-scoped query state, durable Notes drafts, and the shared WebMCP catalog. Production release acceptance is still pending; [ARCHITECTURE §1](../docs/ARCHITECTURE.md#1-status-and-scope) records the verified boundaries and remaining work.
 
 Run from the repository root:
 
 ```sh
 npm --prefix app ci
+npm --prefix app run dev
 npm --prefix app run typecheck
 npm --prefix app test
 npm --prefix app run build
 ```
 
-The build writes `app/dist/`. Anonymous fixtures are in `src/ui/data/mock.ts`; account loaders never receive those fixtures. Database migrations are historical schema records, not evidence that the target backend is implemented. Existing cloud data and local user data are preserved; source cleanup does not alter either.
+The development server binds `127.0.0.1:5173` for unauthenticated UI work, typecheck, and tests. Localhost is not an authorized staging origin, so sign-in and end-to-end flows are tested on the hosted staging site ([ARCHITECTURE §1](../docs/ARCHITECTURE.md#1-status-and-scope)). Supply `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` through the app's local environment or deployment configuration, using staging for preview builds. These are browser connection values; never put service-role, database, OAuth-client, or provider secrets in a `VITE_` variable. The build writes the static web app to `app/dist/`.
+
+`App` receives stable `ManorServices` instances for the active account. Web adapters send mutations through the shared transactional command boundary and preserve edited revisions for conflict detection. Account changes reset session-scoped state. Anonymous fixtures remain in `src/ui/data/mock.ts`; signed-in loaders never substitute them for account records.
+
+The Notes draft layer protects unfinished edits and pending attachments across reloads, navigation, and sign-out attempts. File and agent-host behavior must still be verified against the deployed environment rather than inferred from unit tests. See the [architecture acceptance checks](../docs/ARCHITECTURE.md#11-migration-and-verification).
+
+The Journal has its own package and build under `journal/`, its own Google session, and a required separate browser origin. Do not import Journal state, keys, or adapters into this application. Run its typecheck, tests, and build independently with the corresponding `npm --prefix journal` commands.

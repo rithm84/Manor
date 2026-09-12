@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 export interface PageShellProps {
-  /** Display-face page headline (EB Garamond 500). Not rendered when fullBleed. */
+  /** Page headline using the shared heading face. Not rendered when fullBleed. */
   title: string
   /**
    * true: children render edge-to-edge with no padding and no title band

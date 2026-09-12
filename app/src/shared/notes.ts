@@ -1,3 +1,5 @@
+import { validateFileUploadSize } from './fileUploadPolicy'
+
 export type NotePageStatus = 'active' | 'archived' | 'trash'
 
 export interface NoteFolder {
@@ -78,10 +80,53 @@ export interface NoteAttachmentUpload {
   noteId: string
   name: string
   mimeType: string
-  bytes: Uint8Array
+  bytes: Blob
+}
+
+export interface NoteVersion {
+  id: string
+  noteId: string
+  revision: number
+  title: string
+  contentJson: string
+  createdAt: string
+}
+
+export interface NoteSuggestion {
+  id: string
+  noteId: string
+  blockId: string
+  summary: string
+  beforeContentJson: string
+  afterContentJson: string
+  status: 'pending' | 'accepted' | 'rejected'
+  createdAt: string
+}
+
+export interface NoteSuggestionReview {
+  noteId: string
+  suggestionIds: readonly string[]
+  decision: 'accepted' | 'rejected'
+}
+
+export interface NoteConflict {
+  current: NotePage
+  local: NotePageContentUpdate
+  revision: number
 }
 
 export interface NotesApi {
+  protectDraft: (draft: NotePageContentUpdate) => Promise<void>
+  pendingDrafts: () => Promise<readonly NotePageContentUpdate[]>
+  acquireWriter: (noteId: string) => Promise<() => void>
+  syncDrafts: () => Promise<readonly NotePage[]>
+  moveBlocks: (request: { sourceNoteId: string; targetNoteId: string; blockIds: readonly string[] }) => Promise<NotesState>
+  readConflict: (noteId: string) => Promise<NoteConflict>
+  resolveConflict: (conflict: NoteConflict) => Promise<NotePage>
+  listVersions: (noteId: string) => Promise<readonly NoteVersion[]>
+  restoreVersion: (request: { noteId: string; versionId: string }) => Promise<NotePage>
+  listSuggestions: (noteId: string) => Promise<readonly NoteSuggestion[]>
+  reviewSuggestions: (request: NoteSuggestionReview) => Promise<NotePage>
   load: () => Promise<NotesState>
   createFolder: (draft: NoteFolderDraft) => Promise<NotesState>
   renameFolder: (mutation: NoteFolderRename) => Promise<NotesState>
@@ -95,7 +140,6 @@ export interface NotesApi {
   archivePage: (pageId: string) => Promise<NotesState>
   trashPage: (pageId: string) => Promise<NotesState>
   restorePage: (pageId: string) => Promise<NotesState>
-  permanentlyDeletePage: (pageId: string) => Promise<NotesState>
   uploadAttachment: (upload: NoteAttachmentUpload) => Promise<NoteAttachment>
   resolveAttachment: (attachmentId: string) => Promise<string>
 }
@@ -103,7 +147,6 @@ export interface NotesApi {
 const MAX_TITLE_LENGTH = 300
 const MAX_FOLDER_NAME_LENGTH = 120
 const MAX_CONTENT_BYTES = 12 * 1024 * 1024
-const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024
 
 function recordValue(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -293,12 +336,10 @@ export function parseNoteAttachment(value: unknown): NoteAttachment {
 
 export function parseNoteAttachmentUpload(value: unknown): NoteAttachmentUpload {
   const upload = recordValue(value, 'note attachment upload')
-  if (!(upload.bytes instanceof Uint8Array)) {
-    throw new TypeError('attachment.bytes must be a Uint8Array')
+  if (!(upload.bytes instanceof Blob)) {
+    throw new TypeError('attachment.bytes must be a Blob')
   }
-  if (upload.bytes.byteLength === 0 || upload.bytes.byteLength > MAX_ATTACHMENT_BYTES) {
-    throw new RangeError('attachment.bytes must contain between 1 byte and 25 MB')
-  }
+  validateFileUploadSize(upload.bytes.size)
   return {
     noteId: stringValue(upload.noteId, 'attachment.noteId'),
     name: limitedString(upload.name, 'attachment.name', 255),

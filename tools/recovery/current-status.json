@@ -1,0 +1,427 @@
+{
+  "staging_project": "cysdooljdslgvqrahymm",
+  "production_project": "pxdxqueevzttpmxjsqes",
+  "production_mutations": true,
+  "migration_history_reconciled": true,
+  "fresh_database_replay_verified": false,
+  "migration_history_note": "Approved staging-only metadata reconciliation completed, with subsequent verified migrations recorded individually. Historical staging-only cron omissions remain recorded below.",
+  "migrations": [
+    {
+      "file": "supabase/migrations/20260910035316_web_command_foundation.sql",
+      "sha256": "4161fb47f344ee0d2eb8ddaf83d726ba52fb4573ce4f381e8250e7b133f6f5d3",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910035631_web_notes_commands.sql",
+      "sha256": "dd6664cbe033a5adf0e226e002e56295100a9f280938eefc35353b2fa1d5701f",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910035836_web_domain_commands.sql",
+      "sha256": "2dd16d1ca847ccc9204eba0e5d6c9750c71629c2c7f1b552e73fdf479c3a2d02",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910040141_web_auth_and_dispatch.sql",
+      "sha256": "fd8f688a20164b5d704ef92d3128f7e15f30015e74e638ff4a3f1c67d079133c",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910040542_web_files.sql",
+      "sha256": "d7ad766f8df47c7a43d090891f52febb9df9fb6336cec6e3ebc488a29f2e55f7",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910040756_web_streaks_and_queries.sql",
+      "sha256": "2dd5a46f45fec2adf8561fbac3179ea11add507b4c5a7ee546365caad976c85f",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910040945_web_recurrence_and_lifecycle.sql",
+      "sha256": "20483ae5fd7b8c0587133e5f7102dca7f4cac4a13eac3a2d2b235e7bb4f6d755",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910041753_isolated_journal.sql",
+      "sha256": "799115fd71c0aa68c780bc04839f26b419aaa4bedce6a1345560586b4b0638b3",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910041913_web_maintenance_and_review_sources.sql",
+      "sha256": "f38ee85ff4d76a19de6a18e98858b1e99ab3112fe0f86843de43dd6b46fc81d1",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910042148_web_tool_queries.sql",
+      "sha256": "fbd900e45086dcef47c1448c21c09713946fb9e1055e69f538ded976d4d29b07",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910042213_web_integrations.sql",
+      "sha256": "c9460a57967d7d84b28ee651b831b70d9490e0b944505d3c4c2a4ab9c1e908d1",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910042347_web_mcp_authorization.sql",
+      "sha256": "e08831186f8c8cd74df622d4aa3c8808510c0cf286db6d6c3247b8a287592074",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910042701_web_search_embeddings.sql",
+      "sha256": "dc6cc7b721737da1b259965bd71e62c3cad00df976d12a6d16bd1eda7404677f",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910043400_web_precise_note_edits.sql",
+      "sha256": "ef5d16bcd7e5f9090f8c8b582dfa3ec9d12db6dd6c398888d85685a376198b8f",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910044227_recovery_acknowledgements.sql",
+      "sha256": "f9b7b052b9695375b60bc0e12e4e2c3f6bcb1edb3a2167204ca4ff977d7993d3",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910044351_web_capture_removal.sql",
+      "sha256": "c54f1b9c0ef71660a69807696a55d78e77a80fef5d74148b4e63fd505e8e436e",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910045344_web_curriculum_and_job_ingestion.sql",
+      "sha256": "ddb9777dc5f5535085844f1a41bcbf97e12b88d1ba7f4e6a696b2fbe7251035d",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910045540_web_file_recovery_lock.sql",
+      "sha256": "86912f7d975dcf95accb94db655c827c65d8ed70200f078cab308cc9a9ced253",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910045726_web_maintenance_schedule.sql",
+      "sha256": "5c9548db006b6a1c1189f2cbc499787af49cd0eb26ad12993b6fe8b8562b5db2",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910045946_web_leetcode_freezes.sql",
+      "sha256": "7b9993521386c03c1cab8ed4a7c374aac01b8eba5e483cda41e5c4361476001d",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910050432_web_complete_deletion_ledger.sql",
+      "sha256": "9850693300b73b69db77f57f773d400babf1b1851247bec4eb36690c541fa67a",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910051223_web_job_schedule.sql",
+      "sha256": "0108d94a525b9e71c562056602d861747ba25e9cd736dd2eea6bae1be1587a03",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910053449_web_integration_return_origin.sql",
+      "sha256": "4ab17a0f42961c2d3f5f85ed2cce94ca5c53f3989684a5c18d8c52542dc04346",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910070637_file_upload_fifty_mib.sql",
+      "sha256": "0d80975ca4ec9bcfd05d993d06c312ae9073bb23fcdc8cfb18ec55a1849bbd4d",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910072536_file_upload_one_gb.sql",
+      "sha256": "ebad995efd21e7d3b0459f4c7c8aca30784b93eff8b54a16131883ae2e88441e",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910073000_mood_focus_history_corrections.sql",
+      "sha256": "7c7d2ab2df7e1f662a3a78adeac0c4b2619379e8ff07bfd73074be8102f73340",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260910073320_resumable_file_verification.sql",
+      "sha256": "24cb59d1e44eafc239af8c5c976e19c914fb1c24354caac4353636939484d981",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260911023700_allow_empty_contexts.sql",
+      "sha256": "201a8ab27d33df233b8f440f30eaedfad0c200fbe29075a4fb6ca6a7ea4ea755",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260911030000_workspace_tool_completion.sql",
+      "sha256": "caa4c6c5128e250b18e38e43e881f5d03526d5b11d753c3d9bcb31a8c2fb3b78",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260911030100_notes_tool_completion.sql",
+      "sha256": "b3f4cc8f91057558127b6f5fbc004ba7376fef21205a7071e1c99c70b088cf3d",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260911030200_weekly_review_contract.sql",
+      "sha256": "abc90b051be36136e667d5a33c544f3f7f0eae59f18ec7e1b4d17ab425f3135f",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260911030300_record_links.sql",
+      "sha256": "db7819ca096d3a679151280bb4503bb2cdc0650ede5d78b29f8d7c13921fd438",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260911030400_complete_tool_dispatch.sql",
+      "sha256": "cac29e2c85a5a5e5cc1609a8c43a3cdc3818ae056dfe390a89130a114221be44",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260911213748_calendar_minute_sync.sql",
+      "sha256": "d1489633fa6835559881c658a2ac19100219f1a4716e9eb03463cbf18a1b4d64",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
+    }
+  ],
+  "validation": {
+    "sql_rollback_passed": [
+      "web_commands",
+      "signup_gate",
+      "mcp_and_journal",
+      "integrations",
+      "recovery",
+      "leetcode_freezes",
+      "permanent_removals"
+    ],
+    "live_jobs_ingestion": {
+      "http_status": 200,
+      "listings": 2028,
+      "pruned": 0
+    },
+    "live_conflict": {
+      "http_status": 409,
+      "sqlstate": "PT409",
+      "single_request": true
+    },
+    "mcp_discovery": {
+      "metadata_http_status": 200,
+      "unauthenticated_http_status": 401
+    },
+    "mcp_authorized_protocol": {
+      "dynamic_registration": true,
+      "pkce_s256": true,
+      "authorization_code_exchange": true,
+      "resource_audience_validated": true,
+      "read_only_catalog": true,
+      "scoped_read": true,
+      "refresh_token_rotation": true,
+      "revoked_token_http_status": 401
+    },
+    "curriculum": {
+      "source": "retained production curriculum metadata only",
+      "count": 150,
+      "distinct_ids": 150,
+      "order_min": 0,
+      "order_max": 149
+    },
+    "database_after_conflict_fix": {
+      "advisory_waiters": 0,
+      "active_clients": 0
+    },
+    "recovery_scope": [
+      "tasks",
+      "job_roles",
+      "note_pages",
+      "kb_entries",
+      "file_objects",
+      "journal_entries",
+      "leetcode_attempts",
+      "leetcode_notes",
+      "note_folders"
+    ],
+    "migration_history": {
+      "records": 40,
+      "unique_versions": 40,
+      "old_aliases": 0,
+      "new_source_hash_mismatches": 0
+    },
+    "authentication": {
+      "google_only": true,
+      "signup_gate_hook_enabled": true,
+      "custom_access_token_hook_enabled": true,
+      "oauth_server_enabled": true,
+      "dynamic_registration_enabled": true,
+      "human_google_consent_completed": false
+    },
+    "embeddings": {
+      "actual_openai_requests": 4,
+      "reported_tokens": 181,
+      "semantic_match": true,
+      "stale_result_rejected": true,
+      "unchanged_text_reuses_vectors": true,
+      "trash_excluded": true,
+      "restore_requeues": true,
+      "journal_excluded": true
+    },
+    "file_upload_limit": {
+      "max_bytes": 1000000000,
+      "global_storage_bytes": 1000000000,
+      "bucket_storage_bytes": 1000000000,
+      "verifier": "32 MiB authenticated ranges, private resumable hash-wasm SHA-256 state, ETag and offset CAS",
+      "one_gb_roundtrip": "passed",
+      "oversize_edge_http": 413,
+      "oversize_rpc_http": 413,
+      "corrupt_checksum_http": 422,
+      "wrong_mime_http": 422,
+      "production_changed": false,
+      "roundtrip_bytes": 1000000000,
+      "download_sha256_matches": true,
+      "upload_interrupted_and_resumed_at_bytes": 12582912,
+      "verification_steps": 30,
+      "verification_elapsed_ms": 43371,
+      "private_state_isolation_cas_version_and_purge_verified": true
+    }
+  },
+  "scheduled_jobs": [
+    "manor-maintenance",
+    "manor-integrations",
+    "manor-jobs",
+    "manor-embeddings"
+  ],
+  "embedding_schedule_enabled": true,
+  "blocked": [
+    "Independent off-site recovery credentials, backup execution and fresh isolated restore drill",
+    "Native ChatGPT-host connection verification for production endpoint"
+  ],
+  "deployment_alignment": {
+    "jobs_ingest": "deployed with dedicated worker secret and verified live",
+    "integration_worker": "Root redeployed minute-cadence worker; over-cap calendars are skipped and reported, connected calendars keep syncing",
+    "manor_mcp": "Root redeployed latest catalog and exact-origin CORS; actual synthetic OAuth protocol verified",
+    "semantic_search": "Deployed and actual synthetic OpenAI indexing/search validated",
+    "file_access": "Deployed; synthetic prepare/upload/finalize/download byte roundtrip and unauthorized/trashed-parent rejection verified",
+    "file_finalize": "Deployed bounded resumable verifier; actual 1 GB upload, interrupted/resumed TUS, complete SHA-256 verification and download comparison passed"
+  },
+  "historical_baseline_variations": [
+    "20260826120200_x_ingest_cron skipped to avoid production endpoint",
+    "20260826210000_job_feed cron section skipped to avoid production endpoint"
+  ],
+  "limitations": [
+    "Clean fresh install not executed; source reviewed for dependency order but requires isolated replay",
+    "Recovery operational backup/restore not run against off-site destination",
+    "Production X credentials migrated from the Electron era are rejected by X; the account must be reconnected",
+    "Production embedding worker receives OpenAI 429 organization-limit responses; 65 jobs queued"
+  ],
+  "migration_history_audit": "/private/tmp/manor-staging-migration-history-before.json",
+  "migration_history_proposed_transaction": "/private/tmp/manor-staging-reconcile-history.sql",
+  "hosting": {
+    "staging": {
+      "project": "mymanor-staging",
+      "project_id": "prj_DxnwfVeC5TNiWUxDTNlDcmBIlJcW",
+      "stable_url": "https://mymanor-staging.vercel.app",
+      "deployment_url": "https://mymanor-staging-nevljxdlc-rithm84s-projects.vercel.app",
+      "deployment_id": "dpl_P2nqe8TetHtroiX7sK2M3YVjiy33",
+      "ready": true,
+      "vercel_target": "production",
+      "environment_meaning": "Dedicated staging website connected only to staging Supabase",
+      "public_configuration_verified": true,
+      "sso_protection": "all_except_custom_domains",
+      "canonical_alias_public_signin_shell_http": 200,
+      "immutable_deployment_unauthenticated_http": 302
+    },
+    "verification": {
+      "spa_routes": [
+        "/home",
+        "/notes/test-route"
+      ],
+      "spa_http_status": 200,
+      "javascript_svg_manifest_service_worker_http_status": 200,
+      "static_content_types_correct": true,
+      "spa_rewrite_intercepts_pwa_files": false,
+      "interactive_hosted_google_login_verified": true
+    },
+    "main": {
+      "project": "mymanor",
+      "active_deployments": 0,
+      "active_aliases": 0,
+      "targets": {},
+      "canonical_url": "https://mymanor.vercel.app",
+      "http_status": 404,
+      "local_vercel_link_preserved": true
+    },
+    "first_deployment_attempts": {
+      "unexpected_production_classifications": 2,
+      "removed": true,
+      "active_remaining": 0
+    },
+    "exact_staging_origin_allowlist": "Hosted staging only: https://mymanor-staging.vercel.app. Localhost browser origins and Auth redirect entries are removed.",
+    "journal_deployed": false,
+    "hosted_google_sign_in": "Google sign-in completes on the hosted staging site with the staging Supabase project."
+  },
+  "migration_history_verified_count": 41,
+  "production_migration": {
+    "date": "2026-09-12",
+    "applied_versions": 34,
+    "recorded_versions": 47,
+    "preserved_rows": {
+      "tasks": 19,
+      "habits": 11,
+      "habit_entries": 68,
+      "note_pages": 11,
+      "job_roles": 13,
+      "kb_entries": 61,
+      "leetcode_attempts": 18,
+      "resumes": 4
+    },
+    "legacy_files_migrated": {
+      "resumes": 4,
+      "captures": 2,
+      "bucket": "manor-files",
+      "legacy_buckets_retained": [
+        "avatars",
+        "captures",
+        "resumes"
+      ]
+    },
+    "test_account_removed": "120c6ee7-1c98-4365-940e-c41ecad100a9",
+    "legacy_functions_removed": [
+      "normalize-capture",
+      "x-ingest",
+      "alfred-session",
+      "alfred-consult",
+      "x-connect"
+    ],
+    "legacy_schedules_removed": [
+      "x-ingest",
+      "jobs-ingest"
+    ],
+    "snapshot": "output/prod-snapshot-2026-09-12 (local, gitignored)"
+  }
+}

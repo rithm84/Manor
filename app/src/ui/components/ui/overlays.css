@@ -1,0 +1,50 @@
+/* Shared interaction surfaces; Base UI owns focus, anchoring, and dismissal. */
+.ui-overlay { position: fixed; inset: 0; z-index: 100; background: var(--overlay-backdrop); opacity: 1; transition: opacity 160ms var(--ease-out); }
+.ui-dialog-viewport { position: fixed; inset: 0; z-index: 101; display: grid; place-items: center; padding: 24px 16px; overflow-y: auto; }
+.ui-modal { position: relative; max-width: calc(100vw - 32px); max-height: min(860px, calc(100dvh - 48px)); overflow: auto; overscroll-behavior: contain; color: var(--ink-body); background: var(--surface-canvas); border: 1px solid var(--hairline-strong); border-radius: 12px; box-shadow: var(--shadow-overlay); outline: none; transform-origin: center; transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
+.ui-modal[data-starting-style], .ui-modal[data-ending-style] { opacity: 0; transform: translateY(6px) scale(.985); }
+.ui-overlay[data-starting-style], .ui-overlay[data-ending-style] { opacity: 0; }
+.ui-modal h2, .ui-modal h3 { font-family: var(--font-ui); letter-spacing: -.015em; }
+.ui-modal input:not([type='checkbox'],[type='radio'],[type='range']), .ui-modal textarea { color: var(--ink); background-color: var(--surface-canvas); caret-color: var(--primary); }
+.ui-modal input:-webkit-autofill { -webkit-text-fill-color: var(--ink); box-shadow: 0 0 0 1000px var(--surface-canvas) inset; }
+.ui-popover-positioner { z-index: 120; outline: none; }
+.ui-select-trigger, .ui-datepicker-trigger { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; min-height: 34px; padding: 6px 10px; border: 1px solid var(--control-border); border-radius: 6px; color: var(--ink-body); background: var(--surface-card); font: 400 13px/1.4 var(--font-ui); text-align: left; }
+.ui-datepicker-trigger { justify-content: flex-start; width: 100%; }
+.ui-select-trigger svg, .ui-datepicker-trigger svg { flex: 0 0 auto; color: var(--ink-muted); }
+.ui-select-trigger[data-popup-open], .ui-datepicker-trigger[data-popup-open] { background: var(--surface-hover); border-color: var(--primary); }
+.ui-select-placeholder, .ui-datepicker-empty { color: var(--ink-muted); }
+.ui-select-menu, .ui-datepicker-menu { border: 1px solid var(--hairline-strong); border-radius: 8px; background: var(--surface-card); color: var(--ink-body); box-shadow: var(--shadow-overlay); outline: none; font-family: var(--font-ui); }
+.ui-select-menu { min-width: max(168px, var(--anchor-width)); max-width: min(360px, var(--available-width)); max-height: min(320px, var(--available-height)); padding: 5px; overflow: auto; }
+.ui-select-option { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 32px; padding: 6px 8px; border-radius: 4px; color: var(--ink-body); font-size: 13px; line-height: 20px; outline: none; cursor: default; }
+.ui-select-option[data-highlighted] { background: var(--surface-hover); color: var(--ink); }
+.ui-select-option[data-selected] { background: var(--surface-selected); color: var(--ink); }
+.ui-select-option[data-selected][data-highlighted] { background: var(--surface-selected-hover); }
+.ui-select-option-label { display: flex; align-items: center; gap: 8px; }
+.ui-option-check { display: flex; margin-left: auto; color: var(--primary); }
+.ui-datepicker-menu { width: 286px; max-width: var(--available-width); max-height: var(--available-height); overflow: auto; padding: 10px; }
+.ui-date-entry { display: flex; align-items: center; gap: 4px; border: 1px solid var(--control-border); border-radius: 5px; padding: 0 6px 0 10px; background: var(--surface-canvas); }
+.ui-date-entry:focus-within { border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+.ui-date-entry input { width: 100%; min-width: 0; height: 32px; padding: 0; border: 0; outline: 0; color: var(--ink); background: transparent; font: 400 13px var(--font-ui); }
+.ui-date-entry input:focus-visible { box-shadow: none; }
+.ui-date-entry button { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 4px; color: var(--ink-muted); }
+.ui-date-error { margin: 7px 0; color: var(--overdue-error); font-size: 12px; line-height: 1.5; }
+.ui-datepicker-presets { display: flex; gap: 3px; padding: 8px 0; margin-bottom: 6px; border-bottom: 1px solid var(--hairline); }
+.ui-datepicker-presets button { flex: 1; padding: 6px 3px; border-radius: 4px; color: var(--ink-body); font: 400 12px var(--font-ui); }
+.ui-datepicker-monthbar { display: flex; align-items: center; justify-content: space-between; padding: 3px 4px 9px; font: 600 13px var(--font-ui); color: var(--ink); }
+.ui-datepicker-nav { display: flex; gap: 2px; }
+.ui-datepicker-nav button { display: grid; place-items: center; width: 28px; height: 28px; color: var(--ink-muted); border-radius: 4px; }
+.ui-datepicker-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.ui-datepicker-dow { display: grid; place-items: center; height: 25px; color: var(--ink-muted); font-size: 12px; }
+.ui-datepicker-day { display: grid; place-items: center; height: 32px; border-radius: 5px; font: 400 13px var(--font-ui); color: var(--ink-body); }
+.ui-datepicker-day.is-today { box-shadow: inset 0 0 0 1px var(--primary); }
+.ui-datepicker-day.is-selected { color: var(--on-primary); background: var(--primary); box-shadow: none; font-weight: 600; }
+.ui-datepicker-day:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.ui-datepicker-menu button:disabled { color: var(--ink-muted); opacity: .45; cursor: not-allowed; }
+.ui-date-clear { width: 100%; padding: 9px 5px 2px; margin-top: 9px; border-top: 1px solid var(--hairline); text-align: left; color: var(--ink-muted); font-size: 12px; }
+@media (hover: hover) and (pointer: fine) {
+  .ui-select-trigger:hover, .ui-datepicker-trigger:hover { background: var(--surface-soft); }
+  .ui-datepicker-menu button:hover:not(:disabled) { background: var(--surface-soft); color: var(--ink); }
+  .ui-datepicker-menu .is-selected:hover { background: var(--primary-hover); color: var(--on-primary); }
+}
+@media (prefers-reduced-motion: reduce) { .ui-modal, .ui-overlay { transition: opacity 100ms ease; transform: none !important; } }
+@media (max-width: 540px) { .ui-dialog-viewport { padding: 12px; } .ui-modal { max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); } }

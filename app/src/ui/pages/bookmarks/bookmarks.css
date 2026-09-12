@@ -558,7 +558,7 @@
 
 .bm-dialog-btn.is-danger {
   border-color: var(--error);
-  color: white;
+  color: var(--on-primary);
   background: var(--error);
 }
 

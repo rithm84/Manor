@@ -11,6 +11,7 @@ export type HabitDayMark =
   | 'inactive'
 
 export interface HabitDefinition {
+  readonly revision?: number
   id: string
   name: string
   kind: HabitKind
@@ -61,6 +62,8 @@ export interface HabitMonthPool {
 }
 
 export interface HabitsState {
+  /** Shared pool balance after that day’s spends and perfect-day grant. */
+  poolDays?: readonly { date: string; balance: number }[]
   today: string
   habits: readonly HabitDefinition[]
   lifecycle: readonly HabitLifecycleEvent[]
@@ -84,6 +87,7 @@ export interface HabitSeed {
 }
 
 export interface HabitDraft {
+  expectedRevision?: number
   name: string
   kind: HabitKind
   targetLabel: string | null
@@ -444,13 +448,24 @@ export function metricsForHabit(state: HabitsState, habit: HabitDefinition): Hab
   let trackedDays = 0
   let brokenStreak = 0
   let brokenOn: string | null = null
+  let retiredGap = false
   let earnBackProgress: 0 | 1 = 0
   const earnBackMonths = new Set<string>()
 
   for (let date = habit.createdOn; date <= state.today; date = addDays(date, 1)) {
     const status = statusOn(habit.id, date, state.lifecycle)
-    if (status === null || status === 'paused' || status === 'retired') {
+    if (status === 'retired') {
+      retiredGap = true
       continue
+    }
+    if (status === null || status === 'paused') continue
+    if (retiredGap) {
+      currentStreak = 0
+      freezeFreeDays = 0
+      brokenStreak = 0
+      brokenOn = null
+      earnBackProgress = 0
+      retiredGap = false
     }
     trackedDays += 1
     const complete = entries.get(date) === 100
@@ -484,9 +499,13 @@ export function metricsForHabit(state: HabitsState, habit: HabitDefinition): Hab
       brokenStreak = 0
       earnBackProgress = 0
     } else if (date < state.today) {
-      if (currentStreak > 0) {
+      const emptyPool = state.poolDays?.find((day) => day.date === date)?.balance === 0
+      if (currentStreak > 0 && emptyPool && !earnBackMonths.has(monthKey(date))) {
         brokenStreak = currentStreak
         brokenOn = date
+      } else if (currentStreak > 0) {
+        brokenStreak = 0
+        brokenOn = null
       }
       currentStreak = 0
       freezeFreeDays = 0

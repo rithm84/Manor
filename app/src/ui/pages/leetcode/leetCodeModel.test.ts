@@ -44,6 +44,7 @@ const STATE: LeetCodeState = {
     streak: 5,
     freezesLeft: 3,
     freezesPerMonth: 5,
+    freezeAction: { date: '2026-08-19', applied: false, canApply: true, canClear: false, revision: 0 },
     legacyProgress: [{ topic: 'Everything after', solvedCount: 3, attemptCount: 3 }]
   }
 }

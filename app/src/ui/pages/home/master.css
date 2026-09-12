@@ -320,7 +320,7 @@
   padding: 0 var(--space-2);
   border-radius: var(--radius-control);
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
   font-size: var(--text-sm);
   font-weight: 600;
 }

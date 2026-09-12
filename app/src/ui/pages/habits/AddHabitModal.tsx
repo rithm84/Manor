@@ -1,4 +1,4 @@
-import { Check, Gauge } from 'lucide-react'
+import { Check, Gauge, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 
@@ -32,10 +32,12 @@ export function HabitEditorModal({
   onClose,
   onSave
 }: HabitEditorModalProps): ReactNode {
+  const [expectedRevision, setExpectedRevision] = useState<number | undefined>(undefined)
   const [name, setName] = useState('')
   const [kind, setKind] = useState<HabitKind>('binary')
   const [targetLabel, setTargetLabel] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
 
   useEffect(() => {
@@ -44,11 +46,13 @@ export function HabitEditorModal({
     }
     const draft = initialDraft ?? EMPTY_DRAFT
     setName(draft.name)
+    setExpectedRevision(draft.expectedRevision)
     setKind(draft.kind)
     setTargetLabel(draft.targetLabel ?? '')
     setSaving(false)
+    setSaveError(null)
     setConfirmDiscard(false)
-  }, [initialDraft, open])
+  }, [open])
 
   const valid = name.trim() !== '' && (kind === 'binary' || targetLabel.trim() !== '')
   const editing = initialDraft !== null
@@ -70,12 +74,16 @@ export function HabitEditorModal({
     event.preventDefault()
     if (!valid || saving) return
     setSaving(true)
+    setSaveError(null)
     try {
       await onSave({
+        expectedRevision,
         name: name.trim(),
         kind,
         targetLabel: kind === 'quantized' ? targetLabel.trim() : null
       })
+    } catch (error: unknown) {
+      setSaveError(`Could not save the habit: ${error instanceof Error ? error.message : String(error)}`)
     } finally {
       setSaving(false)
     }
@@ -85,7 +93,12 @@ export function HabitEditorModal({
     <>
     <Modal open={open} onClose={requestClose} width={460} ariaLabel={editing ? 'Edit habit' : 'New habit'}>
       <form className="habit-add" onSubmit={(event) => void submit(event)}>
-        <h2 className="habit-add-title">{editing ? 'Edit habit' : 'New habit'}</h2>
+        <header className="habit-add-head">
+          <h2 className="habit-add-title">{editing ? 'Edit habit' : 'New habit'}</h2>
+          <button type="button" className="habit-add-close" aria-label="Close habit editor" onClick={requestClose} disabled={saving}>
+            <X size={17} />
+          </button>
+        </header>
 
         <label className="habit-add-field">
           <span className="habit-add-label">Name</span>
@@ -146,6 +159,8 @@ export function HabitEditorModal({
             Past entries keep their recorded percentages. From today, this habit becomes one tap.
           </p>
         ) : null}
+
+        {saveError !== null ? <p className="habit-add-error" role="alert">{saveError}</p> : null}
 
         <div className="habit-add-footer">
           <Button variant="ghost" onClick={requestClose} disabled={saving}>

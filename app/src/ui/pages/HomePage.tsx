@@ -1,3 +1,7 @@
+import { browserSurfaces } from '../../web/browserTools'
+import { useCommitVersion } from '../services/useCommitVersion'
+import { useAccountTimezone } from '../../web/accountContext'
+import { dateInTimezone, timeInTimezone } from '../../shared/timezone'
 import { useManorService } from '../services/ManorServices'
 import {
   DndContext,
@@ -17,8 +21,6 @@ import type { ReactNode } from 'react'
 
 import { Button, EmptyState, QuickActionsMenu } from '../components/ui'
 import type { QuickActionItem, QuickActionPoint } from '../components/ui'
-import { events as demoEvents, user } from '../data/mock'
-import { useCurrentAccount } from './welcome/accountSession'
 import type {
   ContextDefinition,
   ContextDraft,
@@ -47,8 +49,6 @@ import {
   findFreeStart,
   formatDayLabel,
   formatLongDayLabel,
-  localTime,
-  localTodayIso,
   minutesToTime,
   scratchExpiry,
   timeToMinutes
@@ -89,14 +89,12 @@ function errorMessage(error: unknown): string {
 }
 
 export function HomePage(): ReactNode {
+  const commitVersion = useCommitVersion()
   const homeApi = useManorService('home')
   const [now, setNow] = useState<Date>(() => new Date())
-  const today = localTodayIso(now)
-  const nowTime = localTime(now)
-  // The mock persona's name greets only the signed-out showroom; accounts
-  // have no display name, so signed-in greetings stand alone.
-  const { account } = useCurrentAccount()
-  const greetingName = account === null ? user.name : null
+  const timezone = useAccountTimezone()
+  const today = dateInTimezone(now, timezone)
+  const nowTime = timeInTimezone(now, timezone)
   const [tasks, setTasks] = useState<readonly Task[]>([])
   const [contexts, setContexts] = useState<readonly ContextDefinition[]>([])
   const [scratchBlocks, setScratchBlocks] = useState<readonly ScratchBlock[]>([])
@@ -131,6 +129,20 @@ export function HomePage(): ReactNode {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
+  useEffect(() => browserSurfaces.attachModule({
+    module: 'home',
+    context: () => ({ ready: !loading, selected_object_id: peekOpen ? peekId : null, navigation_blocked: peekOpen || composerBucket !== null || blockPeekOpen, filters: { view, schedule_day: scheduleDay }, presentation: 'dialog' }),
+    open: id => {
+      if (!tasks.some(task => task.id === id)) throw new Error(`Task ${id} is not available in the current account`)
+      if (composerBucket !== null || blockPeekOpen) throw new Error('Close the task composer or time-block dialog before opening a task')
+      setPeekId(id); setDueAttention(false); setPeekOpen(true)
+    },
+    filter: request => {
+      if (request.module !== 'home') throw new TypeError('Home requires Home view controls')
+      setView(request.view); setScheduleDay(request.schedule_day)
+    }
+  }), [loading, tasks, peekOpen, peekId, view, scheduleDay, composerBucket, blockPeekOpen])
+
   useEffect(() => {
     const clock = window.setInterval(() => setNow(new Date()), 60_000)
     return (): void => window.clearInterval(clock)
@@ -158,7 +170,7 @@ export function HomePage(): ReactNode {
     return (): void => {
       cancelled = true
     }
-  }, [])
+  }, [homeApi, commitVersion])
 
   useEffect(() => {
     const timers = completeTimers.current
@@ -211,11 +223,12 @@ export function HomePage(): ReactNode {
     setPersistError(`${operation}: ${errorMessage(error)}`)
   }
 
-  const updateTask = async (updated: Task): Promise<void> => {
+  const updateTask = async (updated: Task): Promise<Task> => {
     try {
       const persisted = await homeApi.upsertTask(updated)
       setTasks((current) => current.map((task) => (task.id === persisted.id ? persisted : task)))
       setPersistError(null)
+      return persisted
     } catch (error) {
       reportPersistenceError('Could not save task', error)
       throw error
@@ -223,8 +236,7 @@ export function HomePage(): ReactNode {
   }
 
   const removeContext = async (name: string): Promise<void> => {
-    // The store refuses while tasks still use the context or it is the last
-    // one; the picker shows that refusal inline.
+    // Task references prevent removal; the picker shows that refusal inline.
     await homeApi.deleteContext(name)
     setContexts((current) =>
       current.filter((candidate) => candidate.name.toLocaleLowerCase() !== name.toLocaleLowerCase())
@@ -250,14 +262,17 @@ export function HomePage(): ReactNode {
   }
 
   /** Rename cascades in the store, so tasks re-read from the returned state. */
-  const updateContext = async (originalName: string, context: ContextDraft): Promise<ContextDefinition> => {
+  const updateContext = async (
+    originalName: string,
+    context: ContextDraft
+  ): Promise<{ context: ContextDefinition; tasks: readonly Task[] }> => {
     try {
       const persisted = await homeApi.updateContext(originalName, context)
       const state = await homeApi.load()
       setContexts(state.contexts)
       setTasks(state.tasks)
       setPersistError(null)
-      return persisted
+      return { context: persisted, tasks: state.tasks }
     } catch (error) {
       reportPersistenceError('Could not save context', error)
       throw error
@@ -277,7 +292,7 @@ export function HomePage(): ReactNode {
       status: 'Not started',
       due: dueForTaskCreation(bucket, today, draft.due),
       tags: [],
-      recurrence: null
+      recurrence: draft.recurrence
     }
     // Creation failures propagate so the dialog can show them inside itself;
     // the page banner would sit behind the dialog scrim.
@@ -325,9 +340,9 @@ export function HomePage(): ReactNode {
     }, COMPLETE_FADE_MS)
     completeTimers.current.set(task.id, timer)
     try {
-      await updateTask({ ...task, status: 'Done' })
+      const persisted = await updateTask({ ...task, status: 'Done' })
       playCompletionTick()
-      recordUndo({ kind: 'complete', task })
+      recordUndo({ kind: 'complete', task: { ...persisted, status: task.status } })
     } catch {
       // updateTask already surfaced the error; keep the card in place.
       window.clearTimeout(timer)
@@ -392,7 +407,7 @@ export function HomePage(): ReactNode {
       return
     }
     try {
-      const persisted = await homeApi.upsertTask(record.task)
+      const persisted = await homeApi.restoreTask(record.task.id)
       setTasks((current) => [...current, persisted])
       setPersistError(null)
     } catch (error) {
@@ -532,7 +547,7 @@ export function HomePage(): ReactNode {
         minutes,
         requested,
         scratchBlocks,
-        account === null ? demoEvents : []
+        []
       )
       return { start, end: minutesToTime(timeToMinutes(start) + minutes), title: task.title, error: null }
     } catch (error) {
@@ -653,6 +668,10 @@ export function HomePage(): ReactNode {
           tone: 'default',
           onSelect: () => void duplicateTask(quickTask)
         },
+        ...(quickTask.seriesId && quickTask.status !== 'Done' ? [{
+          id: 'skip-occurrence', label: 'Skip this occurrence', icon: <RotateCcw size={15} />, tone: 'default' as const,
+          onSelect: () => { void homeApi.skipOccurrence(quickTask).catch((error: Error) => reportPersistenceError('Could not skip occurrence', error)) }
+        }] : []),
         {
           id: 'delete',
           label: 'Delete task',
@@ -683,7 +702,7 @@ export function HomePage(): ReactNode {
           <div className="home-heading">
             <h1 className="home-greeting display">
               {greetingFor(nowTime)}
-              {greetingName === null ? '.' : `, ${greetingName}.`}
+              .
             </h1>
             <span className="home-date">{todayLabel}</span>
           </div>
@@ -801,19 +820,21 @@ export function HomePage(): ReactNode {
           today={today}
           contexts={contexts}
           onAddContext={addContext}
-          onUpdateContext={updateContext}
+          onUpdateContext={async (originalName, context) =>
+            (await updateContext(originalName, context)).context}
           onDeleteContext={removeContext}
           onCreate={createTask}
           onClose={() => setComposerBucket(null)}
         />
 
         <TaskDetailDialog
+          today={today}
           task={peekTask}
           open={peekOpen}
           contexts={contexts}
           dueAttention={dueAttention}
           onClose={() => setPeekOpen(false)}
-          onUpdate={updateTask}
+          onUpdate={async (updated) => { await updateTask(updated) }}
           onAddContext={addContext}
           onUpdateContext={updateContext}
           onDeleteContext={removeContext}
@@ -824,6 +845,7 @@ export function HomePage(): ReactNode {
           onDelete={(taskId) => void deleteTask(taskId).catch(() => undefined)}
         />
         <ScratchBlockDialog
+          today={today}
           block={blockPeek}
           task={blockPeekTask}
           open={blockPeekOpen}

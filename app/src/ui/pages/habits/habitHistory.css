@@ -66,13 +66,14 @@
 
 .habit-history-summaryvalue {
   color: var(--ink);
-  font-size: 22px;
+  font-family: var(--font-display);
+  font-size: var(--display-md);
   font-weight: 600;
 }
 
 .habit-history-summary-primary .habit-history-summaryvalue {
   color: var(--completion);
-  font-size: 28px;
+  font-size: var(--display-md);
 }
 
 .habit-history-summarylabel {
@@ -101,6 +102,46 @@
   font-size: var(--text-xs);
 }
 
+.habit-history-trendcontrols {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.habit-history-trendcontrols > .ui-select {
+  width: 152px;
+}
+
+.habit-history-range {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+}
+
+.habit-history-range button {
+  min-width: 34px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border-radius: calc(var(--radius-control) - 2px);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+.habit-history-range button.is-selected {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.habit-history-range button:active {
+  transform: scale(0.97);
+}
+
 .habit-history-trendstat > span:first-child {
   color: var(--ink-body);
   font-size: var(--text-md);
@@ -124,6 +165,8 @@
   border-top: 1px solid var(--hairline);
   list-style: none;
 }
+
+.habit-history-empty { color: var(--ink-muted); font-size: var(--text-sm); }
 
 .habit-history-rankrow {
   display: grid;
@@ -275,6 +318,17 @@
 }
 
 @media (max-width: 1080px) {
+  .habit-history-sectionhead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .habit-history-trendcontrols {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
   .habit-history-rankrow {
     grid-template-columns: 20px minmax(160px, 1fr) 40px 40px 16px;
   }

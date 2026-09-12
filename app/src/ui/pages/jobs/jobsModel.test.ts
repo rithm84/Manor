@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { JobRole, JobStageTransition } from '../../../shared/jobs'
-import { currentUpdateLabel, fieldsForStageChange, jobFlowData, postedLabel, toBoardCard } from './jobsModel'
+import { currentUpdateLabel, roleFields, jobFlowData, postedLabel, toBoardCard } from './jobsModel'
 
 const ROLE: JobRole = {
   id: 'job-1',
@@ -70,9 +70,9 @@ describe('jobs presentation model', () => {
     expect(jobFlowData(transitions)).toEqual({ nodes: [], links: [] })
   })
 
-  it('keeps the hiring cycle through a stage change', () => {
+  it('keeps the hiring cycle in the editable role fields', () => {
     const role: JobRole = { ...ROLE, term: 'Summer 2027' }
-    const fields = fieldsForStageChange(role, 'interview_1', '2026-08-26')
+    const fields = roleFields(role)
     expect(fields.term).toBe('Summer 2027')
     expect(fields.appliedDate).toBe('2026-08-17')
   })

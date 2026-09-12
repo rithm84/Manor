@@ -13,10 +13,13 @@ import type { ReactNode } from 'react'
 
 import {
   tableOfContentsBlock,
-  twoColumnsBlock,
   webBookmarkBlock,
   webEmbedBlock
 } from './noteAdvancedBlocks'
+
+import { twoColumnsBlock, noteColumnBlock, documentTabsBlock, documentTabBlock } from './noteLayoutBlocks'
+
+import { noteImageBlock } from './noteImageBlock'
 
 const calloutBlock = createReactBlockSpec(
   {
@@ -73,15 +76,19 @@ const pageMention = createReactInlineContentSpec(
   }
 )
 
-const { checkListItem: _checkListItem, codeBlock: _codeBlock, ...documentBlockSpecs } =
+const { codeBlock: _codeBlock, ...documentBlockSpecs } =
   defaultBlockSpecs
 
 export const noteEditorSchema = BlockNoteSchema.create({
   blockSpecs: {
     ...documentBlockSpecs,
+    image: noteImageBlock,
     codeBlock: createCodeBlockSpec(codeBlockOptions),
     callout: calloutBlock,
     twoColumns: twoColumnsBlock,
+    noteColumn: noteColumnBlock,
+    documentTabs: documentTabsBlock,
+    documentTab: documentTabBlock,
     mathBlock: createReactMathBlockSpec(),
     tableOfContents: tableOfContentsBlock,
     webBookmark: webBookmarkBlock,

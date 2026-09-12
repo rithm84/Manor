@@ -1,4 +1,5 @@
-import { renderToStaticMarkup } from 'react-dom/server'
+// @vitest-environment happy-dom
+import { renderPortalMarkup } from '../../testing/renderPortalMarkup'
 import { describe, expect, it, vi } from 'vitest'
 
 import { ProblemReviewModal } from './ProblemReviewModal'
@@ -10,8 +11,8 @@ const SOURCE = `class Solution:
 `
 
 describe('ProblemReviewModal', () => {
-  it('renders a centered accessible review workflow with exact solution history', () => {
-    const markup = renderToStaticMarkup(
+  it('renders a centered accessible review workflow with exact solution history', async () => {
+    const markup = await renderPortalMarkup(
       <ProblemReviewModal
         problem={{
           id: 'two-sum',

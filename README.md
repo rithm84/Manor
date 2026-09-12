@@ -2,13 +2,13 @@
 
 _Last updated: 2026-09-09_
 
-Manor brings daily planning, habits, learning, job applications, and personal knowledge into one workspace. It is being rebuilt as a web app that can be used directly or operated by Codex through WebMCP.
+Manor brings daily planning, habits, learning, job applications, and personal knowledge into one workspace. It is being rebuilt as a web app that can be used directly or operated by Codex through WebMCP and remote MCP.
 
 Manor provides the productivity interface and durable records. Codex brings conversation, voice, and context from connected sources to help maintain them. The aim is to spend less time organizing the system and more time using what it knows.
 
-**Status: foundation for the web rebuild.** This checkout contains a buildable React UI library and reusable domain logic. It is not yet a runnable or deployed web application. The desktop runtime has been removed; the new web services and agent tools are still to be implemented.
+**Status: runnable web app with staging verification.** The interface, real backend adapters, transactional commands, durable Notes editing, and agent-tool catalog are implemented. The encrypted Journal builds separately. Production release acceptance is not complete; [architecture status](docs/ARCHITECTURE.md#1-status-and-scope) distinguishes verified flows from outstanding OAuth, deployment, and recovery work.
 
-## The planned experience
+## The experience
 
 | Area | What it brings together |
 |---|---|
@@ -20,7 +20,7 @@ Manor provides the productivity interface and durable records. Codex brings conv
 | **Notes and knowledge** | Rich documents, attachments, captured material, X bookmarks, and retrieval across saved content. |
 | **Journal** | A separate encrypted writing surface, kept outside agent access. |
 
-Scheduled weekly reviews will bring patterns and unfinished work back into view. The visual redesign will use Mobbin references, with the existing [design charter](docs/DESIGN.md) as its starting point.
+Scheduled weekly reviews will bring patterns and unfinished work back into view. The [design charter](docs/DESIGN.md) sets a Mixpanel-informed aesthetic, Notion-style Notes editing, and deliberately designed light and dark modes.
 
 ## Working with Codex
 
@@ -30,21 +30,21 @@ The intended workflow is to keep Manor open in Codex's browser and use either th
 - “Read my email and update the tasks that need attention.”
 - “Let's debrief today, then update my daily synthesis.”
 
-These are target workflows. WebMCP will expose comprehensive domain operations so Codex can find records, make precise changes, and see their saved results. When context comes from email or another connected source, Codex uses its own integration and then invokes the relevant Manor operation.
+The shared catalog exposes domain operations for finding records, making precise changes, and inspecting saved results. Native WebMCP host behavior and real remote OAuth authorization still require verification. When context comes from email or another connected source, Codex uses its own integration and then invokes the relevant Manor operation.
 
-Background ingestion and review generation belong to the backend so they can run independently of an open conversation. The Journal has a separate privacy boundary and does not participate in synthesis, search, or agent tools.
+Backend jobs own ingestion and embeddings. Scheduled ChatGPT Work tasks generate weekly reviews and save them through remote MCP without an open Manor tab. The Journal has a separate privacy boundary and does not participate in synthesis, search, or agent tools.
 
 ## What is in this repository
 
-The retained foundation includes React routes and components, a BlockNote editor, shared types and validation, domain calculations, anonymous fixtures, and tests. It also includes existing database migrations, jobs ingestion code, and reusable X bookmark parsing.
+The repository includes the React web app, a BlockNote editor with protected drafts, shared domain types and tool contracts, Supabase migrations and workers, anonymous fixtures, and tests. The separate Journal package implements browser encryption. Recovery tools use restic and rclone for encrypted snapshots and isolated file restoration.
 
-The target stack is React, TypeScript, and Vite on Vercel, with Supabase for backend services and TanStack Query for browser server state. The [architecture document](docs/ARCHITECTURE.md) defines the boundaries and contains editable Excalidraw diagrams.
+The stack is React, TypeScript, and Vite on Vercel, with Supabase for backend services and TanStack Query for browser server state. The [architecture document](docs/ARCHITECTURE.md) defines the boundaries and contains editable Excalidraw diagrams.
 
-Work still required before release includes the web entry point, account flows, shared transactional operations, WebMCP registration, cache updates, protected browser drafts, file lifecycle and recovery, background jobs, and the isolated Journal. Existing migration files describe historical deployments; they do not establish that the target architecture is implemented.
+Before release, complete production data import, real Google and remote OAuth authorization, unattended weekly-review verification, and a remote database-plus-files restore rehearsal. Staging checks and buildable code do not establish production readiness.
 
 ## Working locally
 
-Start with the [UI foundation guide](app/README.md) for installation, typechecking, tests, and build commands. The package currently builds a library into `app/dist/`; it has no development app server. Its view components require explicit service implementations.
+Start with the [web app guide](app/README.md) for connection settings, development, and verification. `npm --prefix app run dev` starts the app on port 5173; the independent Journal uses port 5180. The production web build writes `app/dist/`. The [recovery guide](tools/recovery/README.md) covers backup credentials, daily scheduling, and isolated restore requirements.
 
 Documentation diagrams live in `docs/diagrams/` as editable `.excalidraw` scenes alongside their exported SVGs. To regenerate the SVGs using the local export tool and an installed Google Chrome browser:
 
@@ -60,5 +60,6 @@ npm --prefix tools/diagrams run render
 | [PRD](docs/PRD.md) | Product scope, business rules, delivery priorities, and open product decisions. |
 | [Architecture](docs/ARCHITECTURE.md) | Technical design, data flow, deployment, migration, and recovery. |
 | [Design charter](docs/DESIGN.md) | Visual direction, typography, component treatment, and interaction principles. |
-| [UI foundation guide](app/README.md) | Package setup, verification commands, and current implementation limits. |
+| [Redesign report](docs/REDESIGN-REPORT.md) | Notion and Mixpanel flow analysis, reference crops, implementation gaps, and design proposals. |
+| [Web app guide](app/README.md) | Package setup, verification commands, and current implementation limits. |
 | [Agent guide](AGENTS.md) | Repository layout, working conventions, and available skill groups. |

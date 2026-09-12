@@ -2,7 +2,10 @@
 
 /* Anchors the bottom-center undo hint pill. */
 .home {
+  --home-column-min: 218px;
+  --home-column-gap: 10px;
   position: relative;
+  container: home / inline-size;
 }
 
 /* --- Header ---------------------------------------------------------------- */
@@ -111,13 +114,18 @@
 }
 
 .home-main {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
   align-items: stretch;
   gap: var(--space-4);
   min-height: calc(100vh - 168px);
 }
 
 .home.is-weekly .home-main {
+  /* Four board columns have three internal gaps; the schedule is column five. */
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(var(--home-column-min), calc((100% - var(--space-4) - 3 * var(--home-column-gap)) / 5));
   min-height: 0;
   flex: 1;
   overflow: hidden;
@@ -125,6 +133,7 @@
 
 .home-empty {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -150,7 +159,7 @@
   min-width: 0;
   display: flex;
   align-items: stretch;
-  gap: 10px;
+  gap: var(--home-column-gap);
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: var(--space-2);
@@ -183,7 +192,7 @@
 .kanban-col {
   flex: 1;
   min-height: 0;
-  min-width: 218px;
+  min-width: var(--home-column-min);
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-card);
@@ -257,77 +266,17 @@
 
 /* --- Task card -------------------------------------------------------------- */
 
-/* Task cards read as white sticky notes: squarer stock, a dog-ear fold
-   showing the column wash beneath, and a hair of hand-placed tilt. */
+/* Compact task objects on a quiet column canvas. */
 .task-card {
-  --card-tilt: 0deg;
   position: relative;
   background: var(--surface-card);
   border: 1px solid var(--hairline);
-  border-radius: 3px;
-  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-radius: var(--radius-control);
+  padding: var(--space-3);
   cursor: pointer;
-  transform: rotate(var(--card-tilt));
-  transition:
-    border-color var(--duration-fast) ease,
-    box-shadow var(--duration-fast) ease,
-    transform var(--duration-press) var(--ease-out),
-    opacity var(--duration-base) ease;
-
-  @starting-style {
-    opacity: 0;
-    transform: translateY(4px) rotate(var(--card-tilt));
-  }
 }
-
-.kanban-cards .task-card:nth-child(odd) {
-  --card-tilt: -0.25deg;
-}
-
-.kanban-cards .task-card:nth-child(even) {
-  --card-tilt: 0.3deg;
-}
-
-/* The fold, two-tone: ::before cuts the corner away (column wash shows
-   through where the paper is gone); ::after is the folded-over flap, a
-   shade darker than the wash, with a crease shadow onto the card. */
-.task-card::before {
-  content: '';
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 0 14px 14px;
-  border-color: transparent transparent var(--board-wash, var(--surface-canvas)) transparent;
-}
-
-.task-card::after {
-  content: '';
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 14px 14px 0 0;
-  border-color: color-mix(in srgb, var(--ink) 8%, var(--board-wash, var(--surface-canvas)))
-    transparent transparent transparent;
-  filter: drop-shadow(-1px -1px 1px rgba(27, 25, 29, 0.09));
-}
-
-/* Lift on hover comes from the border and a nudge, never box-shadow: a
-   shadow traces the uncut rectangle and reveals a ghost of the dog-eared
-   corner. */
-.task-card:hover {
-  border-color: var(--surface-strong);
-  transform: rotate(var(--card-tilt)) translateY(-1px);
-}
-
-.task-card:active {
-  transform: rotate(var(--card-tilt)) scale(0.99);
-}
+.task-card:hover { border-color: var(--hairline-strong); box-shadow: var(--shadow-hover); }
+.task-card:active { background: var(--surface-soft); }
 
 .task-card.is-completing {
   opacity: 0.35;
@@ -425,15 +374,14 @@
 /* --- Today panel ------------------------------------------------------------ */
 
 .today-panel {
-  width: 300px;
-  flex-shrink: 0;
+  min-width: 0;
   align-self: flex-start;
   position: sticky;
   top: 0;
   background: var(--surface-card);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-card-lg);
-  padding: var(--space-4);
+  padding: clamp(var(--space-2), 1.5cqi, var(--space-4));
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -449,6 +397,7 @@
 
 .today-head {
   display: flex;
+  flex-wrap: wrap;
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
@@ -493,6 +442,23 @@
   font-size: var(--text-sm);
   color: var(--ink-muted);
   white-space: nowrap;
+}
+
+/* Keep both regions usable once a side-by-side schedule would be too narrow. */
+@container home (max-width: 720px) {
+  .home-header,
+  .home-heading { flex-wrap: wrap; }
+
+  .home-main { grid-template-columns: minmax(0, 1fr); }
+
+  .home.is-weekly .home-main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(360px, 1fr) minmax(420px, 1fr);
+    overflow-y: auto;
+  }
+
+  .today-panel { position: static; }
+  .home.is-weekly .today-panel { height: auto; }
 }
 
 /* Hour axis: tabular labels in a 44px gutter, faint hourlines, blocks placed
@@ -557,7 +523,7 @@
   gap: 1px;
   padding: 2px var(--space-2) 2px 10px;
   border-radius: var(--radius-chip);
-  background: color-mix(in srgb, var(--entry-color) 11%, #ffffff);
+  background: color-mix(in srgb, var(--entry-color) 11%, var(--surface-canvas));
   overflow: hidden;
   transition:
     filter var(--duration-fast) ease,
@@ -581,40 +547,16 @@
   background: var(--entry-color);
 }
 
-/* Scratch blocks are disposable paper: the one sanctioned full skeuomorph.
-   Sticky-note stock, faint grain, a hair of rotation, and a dog-ear fold. */
-/* The dog-ear corner is genuinely cut off the note's geometry (clip-path),
-   so nothing sticks out past the fold on any background. No resting shadow:
-   box-shadow would trace the uncut rectangle and betray the fold. */
+/* Scratch blocks use the same time geometry as calendar events. */
 .today-block.is-scratch {
-  background: var(--sticky-note);
-  border: 1px solid var(--sticky-note-edge);
-  border-radius: 2px;
-  transform: rotate(-0.5deg);
-  color: var(--tomorrow-gold);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 13px), calc(100% - 13px) 100%, 0 100%);
-}
-
-.today-block.is-scratch:nth-child(even) {
-  transform: rotate(0.4deg);
-}
-
-/* A sticky note is written by hand */
-.today-block.is-scratch .today-block-title {
-  font-family: var(--font-hand);
-  font-weight: 500;
-}
-
-.today-block.is-scratch {
+  background: var(--scratch-tint);
+  border: 1px solid color-mix(in srgb, var(--scratch) 45%, var(--hairline));
+  border-radius: var(--radius-chip);
+  color: var(--scratch);
   cursor: grab;
 }
-
-.today-block.is-dragging {
-  z-index: 6;
-  box-shadow: var(--shadow-overlay);
-  cursor: grabbing;
-  transform: rotate(-1deg) scale(1.02);
-}
+.today-block.is-scratch .today-block-title { font-family: var(--font-ui); font-weight: 600; }
+.today-block.is-dragging { z-index: 6; box-shadow: var(--shadow-overlay); cursor: grabbing; }
 
 /* Hovering over another block: this position will snap back on release. */
 .today-block.is-drag-invalid {
@@ -632,35 +574,6 @@
 .today-timeline.is-pointer-drag {
   cursor: grabbing;
   user-select: none;
-}
-
-.today-block.is-scratch::before {
-  display: none;
-}
-
-/* The flap folded back over the cut, same anatomy as task cards. */
-.today-block.is-scratch::after {
-  content: '';
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 12px 12px 0 0;
-  border-color: color-mix(in srgb, var(--ink) 8%, var(--sticky-note)) transparent transparent
-    transparent;
-  filter: drop-shadow(-1px -1px 1px rgba(27, 25, 29, 0.09));
-}
-
-/* A lifted note flattens: clip-path would clip the drag shadow away, so the
-   fold rests while dragging and the overlay shadow does the lifting. */
-.today-block.is-scratch.is-dragging {
-  clip-path: none;
-}
-
-.today-block.is-scratch.is-dragging::after {
-  display: none;
 }
 
 .today-block.is-faded {
@@ -745,7 +658,7 @@
   overflow: hidden;
   border: 1.5px solid var(--scratch);
   border-radius: var(--radius-chip);
-  background: color-mix(in srgb, var(--scratch-tint) 88%, white);
+  background: color-mix(in srgb, var(--scratch-tint) 88%, var(--surface-canvas));
   box-shadow: var(--shadow-hover);
   color: var(--scratch);
   pointer-events: none;

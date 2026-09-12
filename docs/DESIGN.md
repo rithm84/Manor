@@ -1,78 +1,75 @@
 # Manor Design Charter
 
-_Last updated: 2026-09-09_
+_Last updated: 2026-09-10_
 
-The binding design reference for everyone building `app/`. Read fully before writing any UI. Product behavior lives in [PRD.md](PRD.md); the canonical mock-data story is [data/mock.ts](../app/src/ui/data/mock.ts). The anti-patterns in [AGENTS.md](../AGENTS.md) are hard rules; violating them is a failed deliverable.
+This document owns the accepted visual and interaction direction. [PRD.md](PRD.md) owns product behavior; [REDESIGN-REPORT.md](REDESIGN-REPORT.md) contains the Mobbin evidence, component analysis, and proposals still awaiting selection. Shared theme tokens and components implement the selected baseline; complete workflow verification remains required.
 
 ## Direction
 
-**Paper.** Light, paper-white, editorial, calm — the 2026-08-23 evolution of the Atelier direction. The heavy cream/beige surfaces of the first hi-fi pass are retired: they muddied readability and made chrome compete with content. Content lives on white; app chrome (sidebars, rails, wells) sits on barely-warm paper neutrals; **violet is the single interaction accent**; semantic colors appear only when they mean something. Dark mode remains rejected. Emotional design still outranks minimalism — warmth, celebration moments, urgency states — executed with restraint.
+Use **Mixpanel's smooth, restrained product UI** as the aesthetic baseline and **Notion's document editing and contextual controls** as the interaction reference. Manor chooses its own color scheme. The paper-and-ink identity, grain overlays, handwritten display typography, sketched decoration, and literal sticky-note styling are retired. The supplied references do not authorize copying unrelated Mixpanel analytics workflows or Notion workspace features.
 
-**The printed page you write on (2026-08-23, second pass).** Manor is a printed instrument: Inter is the *print*, a faint paper grain is the *stock*, and the hand face plus rough ink marks are *your marks on it*. Handwriting appears only where a person would plausibly write on a printed page — greetings, titles, empty-state headlines, celebrations, marginalia. Data is always print. Texture is always felt, never seen first.
+Preserve Manor's high-level layout, especially Home's task kanban alongside a single-column calendar timeline. Redesign Mood & Focus and module history views comprehensively. The tool-only action history remains outside the UI. Follow [PRD §8](PRD.md#8-surfaces) for navigation and centered object details.
 
-**Scope:** this is the current visual baseline while the Mobbin-informed web redesign is developed. Product surfaces follow the PRD.
+Home's calendar matches the width of one kanban column. All five columns grow and shrink together until their shared readable minimum; below that, the board scrolls horizontally. Narrow layouts stack the board and calendar.
 
-**Blueprints, in order of authority:**
+Light and dark modes are both required. Design each mode's surfaces, contrast, controls, charts, editor selection, media presentation, and overlays deliberately. Plum and neutral gray are selected. Use muted teal as the working secondary accent for supporting highlights and chart differentiation; its exact treatment remains subject to review on populated screens. Exact theme tokens still need contrast and interaction checks.
 
-1. **Notion** (via Mobbin — pull flows before designing your surface): board/kanban UX (group pills with counts, softly tinted columns, card chips, "+ New" affordances), sidebar behavior, property editors, settings anatomy. Object details adapt those property patterns into Manor's centered dialogs.
-2. **The tokens below** as the base coat. When a value is not here, derive it from a token (`color-mix`), never invent a literal.
+## Manor mark
 
-## Tokens (Paper Violet)
+The selected logo is the **Flowing M**: a continuous, rounded monogram with a restrained plum treatment. The canonical standalone asset is `app/public/brand/manor-mark.svg`; `app/src/ui/components/brand/ManorLogo.tsx` renders the same SVG geometry inline for the app sidebar and account surface. Use its established proportions and theme-aware color. Do not introduce alternate marks, sketched treatments, or character imagery.
 
-Defined in `app/src/ui/styles/tokens.css` — the single source of truth. Never write a color, radius, shadow, or font-size literal in page CSS; if a needed value is missing, add a token first.
+## Typography and density
 
-**Surfaces:** canvas `#ffffff` (all content areas), paper `#fafaf8` (app chrome: sidebar, rails), soft `#f5f4f1` (hover wells, banners), strong `#eae8e3` (pressed wells); card = canvas + hairline border (cards are delineated by border and shadow, not by a different fill).
-**Ink:** ink `#1b191d`, body `#3f3b44`, muted `#6e6975`. Muted is for secondary text at ≥12px only — never for primary content.
-**Hairlines:** `#e8e6e1` (default), `#dcd9d3` (controls/emphasized). 1px borders are the elevation system; shadows only on overlays.
-**Shadows (one black, tokenized):** hover `0 1px 3px rgba(27,25,29,0.07)`; overlay `0 16px 40px rgba(27,25,29,0.12), 0 2px 6px rgba(27,25,29,0.05)`. No other shadow recipes.
-**Violet (the accent):** primary `#71549e`, hover `#654a8d`, active `#57407b`, tint `#f2edf9`. Violet owns: primary buttons, links, focus rings, selected states, active filters, and progress accents. If an accent is not semantic, it is violet.
-**Streak fire (2026-08-24):** habit completion marks (checkboxes, quantized quarters, week segments) are **completion green**; achievement lives only in the streak indicator, a classic fire flame on the `--streak` ladder (`#e8590c` / deep `#d9480f` / glow `#ff922b` / core `#ffd43b`). Flame states: ember (no streak), dim (streak at risk today — gray body, live core), lit, blazing (freeze-free week). Live flames flicker subtly (reduced-motion: static). Today's week segment never pre-fills with state.
-**Semantic pairs (strong / tint):** completion `#3d7a52` / `#e6f2ea`; warning amber `#8f6a0e` / `#f8efd8`; sticky-ink gold `#6f671f` / `#f1eeda`; error red `#b0434b` / `#f9e6e7`; info blue `#48708e` / `#e8eff5`; plum `#6f5680` / `#efe9f4`. The Today timeline's now-line is violet (`--timeline-now` → `--primary`; 2026-08-23 decision).
-**Due ladder (2026-08-26):** the kanban buckets carry their own brighter palette (`--pill-*`), decoupled from the error/warning inks: overdue `#c43b48`, today `#b06712`, tomorrow teal `#22857a`, week plum `#7857a0`, each with a matching tint. It reads as temperature: hot red for late, warm amber for now, fresh teal for next, cool plum for later.
-**Kanban (the signature, kept):** group pills use the dark strong color with white text; columns use a *light* wash of the matching tint (mixed toward white) so boards read as paper, not slabs.
-**Spacing:** 4px base scale. **Radii:** 6px chips, 8px controls, 10px cards, 12px overlays/dialogs. Nothing else — no 3/5/7/9/15/16px.
+Use Outfit for headings and DM Sans for body text, navigation, forms, and other interface controls, with a clear hierarchy of weight, size, and spacing. Both use the SIL Open Font License; self-host the selected font files and retain their license notices. These are Manor's chosen fonts, not a claim to reproduce Mixpanel's proprietary typeface. Handwriting has no role in the new baseline. Monospace remains for code; use tabular numerals for comparable statistics and times.
 
-## Typography (roles are law)
+Keep product UI text at least 12px, with the existing 11px exception only for dense time-grid gutters. Note reading text and line length need their own comfortable scale; compact controls do not justify cramped prose. Growing collections use compact rows or tables. Content uses the page directly, without a padded card enclosing an entire page.
 
-- **UI face: Inter** (400/500/600 — the only loaded weights; never specify 550–750, they render as fake 600). Body 14px, secondary 13px, micro 12px, emphasized 15–16px. **The floor is 12px.** One exception: dense time-grid gutters (the Today timeline hour axis) may use 11px. 8–10px type is prohibited.
-- **Hand face: Shantell Sans Variable** (`--font-display` / `--font-hand`; EB Garamond retired 2026-08-23) — every display role: page titles, the wordmark, the Home greeting, empty-state headlines, celebration lines, Journal dates and lock screen, and Notes document titles and headings (2026-08-24). **Never inside data components** (stats, chips, tables, buttons, forms), never carrying paragraphs of body text, never below 16px, never with negative tracking. When in doubt, print it in Inter.
-- **Mono face: JetBrains Mono 400** — **code only** (code blocks, solution editors, inline code). Never for times, dates, hour axes, step numbers, IDs, or kbd hints. Stats and times everywhere: Inter with `font-variant-numeric: tabular-nums` (the `.tnum` utility).
-- Microlabels (uppercase section headings) use one shared recipe: 12px / 600 / 0.04em / muted. Do not invent per-page variants.
-- Fonts ship bundled via `@fontsource/*`.
+Exact font sizes, spacing, radii, and color values will be chosen from the reference study and tested together. Implement approved values in the shared token system rather than scattering literals through page CSS. The shared values live in `app/src/ui/styles/tokens.css`.
 
-## Paper stock and ink marks
+## Light and dark modes
 
-- **Grain:** one pre-baked feTurbulence tile (`--paper-grain`, opacity `--paper-grain-opacity` ≈ 5%) rendered as a single static fixed overlay (`body::after`) — the whole window shares one paper stock. Never a live SVG filter, never a per-element grain layer on scrolling content, never an opacity that reads as noise before it reads as paper.
-- **Ink marks (rough-notation / hand-drawn SVG):** the `HandCircle` around a perfect day's count, the drawn-on checkbox stroke, the sketched rings behind empty-state icons and around selected Mood & Focus chips, the squiggle under empty-state titles. Animated marks stay reserved for rare moments (never hover, never keyboard-driven or 100+/day actions, reduced-motion fallback always). Ink marks are single fitted SVGs — never a `repeat-x` tile (tiled squiggles read as broken dashes; tried and retired 2026-08-23).
-- **Sticky notes:** scratch blocks are disposable paper and get the full skeuomorph — `--sticky-note` stock, hair-of-rotation, dog-ear fold, handwritten note text. They are direct-manipulation paper: drag a sticky to move it in the Today timeline; drag on empty timeline to write a new one. Other components do not get rotation or literal paper props.
+Give canvas, navigation, inset controls, raised surfaces, and overlays distinct roles in each theme. Check disabled, hovered, pressed, selected, focused, loading, and error states independently. A darker surface is not automatically a disabled surface; selected content must remain distinguishable from hover and keyboard focus.
 
-## Sound (tasteful, sparse)
+Shared controls use distinct hover and selected fills, with a stronger selected-hover state. Input and checkbox boundaries use the control-border role rather than decorative divider colors. Tinted tags retain a subtle edge derived from their foreground so they remain distinct inside selected rows.
 
-A single quiet sound layer (`app/src/ui/sound/`) synthesized via WebAudio — no audio assets. The voice is **tactile, not tonal**: band-passed noise taps with a low thump (a pen landing on paper), never pure sine beeps. Sounds exist for **completion moments only**: checking off a task or habit (soft felt tap), a perfect-day/streak celebration (three soft mallet strikes). Nothing on navigation, hover, typing, or errors. Master toggle in Settings → Appearance; default on; volume well under system alert level. If a sound calls attention to itself, it is too loud or too long.
+Every semantic family defines its foreground independently from its subtle and strong fills in each theme. Duration, status, priority, completion, warning, and danger pills must keep readable text at the 12px minimum; never derive both text and fill by changing opacity on one source color. Verify text and meaningful control boundaries in both themes at their rendered sizes, including hover, selected, disabled, and focus states.
 
-## Copy voice (read twice)
+Choose semantic and categorical chart colors independently from the primary action accent. Preserve each series' identity between themes while tuning its lightness and saturation for readability. Use labels, shapes, strokes, or patterns where color alone cannot carry meaning. Missing data must remain distinct from zero and from an explicitly logged rest day.
 
-Product voice: confident, terse, human. **Never** system-documentation captions in the UI ("nightly ingestion", "parsed daily from SimplifyJobs", "no Earn-Back", "fades 48h" as scattered annotations). If behavior needs explaining, it lives in Settings or an (i) popover written in product voice ("Blocks tidy themselves up two days after they end"). **No em-dashes anywhere in UI copy.** No exclamation-mark spam. Microcopy warmth is welcome ("Two left. The evening is yours.") but sparingly and never explaining mechanics.
+Treat photographs, embedded content, code highlighting, selection highlights, and transparent images as content with their own theme behavior; do not apply a blanket inversion. Design and verify both modes with realistic dense and empty states, keyboard focus, and reduced-motion preferences.
 
-## Structure
+## Notes editing
 
-- **Navigation:** follow [PRD §8](PRD.md#8-surfaces) for sidebar behavior and surfaces. Selected item = soft fill + weight change, with no left-edge accent bar. Historical desktop agent and Activity surfaces are retired.
-- **Home = tasks kanban + Today panel. Nothing else.**
-- **Habit logging lives on its own surface.**
-- **Object details = centered dialogs, always.** Side peeks, drawers, sheets, right-edge detail panels, and detail rails are prohibited. The rule does not convert primary page layouts, the app sidebar, inline popovers, menus, or tooltips. Dialog anatomy follows Notion's property-row pattern: borderless click-to-edit fields in an icon-gutter grid, hairline section dividers, generous padding — not boxed form inputs.
-- **Agent operations:** Codex supplies conversation outside Manor. The UI reflects committed operations immediately and makes drafts, failures, and genuine conflicts clear; see [PRD §5](PRD.md#5-codex-webmcp-and-background-work).
-- **Proper product, not a personal hack:** sign-in + onboarding, Settings, real empty states on every module.
-- **Density rule:** high-volume collections (bookmarks, logs, to-apply lists) are compact rows/tables. Card grids only for genuinely small, rich sets.
-- **Workflows are the deliverable.** Every surface ships its flows clickable.
+Full note-taking fundamentals and rich-media parity with Notion are the target defined in [PRD §7.7](PRD.md#77-notes). Rebuild the BlockNote-facing controls to match the reference interaction anatomy: block handles, slash menus, selection formatting, nested menus, link editors, media controls, and tooltips. Merely recoloring default controls does not satisfy the requested UX.
 
-## Consistency contract (one recipe per pattern)
+Selection and caret positions survive opening controls. Menus remain anchored to their object and within the viewport; keyboard access and pointer movement between nested menus must be dependable. Block spacing, list indentation, headings, code, tables, and adjacent media form one document rhythm. Hover controls must not shift text or cover the content being edited.
 
-These live in `components/ui/ui.css` (or `base.css`) and pages consume them — never re-implement per page: buttons, chips (24px / 6px radius / card surface), segmented view toggles, switches, kbd hints, table headers (13px / 500 / sentence case), microlabels, empty states, focus ring (violet), progress bars (4px / 999px radius), scrollbars. A page that needs a variant extends the shared class; a page that redefines the pattern is a defect.
+Contextual editor rows use a stable icon column, a label with optional description, and a muted trailing shortcut or submenu affordance. Groups have visible breathing room, and hover, keyboard-active, and selected states use neutral semantic surfaces rather than browser-default blue. A nested color, link, or property popup owns Escape first; closing it preserves the text selection and returns control to its parent surface.
 
-## Craft bar
+Typing, keyboard navigation, selection, and repeated editor actions respond immediately. Dragging has explicit insertion targets and a keyboard-accessible alternative. Durable saving, conflict behavior, and agent editing are specified in [ARCHITECTURE §6](ARCHITECTURE.md#6-notes-drafts-and-editing), not inferred from the appearance of a save indicator.
 
-Read `.agents/skills/emilkowalski-design/emil-design-eng/SKILL.md` and apply it. Also `.agents/skills/emilkowalski-design/animate/SKILL.md` for any motion (150–250ms, strong ease-out entrances; interruptible; nothing gratuitous; no animation on keyboard-driven or 100+/day actions). Hover/press states on everything interactive. Icons: lucide-react, one consistent stroke set on a 16px grid. Tabular numerals on all stats. No emoji as icons. No fake OS chrome inside pages.
+## Shared components and motion
 
-## Mobbin protocol (for every builder)
+Use one shared recipe for each button, menu row, property editor, tooltip, date picker, dialog, filter, table, chart legend, empty state, and focus treatment. Adapt Notion's contextual layout within Manor's new aesthetic. Object details remain centered dialogs; sidebar navigation and small anchored controls retain their separate purposes.
 
-Before designing your surface, pull references with the Mobbin MCP tools (load via ToolSearch: `mcp__mobbin__search_flows`, `mcp__mobbin__search_screens`; platform "web"; name the app in the query, e.g. "Cron Calendar week view", "Notion board view group by status", "Notion task properties", "Notion settings"; use flows wherever possible). Copy the good patterns bar-for-bar where they fit Manor; strip what does not apply. Cite in your final report which flows you leaned on.
+Create and detail dialogs use compact property rows with the label in a stable column and the control beside it. Common properties stay visible; conditional or advanced properties expand in place inside a scrolling body. Each dialog has a plain DM Sans title, an obvious top-right close control, a neutral Cancel action, and one primary save action. Dirty dismissal asks before discarding, failed saves keep the draft and show an actionable error, and destructive actions use a separate confirmation when reversal is not immediate.
+
+An anchored popup is a separate dismissal layer from its parent dialog. Escape and outside press close the topmost popup first and restore focus to its trigger; they do not discard the parent draft. Popup content stays within the viewport and may scroll independently when its option set is long.
+
+Every interactive component has hover where applicable, press, focus, disabled, and error treatment. Use consistent Lucide icons and meaningful accessible names; no emoji as interface icons, mascots, or fake OS chrome. Selected sidebar items use a fill and text emphasis, without a left-edge accent bar.
+
+Motion explains state and preserves orientation. Use brief, interruptible transitions for occasional overlays and feedback, with reduced-motion treatment. Avoid animation delays on typing, keyboard-driven commands, and frequently repeated editing actions. The design-engineering skill supplies implementation guidance; screenshot sequences do not establish exact animation timings.
+
+Streak and freeze indicators may animate briefly when their state changes or an achievement is earned. They do not loop continuously at rest. Both the static resting state and the reduced-motion state must communicate the same meaning.
+
+## Sound and copy
+
+Retain the existing optional, quiet completion sounds and appearance setting. Sound is reserved for task/habit completion and rare achievements, never navigation, hover, typing, or errors. Removing the visual paper metaphor does not require adding new audio behavior.
+
+Product copy is concise and human. No implementation or brainstorming captions, em-dashes in UI copy, or excessive exclamation marks. Explain mechanics in Settings or contextual help where they inform a decision. Do not use status labels as a substitute for a legible visual hierarchy.
+
+## Verification and references
+
+Use the supplied Mobbin flows and crops in [REDESIGN-REPORT.md](REDESIGN-REPORT.md) as the starting reference set; obtain additional flows for interactions the archive does not show. Distinguish screenshot observations from proposed behavior and implementation findings. Refer to [NOTION-DESIGN.md](NOTION-DESIGN.md) for earlier interaction research without reviving superseded visual rules.
+
+Verify complete workflows, including empty, loading, failure, long-content, keyboard, and both-theme states. The existing [mock data](../app/src/ui/data/mock.ts) is the canonical showroom story; signed-in surfaces use real account data. The charter defines the target; completed components still require workflow and accessibility verification.

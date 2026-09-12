@@ -5,11 +5,6 @@ export interface AccountInfo {
   email: string
 }
 
-export interface SignInMutation {
-  email: string
-  password: string
-}
-
 export interface AvatarUpload {
   /** Image bytes, base64-encoded. */
   base64: string
@@ -27,8 +22,9 @@ export const AVATAR_CONTENT_TYPES: readonly AvatarContentType[] = [
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024
 
 export interface AccountApi {
-  signIn: (mutation: SignInMutation) => Promise<AccountInfo>
-  signUp: (mutation: SignInMutation) => Promise<AccountInfo>
+  connections: () => Promise<readonly AgentConnection[]>
+  revokeConnection: (clientId: string) => Promise<void>
+  signInWithGoogle: () => Promise<void>
   signOut: () => Promise<'signedOut' | 'cancelled'>
   current: () => Promise<AccountInfo | null>
   /** Signed display URL for the profile picture, or null when none is set. */
@@ -37,19 +33,7 @@ export interface AccountApi {
   setAvatar: (upload: AvatarUpload) => Promise<string>
 }
 
-export function parseSignInMutation(value: unknown): SignInMutation {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    throw new TypeError('Sign in requires an email and password object')
-  }
-  const mutation = value as Record<string, unknown>
-  if (typeof mutation.email !== 'string' || !mutation.email.includes('@')) {
-    throw new TypeError('Sign in requires a valid email address')
-  }
-  if (typeof mutation.password !== 'string' || mutation.password === '') {
-    throw new TypeError('Sign in requires a password')
-  }
-  return { email: mutation.email, password: mutation.password }
-}
+export interface AgentConnection { clientId: string; canWrite: boolean; authorizedAt: string }
 
 export function parseAvatarUpload(value: unknown): AvatarUpload {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {

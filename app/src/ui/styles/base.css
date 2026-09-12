@@ -63,6 +63,7 @@ h1,
 h2,
 h3,
 h4 {
+  font-family: var(--font-display);
   font-weight: 600;
   color: var(--ink);
 }
@@ -91,14 +92,14 @@ h4 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(27, 25, 29, 0.12);
+  background: color-mix(in srgb, var(--ink-muted) 32%, transparent);
   border-radius: 5px;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(27, 25, 29, 0.22);
+  background: color-mix(in srgb, var(--ink-muted) 55%, transparent);
   border: 3px solid transparent;
   background-clip: padding-box;
 }
@@ -121,23 +122,12 @@ h4 {
   color: var(--ink-muted);
 }
 
-/* The hand face: greetings, page titles, empty states, celebrations.
-   Never inside data components; never below 16px. */
+/* Display typography for headings. */
 .display {
   font-family: var(--font-display);
   font-weight: 500;
   color: var(--ink);
   letter-spacing: 0;
-}
-
-/* Paper stock: the PaperBackdrop shader canvas over the whole window
-   (see app/PaperBackdrop.tsx); a static composited layer. */
-.paper-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  opacity: var(--paper-texture-opacity);
-  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

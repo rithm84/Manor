@@ -9,7 +9,7 @@ const NOTE_DATE = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numer
 interface MistakesPanelProps {
   notes: readonly LeetCodeNote[]
   onAdd: (text: string) => Promise<void>
-  onUpdate: (noteId: string, text: string) => Promise<void>
+  onUpdate: (noteId: string, text: string, expectedRevision: number | undefined) => Promise<void>
   onDelete: (noteId: string) => Promise<void>
 }
 
@@ -23,16 +23,17 @@ function autoGrow(element: HTMLTextAreaElement): void {
 export function MistakesPanel({ notes, onAdd, onUpdate, onDelete }: MistakesPanelProps): ReactNode {
   const [draft, setDraft] = useState('')
   const [saving, setSaving] = useState(false)
+  const [editingRevision, setEditingRevision] = useState<number | undefined>(undefined)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const composerRef = useRef<HTMLTextAreaElement | null>(null)
 
-  // The page-level persist banner owns failure messages; here a failed save
-  // keeps the draft (or the editor) in place instead of losing the text.
   const add = async (): Promise<void> => {
     const text = draft.trim()
     if (text === '' || saving) return
     setSaving(true)
+    setError(null)
     try {
       await onAdd(text)
       setDraft('')
@@ -41,8 +42,8 @@ export function MistakesPanel({ notes, onAdd, onUpdate, onDelete }: MistakesPane
         composer.value = ''
         autoGrow(composer)
       }
-    } catch {
-      return
+    } catch (saveError: unknown) {
+      setError(`Could not save the note: ${saveError instanceof Error ? saveError.message : String(saveError)}`)
     } finally {
       setSaving(false)
     }
@@ -54,12 +55,31 @@ export function MistakesPanel({ notes, onAdd, onUpdate, onDelete }: MistakesPane
       setEditingId(null)
       return
     }
+    if (saving) return
+    setSaving(true)
     try {
-      await onUpdate(note.id, text)
-    } catch {
+      setError(null)
+      await onUpdate(note.id, text, editingRevision)
+    } catch (saveError: unknown) {
+      setError(`Could not update the note: ${saveError instanceof Error ? saveError.message : String(saveError)}`)
       return
+    } finally {
+      setSaving(false)
     }
     setEditingId(null)
+  }
+
+  const deleteNote = async (noteId: string): Promise<void> => {
+    if (saving) return
+    setSaving(true)
+    setError(null)
+    try {
+      await onDelete(noteId)
+    } catch (deleteError: unknown) {
+      setError(`Could not delete the note: ${deleteError instanceof Error ? deleteError.message : String(deleteError)}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const onComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
@@ -86,6 +106,7 @@ export function MistakesPanel({ notes, onAdd, onUpdate, onDelete }: MistakesPane
         }}
         onKeyDown={onComposerKeyDown}
       />
+      {error !== null ? <p className="lc-mistakes-error" role="alert">{error}</p> : null}
       {notes.length === 0 ? (
         <p className="lc-mistakes-empty">What tripped you up today goes here.</p>
       ) : (
@@ -123,6 +144,7 @@ export function MistakesPanel({ notes, onAdd, onUpdate, onDelete }: MistakesPane
                   aria-label={`Edit note: ${note.text}`}
                   onClick={() => {
                     setEditingId(note.id)
+                    setEditingRevision(note.revision)
                     setEditText(note.text)
                   }}
                 >
@@ -136,7 +158,8 @@ export function MistakesPanel({ notes, onAdd, onUpdate, onDelete }: MistakesPane
                   className="lc-mistakes-delete"
                   aria-label="Delete note"
                   title="Delete note"
-                  onClick={() => void onDelete(note.id).catch(() => undefined)}
+                  disabled={saving}
+                  onClick={() => void deleteNote(note.id)}
                 >
                   <Trash2 size={13} />
                 </button>

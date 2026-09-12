@@ -1,0 +1,642 @@
+/* Compact centered task composer and task property surfaces. */
+
+.task-dialog {
+  display: flex;
+  max-height: min(760px, calc(100vh - 48px));
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.task-dialog-header {
+  display: flex;
+  height: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4) 0 var(--space-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.task-dialog-header h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.task-dialog-close {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease, transform var(--duration-press) var(--ease-out);
+}
+
+.task-dialog-close:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.task-dialog-close:active,
+.task-dialog-secondary-actions button:active,
+.context-property-trigger:active,
+.context-create-button:active:not(:disabled),
+.context-icon-grid button:active,
+.context-color-picker button:active {
+  transform: scale(0.97);
+}
+
+.task-dialog-title {
+  display: block;
+  padding: var(--space-5) var(--space-5) var(--space-3);
+}
+
+.task-dialog-title input {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 600 21px / 1.3 var(--font-ui);
+}
+
+.task-dialog-title input::placeholder {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.task-dialog-title input:focus,
+.task-dialog-title input:focus-visible {
+  outline: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.task-dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.task-property-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-4) var(--space-3);
+}
+
+.task-property-row {
+  display: grid;
+  min-height: 36px;
+  grid-template-columns: 20px 92px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-control);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.task-property-row:hover {
+  background: var(--surface-soft);
+}
+
+.task-property-row > svg {
+  color: var(--ink-muted);
+}
+
+.task-property-label {
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.task-property-row > :last-child,
+.task-property-row > .ui-select,
+.task-property-row > .ui-datepicker {
+  min-width: 0;
+  width: 100%;
+}
+
+.task-property-row .ui-select-trigger,
+.task-property-row .ui-datepicker-trigger,
+.task-property-control {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  justify-content: space-between;
+  border-color: transparent;
+  background: transparent;
+}
+
+.task-property-row:hover .ui-select-trigger,
+.task-property-row:hover .ui-datepicker-trigger,
+.task-property-row:hover .task-property-control,
+.task-property-row .ui-select-trigger[aria-expanded='true'],
+.task-property-row .ui-datepicker-trigger[aria-expanded='true'],
+.task-property-row .task-property-control[aria-expanded='true'] {
+  border-color: var(--hairline);
+  background: var(--surface-card);
+}
+
+.task-dialog-hint,
+.task-dialog-attention,
+.task-dialog-error {
+  margin: 0 var(--space-5) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.task-dialog-hint {
+  color: var(--ink-muted);
+}
+
+.task-dialog-attention {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--pill-week-tint);
+  color: var(--pill-week);
+}
+
+.task-dialog-error,
+.context-error {
+  color: var(--error);
+}
+
+.task-dialog-footer {
+  display: flex;
+  min-height: 56px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--hairline);
+}
+
+.task-dialog-shortcut {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.task-dialog-shortcut kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--surface-soft);
+  color: var(--ink-muted);
+  font: inherit;
+}
+
+.task-dialog-footer--detail {
+  margin-top: var(--space-4);
+}
+
+.task-dialog-secondary-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.peek-duplicate,
+.peek-delete {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-control);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: background-color var(--duration-fast) ease, transform var(--duration-press) var(--ease-out);
+}
+
+.peek-duplicate {
+  color: var(--ink-muted);
+}
+
+.peek-duplicate:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.peek-delete {
+  color: var(--error);
+}
+
+.peek-delete:hover {
+  background: var(--error-soft);
+}
+
+.task-property-row--expandable {
+  align-items: center;
+}
+
+.task-recurrence-trigger {
+  display: flex;
+  min-width: 0;
+  height: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--ink-body);
+  font-size: var(--text-body);
+  text-align: left;
+}
+
+.task-recurrence-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-recurrence-trigger[aria-expanded='true'],
+.task-recurrence-trigger:hover {
+  border-color: var(--hairline);
+  background: var(--surface-card);
+}
+
+.task-recurrence-trigger svg {
+  flex-shrink: 0;
+  color: var(--ink-muted);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.task-recurrence-trigger[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.task-recurrence-panel {
+  margin: 2px var(--space-2) var(--space-3) 120px;
+  padding: var(--space-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-soft);
+}
+
+/* Context property popover. Base UI owns collision and focus behavior. */
+
+.context-menu {
+  z-index: 80;
+  width: min(320px, calc(100vw - 24px));
+  padding: var(--space-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--ink-body);
+  transform-origin: var(--transform-origin);
+  transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
+}
+
+.context-menu[data-starting-style],
+.context-menu[data-ending-style] {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+.context-search {
+  display: flex;
+  height: 32px;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
+}
+
+.context-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ink-body);
+  font-size: var(--text-body);
+}
+
+.context-search:focus-within {
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-ring);
+}
+
+.context-search input:focus {
+  outline: none;
+}
+
+.context-search input:focus-visible {
+  box-shadow: none;
+}
+
+.context-options {
+  display: flex;
+  max-height: 210px;
+  flex-direction: column;
+  margin-top: var(--space-1);
+  overflow-y: auto;
+}
+
+.context-option-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.context-option {
+  display: flex;
+  min-width: 0;
+  min-height: 32px;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-chip);
+  text-align: left;
+}
+
+.context-option:hover {
+  background: var(--surface-hover);
+}
+
+.context-option.is-selected {
+  background: var(--surface-selected);
+  color: var(--primary);
+}
+
+.context-option.is-selected:hover {
+  background: var(--surface-selected-hover);
+}
+
+.context-option .ui-pill {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-option-edit,
+.context-option-delete {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: var(--radius-chip);
+  color: var(--ink-muted);
+  opacity: 0;
+}
+
+.context-option-row:hover .context-option-edit,
+.context-option-row:hover .context-option-delete,
+.context-option-edit:focus-visible,
+.context-option-delete:focus-visible {
+  opacity: 1;
+}
+
+.context-option-edit:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.context-option-delete:hover {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.context-add {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--hairline);
+}
+
+.context-composer-heading,
+.context-inline-heading {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.context-composer-heading button,
+.context-inline-heading button {
+  padding: 3px 5px;
+  border-radius: var(--radius-chip);
+}
+
+.context-composer-heading button:hover,
+.context-inline-heading button:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.context-composer {
+  display: grid;
+  grid-template-columns: minmax(96px, 1fr) 30px 30px auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.context-composer > input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-body);
+}
+
+.context-composer > input:focus {
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.context-property-trigger {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-muted);
+  transition: background-color var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-press) var(--ease-out);
+}
+
+.context-property-trigger:hover,
+.context-property-trigger[aria-expanded='true'] {
+  border-color: var(--focus-border);
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.context-color-swatch {
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.context-color-swatch.is-forest { background: var(--forest); }
+.context-color-swatch.is-success { background: var(--success); }
+.context-color-swatch.is-gold { background: var(--gold); }
+.context-color-swatch.is-info { background: var(--frozen-info); }
+.context-color-swatch.is-plum { background: var(--this-week-plum); }
+.context-color-swatch.is-today { background: var(--pill-today); }
+
+.context-create-button {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background-color var(--duration-fast) ease, transform var(--duration-press) var(--ease-out);
+}
+
+.context-create-button:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.context-create-button:disabled {
+  opacity: 0.38;
+}
+
+.context-inline-picker {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--hairline);
+}
+
+.context-icon-catalog {
+  max-height: 210px;
+  overflow-y: auto;
+}
+
+.context-icon-category + .context-icon-category {
+  margin-top: var(--space-2);
+}
+
+.context-icon-category > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.context-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.context-icon-grid button {
+  display: grid;
+  height: 30px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-chip);
+  color: var(--ink-muted);
+  transition: background-color var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-press) var(--ease-out);
+}
+
+.context-icon-grid button:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.context-icon-grid button.is-selected {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--hairline));
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.context-color-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.context-color-picker button {
+  display: flex;
+  height: 30px;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-chip);
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+}
+
+.context-color-picker button:hover,
+.context-color-picker button.is-selected {
+  background: var(--surface-soft);
+}
+
+.context-color-picker button.is-selected {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--hairline));
+}
+
+.context-color-picker button svg {
+  margin-left: auto;
+}
+
+.context-picker-empty {
+  display: block;
+  padding: var(--space-3);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.context-error {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 560px) {
+  .task-dialog {
+    max-height: calc(100vh - 24px);
+  }
+
+  .task-dialog-header,
+  .task-dialog-title,
+  .task-dialog-footer {
+    padding-right: var(--space-4);
+    padding-left: var(--space-4);
+  }
+
+  .task-property-list {
+    padding-right: var(--space-3);
+    padding-left: var(--space-3);
+  }
+
+  .task-property-row {
+    grid-template-columns: 18px 78px minmax(0, 1fr);
+  }
+
+  .task-recurrence-panel {
+    margin-left: 104px;
+  }
+
+  .task-dialog-shortcut {
+    display: none;
+  }
+}

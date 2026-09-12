@@ -85,6 +85,11 @@ export function DailyCapture({
           {saving ? 'Saving…' : loggedCount === 2 ? <><Check size={13} /> Complete</> : `${loggedCount} of 2`}
         </span>
       </footer>
+      <section className="mf-synthesis" aria-labelledby="mf-synthesis-title">
+        <h3 id="mf-synthesis-title">Daily synthesis</h3>
+        <p>{entry?.note ?? 'Debrief with Codex to bring your day together.'}</p>
+        {entry?.note ? <span className="mf-record-source">{entry.noteSource === 'codex' ? 'Codex debrief' : 'Manual'}</span> : null}
+      </section>
     </section>
   )
 }

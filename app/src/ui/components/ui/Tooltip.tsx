@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Tooltip as BaseTooltip } from '@base-ui/react/tooltip'
 import type { ReactNode } from 'react'
 
 export interface TooltipProps {
@@ -7,81 +7,16 @@ export interface TooltipProps {
   side: 'top' | 'bottom'
 }
 
-const SHOW_DELAY_MS = 400
-/** After one tooltip closes, adjacent tooltips open instantly for this long. */
-const INSTANT_WINDOW_MS = 500
-
-let lastShownAt = 0
-
-/**
- * Hover tooltip. Delays before the first show; once one tooltip has been
- * open, adjacent tooltips skip the delay (the toolbar-speed trick).
- */
+/** Shared delayed hints stay inside the viewport and escape clipping containers. */
 export function Tooltip({ label, children, side }: TooltipProps): ReactNode {
-  const [visible, setVisible] = useState(false)
-  const timer = useRef<number | null>(null)
-
-  useEffect(() => {
-    return (): void => {
-      if (timer.current !== null) {
-        window.clearTimeout(timer.current)
-      }
-    }
-  }, [])
-
-  // Passive Escape hide: never preventDefault/stopPropagation, so the dismiss
-  // stack (and anything else) still receives the key.
-  useEffect(() => {
-    if (!visible) return
-    const onKeyDown = (event: globalThis.KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        lastShownAt = Date.now()
-        setVisible(false)
-      }
-    }
-    window.addEventListener('keydown', onKeyDown, { capture: true })
-    return (): void => {
-      window.removeEventListener('keydown', onKeyDown, { capture: true })
-    }
-  }, [visible])
-
-  const show = (): void => {
-    const instant = Date.now() - lastShownAt < INSTANT_WINDOW_MS
-    if (instant) {
-      setVisible(true)
-      return
-    }
-    timer.current = window.setTimeout(() => {
-      setVisible(true)
-    }, SHOW_DELAY_MS)
-  }
-
-  const hide = (): void => {
-    if (timer.current !== null) {
-      window.clearTimeout(timer.current)
-      timer.current = null
-    }
-    if (visible) {
-      lastShownAt = Date.now()
-    }
-    setVisible(false)
-  }
-
-  return (
-    <span
-      className="ui-tooltip-anchor"
-      onMouseEnter={show}
-      onMouseLeave={hide}
-      onMouseDown={hide}
-      onFocus={show}
-      onBlur={hide}
-    >
+  return <BaseTooltip.Root>
+    <BaseTooltip.Trigger render={<span className="ui-tooltip-anchor" />}>
       {children}
-      {visible ? (
-        <span className={`ui-tooltip${side === 'bottom' ? ' ui-tooltip--below' : ''}`} role="tooltip">
-          {label}
-        </span>
-      ) : null}
-    </span>
-  )
+    </BaseTooltip.Trigger>
+    <BaseTooltip.Portal>
+      <BaseTooltip.Positioner className="ui-tooltip-positioner" side={side} sideOffset={6} collisionPadding={12}>
+        <BaseTooltip.Popup className="ui-tooltip">{label}</BaseTooltip.Popup>
+      </BaseTooltip.Positioner>
+    </BaseTooltip.Portal>
+  </BaseTooltip.Root>
 }

@@ -11,6 +11,7 @@ export interface ButtonProps {
   icon?: ReactNode
   title?: string
   ariaLabel?: string
+  testId?: string
 }
 
 export function Button({
@@ -20,7 +21,8 @@ export function Button({
   disabled,
   icon,
   title,
-  ariaLabel
+  ariaLabel,
+  testId
 }: ButtonProps): ReactNode {
   return (
     <button
@@ -30,6 +32,7 @@ export function Button({
       disabled={disabled === true}
       title={title}
       aria-label={ariaLabel}
+      data-testid={testId}
     >
       {icon}
       {children}

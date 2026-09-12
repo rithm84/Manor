@@ -2,7 +2,7 @@ import { Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 
-import { Button, DetailDialog, Select } from '../../components/ui'
+import { Button, DatePicker, DetailDialog, Select, TimePicker } from '../../components/ui'
 import type { SelectOption } from '../../components/ui'
 import type { ScratchBlock, Task } from '../../data/mock'
 import { isTimeString, minutesToTime, scratchExpiry, timeToMinutes } from './taskModel'
@@ -11,6 +11,7 @@ export interface ScratchBlockDialogProps {
   block: ScratchBlock | null
   task: Task | null
   open: boolean
+  today?: string
   onClose: () => void
   onUpdate: (block: ScratchBlock) => Promise<void>
   onDelete: (blockId: string) => Promise<void>
@@ -37,74 +38,91 @@ export function ScratchBlockDialog({
   block,
   task,
   open,
+  today,
   onClose,
   onUpdate,
   onDelete
 }: ScratchBlockDialogProps): ReactNode {
-  const [portion, setPortion] = useState(block?.portion ?? '')
+  const [draft, setDraft] = useState<ScratchBlock | null>(block)
   const [scheduleError, setScheduleError] = useState<string | null>(null)
-
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [timeValid, setTimeValid] = useState(true)
+  const [saving, setSaving] = useState(false)
   useEffect(() => {
-    setPortion(block?.portion ?? '')
+    setDraft(block)
     setScheduleError(null)
-  }, [block?.id, block?.portion])
-
-  if (block === null) return null
-
-  const duration = timeToMinutes(block.end) - timeToMinutes(block.start)
-
+    setTimeValid(true)
+    setSaveError(null)
+  }, [block?.id, open])
+  if (block === null || draft === null) return null
+  const duration = timeToMinutes(draft.end) - timeToMinutes(draft.start)
   const updateSchedule = (start: string, minutes: number): void => {
-    // A cleared or half-typed time input is transient editing, not an error.
     if (!isTimeString(start)) return
     const endMinutes = timeToMinutes(start) + minutes
-    if (endMinutes > 24 * 60) {
-      setScheduleError('This block must end by midnight.')
+    if (timeToMinutes(start) < 360 || endMinutes > 24 * 60 || timeToMinutes(start) % 15 !== 0) {
+      setScheduleError('Choose a 15-minute boundary between 6 AM and midnight.')
       return
     }
     const end = minutesToTime(endMinutes)
     setScheduleError(null)
-    void onUpdate({ ...block, start, end, expiresAt: scratchExpiry(block.date, end) })
+    setDraft({ ...draft, start, end, expiresAt: scratchExpiry(draft.date, end) })
   }
 
-  const savePortion = (): void => {
-    const next = portion.trim()
-    if (next === '') {
-      setPortion(block.portion)
-      return
-    }
-    if (next !== block.portion) {
-      void onUpdate({ ...block, portion: next })
-    }
+  const updateDate = (date: string | null): void => {
+    if (date === null) throw new Error('A time block date is required')
+    setDraft({ ...draft, date, expiresAt: scratchExpiry(date, draft.end) })
   }
 
   const onTitleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
     if (event.key === 'Enter') event.currentTarget.blur()
   }
 
-  // Closing must save the sticky title itself; blur does not fire on unmount.
-  const closeWithSave = (): void => {
-    savePortion()
-    onClose()
+  const closeWithSave = async (): Promise<void> => {
+    if (saving || scheduleError !== null) return
+    if (!timeValid) { setSaveError('Enter a valid start time before saving.'); return }
+    if (JSON.stringify(draft) === JSON.stringify(block)) { onClose(); return }
+    setSaving(true)
+    setSaveError(null)
+    try {
+      await onUpdate(draft)
+      onClose()
+    } catch (error: unknown) {
+      setSaveError(`Could not save the time block: ${error instanceof Error ? error.message : String(error)}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const deleteBlock = async (): Promise<void> => {
+    if (saving) return
+    setSaving(true)
+    setSaveError(null)
+    try {
+      await onDelete(block.id)
+      onClose()
+    } catch (error: unknown) {
+      setSaveError(`Could not delete the time block: ${error instanceof Error ? error.message : String(error)}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const accessibleTitle =
-    task !== null ? task.title : block.portion.trim() === '' ? 'Sticky note' : block.portion
+    task !== null ? task.title : block.portion.trim() === '' ? 'Time block' : block.portion
 
-  /* A sticky's text is its title: directly editable in the header,
-     Notion click-to-edit style, like the task dialog. */
+  /* Freestanding blocks edit their label directly in the dialog header. */
   const dialogTitle =
     task !== null ? (
       task.title
     ) : (
       <input
-        className="peek-title-input"
+        className="block-title-input"
         autoFocus={block.portion === ''}
-        value={portion}
+        value={draft.portion}
         maxLength={80}
         placeholder="What is this time for?"
-        aria-label="Sticky note title"
-        onChange={(event) => setPortion(event.target.value)}
-        onBlur={savePortion}
+        aria-label="Time block title"
+        onChange={(event) => setDraft({ ...draft, portion: event.target.value })}
         onKeyDown={onTitleKeyDown}
       />
     )
@@ -112,41 +130,37 @@ export function ScratchBlockDialog({
   return (
     <DetailDialog
       open={open}
-      onClose={closeWithSave}
+      onClose={() => void closeWithSave()}
       title={dialogTitle}
       width={440}
       ariaLabel={`Time block details for ${accessibleTitle}`}
     >
       <div className="block-peek">
-        <div className="peek-props">
-          <div className="peek-row">
-            <span className="peek-label">Starts</span>
-            <input
-              className="block-time-input tnum"
-              type="time"
-              step={900}
-              value={block.start}
-              aria-label="Block start time"
-              onChange={(event) => updateSchedule(event.target.value, duration)}
-            />
+        <div className="block-fields">
+          <div className="block-property-row"><span className="block-property-label">Date</span><DatePicker today={today} value={draft.date} onChange={updateDate} ariaLabel="Block date" min={null} max={null} required /></div>
+          {task !== null ? <div className="block-property-row"><span className="block-property-label">Portion</span><input className="ui-input" aria-label="Time block portion" value={draft.portion} onChange={(event) => setDraft({ ...draft, portion: event.target.value })} /></div> : null}
+          <div className="block-property-row">
+            <span className="block-property-label">Starts</span>
+            <TimePicker value={draft.start} onChange={(time) => updateSchedule(time, duration)} ariaLabel="Block start time" format="12h" onValidityChange={setTimeValid} />
           </div>
-          <div className="peek-row">
-            <span className="peek-label">Duration</span>
+          <div className="block-property-row">
+            <span className="block-property-label">Duration</span>
             <Select
               value={String(duration)}
               options={durationOptions(duration)}
-              onChange={(value) => updateSchedule(block.start, Number(value))}
+              onChange={(value) => updateSchedule(draft.start, Number(value))}
               placeholder="Duration"
               ariaLabel="Block duration"
             />
           </div>
-          {scheduleError !== null ? <span className="block-error">{scheduleError}</span> : null}
+          {scheduleError !== null ? <span className="block-error" role="alert">{scheduleError}</span> : null}
+          {saveError !== null ? <span className="block-error" role="alert">{saveError}</span> : null}
         </div>
 
 
-        <div className="peek-actions">
-          <Button variant="subtle" onClick={() => closeWithSave()}>Done</Button>
-          <button type="button" className="peek-delete" onClick={() => void onDelete(block.id)}>
+        <div className="block-actions">
+          <Button ariaLabel="Save time block" variant="primary" disabled={saving} onClick={() => void closeWithSave()}>{saving ? 'Saving…' : 'Done'}</Button>
+          <button type="button" className="peek-delete" disabled={saving} onClick={() => void deleteBlock()}>
             <Trash2 size={15} />
             Delete block
           </button>

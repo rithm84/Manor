@@ -28,4 +28,10 @@ describe('findMatches', () => {
     const root = editorWith('<p>Sliding window notes</p>')
     expect(findMatches(root, 'heap')).toHaveLength(0)
   })
+
+  it('finds a phrase across formatting and ignores menu text', () => {
+    const root = editorWith('<p>Pri<strong>ority</strong> queue</p><button>Priority queue</button>')
+    expect(findMatches(root, 'priority queue').map((range) => range.toString())).toEqual(['Priority queue'])
+    expect(findMatches(root, '')).toEqual([])
+  })
 })

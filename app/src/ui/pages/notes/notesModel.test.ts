@@ -36,6 +36,15 @@ describe('notes workspace model', () => {
     ])
   })
 
+  it('searches text inside retained column documents and image descriptions', () => {
+    const document = { ...parent, contentJson: JSON.stringify([
+      { type: 'twoColumns', props: { leftContent: JSON.stringify([{ type: 'paragraph', content: [{ type: 'text', text: 'Hidden research' }] }]), rightContent: '[]' } },
+      { type: 'image', props: { caption: 'Experiment', alt: 'Microscope slide' } }
+    ]) }
+    expect(searchableNoteText(document)).toContain('hidden research')
+    expect(searchableNoteText(document)).toContain('microscope slide')
+  })
+
   it('filters favorites without losing page content', () => {
     expect(pagesForScope([parent, child], 'favorites', '')).toEqual([parent])
   })

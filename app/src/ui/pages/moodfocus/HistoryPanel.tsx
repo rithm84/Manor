@@ -1,39 +1,20 @@
-import { ChevronLeft, ChevronRight, Mic, PencilLine, TrendingUp } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Mic, PencilLine, Plus, TrendingUp } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from 'recharts'
-
-import type { MoodFocusEntry, MoodFocusState } from '../../../shared/moodFocus'
-import { EmptyState } from '../../components/ui'
-import {
-  canEditEntry,
-  dayLabel,
-  earliestEntryMonth,
-  entriesForMonth,
-  monthKey,
-  monthShift,
-  monthSummary,
-  sixMonthTrend
-} from './moodFocusModel'
-import { focusTone, focusToneAtAverage, moodTone, moodToneAtAverage } from './scaleTones'
+import { moodFocusPreviousDate } from '../../../shared/moodFocus'
+import type { Focus, Mood, MoodFocusEntry, MoodFocusHistoryMutation, MoodFocusState } from '../../../shared/moodFocus'
+import { Button, DatePicker, DetailDialog, EmptyState, Modal } from '../../components/ui'
+import { dayLabel, earliestEntryMonth, fullDateLabel, monthKey, monthShift, monthSummary } from './moodFocusModel'
+import { ScalePicker } from './ScalePicker'
+import { focusOptions, moodOptions } from './scales'
+import { focusTone, moodTone } from './scaleTones'
 import type { ScaleTone } from './scaleTones'
 
 export interface HistoryPanelProps {
   state: MoodFocusState
   month: string
   onMonthChange: (month: string) => void
-  onEditDate: (date: string) => void
-}
-
-function averageLabel(value: number | null): string {
-  return value === null ? 'None' : value.toFixed(1)
+  onSaveRatings: (mutation: MoodFocusHistoryMutation) => Promise<void>
 }
 
 function signalClass(signal: 'mood' | 'focus', missing: boolean): string {
@@ -55,31 +36,6 @@ function signalStyle(tone: ScaleTone | null): SignalStyle | undefined {
   }
 }
 
-interface TrendDotProps {
-  signal: 'mood' | 'focus'
-  active?: boolean
-  cx?: number
-  cy?: number
-  value?: number | null
-}
-
-function TrendDot({ signal, active = false, cx, cy, value }: TrendDotProps): ReactNode {
-  if (cx === undefined || cy === undefined || value === undefined || value === null) {
-    return null
-  }
-  const tone = signal === 'mood' ? moodToneAtAverage(value) : focusToneAtAverage(value)
-  return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={active ? 4.5 : 3.5}
-      fill={tone.tint}
-      stroke={tone.strong}
-      strokeWidth={active ? 2.25 : 1.75}
-    />
-  )
-}
-
 function weekdayLabel(date: string): string {
   return new Intl.DateTimeFormat('en-US', {
     timeZone: 'UTC',
@@ -96,14 +52,13 @@ function RecordRow({
   today: string
   onEditDate: (date: string) => void
 }): ReactNode {
-  const editable = canEditEntry(entry.date, today)
   return (
     <button
       type="button"
-      className={`mf-record-row${editable ? ' is-editable' : ''}${entry.date === today ? ' is-today' : ''}`}
-      disabled={!editable}
+      className={`mf-record-row is-editable${entry.date === today ? ' is-today' : ''}`}
       onClick={() => onEditDate(entry.date)}
-      aria-label={`${dayLabel(entry.date, today)}. Mood ${entry.mood ?? 'not logged'}. Focus ${entry.focus ?? 'not logged'}${editable ? '. Edit entry.' : ''}`}
+      aria-label={`${dayLabel(entry.date, today)}. Mood ${entry.mood ?? 'not logged'}. Focus ${entry.focus ?? 'not logged'}. Edit entry.`}
+      data-testid={`history-record-${entry.date}`}
     >
       <span className="mf-record-date" aria-hidden="true">
         <span>{weekdayLabel(entry.date)}</span>
@@ -143,16 +98,23 @@ function RecordRow({
         </span>
       </span>
       <span className="mf-record-edit" aria-hidden="true">
-        {editable ? <><PencilLine size={13} /> Edit</> : null}
+        <PencilLine size={13} /> Edit
       </span>
     </button>
   )
 }
 
-export function HistoryPanel({ state, month, onMonthChange, onEditDate }: HistoryPanelProps): ReactNode {
+export function HistoryPanel({ state, month, onMonthChange, onSaveRatings }: HistoryPanelProps): ReactNode {
   const summary = monthSummary(state.entries, month)
-  const entries = [...entriesForMonth(state.entries, month)].reverse()
-  const trend = sixMonthTrend(state, month)
+  const [editorDate, setEditorDate] = useState<string | null>(null)
+  const [editorBaseline, setEditorBaseline] = useState<MoodFocusEntry | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [range, setRange] = useState<'month' | 'quarter'>('month')
+  const rangeStart = range === 'month' ? month : monthShift(month, -2)
+  const plotEntries = state.entries.filter((entry) => entry.date >= `${rangeStart}-01` && entry.date < `${monthShift(month, 1)}-01`)
+  const rangeDays = Math.round((new Date(`${monthShift(month, 1)}-01T12:00:00Z`).getTime() - new Date(`${rangeStart}-01T12:00:00Z`).getTime()) / 86400000)
+  const moodDays = plotEntries.filter((entry) => entry.mood !== null).length
+  const focusDays = plotEntries.filter((entry) => entry.focus !== null).length
   const currentMonth = monthKey(state.today)
   const canMoveForward = month < currentMonth
   const canMoveBack = month > earliestEntryMonth(state)
@@ -161,7 +123,9 @@ export function HistoryPanel({ state, month, onMonthChange, onEditDate }: Histor
     <div className="mf-history">
       <section className="mf-history-head">
         <h2>History</h2>
-        <div className="mf-month-nav" role="group" aria-label="History month">
+        <div className="mf-history-actions">
+          <Button variant="subtle" icon={<Plus size={15} />} onClick={() => { const date = moodFocusPreviousDate(state.today); setAdding(true); setEditorBaseline(state.entries.find((entry) => entry.date === date) ?? null); setEditorDate(date) }} testId="history-add-day">Add day</Button>
+          <div className="mf-month-nav" role="group" aria-label="History month">
           <button
             type="button"
             aria-label="Previous month"
@@ -179,72 +143,122 @@ export function HistoryPanel({ state, month, onMonthChange, onEditDate }: Histor
           >
             <ChevronRight size={16} />
           </button>
+          </div>
         </div>
       </section>
 
-      <section className="mf-summary-line" aria-label={`${summary.label} summary`}>
-        <div className="mf-summary-primary">
-          <span className="mf-summary-value tnum">{summary.loggedDays}</span>
-          <span>days logged</span>
+      <div className="mf-range-toolbar">
+        <div className="mf-viewtabs" aria-label="History range">
+          <button type="button" data-testid="history-range-month" aria-pressed={range === 'month'} className={range === 'month' ? 'is-selected' : ''} onClick={() => setRange('month')}>Month</button>
+          <button type="button" data-testid="history-range-quarter" aria-pressed={range === 'quarter'} className={range === 'quarter' ? 'is-selected' : ''} onClick={() => setRange('quarter')}>3 months</button>
         </div>
-        <div>
-          <span className="mf-summary-value tnum">{averageLabel(summary.moodAverage)}</span>
-          <span>average mood</span>
-        </div>
-        <div>
-          <span className="mf-summary-value tnum">{averageLabel(summary.focusAverage)}</span>
-          <span>average focus</span>
-        </div>
-        <div>
-          <span className="mf-summary-value tnum">{summary.restDays}</span>
-          <span>rest days</span>
-        </div>
+        <span>{rangeStart === month ? summary.label : `${monthSummary([], rangeStart).label} – ${summary.label}`}</span>
+      </div>
+      <section className="mf-summary-line" aria-label="Recording coverage">
+        <div><span className="mf-summary-value tnum">{moodDays} / {rangeDays}</span><span>days with mood</span></div>
+        <div><span className="mf-summary-value tnum">{focusDays} / {rangeDays}</span><span>days with focus</span></div>
+        <div><span className="mf-summary-value tnum">{plotEntries.filter((entry) => entry.focus === 'Resting').length}</span><span>rest days</span></div>
       </section>
-
-      <section className="mf-trend" aria-labelledby="mf-trend-title">
-        <div className="mf-section-head">
-          <div>
-            <h3 id="mf-trend-title">Six-month averages</h3>
-          </div>
-          <div className="mf-trend-key" aria-hidden="true">
-            <span className="is-mood"><span /> Mood</span>
-            <span className="is-focus"><span /> Focus</span>
-          </div>
-        </div>
-        <div className="mf-trend-chart" role="img" aria-label={`Mood and focus averages for the six months ending ${summary.label}`}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart accessibilityLayer data={trend} margin={{ top: 10, right: 14, bottom: 0, left: -16 }}>
-              <CartesianGrid vertical={false} stroke="var(--hairline)" strokeDasharray="2 5" />
-              <XAxis axisLine={false} dataKey="shortLabel" tick={{ fill: 'var(--ink-muted)', fontSize: 12 }} tickLine={false} />
-              <YAxis axisLine={false} domain={[1, 5]} tick={{ fill: 'var(--ink-muted)', fontSize: 12 }} tickLine={false} ticks={[1, 2, 3, 4, 5]} width={32} />
-              <Tooltip
-                contentStyle={{ background: 'var(--surface-card)', border: '1px solid var(--hairline)', borderRadius: 8, boxShadow: 'var(--shadow-overlay)', color: 'var(--ink-body)', fontSize: 12 }}
-                cursor={{ stroke: 'var(--surface-strong)', strokeWidth: 1 }}
-                formatter={(value, name) => [Number(value).toFixed(1), name]}
-                isAnimationActive={false}
-                labelStyle={{ color: 'var(--ink)', fontWeight: 600, marginBottom: 4 }}
-              />
-              <Line activeDot={<TrendDot signal="mood" active />} connectNulls={false} dataKey="mood" dot={<TrendDot signal="mood" />} isAnimationActive={false} name="Mood" stroke="var(--mf-mood)" strokeWidth={2} type="monotone" />
-              <Line activeDot={<TrendDot signal="focus" active />} connectNulls={false} dataKey="focus" dot={<TrendDot signal="focus" />} isAnimationActive={false} name="Focus" stroke="var(--mf-focus)" strokeWidth={2} type="monotone" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      <section className="mf-trend" aria-label="Mood and focus over time">
+        <SignalPlot signal="mood" entries={plotEntries} start={rangeStart} days={rangeDays} onOpen={(entry) => { setAdding(false); setEditorBaseline(entry); setEditorDate(entry.date) }} />
+        <SignalPlot signal="focus" entries={plotEntries} start={rangeStart} days={rangeDays} onOpen={(entry) => { setAdding(false); setEditorBaseline(entry); setEditorDate(entry.date) }} />
+        <p className="mf-chart-note">Each dot is a recorded day. Gaps are days without a rating.</p>
       </section>
 
       <section className="mf-records" aria-labelledby="mf-records-title">
         <div className="mf-section-head">
           <h3 id="mf-records-title">Daily record</h3>
         </div>
-        {entries.length === 0 ? (
+        {plotEntries.length === 0 ? (
           <EmptyState icon={<TrendingUp size={20} />} title="No check-ins" message={`No entries in ${summary.label}.`} />
         ) : (
           <div className="mf-record-stack">
-            {entries.map((entry) => (
-              <RecordRow key={entry.date} entry={entry} today={state.today} onEditDate={onEditDate} />
+            {[...plotEntries].reverse().map((entry) => (
+              <RecordRow key={entry.date} entry={entry} today={state.today} onEditDate={(date) => { setAdding(false); setEditorBaseline(entry); setEditorDate(date) }} />
             ))}
           </div>
         )}
       </section>
+      <HistoryEditor
+        open={editorDate !== null}
+        adding={adding}
+        date={editorDate}
+        baseline={editorBaseline}
+        today={state.today}
+        onDateChange={(date) => { setEditorBaseline(date === null ? null : state.entries.find((entry) => entry.date === date) ?? null); setEditorDate(date) }}
+        onClose={() => setEditorDate(null)}
+        onSave={async (mutation) => { await onSaveRatings(mutation); setEditorDate(null) }}
+      />
     </div>
   )
+}
+
+function HistoryEditor({ open, adding, date, baseline, today, onDateChange, onClose, onSave }: {
+  open: boolean
+  adding: boolean
+  date: string | null
+  baseline: MoodFocusEntry | null
+  today: string
+  onDateChange: (date: string | null) => void
+  onClose: () => void
+  onSave: (mutation: MoodFocusHistoryMutation) => Promise<void>
+}): ReactNode {
+  const entry = baseline
+  const [mood, setMood] = useState<Mood | null>(null)
+  const [focus, setFocus] = useState<Focus | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  useEffect(() => {
+    setMood(entry?.mood ?? null)
+    setFocus(entry?.focus ?? null)
+    setError(null)
+  }, [date, entry?.mood, entry?.focus])
+  const dirty = mood !== (entry?.mood ?? null) || focus !== (entry?.focus ?? null)
+  const requestClose = (): void => {
+    if (saving) return
+    if (dirty) { setConfirmDiscard(true); return }
+    onClose()
+  }
+  const save = async (): Promise<void> => {
+    if (date === null || (mood === null && focus === null)) { setError('Choose a mood or focus rating.'); return }
+    setSaving(true); setError(null)
+    try { await onSave({ date, mood, focus, expectedUpdatedAt: entry?.updatedAt ?? null }) }
+    catch (caught) { setError(caught instanceof Error ? caught.message : 'The ratings could not be saved.') }
+    finally { setSaving(false) }
+  }
+  return <><DetailDialog open={open} onClose={requestClose} title={date === null ? 'Add day' : fullDateLabel(date)} width={720} ariaLabel="Edit mood and focus history">
+    <div className="mf-history-editor">
+      {adding ? <div className="mf-history-date"><span>Date</span><DatePicker value={date} onChange={onDateChange} ariaLabel="History date" min={null} max={moodFocusPreviousDate(today)} required today={today} /></div> : null}
+      <ScalePicker id="history-mood" prompt="Mood" kind="mood" options={moodOptions} value={mood} onChange={setMood} />
+      <ScalePicker id="history-focus" prompt="Focus" kind="focus" options={focusOptions} value={focus} onChange={setFocus} />
+      {entry?.note !== null && entry?.note !== undefined ? <section className="mf-history-synthesis"><h3>Daily synthesis</h3><p>{entry.note}</p><span className="mf-record-source">{entry.noteSource === 'codex' ? 'Codex debrief' : 'Manual'}</span></section> : null}
+      {error !== null ? <p className="mf-history-editor-error" role="alert">{error}</p> : null}
+      <footer className="mf-history-editor-footer"><Button variant="ghost" disabled={saving} onClick={requestClose}>Cancel</Button><Button variant="primary" disabled={saving || date === null || (mood === null && focus === null)} onClick={() => void save()} testId="history-save-ratings">{saving ? 'Saving…' : entry === null ? 'Add record' : 'Save changes'}</Button></footer>
+    </div>
+  </DetailDialog><Modal open={confirmDiscard} onClose={() => setConfirmDiscard(false)} width={400} ariaLabel="Discard history changes"><div className="mf-history-discard"><h2>Discard changes?</h2><p>Your rating changes have not been saved.</p><footer><Button variant="ghost" onClick={() => setConfirmDiscard(false)}>Keep editing</Button><Button variant="primary" onClick={() => { setConfirmDiscard(false); onClose() }}>Discard</Button></footer></div></Modal></>
+}
+
+function SignalPlot({ signal, entries, start, days, onOpen }: {
+  signal: 'mood' | 'focus'
+  entries: readonly MoodFocusEntry[]
+  start: string
+  days: number
+  onOpen: (entry: MoodFocusEntry) => void
+}): ReactNode {
+  const levels = signal === 'mood' ? ['Great', 'Good', 'Neutral', 'Bad', 'Awful'] : ['Locked In', 'High', 'Medium', 'Low', 'Locked Out', 'Resting']
+  const firstDay = new Date(`${start}-01T12:00:00Z`).getTime()
+  return <div className={`mf-signal-plot is-${signal}`}>
+    <h3>{signal === 'mood' ? 'Mood' : 'Focus'}</h3>
+    {levels.map((level) => <div className={`mf-plot-band${level === 'Resting' ? ' is-resting' : ''}`} key={level}>
+      <span className="mf-plot-label">{level}</span>
+      <div className="mf-plot-track">
+        {entries.filter((entry) => entry[signal] === level).map((entry) => {
+          const offset = Math.round((new Date(`${entry.date}T12:00:00Z`).getTime() - firstDay) / 86400000)
+          return <button type="button" key={entry.date} className="mf-plot-dot" style={{ left: `${((offset + 0.5) / days) * 100}%` }} aria-label={`${fullDateLabel(entry.date)}: ${level}`} title={`${fullDateLabel(entry.date)}: ${level}`} data-testid={`plot-${signal}-${entry.date}`} onClick={() => onOpen(entry)} />
+        })}
+      </div>
+    </div>)}
+    <div className="mf-plot-axis"><span>{fullDateLabel(`${start}-01`)}</span><span>{days} days</span></div>
+  </div>
 }

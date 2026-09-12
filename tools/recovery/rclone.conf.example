@@ -1,0 +1,16 @@
+# Fill secrets via RCLONE_CONFIG_MANOR_ACCESS_KEY_ID and SECRET_ACCESS_KEY.
+# Do not commit a real rclone configuration. Backups use source read credentials.
+[manor]
+type = s3
+provider = Other
+endpoint = https://PROJECT_REF.storage.supabase.co/storage/v1/s3
+region = us-east-2
+force_path_style = true
+
+# Restore-only credentials belong in a separate operator secret store.
+[recovery]
+type = s3
+provider = Other
+endpoint = https://ISOLATED_PROJECT_REF.storage.supabase.co/storage/v1/s3
+region = us-east-2
+force_path_style = true

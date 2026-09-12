@@ -49,9 +49,9 @@ describe('notes validation', () => {
         noteId: 'note-a',
         name: 'figure.png',
         mimeType: 'image/png',
-        bytes: new Uint8Array([1, 2, 3])
+        bytes: new Blob([new Uint8Array([1, 2, 3])])
       }).bytes
-    ).toBeInstanceOf(Uint8Array)
+    ).toBeInstanceOf(Blob)
     expect(() =>
       parseNoteAttachmentUpload({
         noteId: 'note-a',
@@ -59,6 +59,6 @@ describe('notes validation', () => {
         mimeType: 'image/png',
         bytes: [1, 2, 3]
       })
-    ).toThrow(/Uint8Array/)
+    ).toThrow(/Blob/)
   })
 })

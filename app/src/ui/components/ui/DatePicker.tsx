@@ -1,10 +1,7 @@
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
-
-import { useDismissLayer } from './dismissLayer'
-import { clampMenuPosition } from './menuPosition'
-import type { MenuPosition } from './menuPosition'
+import { Popover } from '@base-ui/react/popover'
+import { CalendarDays, ChevronLeft, ChevronRight, CornerDownLeft } from 'lucide-react'
+import { useRef, useState } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 
 export interface DatePickerProps {
   value: string | null
@@ -12,6 +9,9 @@ export interface DatePickerProps {
   ariaLabel: string
   min: string | null
   max: string | null
+  required?: boolean
+  today?: string
+  showIcon?: boolean
 }
 
 interface MonthCursor {
@@ -24,8 +24,6 @@ const MONTH_LABELS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ] as const
 const WEEKDAY_HEADERS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
-const MENU_WIDTH = 260
-const MENU_HEIGHT = 330
 
 function localIso(date: Date): string {
   const year = date.getFullYear()
@@ -77,190 +75,86 @@ function formatDate(iso: string): string {
   }).format(date)
 }
 
-export function DatePicker({ value, onChange, ariaLabel, min, max }: DatePickerProps): ReactNode {
-  const today = localIso(new Date())
+export function DatePicker({ value, onChange, ariaLabel, min, max, required, today: accountToday, showIcon }: DatePickerProps): ReactNode {
+  const today = accountToday ?? localIso(new Date())
   const [open, setOpen] = useState(false)
   const [cursor, setCursor] = useState<MonthCursor>(cursorFor(value ?? today))
   const [activeDate, setActiveDate] = useState(value ?? today)
-  const [position, setPosition] = useState<MenuPosition | null>(null)
-  const rootRef = useRef<HTMLDivElement | null>(null)
-  const triggerRef = useRef<HTMLButtonElement | null>(null)
-  const menuRef = useRef<HTMLDivElement | null>(null)
-
-  const isAllowed = useCallback((iso: string): boolean =>
-    (min === null || iso >= min) && (max === null || iso <= max), [max, min])
-
-  const updatePosition = useCallback((): void => {
-    if (triggerRef.current !== null) {
-      setPosition(clampMenuPosition(triggerRef.current.getBoundingClientRect(), MENU_WIDTH, MENU_HEIGHT))
-    }
-  }, [])
-
-  const closeAndFocus = useCallback((): void => {
-    setOpen(false)
-    window.requestAnimationFrame(() => triggerRef.current?.focus())
-  }, [])
-
-  const focusDate = useCallback((iso: string): void => {
-    if (!isAllowed(iso)) return
-    setActiveDate(iso)
-    setCursor(cursorFor(iso))
-    window.requestAnimationFrame(() => {
-      menuRef.current?.querySelector<HTMLButtonElement>(`[data-date="${iso}"]`)?.focus()
-    })
-  }, [isAllowed])
-
-  useDismissLayer(open, closeAndFocus)
-
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (event: PointerEvent): void => {
-      if (rootRef.current !== null && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-    const onViewportChange = (): void => updatePosition()
-    window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('resize', onViewportChange)
-    window.addEventListener('scroll', onViewportChange, true)
-    focusDate(activeDate)
-    return (): void => {
-      window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('resize', onViewportChange)
-      window.removeEventListener('scroll', onViewportChange, true)
-    }
-  }, [activeDate, focusDate, open, updatePosition])
-
+  const [typed, setTyped] = useState(value ?? '')
+  const [error, setError] = useState<string | null>(null)
+  const menu = useRef<HTMLDivElement>(null)
+  const allowed = (iso: string): boolean => (min === null || iso >= min) && (max === null || iso <= max)
   const pick = (iso: string): void => {
-    if (!isAllowed(iso)) return
-    onChange(iso)
-    setActiveDate(iso)
-    setCursor(cursorFor(iso))
-    closeAndFocus()
+    if (!allowed(iso)) { setError('Choose a date within the allowed range.'); return }
+    onChange(iso); setOpen(false); setError(null)
   }
-
-  const toggle = (): void => {
-    if (!open) {
-      const nextActive = value !== null && isAllowed(value) ? value : today
-      setActiveDate(nextActive)
-      setCursor(cursorFor(nextActive))
-      updatePosition()
-    }
-    setOpen((current) => !current)
+  const parseTyped = (): string | null => {
+    const input = typed.trim().toLowerCase()
+    if (input === 'today') return today
+    if (input === 'tomorrow') return shiftDate(today, 1)
+    if (input === 'next week') return shiftDate(today, 7)
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input)
+    if (match && localIso(parseIso(input)) === input) return input
+    return null
   }
-
-  const onDayKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, iso: string): void => {
-    const offsets: Readonly<Record<string, number>> = {
-      ArrowLeft: -1,
-      ArrowRight: 1,
-      ArrowUp: -7,
-      ArrowDown: 7
-    }
-    const offset = offsets[event.key]
-    if (offset !== undefined) {
-      event.preventDefault()
-      focusDate(shiftDate(iso, offset))
-      return
-    }
-    if (event.key === 'Home' || event.key === 'End') {
-      event.preventDefault()
-      const weekday = parseIso(iso).getDay()
-      focusDate(shiftDate(iso, event.key === 'Home' ? -weekday : 6 - weekday))
-      return
-    }
+  const applyTyped = (): void => {
+    const parsed = parseTyped()
+    if (parsed === null) { setError('Enter YYYY-MM-DD, today, tomorrow, or next week.'); return }
+    pick(parsed)
+  }
+  const focusDay = (iso: string): void => {
+    if (!allowed(iso)) return
+    setActiveDate(iso); setCursor(cursorFor(iso))
+    requestAnimationFrame(() => menu.current?.querySelector<HTMLButtonElement>(`[data-date="${iso}"]`)?.focus())
+  }
+  const dayKey = (event: KeyboardEvent<HTMLButtonElement>, iso: string): void => {
+    const offset = ({ ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 } as Record<string, number>)[event.key]
+    if (offset !== undefined) { event.preventDefault(); focusDay(shiftDate(iso, offset)); return }
+    if (event.key === 'Home' || event.key === 'End') { event.preventDefault(); const day = parseIso(iso).getDay(); focusDay(shiftDate(iso, event.key === 'Home' ? -day : 6 - day)); return }
     if (event.key === 'PageUp' || event.key === 'PageDown') {
       event.preventDefault()
-      const nextCursor = shiftMonth(cursorFor(iso), event.key === 'PageUp' ? -1 : 1)
-      const day = Math.min(parseIso(iso).getDate(), new Date(nextCursor.year, nextCursor.month + 1, 0).getDate())
-      focusDate(localIso(new Date(nextCursor.year, nextCursor.month, day)))
+      const next = shiftMonth(cursorFor(iso), event.key === 'PageUp' ? -1 : 1)
+      focusDay(localIso(new Date(next.year, next.month, Math.min(parseIso(iso).getDate(), new Date(next.year, next.month + 1, 0).getDate()))))
     }
   }
-
-  const menuStyle: CSSProperties | undefined = position === null
-    ? undefined
-    : { left: position.left, top: position.top }
-  const monthCells = datePickerMonthCells(cursor)
-  const activeCursor = cursorFor(activeDate)
-  const gridTabDate =
-    activeCursor.year === cursor.year &&
-    activeCursor.month === cursor.month &&
-    isAllowed(activeDate)
-      ? activeDate
-      : (monthCells.find(
-          (date): date is string => date !== null && isAllowed(date)
-        ) ?? '')
-
-  return (
-    <div className="ui-datepicker" ref={rootRef}>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="ui-datepicker-trigger"
-        aria-label={value === null ? ariaLabel : `${ariaLabel}: ${formatDate(value)}`}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={toggle}
-      >
-        <CalendarDays size={14} />
-        {value === null ? <span className="ui-datepicker-empty">Not set</span> : <span className="tnum">{formatDate(value)}</span>}
-      </button>
-
-      {open ? (
-        <div
-          ref={menuRef}
-          className="ui-datepicker-menu"
-          role="dialog"
-          aria-label={`${ariaLabel} calendar`}
-          style={menuStyle}
-        >
+  const cells = datePickerMonthCells(cursor)
+  const tabDate = cells.includes(activeDate) && allowed(activeDate) ? activeDate : cells.find(iso => iso !== null && allowed(iso))
+  return <Popover.Root open={open} onOpenChange={(next) => {
+    if (next) { setTyped(value ?? ''); setCursor(cursorFor(value ?? today)); setActiveDate(value ?? today); setError(null) }
+    setOpen(next)
+  }}>
+    <Popover.Trigger className="ui-datepicker-trigger" aria-label={value === null ? ariaLabel : `${ariaLabel}: ${formatDate(value)}`}>
+      {showIcon !== false && <CalendarDays size={15} />}{value === null ? <span className="ui-datepicker-empty">Not set</span> : <span className="tnum">{formatDate(value)}</span>}
+    </Popover.Trigger>
+    <Popover.Portal>
+      <Popover.Positioner className="ui-popover-positioner" align="start" sideOffset={6} collisionPadding={12}>
+        <Popover.Popup ref={menu} className="ui-datepicker-menu" aria-label={`${ariaLabel} calendar`}>
+          <div className="ui-date-entry">
+            <input aria-label="Type a date" placeholder="YYYY-MM-DD" value={typed} autoComplete="off" onChange={event => { setTyped(event.target.value); setError(null) }}
+              onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); applyTyped() } }} />
+            <button type="button" aria-label="Apply typed date" onClick={applyTyped}><CornerDownLeft size={14} /></button>
+          </div>
+          {error && <p className="ui-date-error" role="alert">{error}</p>}
           <div className="ui-datepicker-presets">
-            <button type="button" disabled={!isAllowed(today)} onClick={() => pick(today)}>Today</button>
-            <button
-              type="button"
-              disabled={value === null}
-              onClick={() => {
-                onChange(null)
-                closeAndFocus()
-              }}
-            >
-              Clear
-            </button>
+            {[['Today', today], ['Tomorrow', shiftDate(today, 1)], ['Next week', shiftDate(today, 7)]].map(([label, iso]) => <button key={label} type="button" disabled={!allowed(iso)} onClick={() => pick(iso)}>{label}</button>)}
           </div>
           <div className="ui-datepicker-monthbar">
             <span>{MONTH_LABELS[cursor.month]} {cursor.year}</span>
-            <span className="ui-datepicker-nav">
-              <button type="button" aria-label="Previous month" onClick={() => setCursor(shiftMonth(cursor, -1))}>
-                <ChevronLeft size={14} />
-              </button>
-              <button type="button" aria-label="Next month" onClick={() => setCursor(shiftMonth(cursor, 1))}>
-                <ChevronRight size={14} />
-              </button>
-            </span>
+            <div className="ui-datepicker-nav">
+              <button type="button" aria-label="Previous month" onClick={() => setCursor(shiftMonth(cursor, -1))}><ChevronLeft size={15} /></button>
+              <button type="button" aria-label="Next month" onClick={() => setCursor(shiftMonth(cursor, 1))}><ChevronRight size={15} /></button>
+            </div>
           </div>
-          <div className="ui-datepicker-grid tnum" role="grid" aria-label={`${MONTH_LABELS[cursor.month]} ${cursor.year}`}>
-            {WEEKDAY_HEADERS.map((header) => <span key={header} className="ui-datepicker-dow">{header}</span>)}
-            {monthCells.map((iso, index) => iso === null ? (
-              <span key={`pad-${index}`} />
-            ) : (
-              <button
-                key={iso}
-                type="button"
-                data-date={iso}
-                className={`ui-datepicker-day${iso === value ? ' is-selected' : ''}${iso === today ? ' is-today' : ''}`}
-                disabled={!isAllowed(iso)}
-                aria-label={formatDate(iso)}
-                aria-current={iso === today ? 'date' : undefined}
-                aria-pressed={iso === value}
-                tabIndex={iso === gridTabDate ? 0 : -1}
-                onKeyDown={(event) => onDayKeyDown(event, iso)}
-                onClick={() => pick(iso)}
-              >
-                {parseIso(iso).getDate()}
-              </button>
-            ))}
+          <div className="ui-datepicker-grid tnum" role="group" aria-label={`${MONTH_LABELS[cursor.month]} ${cursor.year}`}>
+            {WEEKDAY_HEADERS.map(day => <span key={day} className="ui-datepicker-dow">{day}</span>)}
+            {cells.map((iso, index) => iso === null ? <span key={`pad-${index}`} /> : <button key={iso} type="button" data-date={iso}
+              className={`ui-datepicker-day${iso === value ? ' is-selected' : ''}${iso === today ? ' is-today' : ''}`}
+              disabled={!allowed(iso)} aria-label={formatDate(iso)} aria-current={iso === today ? 'date' : undefined} aria-pressed={iso === value}
+              tabIndex={iso === tabDate ? 0 : -1} onClick={() => pick(iso)} onKeyDown={event => dayKey(event, iso)}>{parseIso(iso).getDate()}</button>)}
           </div>
-        </div>
-      ) : null}
-    </div>
-  )
+          {!required && <button className="ui-date-clear" type="button" disabled={value === null} onClick={() => { onChange(null); setOpen(false) }}>Clear date</button>}
+        </Popover.Popup>
+      </Popover.Positioner>
+    </Popover.Portal>
+  </Popover.Root>
 }

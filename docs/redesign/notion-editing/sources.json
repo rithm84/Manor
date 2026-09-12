@@ -1,0 +1,107 @@
+[
+  {
+    "crop": "block-actions.png",
+    "archive": "Notion Web Duplicating a block.zip",
+    "source": "Notion Web Duplicating a block 0.png",
+    "box_xyxy": [
+      285,
+      520,
+      660,
+      1118
+    ],
+    "source_dimensions": [
+      1920,
+      1320
+    ]
+  },
+  {
+    "crop": "duplicate-result.png",
+    "archive": "Notion Web Duplicating a block.zip",
+    "source": "Notion Web Duplicating a block 1.png",
+    "box_xyxy": [
+      674,
+      485,
+      1596,
+      1008
+    ],
+    "source_dimensions": [
+      1920,
+      1320
+    ]
+  },
+  {
+    "crop": "move-picker.png",
+    "archive": "Notion Web Moving a block.zip",
+    "source": "Notion Web Moving a block 1.png",
+    "box_xyxy": [
+      625,
+      493,
+      1130,
+      1090
+    ],
+    "source_dimensions": [
+      1920,
+      1320
+    ]
+  },
+  {
+    "crop": "tabs-menu.png",
+    "archive": "Notion Web Adding a tabs block.zip",
+    "source": "Notion Web Adding a tabs block 2.png",
+    "box_xyxy": [
+      675,
+      789,
+      1595,
+      1032
+    ],
+    "source_dimensions": [
+      1920,
+      1320
+    ]
+  },
+  {
+    "crop": "code-language.png",
+    "archive": "Notion Web Adding a code.zip",
+    "source": "Notion Web Adding a code 3.png",
+    "box_xyxy": [
+      680,
+      120,
+      1708,
+      794
+    ],
+    "source_dimensions": [
+      1920,
+      1320
+    ]
+  },
+  {
+    "crop": "suggested-edit.png",
+    "archive": "Notion Web Suggesting an edit.zip",
+    "source": "Notion Web Suggesting an edit 2.png",
+    "box_xyxy": [
+      512,
+      486,
+      1840,
+      807
+    ],
+    "source_dimensions": [
+      1920,
+      1320
+    ]
+  },
+  {
+    "crop": "ai-result.png",
+    "archive": "Notion Web Adding a text block with AI.zip",
+    "source": "Notion Web Adding a text block with AI 4.png",
+    "box_xyxy": [
+      665,
+      710,
+      1605,
+      995
+    ],
+    "source_dimensions": [
+      1920,
+      1320
+    ]
+  }
+]

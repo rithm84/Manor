@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import type { ReactElement, ReactNode, RefObject, SVGProps } from 'react'
+import { useEffect, useState } from 'react'
+import type { ReactElement, ReactNode, RefCallback, SVGProps } from 'react'
 import {
   Sankey,
   Tooltip
@@ -10,11 +10,6 @@ import type { JobStageTransition, JobStage } from '../../../shared/jobs'
 import { EmptyState } from '../../components/ui'
 import { jobFlowData, jobStageOptions, stageLabel } from './jobsModel'
 
-interface StageTone {
-  strong: string
-  tint: string
-}
-
 interface ChartSize {
   width: number
   height: number
@@ -24,15 +19,15 @@ interface FlowNodeProps extends SankeyNodeProps {
   chartWidth: number
 }
 
-const STAGE_TONES: Readonly<Record<JobStage, StageTone>> = {
-  to_apply: { strong: '#6e6975', tint: '#f5f4f1' },
-  applied: { strong: '#3d7a52', tint: '#e6f2ea' },
-  oa: { strong: '#8f6a0e', tint: '#f8efd8' },
-  interview_1: { strong: '#6f5680', tint: '#efe9f4' },
-  interview_2: { strong: '#6f5680', tint: '#efe9f4' },
-  interview_3: { strong: '#6f5680', tint: '#efe9f4' },
-  offer: { strong: '#3d7a52', tint: '#e6f2ea' },
-  rejected: { strong: '#b0434b', tint: '#f9e6e7' }
+const STAGE_TONES: Readonly<Record<JobStage, string>> = {
+  to_apply: '#6e6975',
+  applied: '#3d7a52',
+  oa: 'var(--chart-oa)',
+  interview_1: '#6f5680',
+  interview_2: '#6f5680',
+  interview_3: '#6f5680',
+  offer: '#3d7a52',
+  rejected: '#b0434b'
 }
 
 export interface JobsFlowProps {
@@ -54,7 +49,7 @@ function FlowNode({ x, y, width, height, payload, chartWidth }: FlowNodeProps): 
   const alignRight = rightEdge + 88 > chartWidth
   return (
     <g>
-      <rect x={x} y={y} width={width} height={height} rx={3} fill={tone.strong} />
+      <rect x={x} y={y} width={width} height={height} rx={3} fill={tone} />
       <text
         x={alignRight ? x - 8 : rightEdge + 8}
         y={y + height / 2 - 2}
@@ -79,14 +74,13 @@ function FlowNode({ x, y, width, height, payload, chartWidth }: FlowNodeProps): 
 }
 
 function useChartSize(): {
-  chartRef: RefObject<HTMLDivElement | null>
+  chartRef: RefCallback<HTMLDivElement>
   size: ChartSize | null
 } {
-  const chartRef = useRef<HTMLDivElement | null>(null)
+  const [chart, setChart] = useState<HTMLDivElement | null>(null)
   const [size, setSize] = useState<ChartSize | null>(null)
 
   useEffect(() => {
-    const chart = chartRef.current
     if (chart === null) return
 
     const measure = (): void => {
@@ -104,9 +98,9 @@ function useChartSize(): {
     const observer = new ResizeObserver(measure)
     observer.observe(chart)
     return (): void => observer.disconnect()
-  }, [])
+  }, [chart])
 
-  return { chartRef, size }
+  return { chartRef: setChart, size }
 }
 
 function FlowLink({
@@ -127,7 +121,7 @@ function FlowLink({
     <path
       d={`M${sourceX},${sourceY} C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`}
       fill="none"
-      stroke={tone.strong}
+      stroke={tone}
       strokeOpacity={0.28}
       strokeWidth={Math.max(1, linkWidth)}
     />

@@ -4,9 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
 
 import type { CalendarDayEvent } from '../../../shared/calendar'
-import { calendars, events } from '../../data/mock'
-import type { CalendarEvent, ScratchBlock, Task } from '../../data/mock'
-import { useCurrentAccount } from '../welcome/accountSession'
+import type { ScratchBlock, Task } from '../../data/mock'
 import { formatClock, minutesToTime, timeToMinutes } from './taskModel'
 
 export type ScheduleDay = 'today' | 'tomorrow'
@@ -49,17 +47,7 @@ type TimelineDrag =
   | { kind: 'move'; blockId: string; grabOffsetMin: number; durationMin: number; startMin: number; moved: boolean }
   | { kind: 'create'; anchorMin: number; currentMin: number }
 
-function calendarColor(calendarId: string): string {
-  const source = calendars.find((calendar) => calendar.id === calendarId)
-  if (source === undefined) throw new Error(`Calendar event references missing calendar ${calendarId}`)
-  return source.color
-}
-
-function blockFromEvent(event: CalendarEvent): TimelineBlock {
-  return { id: event.id, title: event.title, start: event.start, end: event.end, scratch: false, taskId: null, color: calendarColor(event.calendarId) }
-}
-
-const LIVE_EVENT_FALLBACK_COLOR = '#48708e'
+const LIVE_EVENT_FALLBACK_COLOR = 'var(--secondary)'
 
 /** A connected-calendar event, clamped to the visible axis; null when the
     whole event falls outside it. All-day events carry no timeline slot. */
@@ -80,12 +68,12 @@ function blockFromDayEvent(event: CalendarDayEvent): TimelineBlock | null {
 
 function blockFromScratch(block: ScratchBlock, tasks: readonly Task[]): TimelineBlock {
   if (block.taskId === null) {
-    const title = block.portion.trim() === '' ? 'Sticky note' : block.portion
-    return { id: block.id, title, start: block.start, end: block.end, scratch: true, taskId: null, color: '#48708e' }
+    const title = block.portion.trim() === '' ? 'Time block' : block.portion
+    return { id: block.id, title, start: block.start, end: block.end, scratch: true, taskId: null, color: 'var(--secondary)' }
   }
   const task = tasks.find((candidate) => candidate.id === block.taskId)
   if (task === undefined) throw new Error(`Scratch block ${block.id} references missing task ${block.taskId}`)
-  return { id: block.id, title: task.title, start: block.start, end: block.end, scratch: true, taskId: task.id, color: '#48708e' }
+  return { id: block.id, title: task.title, start: block.start, end: block.end, scratch: true, taskId: task.id, color: 'var(--secondary)' }
 }
 
 export function timelineTop(minutes: number): number {
@@ -114,8 +102,7 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
   const suppressClickRef = useRef(false)
   const [drag, setDrag] = useState<TimelineDrag | null>(null)
 
-  // Connected-calendar feed: while at least one Google account is connected,
-  // real events replace the showroom story.
+  const [calendarError, setCalendarError] = useState<string | null>(null)
   const [liveEvents, setLiveEvents] = useState<readonly CalendarDayEvent[] | null>(null)
   useEffect(() => {
     let cancelled = false
@@ -128,12 +115,11 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
             .then((accounts) => (accounts.length === 0 ? null : api.eventsFor([date])))
         })
         .then((eventsForDay) => {
-          if (!cancelled) setLiveEvents(eventsForDay)
+          if (!cancelled) { setLiveEvents(eventsForDay); setCalendarError(null) }
         })
         .catch((error: unknown) => {
-          // No connection or no bridge: the mock story stays on screen.
           console.warn('Connected calendar events unavailable', { error })
-          if (!cancelled) setLiveEvents(null)
+          if (!cancelled) { setLiveEvents(null); setCalendarError(error instanceof Error ? error.message : 'Calendar could not be loaded.') }
         })
     }
     load()
@@ -144,9 +130,6 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
     }
   }, [date])
 
-  // The mock story fills the timeline only for the signed-out showroom; a
-  // signed-in account with no connected calendar gets an honest empty day.
-  const { account } = useCurrentAccount()
   const dayScratchBlocks = scratchBlocks.filter((block) => block.date === date)
   const dayEventBlocks: readonly TimelineBlock[] =
     liveEvents !== null
@@ -156,9 +139,7 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
             const block = blockFromDayEvent(event)
             return block === null ? [] : [block]
           })
-      : account === null
-        ? events.filter((event) => event.date === date && !event.scratch).map(blockFromEvent)
-        : []
+      : []
   const blocks: readonly TimelineBlock[] = [
     ...dayEventBlocks,
     ...dayScratchBlocks.map((block) => blockFromScratch(block, tasks))
@@ -281,6 +262,7 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
         <span className="today-date">{dateLabel}</span>
       </header>
 
+      {calendarError !== null ? <p className="home-error" role="alert">{calendarError}</p> : null}
       <div className="today-timeline-scroll">
         <div
           ref={(node) => { setNodeRef(node); timelineRef.current = node }}
@@ -322,7 +304,7 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
 
           {createGhost !== null ? (
             <div className="today-block is-scratch today-create-ghost" style={{ top: timelineTop(createGhost.start), height: timelineTop(createGhost.end) - timelineTop(createGhost.start) }}>
-              <span className="today-block-title">Sticky note</span>
+              <span className="today-block-title">Time block</span>
               <span className="today-block-time tnum">{formatClock(minutesToTime(createGhost.start))} to {formatClock(minutesToTime(createGhost.end))}</span>
             </div>
           ) : null}

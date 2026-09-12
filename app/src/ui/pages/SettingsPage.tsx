@@ -1,15 +1,18 @@
 import { useManorService } from '../services/ManorServices'
 import { Camera } from 'lucide-react'
-import { useRef, useState } from 'react'
-import type { ChangeEvent, FormEvent, ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ChangeEvent, ReactNode } from 'react'
 
+import { readThemePreference, setThemePreference } from '../../web/theme'
 import { AVATAR_CONTENT_TYPES } from '../../shared/account'
+import { IntegrationSettings } from './settings/IntegrationSettings'
+import { AgentConnections } from './settings/AgentConnections'
 import { AvatarCropDialog } from './settings/AvatarCropDialog'
 
 import { useSidebarDocked } from '../app/sidebarState'
 import { Button } from '../components/ui'
 import { setSoundsEnabled, soundsEnabled } from '../sound/sounds'
-import { accountErrorMessage, useAvatar, useCurrentAccount, useSignIn, validateSignIn } from './welcome/accountSession'
+import { accountErrorMessage, useAvatar, useCurrentAccount } from './welcome/accountSession'
 import { SettingsRow, SettingsToggle } from './settings/controls'
 import { PageShell } from './PageShell'
 import './settings/settings.css'
@@ -17,11 +20,13 @@ import './settings/settings.css'
 type SettingsSection =
   | 'account'
   | 'appearance'
+  | 'connections'
   | 'about'
 
 const SECTIONS: readonly { id: SettingsSection; label: string }[] = [
   { id: 'account', label: 'Account' },
   { id: 'appearance', label: 'Appearance' },
+  { id: 'connections', label: 'Connections' },
   { id: 'about', label: 'About' }
 ]
 
@@ -29,31 +34,18 @@ const SECTIONS: readonly { id: SettingsSection; label: string }[] = [
 /** Sectioned settings: nav of sections on the left, one section at a time. */
 export function SettingsPage(): ReactNode {
   const accountApi = useManorService('account')
-  const [section, setSection] = useState<SettingsSection>('account')
+  const [section, setSection] = useState<SettingsSection>(() => window.location.search.includes('connection_') ? 'connections' : 'account')
 
   // Account
   const { account, setAccount } = useCurrentAccount()
-  const [signInEmail, setSignInEmail] = useState('')
-  const [signInPassword, setSignInPassword] = useState('')
-  const [signInFieldError, setSignInFieldError] = useState<string | null>(null)
   const [signOutBusy, setSignOutBusy] = useState(false)
   const [signOutError, setSignOutError] = useState<string | null>(null)
-  const signIn = useSignIn((signedIn) => {
-    setAccount(signedIn)
-    setSignInEmail('')
-    setSignInPassword('')
-  })
-
-  const submitSignIn = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault()
-    const problem = validateSignIn(signInEmail, signInPassword)
-    if (problem !== null) {
-      setSignInFieldError(problem)
-      return
-    }
-    setSignInFieldError(null)
-    signIn.submit(signInEmail, signInPassword)
+  const [reconnectError, setReconnectError] = useState<string | null>(null)
+  const reconnectGoogle = (): void => {
+    setReconnectError(null)
+    void accountApi.signInWithGoogle().catch((error: Error) => setReconnectError(error.message))
   }
+  const [theme, setTheme] = useState(readThemePreference)
 
   const avatar = useAvatar(account !== undefined && account !== null)
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
@@ -102,7 +94,10 @@ export function SettingsPage(): ReactNode {
       .signOut()
       .then((outcome) => {
         setSignOutBusy(false)
-        if (outcome === 'cancelled') return
+        if (outcome === 'cancelled') {
+          setSignOutError('Your notes have unsynced changes. Stay signed in until they finish saving.');
+          return
+        }
         setAccount(null)
       })
       .catch((cause: unknown) => {
@@ -116,6 +111,14 @@ export function SettingsPage(): ReactNode {
   const [sidebarDocked, setSidebar] = useSidebarDocked()
 
   const [sounds, setSounds] = useState(soundsEnabled)
+  useEffect(() => {
+    const refreshAppearance = (): void => {
+      setTheme(readThemePreference())
+      setSounds(soundsEnabled())
+    }
+    window.addEventListener('manor:appearance-changed', refreshAppearance)
+    return () => window.removeEventListener('manor:appearance-changed', refreshAppearance)
+  }, [])
   const setSoundPreference = (enabled: boolean): void => {
     setSoundsEnabled(enabled)
     setSounds(enabled)
@@ -191,7 +194,7 @@ export function SettingsPage(): ReactNode {
                         <span className="set-account-name">{account.email}</span>
                         <span className="set-account-mail">Manor account</span>
                       </div>
-                      <Button variant="ghost" onClick={signOutOfAccount} disabled={signOutBusy}>
+                      <Button variant="ghost" testId="account-sign-out" onClick={signOutOfAccount} disabled={signOutBusy}>
                         Sign out
                       </Button>
                     </div>
@@ -208,63 +211,26 @@ export function SettingsPage(): ReactNode {
                   </>
                 ) : null}
                 {account === null ? (
-                  <form className="set-signin" onSubmit={submitSignIn} noValidate>
-                    <div className="set-signin-fields">
-                      <span className="ui-input-wrap">
-                        <input
-                          type="email"
-                          className="ui-input"
-                          value={signInEmail}
-                          onChange={(event) => {
-                            setSignInEmail(event.target.value)
-                            setSignInFieldError(null)
-                            signIn.clearError()
-                          }}
-                          placeholder="you@example.com"
-                          aria-label="Email address"
-                          aria-invalid={(signInFieldError ?? signIn.error) !== null}
-                          autoComplete="email"
-                        />
-                      </span>
-                      <span className="ui-input-wrap">
-                        <input
-                          type="password"
-                          className="ui-input"
-                          value={signInPassword}
-                          onChange={(event) => {
-                            setSignInPassword(event.target.value)
-                            setSignInFieldError(null)
-                            signIn.clearError()
-                          }}
-                          placeholder="Password"
-                          aria-label="Password"
-                          autoComplete="current-password"
-                        />
-                      </span>
-                      <button
-                        type="submit"
-                        className="ui-button ui-button--primary"
-                        disabled={signInEmail.trim() === '' || signInPassword === '' || signIn.busy}
-                      >
-                        {signIn.busy ? 'Signing in…' : 'Sign in'}
-                      </button>
-                    </div>
-                    {(signInFieldError ?? signIn.error) !== null ? (
-                      <span className="set-signin-error" role="alert">
-                        {signInFieldError ?? signIn.error}
-                      </span>
-                    ) : null}
-                  </form>
+                  <div className="set-signin">
+                    <Button variant="primary" onClick={reconnectGoogle}>Reconnect Google</Button>
+                    {reconnectError !== null ? <p className="set-signin-error" role="alert">{reconnectError}</p> : null}
+                  </div>
                 ) : null}
               </div>
             </section>
           ) : null}
 
 
+          {section === 'connections' ? <><IntegrationSettings /><AgentConnections /></> : null}
           {section === 'appearance' ? (
             <section className="set-section">
               <h2 className="set-section-title">Appearance</h2>
               <div className="set-card">
+                <SettingsRow label="Theme" description="Choose how Manor looks.">
+                  <div className="set-segment" role="group" aria-label="Theme">
+                    {(['system', 'light', 'dark'] as const).map((value) => <button type="button" key={value} data-testid={`theme-${value}`} aria-pressed={theme === value} className={`set-segment-btn${theme === value ? ' is-active' : ''}`} onClick={() => { setThemePreference(value); setTheme(value) }}>{value.charAt(0).toUpperCase() + value.slice(1)}</button>)}
+                  </div>
+                </SettingsRow>
                 <SettingsRow label="Sounds" description="A soft tick when you check something off.">
                   <SettingsToggle
                     checked={sounds}

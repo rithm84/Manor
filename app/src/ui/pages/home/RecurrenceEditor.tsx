@@ -3,28 +3,20 @@ import type { KeyboardEvent, ReactNode } from 'react'
 
 import { Select } from '../../components/ui'
 import { DueDatePicker } from './DueDatePicker'
-import { MONTHS_SHORT, formatShortDate, localTodayIso, parseIso, toIso } from './taskModel'
+import { parseRecurrence, recurrenceLabel, serializeRecurrence } from '../../../shared/recurrence'
+import type { RecurrenceRule, RecurrenceUnit } from '../../../shared/recurrence'
 
 export interface RecurrenceEditorProps {
-  /** Human summary, e.g. "Every Sunday"; null when the task does not repeat. */
+  /** RFC 5545 recurrence rule; null when the task does not repeat. */
   value: string | null
   onChange: (value: string | null) => void
 }
 
-type RecurrenceUnit = 'day' | 'week' | 'month'
-
-interface CustomRule {
-  every: number
-  unit: RecurrenceUnit
-  weekdays: readonly string[]
-  until: string | null
-}
-
 const PRESETS: readonly { label: string; value: string | null }[] = [
   { label: "Doesn't repeat", value: null },
-  { label: 'Every day', value: 'Every day' },
-  { label: 'Every week', value: 'Every week' },
-  { label: 'Every Sunday', value: 'Every Sunday' }
+  { label: 'Every day', value: 'FREQ=DAILY;INTERVAL=1' },
+  { label: 'Every week', value: 'FREQ=WEEKLY;INTERVAL=1' },
+  { label: 'Every Sunday', value: 'FREQ=WEEKLY;INTERVAL=1;BYDAY=SU' }
 ]
 
 const UNIT_OPTIONS = [
@@ -35,65 +27,26 @@ const UNIT_OPTIONS = [
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
-const DEFAULT_RULE: CustomRule = { every: 2, unit: 'week', weekdays: ['Sun'], until: null }
+const DEFAULT_RULE: RecurrenceRule = { every: 2, unit: 'week', weekdays: ['Sun'], until: null }
 
 const MIN_INTERVAL = 1
 const MAX_INTERVAL = 30
 
-function summarize(rule: CustomRule): string {
-  const unitText =
-    rule.every === 1 ? rule.unit : `${rule.every} ${rule.unit}s`
-  const days =
-    rule.unit === 'week' && rule.weekdays.length > 0 ? ` on ${rule.weekdays.join(', ')}` : ''
-  const until = rule.until !== null ? ` until ${formatShortDate(rule.until)}` : ''
-  return `Every ${unitText}${days}${until}`
-}
-
-const RULE_PATTERN =
-  /^Every (?:(\d+) )?(day|week|month)s?(?: on ((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?:, (?:Mon|Tue|Wed|Thu|Fri|Sat|Sun))*))?(?: until ([A-Z][a-z]{2}) (\d{1,2}))?$/
-
-/** Inverse of summarize. The summary drops the until year, so it is read
-    back as the next occurrence on or after today. Null for non-custom text. */
-function parseRule(value: string, today: string): CustomRule | null {
-  const match = RULE_PATTERN.exec(value)
-  if (match === null) return null
-  const [, countText, unit, daysText, untilMonth, untilDay] = match
-  let until: string | null = null
-  if (untilMonth !== undefined && untilDay !== undefined) {
-    const month = (MONTHS_SHORT as readonly string[]).indexOf(untilMonth)
-    if (month === -1) return null
-    const year = parseIso(today).getFullYear()
-    const sameYear = toIso(new Date(year, month, Number(untilDay)))
-    until = sameYear < today ? toIso(new Date(year + 1, month, Number(untilDay))) : sameYear
-  }
-  return {
-    every: countText === undefined ? 1 : Number(countText),
-    unit: unit as RecurrenceUnit,
-    weekdays: daysText === undefined ? [] : daysText.split(', '),
-    until
-  }
-}
-
-/**
- * Recurrence property: preset chips plus a custom
- * "every [n] [unit] on [weekdays] until [date]" rule builder. Mock state;
- * the applied rule is stored as its human summary.
- */
+/** Repeats retain exact weekdays, interval, and end date in their persisted rule. */
 export function RecurrenceEditor({ value, onChange }: RecurrenceEditorProps): ReactNode {
-  const today = localTodayIso(new Date())
   const presetValues = PRESETS.map((preset) => preset.value)
   const startsCustom = value !== null && !presetValues.includes(value)
   const [customOpen, setCustomOpen] = useState(startsCustom)
-  const [rule, setRule] = useState<CustomRule>(
-    () => (value === null ? null : parseRule(value, today)) ?? DEFAULT_RULE
+  const [rule, setRule] = useState<RecurrenceRule>(
+    () => (value === null || !value.startsWith('FREQ=') ? null : parseRecurrence(value)) ?? DEFAULT_RULE
   )
   // Raw text so the interval field can be cleared while retyping; it is
   // clamped and committed on blur, not per keystroke.
   const [everyText, setEveryText] = useState(String(rule.every))
 
-  const applyRule = (next: CustomRule): void => {
+  const applyRule = (next: RecurrenceRule): void => {
     setRule(next)
-    onChange(summarize(next))
+    onChange(serializeRecurrence(next))
   }
 
   const commitInterval = (): void => {
@@ -112,7 +65,7 @@ export function RecurrenceEditor({ value, onChange }: RecurrenceEditorProps): Re
   const openCustom = (): void => {
     // Show the saved custom rule instead of the default; commit nothing
     // until the user actually changes something.
-    const saved = value === null ? null : parseRule(value, today)
+    const saved = value === null || !value.startsWith('FREQ=') ? null : parseRecurrence(value)
     const next = saved ?? DEFAULT_RULE
     setRule(next)
     setEveryText(String(next.every))
@@ -203,7 +156,7 @@ export function RecurrenceEditor({ value, onChange }: RecurrenceEditorProps): Re
               max={null}
             />
           </div>
-          <div className="recur-summary">{summarize(rule)}</div>
+          <div className="recur-summary">{recurrenceLabel(serializeRecurrence(rule))}</div>
         </div>
       ) : null}
     </div>

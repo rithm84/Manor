@@ -1,86 +1,83 @@
-/* Manor design tokens — Paper Violet. Single source of truth.
-   Never write color/radius/shadow/font-size literals in page CSS;
-   if a value is missing here, add a token first (see docs/DESIGN.md). */
-
+/* Shared Manor theme roles. Light and dark palettes are tuned independently. */
 :root {
-  /* Surfaces — content on white, chrome on paper */
+  color-scheme: light;
+  --secondary: #2e716c;
+  --secondary-tint: #e6f2ef;
+  --on-primary: #ffffff;
+  --on-danger: #ffffff;
+  --overlay-backdrop: rgb(30 23 38 / 35%);
   --surface-canvas: #ffffff;
-  --surface-paper: #fafaf8;
-  --surface-soft: #f5f4f1;
+  --surface-paper: #f6f6f8;
+  --surface-soft: #efedf2;
+  --surface-hover: #eae6ef;
+  --surface-selected: #e4dbea;
+  --surface-selected-hover: #e0d7e8;
   --surface-card: #ffffff;
-  --surface-card-warm: #f5f4f1;
-  --surface-strong: #eae8e3;
+  --surface-card-warm: #f1f1f4;
+  --surface-strong: #ddd8e3;
 
-  /* Ink */
-  --ink: #1b191d;
-  --ink-body: #3f3b44;
-  --ink-muted: #6e6975;
+  --ink: #25222a;
+  --ink-body: #46424d;
+  --ink-muted: #625a6c;
 
-  /* Hairline borders are the elevation system */
-  --hairline: #e8e6e1;
-  --hairline-strong: #dcd9d3;
+  --hairline: #e8e6ed;
+  --hairline-strong: #d3cedb;
+  --control-border: #8d8497;
   --shadow-overlay: 0 16px 40px rgba(27, 25, 29, 0.12), 0 2px 6px rgba(27, 25, 29, 0.05);
   --shadow-hover: 0 1px 3px rgba(27, 25, 29, 0.07);
 
-  /* Violet — the single interaction accent */
-  --primary: #71549e;
-  --primary-hover: #654a8d;
-  --primary-active: #57407b;
-  --primary-tint: #f2edf9;
+  --primary: #75508f;
+  --primary-hover: #634079;
+  --primary-active: #553369;
+  --primary-tint: #ecdef5;
 
-  /* Grounding — forest (legacy; prefer violet for selection states) */
-  --forest: #2f4127;
+  --forest: #315c3d;
   --forest-soft: var(--completion-tint);
 
-  /* Semantic strong/tint pairs — used only when they mean something */
-  --completion: #3d7a52;
-  --completion-soft: color-mix(in srgb, #3d7a52 55%, white);
-  --completion-tint: #e6f2ea;
-  --today-warning: #8f6a0e;
-  --today-warning-tint: #f8efd8;
-  --tomorrow-gold: #6f671f;
-  --tomorrow-gold-tint: #f1eeda;
-  --overdue-error: #b0434b;
-  --overdue-error-tint: #f9e6e7;
-  --frozen-info: #48708e;
-  --frozen-info-tint: #e8eff5;
-  --this-week-plum: #6f5680;
-  --this-week-plum-tint: #efe9f4;
+  --completion: #2c6440;
+  --completion-soft: color-mix(in srgb, #39764e 55%, white);
+  --completion-tint: #dbece0;
+  --today-warning: #775506;
+  --today-warning-tint: #f5e6bf;
+  --tomorrow-gold: #675e19;
+  --tomorrow-gold-tint: #eee6be;
+  --overdue-error: #9f3742;
+  --overdue-error-tint: #f7dfe3;
+  --frozen-info: #355f7e;
+  --frozen-info-tint: #dce9f3;
+  --this-week-plum: #664677;
+  --this-week-plum-tint: #eadef0;
 
-  /* Streak fire — the classic flame ladder, reserved for the streak
-     indicator alone (2026-08-24; completion marks are green everywhere) */
   --streak: #e8590c;
   --streak-deep: #d9480f;
   --streak-glow: #ff922b;
   --streak-core: #ffd43b;
   --streak-tint: #fff4e6;
 
-  /* Mood & Focus scale (strong / tint) — the one sanctioned multi-hue ladder */
-  --scale-awful: #a63d4c;
+  --scale-awful: #79528f;
   --scale-awful-tint: #f8e3e7;
-  --scale-bad: #a05a3a;
+  --scale-bad: #805b8a;
   --scale-bad-tint: #f7e9e0;
-  --scale-neutral: #6e6975;
+  --scale-neutral: #6e6876;
   --scale-neutral-tint: #efedea;
-  --scale-good: #5e7a35;
+  --scale-good: #4b7179;
   --scale-good-tint: #ecf1df;
-  --scale-great: #2f7a50;
+  --scale-great: #326f79;
   --scale-great-tint: #e3efe8;
   --scale-lockedout: #7b5686;
   --scale-lockedout-tint: #f0e7f2;
   --scale-low: #5e6092;
   --scale-low-tint: #e9e9f4;
-  --scale-medium: #4e6e91;
+  --scale-medium: #4b6b8e;
   --scale-medium-tint: #e5ecf4;
-  --scale-high: #39728b;
+  --scale-high: #356f88;
   --scale-high-tint: #e2edf2;
   --scale-lockedin: #245f70;
   --scale-lockedin-tint: #deeaee;
   --scale-resting: #6c676f;
   --scale-resting-tint: #eceaee;
 
-  /* Compatibility aliases for established module roles */
-  --teal: var(--frozen-info);
+  --teal: var(--secondary);
   --amber: var(--today-warning);
   --gold: var(--tomorrow-gold);
   --gold-soft: var(--tomorrow-gold-tint);
@@ -91,46 +88,35 @@
   --error: var(--overdue-error);
   --error-soft: var(--overdue-error-tint);
 
-  /* Interaction roles — violet owns interaction; red owns "now" */
   --link: var(--primary);
   --link-hover: var(--ink);
   --focus-border: var(--primary);
   --selection: var(--primary-tint);
-  --scratch: var(--tomorrow-gold);
-  --scratch-tint: var(--sticky-note);
+  --scratch: var(--secondary);
+  --scratch-tint: var(--secondary-tint);
   --timeline-now: var(--primary);
 
-  /* Kanban group pills (the signature): dark fill, white text.
-     Column washes mix the tint toward white so boards read as paper.
-     The due ladder is its own palette, decoupled from the error/warning
-     inks (2026-08-26): hot red for late, warm amber for today, fresh teal
-     for tomorrow, cool plum for the week beyond. White text stays >=4.3:1
-     on every fill. */
-  --pill-overdue: #c43b48;
-  --pill-overdue-tint: #fbe4e6;
-  --pill-today: #b06712;
-  --pill-today-tint: #fbecd3;
-  --pill-tomorrow: #22857a;
-  --pill-tomorrow-tint: #def0ec;
-  --pill-week: #7857a0;
-  --pill-week-tint: #eee7f8;
+  --pill-overdue: #b5303e;
+  --pill-overdue-tint: #f8dce1;
+  --chart-oa: #b16c3a;
+  --pill-today: #945714;
+  --pill-today-tint: #f7e3c2;
+  --pill-tomorrow: #196f65;
+  --pill-tomorrow-tint: #d7eae3;
+  --pill-week: #6c478f;
+  --pill-week-tint: #e7dbf2;
   --pill-text: #ffffff;
 
-  /* Sidebar — paper chrome; selection carries a faint violet cast */
   --sidebar-background: var(--surface-paper);
   --sidebar-border: var(--hairline);
-  --sidebar-hover: #f1efec;
-  --sidebar-selected: #edeaf2;
+  --sidebar-hover: var(--surface-hover);
+  --sidebar-selected: var(--surface-selected);
 
-  /* Typography — the hand face owns every display role (charter: "the
-     printed page you write on"; Inter is the print, Shantell is the hand) */
-  --font-ui: 'Inter', -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  --font-display: 'Shantell Sans Variable', 'Bradley Hand', 'Segoe Print', cursive;
+  --font-ui: 'DM Sans Variable', 'DM Sans', -apple-system, sans-serif;
+  --font-display: 'Outfit Variable', 'Outfit', sans-serif;
   --font-hand: var(--font-display);
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
 
-  /* Scale floor is --text-xs; --text-gutter is the one sanctioned
-     exception for dense time-grid gutters and mini-month letters. */
   --text-gutter: 11px;
   --text-xs: 12px;
   --text-sm: 13px;
@@ -139,11 +125,8 @@
   --text-emphasis: 16px;
   --text-lg: 17px;
   --display-md: 28px;
-  /* Sits clearly above BlockNote's 3em document H1 (45px at the 15px base):
-     a note's title must outrank every heading inside it. */
-  --display-lg: 54px;
+  --display-lg: 40px;
 
-  /* Spacing — 4px base scale */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -154,16 +137,13 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* Radii — the complete set; nothing else ships */
   --radius-chip: 6px;
   --radius-control: 8px;
   --radius-card: 10px;
   --radius-card-lg: 12px;
 
-  /* Focus is violet, like every interaction state */
-  --focus-ring: 0 0 0 3px #e5dcf3;
+  --focus-ring: 0 0 0 2px #9677ac;
 
-  /* Motion — spring-feel, interruptible (emil bar) */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
@@ -172,16 +152,90 @@
   --duration-base: 200ms;
   --duration-panel: 240ms;
 
-  /* Paper stock — the PaperBackdrop shader overlay (Paper Shaders), one
-     static canvas over the whole window, dimmed here */
-  --paper-texture-opacity: 0.14;
 
-  /* Sticky note — the one sanctioned full skeuomorph (scratch blocks are
-     disposable paper); text on it uses --tomorrow-gold ink */
-  --sticky-note: #fbf3c2;
-  --sticky-note-edge: #e9dd9f;
 
-  /* Layout */
-  --sidebar-width: 248px;
+  --sidebar-width: 224px;
   --topbar-height: 52px;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --surface-canvas: #19181d;
+  --surface-paper: #201f25;
+  --surface-soft: #302c37;
+  --surface-hover: #393240;
+  --surface-selected: #44334f;
+  --surface-selected-hover: #493753;
+  --surface-card: #24222a;
+  --surface-card-warm: #29272f;
+  --surface-strong: #46404f;
+  --ink: #f3eff7;
+  --ink-body: #d4cedc;
+  --ink-muted: #b9afc4;
+  --hairline: #36313e;
+  --hairline-strong: #52495e;
+  --control-border: #887b94;
+  --primary: #c29bdc;
+  --primary-hover: #d1ade7;
+  --primary-active: #b888d5;
+  --primary-tint: #3c2b48;
+  --on-primary: #281532;
+  --on-danger: #321a20;
+  --secondary: #83c3b9;
+  --secondary-tint: #213a37;
+  --focus-ring: 0 0 0 2px #a37bc0;
+  --shadow-overlay: 0 20px 60px rgb(0 0 0 / 38%), 0 2px 8px rgb(0 0 0 / 25%);
+  --shadow-hover: 0 2px 6px rgb(0 0 0 / 20%);
+  --overlay-backdrop: rgb(0 0 0 / 55%);
+  --forest: #a4d6b4;
+  --pill-overdue: #f3a0aa;
+  --chart-oa: #dda36c;
+  --pill-today: #edc18c;
+  --pill-tomorrow: #97d7c7;
+  --pill-week: #cdb6ec;
+  --pill-text: #211923;
+  --completion: #9cd5ad;
+  --completion-soft: #6b997a;
+  --completion-tint: #2b4233;
+  --today-warning: #e3bd6c;
+  --today-warning-tint: #3b3120;
+  --tomorrow-gold: #e0d092;
+  --tomorrow-gold-tint: #463c24;
+  --overdue-error: #ffabb5;
+  --overdue-error-tint: #512c35;
+  --frozen-info: #a9cdec;
+  --frozen-info-tint: #2c4051;
+  --this-week-plum: #d6b5e9;
+  --this-week-plum-tint: #42304e;
+  --streak: #ff9a62;
+  --streak-deep: #ee8049;
+  --streak-glow: #ffb570;
+  --streak-core: #ffdb88;
+  --streak-tint: #402d22;
+  --scale-awful: #c5a2d9;
+  --scale-awful-tint: #362b40;
+  --scale-bad: #c5abc9;
+  --scale-bad-tint: #362e3d;
+  --scale-neutral: #b8b1c0;
+  --scale-neutral-tint: #302d35;
+  --scale-good: #9abec7;
+  --scale-good-tint: #26373d;
+  --scale-great: #8bc5cc;
+  --scale-great-tint: #23383b;
+  --scale-lockedout: #c7a0d2;
+  --scale-lockedout-tint: #382a3f;
+  --scale-low: #acaee0;
+  --scale-low-tint: #2d2e43;
+  --scale-medium: #9cbde0;
+  --scale-medium-tint: #293545;
+  --scale-high: #8cc5dc;
+  --scale-high-tint: #233941;
+  --scale-lockedin: #81c6c4;
+  --scale-lockedin-tint: #203b3a;
+  --scale-resting: #bdb4c5;
+  --scale-resting-tint: #322d38;
+  --pill-overdue-tint: #392429;
+  --pill-today-tint: #392d20;
+  --pill-tomorrow-tint: #203732;
+  --pill-week-tint: #32263e;
 }

@@ -1,3 +1,4 @@
+import { browserSurfaces } from '../../../web/browserTools'
 import { useManorService } from '../../services/ManorServices'
 import { BlockNoteEditor } from '@blocknote/core'
 import {
@@ -12,6 +13,8 @@ import {
 import { BlockNoteView } from '@blocknote/ariakit'
 import '@blocknote/ariakit/style.css'
 import {
+  SideMenu,
+  SideMenuController,
   FormattingToolbar,
   FormattingToolbarController,
   SuggestionMenuController,
@@ -40,10 +43,14 @@ import {
   PanelsTopLeft,
   TextQuote
 } from 'lucide-react'
-import { memo, useMemo } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 
 import type { NotePage } from '../../../shared/notes'
+import { validateFileUploadSize } from '../../../shared/fileUploadPolicy'
+import { MoveBlocksDialog } from './MoveBlocksDialog'
+import { NoteBlockMenu } from './NoteBlockMenu'
+import { useNoteTheme } from './useNoteTheme'
 import { noteEditorSchema } from './noteEditorSchema'
 import type { NoteEditor, NoteEditorBlock } from './noteEditorSchema'
 
@@ -51,6 +58,7 @@ export interface RichNoteEditorProps {
   page: NotePage
   allPages: readonly NotePage[]
   onChange: (contentJson: string) => void
+  onMoveBlocks: (blockIds: readonly string[], targetNoteId: string) => Promise<void>
 }
 
 interface PortableText {
@@ -88,43 +96,50 @@ function isPortableMath(inline: PortableInline): inline is PortableMath {
 }
 
 function normalizeLegacyColumns(blocks: readonly PortableBlock[]): PortableBlock[] {
-  return blocks.flatMap((block) => {
-    if (block.type === 'columnList') {
-      const columns = (block.children ?? []).filter((child) => child.type === 'column')
-      const rawRatio = Number(block.props?.ratio ?? 50)
-      const ratio = Number.isFinite(rawRatio) ? Math.min(75, Math.max(25, rawRatio)) : 50
-      return [{
+  return blocks.map((block) => {
+    if (block.type === 'columnList' || (block.type === 'twoColumns' && typeof block.props?.leftContent === 'string')) {
+      const columns = block.type === 'columnList'
+        ? (block.children ?? []).filter((child) => child.type === 'column').map((column) => ({
+          ...column, type: 'noteColumn', children: normalizeLegacyColumns(column.children ?? [])
+        }))
+        : ['leftContent', 'rightContent'].map((key) => ({
+          id: `${block.id ?? crypto.randomUUID()}-${key}`,
+          type: 'noteColumn',
+          children: columnBlocks(block.props?.[key])
+        }))
+      return {
         id: block.id,
         type: 'twoColumns',
-        props: {
-          ratio,
-          leftContent: JSON.stringify(normalizeLegacyColumns(columns[0]?.children ?? [])),
-          rightContent: JSON.stringify(normalizeLegacyColumns(columns[1]?.children ?? []))
-        },
-        children: []
-      }]
+        props: { ratio: Number(block.props?.ratio ?? 50) },
+        children: columns
+      }
     }
-    if (block.type === 'column') return normalizeLegacyColumns(block.children ?? [])
-    return [{ ...block, children: normalizeLegacyColumns(block.children ?? []) }]
+    return { ...block, type: block.type === 'column' ? 'noteColumn' : block.type,
+      children: normalizeLegacyColumns(block.children ?? []) }
   })
 }
 
 function columnBlocks(value: unknown): PortableBlock[] {
-  if (typeof value !== 'string') return []
-  try {
-    const parsed: unknown = JSON.parse(value)
-    return Array.isArray(parsed) ? normalizeLegacyColumns(parsed as PortableBlock[]) : []
-  } catch {
-    return []
-  }
+  if (typeof value !== 'string') throw new TypeError('A retained column must contain serialized blocks')
+  const parsed: unknown = JSON.parse(value)
+  if (!Array.isArray(parsed)) throw new TypeError('A retained column must contain a block array')
+  return normalizeLegacyColumns(parsed as PortableBlock[])
 }
 
-function blocksFromJson(contentJson: string): NoteEditorBlock[] {
+export function blocksFromJson(contentJson: string): NoteEditorBlock[] {
   const parsed: unknown = JSON.parse(contentJson)
   if (!Array.isArray(parsed)) {
     throw new TypeError('Persisted note content must be a block array')
   }
   return normalizeLegacyColumns(parsed as PortableBlock[]) as NoteEditorBlock[]
+}
+
+function canonicalDocument(contentJson: string): string {
+  return JSON.stringify(JSON.parse(contentJson), (_key, value: unknown) => {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) return value
+    const record = value as Record<string, unknown>
+    return Object.fromEntries(Object.keys(record).sort().map((key) => [key, record[key]]))
+  })
 }
 
 function splitInlineMath(content: readonly PortableInline[]): PortableInline[] {
@@ -219,7 +234,19 @@ function prepareMarkdownExport(blocks: readonly PortableBlock[]): {
   const inline = (content: readonly PortableInline[]): PortableInline[] => content.map((item) => isPortableMath(item)
     ? { type: 'text', text: token(`$${item.content}$`), styles: {} }
     : item)
-  const visit = (items: readonly PortableBlock[]): PortableBlock[] => items.flatMap((block) => {
+  const visit = (items: readonly PortableBlock[]): PortableBlock[] => items.flatMap<PortableBlock>((block) => {
+    if (block.type === 'twoColumns' && typeof block.props?.leftContent !== 'string') {
+      return (block.children ?? []).flatMap((column, index) => [
+        ...(index === 0 ? [] : [{ type: 'divider', children: [] }]),
+        ...visit(column.children ?? [])
+      ])
+    }
+    if (block.type === 'documentTabs') return visit(block.children ?? [])
+    if (block.type === 'documentTab') return [
+      { type: 'heading', props: { level: 3 }, content: [{ type: 'text', text: String(block.props?.title ?? 'Tab'), styles: {} }], children: [] },
+      ...visit(block.children ?? [])
+    ]
+    if (block.type === 'noteColumn') return visit(block.children ?? [])
     if (block.type === 'twoColumns') {
       return [
         ...visit(columnBlocks(block.props?.leftContent)),
@@ -277,8 +304,12 @@ function slashItems(editor: NoteEditor, query: string): ReturnType<typeof getDef
   const defaults = getDefaultReactSlashMenuItems(editor)
     .filter((item) => !item.title.toLowerCase().includes('emoji'))
     .map((item) => ({
-    ...item,
-    icon: iconForSlashItem(item.title)
+      ...item,
+      icon: iconForSlashItem(item.title),
+      // The custom image block owns its upload and link controls.
+      onItemClick: item.title === editor.dictionary.slash_menu.image.title
+        ? () => { insertOrUpdateBlockForSlashMenu(editor, { type: 'image' }) }
+        : item.onItemClick
     }))
   const callout = {
     title: 'Callout',
@@ -320,14 +351,28 @@ function slashItems(editor: NoteEditor, query: string): ReturnType<typeof getDef
     icon: <Columns2 size={17} />,
     onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, {
       type: 'twoColumns',
-      props: { ratio: 50 }
+      props: { ratio: 50 },
+      children: [
+        { type: 'noteColumn', children: [{ type: 'paragraph', content: [] }] },
+        { type: 'noteColumn', children: [{ type: 'paragraph', content: [] }] }
+      ]
+    })
+  }
+  const tabs = {
+    title: 'Tabs', subtext: 'Keep related sections together', aliases: ['tabs', 'sections'], group: 'Advanced',
+    icon: <PanelsTopLeft size={17} />,
+    onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, {
+      type: 'documentTabs', children: [
+        { type: 'documentTab', props: { title: 'Tab 1' }, children: [{ type: 'paragraph', content: [] }] },
+        { type: 'documentTab', props: { title: 'Tab 2' }, children: [{ type: 'paragraph', content: [] }] }
+      ]
     })
   }
   // BlockNote keys menu sections by group name, so items of one group must
   // sit contiguously: splice each custom item after its group's last
   // default instead of appending (appending duplicates the section keys).
   const merged = [...defaults]
-  for (const item of [callout, tableOfContents, columns, bookmark, embed]) {
+  for (const item of [callout, tableOfContents, columns, tabs, bookmark, embed]) {
     let insertAt = merged.length
     for (let index = merged.length - 1; index >= 0; index -= 1) {
       if (merged[index].group === item.group) {
@@ -346,8 +391,14 @@ function attachmentId(stableUrl: string): string | null {
 }
 
 /** The heavy BlockNote editor is lazy-loaded by NotesPage. */
-function RichNoteEditorComponent({ page, allPages, onChange }: RichNoteEditorProps): ReactNode {
+function RichNoteEditorComponent({ page, allPages, onChange, onMoveBlocks }: RichNoteEditorProps): ReactNode {
+  const [movingBlocks, setMovingBlocks] = useState<readonly string[] | null>(null)
+  const [menuError, setMenuError] = useState<string | null>(null)
+  const browserHighlightsRef = useRef(new Map<HTMLElement, { outline: string; offset: string; timer: number }>())
+  const theme = useNoteTheme()
   const notesApi = useManorService('notes')
+  const visibleContentRef = useRef(page.contentJson)
+  const applyingExternalRef = useRef(false)
   const editor = useCreateBlockNote(
     {
       schema: noteEditorSchema,
@@ -360,11 +411,12 @@ function RichNoteEditorComponent({ page, allPages, onChange }: RichNoteEditorPro
         headers: true
       },
       uploadFile: async (file: File) => {
+        validateFileUploadSize(file.size)
         const attachment = await notesApi.uploadAttachment({
           noteId: page.id,
           name: file.name,
           mimeType: file.type === '' ? 'application/octet-stream' : file.type,
-          bytes: new Uint8Array(await file.arrayBuffer())
+          bytes: file
         })
         return attachment.stableUrl
       },
@@ -375,6 +427,78 @@ function RichNoteEditorComponent({ page, allPages, onChange }: RichNoteEditorPro
     },
     [page.id]
   )
+
+  useEffect(() => {
+    const highlights = browserHighlightsRef.current
+    return () => {
+      for (const [element, highlight] of highlights) {
+        window.clearTimeout(highlight.timer)
+        element.style.outline = highlight.outline
+        element.style.outlineOffset = highlight.offset
+      }
+      highlights.clear()
+    }
+  }, [])
+
+  useEffect(() => browserSurfaces.attachEditor({
+    noteId: page.id,
+    selection: () => {
+      const selected = editor.getSelection()
+      return { block_ids: selected?.blocks.map(block => block.id) ?? [editor.getTextCursorPosition().block.id],
+        selected_text: editor.getSelectedText().slice(0, 10000), content_json: JSON.stringify(editor.document),
+        focused: editor.domElement?.contains(document.activeElement) ?? false }
+    },
+    reveal: blockIds => {
+      const elements = blockIds.map(id => {
+        if (editor.getBlock(id) === undefined) throw new Error(`Block ${id} does not exist in note ${page.id}`)
+        const element = editor.domElement?.querySelector<HTMLElement>(`.bn-block[data-id="${CSS.escape(id)}"]`)
+        if (!element) throw new Error(`Block ${id} is not rendered in the current editor`)
+        return { id, element }
+      })
+      return { note_id: page.id, caret_preserved: true, scroll_preserved: true, blocks: elements.map(({ id, element }) => {
+        const bounds = element.getBoundingClientRect()
+        const previous = browserHighlightsRef.current.get(element)
+        if (previous) window.clearTimeout(previous.timer)
+        const outline = previous?.outline ?? element.style.outline
+        const offset = previous?.offset ?? element.style.outlineOffset
+        element.style.outline = '2px solid currentColor'
+        element.style.outlineOffset = '2px'
+        const timer = window.setTimeout(() => {
+          element.style.outline = outline
+          element.style.outlineOffset = offset
+          browserHighlightsRef.current.delete(element)
+        }, 2000)
+        browserHighlightsRef.current.set(element, { outline, offset, timer })
+        return { id, x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height,
+          visible: bounds.bottom > 0 && bounds.top < window.innerHeight && bounds.right > 0 && bounds.left < window.innerWidth }
+      }) }
+    }
+  }), [editor, page.id])
+
+  useEffect(() => {
+    if (canonicalDocument(page.contentJson) === canonicalDocument(visibleContentRef.current)) return
+    visibleContentRef.current = page.contentJson
+    applyingExternalRef.current = true
+    try { editor.replaceBlocks(editor.document, blocksFromJson(page.contentJson)) }
+    finally { applyingExternalRef.current = false }
+    visibleContentRef.current = JSON.stringify(editor.document)
+  }, [editor, page.contentJson])
+
+  useEffect(() => {
+    const reveal = (): void => {
+      if (!window.location.hash.startsWith('#block=')) return
+      const id = decodeURIComponent(window.location.hash.slice('#block='.length))
+      if (editor.getBlock(id) === undefined) return
+      window.dispatchEvent(new CustomEvent('manor:reveal-block', { detail: id }))
+      window.requestAnimationFrame(() => {
+        editor.setTextCursorPosition(id, 'start')
+        document.querySelector(`.bn-block[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'center' })
+      })
+    }
+    reveal()
+    window.addEventListener('hashchange', reveal)
+    return () => window.removeEventListener('hashchange', reveal)
+  }, [editor])
 
   const mentionItems = useMemo(
     () =>
@@ -399,16 +523,26 @@ function RichNoteEditorComponent({ page, allPages, onChange }: RichNoteEditorPro
   )
 
   return (
+    <>
+    {menuError !== null ? <p className="note-media-error" role="alert">{menuError}</p> : null}
     <BlockNoteView
       editor={editor}
-      theme="light"
+      theme={theme}
       className="note-block-editor"
+      sideMenu={false}
       formattingToolbar={false}
       slashMenu={false}
       emojiPicker={false}
       portalElements={{ default: document.body }}
-      onChange={(changedEditor) => onChange(JSON.stringify(changedEditor.document))}
+      onChange={(changedEditor) => {
+        if (applyingExternalRef.current) return
+        const content = JSON.stringify(changedEditor.document)
+        if (content === visibleContentRef.current) return
+        visibleContentRef.current = content
+        onChange(content)
+      }}
     >
+      <SideMenuController sideMenu={(props) => <SideMenu {...props} dragHandleMenu={() => <NoteBlockMenu editor={editor} noteId={page.id} onError={setMenuError} onMove={setMovingBlocks} />} />} />
       <SuggestionMenuController
         triggerCharacter="/"
         getItems={async (query) => slashItems(editor, query)}
@@ -430,11 +564,14 @@ function RichNoteEditorComponent({ page, allPages, onChange }: RichNoteEditorPro
         getItems={async (query) => filterSuggestionItems(mentionItems, query)}
       />
     </BlockNoteView>
+    {movingBlocks !== null ? <MoveBlocksDialog blockIds={movingBlocks} pages={allPages.filter((candidate) => candidate.status === 'active' && candidate.id !== page.id)} onClose={() => setMovingBlocks(null)} onMove={onMoveBlocks} /> : null}
+    </>
   )
 }
 
 function sameMentionCatalog(previous: RichNoteEditorProps, next: RichNoteEditorProps): boolean {
-  if (previous.page.id !== next.page.id || previous.onChange !== next.onChange) return false
+  if (previous.page.id !== next.page.id || previous.onChange !== next.onChange || previous.onMoveBlocks !== next.onMoveBlocks) return false
+  if (previous.page.contentJson !== next.page.contentJson) return false
   const previousPages = previous.allPages.filter((page) => page.status === 'active' && page.id !== previous.page.id)
   const nextPages = next.allPages.filter((page) => page.status === 'active' && page.id !== next.page.id)
   return previousPages.length === nextPages.length

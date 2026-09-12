@@ -1,4 +1,5 @@
-import { renderToStaticMarkup } from 'react-dom/server'
+// @vitest-environment happy-dom
+import { renderPortalMarkup } from '../../testing/renderPortalMarkup'
 import { describe, expect, it } from 'vitest'
 
 import { monthKey } from '../../../shared/habits'
@@ -8,7 +9,7 @@ import { createHabitSeed } from './habitSeed'
 import { habitViewModel } from './habitModel'
 
 describe('habit detail dialog', () => {
-  it('keeps streak history and lifecycle actions in a centered accessible modal', () => {
+  it('keeps streak history and lifecycle actions in a centered accessible modal', async () => {
     const seed = createHabitSeed()
     const state: HabitsState = {
       today: seed.today,
@@ -23,7 +24,7 @@ describe('habit detail dialog', () => {
     const definition = state.habits[0]
     if (definition === undefined) throw new Error('Habit detail test requires a seeded habit')
     const habit = habitViewModel(state, definition, state.today)
-    const markup = renderToStaticMarkup(
+    const markup = await renderPortalMarkup(
       <HabitDetailDialog
         open
         onClose={() => undefined}
