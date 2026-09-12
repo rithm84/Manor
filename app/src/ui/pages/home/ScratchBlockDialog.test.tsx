@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { renderToStaticMarkup } from 'react-dom/server'
+import { renderPortalMarkup } from '../../testing/renderPortalMarkup'
 import { describe, expect, it } from 'vitest'
 
 import type { ScratchBlock, Task } from '../../../shared/home'
@@ -33,8 +33,8 @@ const BLOCK: ScratchBlock = {
 }
 
 describe('scratch block detail dialog', () => {
-  it('keeps scheduling controls in a centered accessible modal without day or part fields', () => {
-    const markup = renderToStaticMarkup(
+  it('keeps scheduling controls in a centered accessible modal with date, duration, and portion controls', async () => {
+    const markup = await renderPortalMarkup(
       <ScratchBlockDialog
         block={BLOCK}
         task={TASK}
@@ -50,15 +50,15 @@ describe('scratch block detail dialog', () => {
     expect(markup).toContain('aria-label="Time block details for Draft report"')
     expect(markup).toContain('aria-label="Block start time"')
     expect(markup).toContain('aria-label="Block duration')
-    expect(markup).not.toContain('aria-label="Block date')
-    expect(markup).not.toContain('aria-label="Part of task"')
-    expect(markup).not.toContain('aria-label="Sticky note title"')
+    expect(markup).toContain('aria-label="Block date')
+    expect(markup).toContain('aria-label="Time block portion"')
+    expect(markup).not.toContain('aria-label="Time block title"')
     expect(markup).toContain('Delete block')
     expect(markup).not.toContain('ui-sidepeek')
   })
 
-  it('lets freestanding stickies edit their title in the dialog header', () => {
-    const markup = renderToStaticMarkup(
+  it('lets freestanding time blocks edit their title in the dialog header', async () => {
+    const markup = await renderPortalMarkup(
       <ScratchBlockDialog
         block={{ ...BLOCK, taskId: null, portion: 'Walk the dog' }}
         task={null}
@@ -69,13 +69,13 @@ describe('scratch block detail dialog', () => {
       />
     )
 
-    expect(markup).toContain('aria-label="Sticky note title"')
+    expect(markup).toContain('aria-label="Time block title"')
     expect(markup).toContain('value="Walk the dog"')
     expect(markup).toContain('What is this time for?')
-    expect(markup).not.toContain('aria-label="Block date')
+    expect(markup).toContain('aria-label="Block date')
   })
 
-  it('ignores a cleared start time as transient editing and applies a complete one', () => {
+  it('keeps schedule edits local until Done saves the complete block', async () => {
     const updates: ScratchBlock[] = []
     const container = document.createElement('div')
     document.body.appendChild(container)
@@ -95,7 +95,7 @@ describe('scratch block detail dialog', () => {
       )
     })
 
-    const input = container.querySelector<HTMLInputElement>('input[aria-label="Block start time"]')
+    const input = document.body.querySelector<HTMLInputElement>('input[aria-label="Block start time"]')
     if (input === null) throw new Error('Block start time input did not render')
     // Bypass React's value tracker so the dispatched input event registers.
     const setValue = Object.getOwnPropertyDescriptor(
@@ -115,6 +115,10 @@ describe('scratch block detail dialog', () => {
       setValue.call(input, '09:30')
       input.dispatchEvent(new Event('input', { bubbles: true }))
     })
+    expect(updates).toHaveLength(0)
+    const save = document.body.querySelector<HTMLButtonElement>('[aria-label="Save time block"]')
+    if (save === null) throw new Error('Time block save button did not render')
+    await act(async () => { save.click() })
     expect(updates).toHaveLength(1)
     expect(updates[0].start).toBe('09:30')
     expect(updates[0].end).toBe('10:30')
@@ -125,8 +129,8 @@ describe('scratch block detail dialog', () => {
     container.remove()
   })
 
-  it('shows a dragged 75 minute duration as the selected value, not a placeholder', () => {
-    const markup = renderToStaticMarkup(
+  it('shows a dragged 75 minute duration as the selected value, not a placeholder', async () => {
+    const markup = await renderPortalMarkup(
       <ScratchBlockDialog
         block={{ ...BLOCK, taskId: null, end: '11:15', portion: 'Walk the dog' }}
         task={null}

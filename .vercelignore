@@ -1,0 +1,15 @@
+.git
+.agents
+.claude
+.codex
+.env*
+**/.env*
+**/node_modules
+**/.DS_Store
+app/dist
+journal
+docs
+tools
+supabase/.temp
+supabase/tests
+output

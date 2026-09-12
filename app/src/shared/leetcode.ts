@@ -10,6 +10,7 @@ export interface LeetCodeProblem {
 }
 
 export interface LeetCodeAttempt {
+  readonly revision?: number
   id: string
   problemId: string
   date: string
@@ -21,6 +22,7 @@ export interface LeetCodeAttempt {
 
 /** A quick jot about a mistake or pattern, kept beside the curriculum. */
 export interface LeetCodeNote {
+  readonly revision?: number
   id: string
   text: string
   createdAt: string
@@ -33,11 +35,25 @@ export interface LeetCodeLegacyProgress {
   attemptCount: number
 }
 
+export interface LeetCodeFreezeAction {
+  date: string
+  applied: boolean
+  canApply: boolean
+  canClear: boolean
+  revision: number
+}
+
+export interface LeetCodeFreezeMutation {
+  date: string
+  expectedRevision: number
+}
+
 export interface LeetCodeSummary {
   totalProblems: number
   streak: number
   freezesLeft: number
   freezesPerMonth: number
+  freezeAction: LeetCodeFreezeAction
   legacyProgress: readonly LeetCodeLegacyProgress[]
 }
 
@@ -57,18 +73,22 @@ export interface AddLeetCodeAttemptMutation {
 }
 
 export interface UpdateLeetCodeAttemptMutation {
+  expectedRevision?: number
   attemptId: string
   date: string
   solution: string
 }
 
 export interface UpdateLeetCodeNoteMutation {
+  expectedRevision?: number
   noteId: string
   text: string
 }
 
 export interface LeetCodeApi {
   load: () => Promise<LeetCodeState>
+  applyFreeze: (mutation: LeetCodeFreezeMutation) => Promise<LeetCodeState>
+  clearFreeze: (mutation: LeetCodeFreezeMutation) => Promise<LeetCodeState>
   addAttempt: (mutation: AddLeetCodeAttemptMutation) => Promise<LeetCodeState>
   updateAttempt: (mutation: UpdateLeetCodeAttemptMutation) => Promise<LeetCodeState>
   deleteAttempt: (attemptId: string) => Promise<LeetCodeState>
@@ -207,6 +227,18 @@ function parseLegacyProgress(value: unknown): LeetCodeLegacyProgress {
   }
 }
 
+function parseFreezeAction(value: unknown): LeetCodeFreezeAction {
+  const action = recordValue(value, 'summary.freezeAction')
+  if (typeof action.applied !== 'boolean' || typeof action.canApply !== 'boolean' || typeof action.canClear !== 'boolean') {
+    throw new TypeError('LeetCode freeze eligibility must contain boolean states')
+  }
+  const revision = nonNegativeInteger(action.revision, 'freezeAction.revision')
+  if ((action.applied && action.canApply) || action.canClear !== action.applied) {
+    throw new TypeError('LeetCode freeze eligibility is inconsistent')
+  }
+  return { date: parseLeetCodeDate(action.date, 'freezeAction.date'), applied: action.applied, canApply: action.canApply, canClear: action.canClear, revision }
+}
+
 export function parseLeetCodeSummary(value: unknown): LeetCodeSummary {
   const summary = recordValue(value, 'LeetCode summary')
   if (!Array.isArray(summary.legacyProgress)) {
@@ -227,6 +259,7 @@ export function parseLeetCodeSummary(value: unknown): LeetCodeSummary {
     streak: nonNegativeInteger(summary.streak, 'summary.streak'),
     freezesLeft,
     freezesPerMonth,
+    freezeAction: parseFreezeAction(summary.freezeAction),
     legacyProgress
   }
 }

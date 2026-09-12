@@ -1,3 +1,5 @@
+import { browserSurfaces } from '../../web/browserTools'
+import { useCommitVersion } from '../services/useCommitVersion'
 import { useManorService } from '../services/ManorServices'
 import { Briefcase, Plus } from 'lucide-react'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
@@ -10,11 +12,7 @@ import { JobDetailModal } from './jobs/JobDetailModal'
 import { JobsBrowse } from './jobs/JobsBrowse'
 import { PipelineBoard } from './jobs/PipelineBoard'
 import type { DragPayload, JobColumn } from './jobs/jobsModel'
-import {
-  fieldsForStageChange,
-  stageForColumn,
-  toBoardCard
-} from './jobs/jobsModel'
+import { toBoardCard } from './jobs/jobsModel'
 import { useJobsView } from './jobs/jobsViewState'
 import type { JobsView } from './jobs/jobsViewState'
 import './jobs/jobs.css'
@@ -27,7 +25,7 @@ const VIEW_TABS: readonly { value: JobsView; label: string }[] = [
   { value: 'pipeline', label: 'Pipeline' },
   { value: 'browse', label: 'Listings' }
 ]
-const ARRIVE_FLASH_MS = 1200
+const ARRIVE_FLASH_MS = 500
 const CLICK_SUPPRESS_MS = 150
 
 function errorMessage(error: unknown): string {
@@ -42,6 +40,7 @@ function freshRolesNote(state: JobsState): string | null {
 }
 
 export function JobsPage(): ReactNode {
+  const commitVersion = useCommitVersion()
   const jobsApi = useManorService('jobs')
   const [state, setState] = useState<JobsState | null>(null)
   const [loading, setLoading] = useState(true)
@@ -51,10 +50,25 @@ export function JobsPage(): ReactNode {
   const [dragging, setDragging] = useState<DragPayload | null>(null)
   const [detailRoleId, setDetailRoleId] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [stageRequest, setStageRequest] = useState<JobStage | JobColumn | null>(null)
   const [removeCandidateId, setRemoveCandidateId] = useState<string | null>(null)
   const [view, setView] = useJobsView()
   const timers = useRef<Set<number>>(new Set())
   const suppressClick = useRef(false)
+
+  useEffect(() => browserSurfaces.attachModule({
+    module: 'jobs',
+    context: () => ({ ready: !loading && state !== null, selected_object_id: detailOpen ? detailRoleId : null, navigation_blocked: detailOpen || addOpen || removeCandidateId !== null, filters: { view }, presentation: 'dialog' }),
+    open: id => {
+      if (!state?.roles.some(role => role.id === id)) throw new Error(`Application ${id} is not available in the current account`)
+      if (addOpen || removeCandidateId !== null) throw new Error('Close the application creation or removal dialog before opening another application')
+      setStageRequest(null); setDetailRoleId(id); setDetailOpen(true)
+    },
+    filter: request => {
+      if (request.module !== 'jobs') throw new TypeError('Jobs requires Jobs view controls')
+      setView(request.view)
+    }
+  }), [loading, state, detailOpen, detailRoleId, view, setView, addOpen, removeCandidateId])
 
   useEffect(() => {
     let cancelled = false
@@ -73,7 +87,7 @@ export function JobsPage(): ReactNode {
     return (): void => {
       cancelled = true
     }
-  }, [])
+  }, [jobsApi, commitVersion])
 
   useEffect(() => {
     const pending = timers.current
@@ -132,8 +146,6 @@ export function JobsPage(): ReactNode {
     return <div className="jobs-error" role="alert">{persistError ?? 'Jobs data could not be loaded.'}</div>
   }
 
-  // Rows mid leave-animation stay in the table (and out of the pipeline)
-  // even though their stage change is already persisted.
   const toApplyCount = state.roles.filter((role) => role.stage === 'to_apply').length
   const cards = state.roles.map((role) => toBoardCard(role, state.today))
   const detailRole = detailRoleId === null
@@ -142,27 +154,26 @@ export function JobsPage(): ReactNode {
   const empty = state.roles.length === 0
   const note = freshRolesNote(state)
 
-  const updateStage = (roleId: string, stage: JobStage): void => {
+  const requestStage = (roleId: string, stage: JobStage | JobColumn): void => {
     const role = state.roles.find((candidate) => candidate.id === roleId)
     if (role === undefined || role.stage === stage) return
-    void persist('Could not change stage', () => jobsApi.updateRole({
-      id: roleId,
-      fields: fieldsForStageChange(role, stage, state.today)
-    }))
-    if (stage !== 'to_apply') flashArrival(roleId)
+    setStageRequest(stage)
+    setDetailRoleId(roleId)
+    setDetailOpen(true)
   }
 
   const dropOnColumn = (column: JobColumn): void => {
     if (dragging === null) return
     const role = state.roles.find((candidate) => candidate.id === dragging.id)
     if (role !== undefined) {
-      updateStage(role.id, stageForColumn(column, role.stage))
+      requestStage(role.id, column)
     }
     setDragging(null)
   }
 
   const openDetail = (roleId: string): void => {
     if (suppressClick.current) return
+    setStageRequest(null)
     setDetailRoleId(roleId)
     setDetailOpen(true)
   }
@@ -247,7 +258,7 @@ export function JobsPage(): ReactNode {
               onDragEnd={endDrag}
               onDropOnColumn={dropOnColumn}
               onOpenCard={openDetail}
-              onMoveCard={updateStage}
+              onMoveCard={requestStage}
               onRemoveCard={(roleId) => setRemoveCandidateId(roleId)}
             />
           </section>
@@ -266,14 +277,16 @@ export function JobsPage(): ReactNode {
       <JobDetailModal
         role={detailRole}
         open={detailOpen}
+        stageRequest={stageRequest}
         onClose={() => setDetailOpen(false)}
-        onSave={async (roleId, fields) => {
+        onSave={async (roleId, fields, expectedRevision) => {
           // Close only once the persist lands; a failure keeps the modal
           // (and its field state) open, with the error shown inside it.
-          const next = await jobsApi.updateRole({ id: roleId, fields })
+          const next = await jobsApi.updateRole({ id: roleId, fields, expectedRevision })
           setState(next)
           setPersistError(null)
           setDetailOpen(false)
+          if (detailRole !== null && detailRole.stage !== fields.stage) flashArrival(roleId)
         }}
       />
 

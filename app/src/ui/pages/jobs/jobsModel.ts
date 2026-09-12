@@ -3,9 +3,7 @@ import type { JobRole, JobRoleFields, JobStage, JobStageTransition } from '../..
 
 export type JobColumn = 'to_apply' | 'applied' | 'oa' | 'interview' | 'decided'
 
-export type DragPayload =
-  | { kind: 'pipeline'; id: string }
-  | { kind: 'to_apply'; id: string }
+export interface DragPayload { kind: 'pipeline'; id: string }
 
 export interface BoardCard {
   role: JobRole
@@ -128,23 +126,6 @@ export function columnForStage(stage: JobStage): JobColumn {
     case 'offer':
     case 'rejected':
       return 'decided'
-  }
-}
-
-export function stageForColumn(column: JobColumn, currentStage: JobStage): JobStage {
-  switch (column) {
-    case 'to_apply':
-      return 'to_apply'
-    case 'applied':
-      return 'applied'
-    case 'oa':
-      return 'oa'
-    case 'interview':
-      return currentStage === 'interview_2' || currentStage === 'interview_3'
-        ? currentStage
-        : 'interview_1'
-    case 'decided':
-      return currentStage === 'offer' ? 'offer' : 'rejected'
   }
 }
 
@@ -280,23 +261,6 @@ export function roleFields(role: JobRole): JobRoleFields {
     decisionDate: role.decisionDate,
     resumeId: role.resumeId ?? null,
     term: role.term ?? null
-  }
-}
-
-export function fieldsForStageChange(
-  role: JobRole,
-  stage: JobStage,
-  today: string
-): JobRoleFields {
-  const fields = roleFields(role)
-  return {
-    ...fields,
-    stage,
-    appliedDate: stage === 'applied' && fields.appliedDate === null ? today : fields.appliedDate,
-    decisionDate:
-      (stage === 'offer' || stage === 'rejected') && fields.decisionDate === null
-        ? today
-        : fields.decisionDate
   }
 }
 

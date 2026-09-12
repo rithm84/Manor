@@ -111,8 +111,7 @@ export function bucketForDue(due: string, today: string): TaskBucket | null {
     hands off to the detail dialog for an exact date. */
 export function canDropTaskOnBucket(source: TaskBucket, target: TaskBucket): boolean {
   if (target === 'week') return source !== 'week'
-  if (target === 'today') return source === 'overdue' || source === 'tomorrow'
-  if (target === 'tomorrow') return source === 'overdue' || source === 'today'
+  if (target === 'today' || target === 'tomorrow') return source !== target
   return false
 }
 
@@ -135,6 +134,7 @@ export interface DraftTask {
   due: string | null
   estimateMinutes: TaskEstimateMinutes | null
   priority: TaskPriority | null
+  recurrence: string | null
 }
 
 export function canCreateTaskInBucket(bucket: TaskBucket): boolean {
@@ -262,22 +262,6 @@ export function estimateLabel(estimate: TaskEstimateMinutes): string {
 
 export function blockMinutesFor(estimate: TaskEstimateMinutes | null): number {
   return estimate ?? 60
-}
-
-const CODEX_CREATED: Readonly<Record<string, string>> = {
-  'task-neetcode-two-pointers': 'Aug 18'
-}
-
-export interface TaskProvenance {
-  byCodex: boolean
-  line: string
-}
-
-export function provenanceFor(task: Task): TaskProvenance {
-  const codexDate = CODEX_CREATED[task.id]
-  return codexDate !== undefined
-    ? { byCodex: true, line: `Codex created this · ${codexDate}` }
-    : { byCodex: false, line: 'You created this' }
 }
 
 export const TASK_DRAG_TYPE = 'application/x-manor-task'

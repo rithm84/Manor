@@ -5,17 +5,6 @@ import type { AccountInfo } from '../../../shared/account'
 
 /** Account UI state backed by injected services. */
 
-/** Basic shape check (name@host.tld); real verification happens server-side. */
-export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-/** Local pre-flight for the sign-in form. Null when both fields look usable. */
-export function validateSignIn(email: string, password: string): string | null {
-  if (!EMAIL_PATTERN.test(email.trim())) return 'Enter a valid email address.'
-  if (password === '') return 'Enter your password.'
-  return null
-}
-
-
 /** Supabase's own wording, rewritten in product voice. */
 const FRIENDLY_MESSAGES: readonly { pattern: RegExp; message: string }[] = [
   { pattern: /invalid login credentials/i, message: 'That email and password do not match.' },
@@ -104,35 +93,4 @@ export function useAvatar(signedIn: boolean): AvatarState {
   }, [signedIn])
 
   return { url, setUrl }
-}
-
-export interface SignInFormState {
-  busy: boolean
-  error: string | null
-  clearError: () => void
-  submit: (email: string, password: string) => void
-}
-
-/** Busy/error plumbing around `account.signIn`; validate fields first. */
-export function useSignIn(onSignedIn: (account: AccountInfo) => void): SignInFormState {
-  const accountApi = useManorService('account')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const submit = (email: string, password: string): void => {
-    setBusy(true)
-    setError(null)
-    accountApi
-      .signIn({ email: email.trim(), password })
-      .then((account) => {
-        setBusy(false)
-        onSignedIn(account)
-      })
-      .catch((cause: unknown) => {
-        setBusy(false)
-        setError(accountErrorMessage(cause, 'Sign in failed. Try again.'))
-      })
-  }
-
-  return { busy, error, clearError: () => setError(null), submit }
 }

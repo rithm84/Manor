@@ -18,7 +18,16 @@ function inlineText(value: unknown): string {
   if (Array.isArray(value)) return value.map(inlineText).join(' ')
   if (typeof value !== 'object' || value === null) return ''
   const record = value as Record<string, unknown>
-  return [record.text, record.content, record.children, record.caption, record.name]
+  const props = typeof record.props === 'object' && record.props !== null
+    ? record.props as Record<string, unknown>
+    : {}
+  const columns = ['leftContent', 'rightContent'].map((key) => {
+    const serialized = props[key]
+    if (typeof serialized !== 'string') return ''
+    return inlineText(JSON.parse(serialized))
+  })
+  return [record.text, record.content, record.children, record.caption, record.name,
+    props.caption, props.alt, props.title, props.name, ...columns]
     .map(inlineText)
     .filter(Boolean)
     .join(' ')

@@ -1,20 +1,17 @@
+import { Popover } from '@base-ui/react/popover'
 import { Clock3 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, FocusEvent, KeyboardEvent, ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import type { FocusEvent, KeyboardEvent, ReactNode } from 'react'
 
-import { useDismissLayer } from './dismissLayer'
-import { clampMenuPosition } from './menuPosition'
-import type { MenuPosition } from './menuPosition'
 
 export interface TimePickerProps {
   value: string
   onChange: (value: string) => void
   ariaLabel: string
   format: '12h' | '24h'
+  onValidityChange?: (valid: boolean) => void
 }
 
-const MENU_WIDTH = 220
-const MENU_HEIGHT = 280
 
 export const TIME_PICKER_OPTIONS: readonly string[] = Array.from({ length: 96 }, (_, index) => {
   const minutes = index * 15
@@ -57,118 +54,102 @@ function nearestOptionIndex(value: string): number {
   return Math.min(95, Math.max(0, Math.round((hour * 60 + minute) / 15)))
 }
 
-function optionId(ariaLabel: string, index: number): string {
-  return `time-option-${ariaLabel.replaceAll(' ', '-').toLocaleLowerCase()}-${index}`
-}
-
-export function TimePicker({ value, onChange, ariaLabel, format }: TimePickerProps): ReactNode {
+export function TimePicker({ value, onChange, ariaLabel, format, onValidityChange }: TimePickerProps): ReactNode {
+  const typedValue = useRef<string | null>(null)
   const [text, setText] = useState(() => formatTimePickerValue(value, format))
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(() => nearestOptionIndex(value))
   const [invalid, setInvalid] = useState(false)
-  const [position, setPosition] = useState<MenuPosition | null>(null)
+  const [choosingOption, setChoosingOption] = useState(false)
+  const listId = useId()
   const rootRef = useRef<HTMLDivElement | null>(null)
   const controlRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    setText(formatTimePickerValue(value, format))
+    if (typedValue.current !== value) setText(formatTimePickerValue(value, format))
     setActiveIndex(nearestOptionIndex(value))
     setInvalid(false)
   }, [format, value])
 
-  const updatePosition = useCallback((): void => {
-    if (controlRef.current !== null) {
-      setPosition(clampMenuPosition(controlRef.current.getBoundingClientRect(), MENU_WIDTH, MENU_HEIGHT))
-    }
-  }, [])
   const close = useCallback((): void => setOpen(false), [])
   const commitText = useCallback((): boolean => {
     const parsed = parseTimePickerText(text)
     if (parsed === null) {
       setInvalid(true)
+      onValidityChange?.(false)
       return false
     }
     setInvalid(false)
+    onValidityChange?.(true)
+    typedValue.current = parsed
     setText(formatTimePickerValue(parsed, format))
     setActiveIndex(nearestOptionIndex(parsed))
     if (parsed !== value) onChange(parsed)
     return true
-  }, [format, onChange, text, value])
+  }, [format, onChange, onValidityChange, text, value])
   const pick = useCallback((nextValue: string): void => {
     setInvalid(false)
+    onValidityChange?.(true)
+    typedValue.current = nextValue
     setText(formatTimePickerValue(nextValue, format))
     setActiveIndex(nearestOptionIndex(nextValue))
     onChange(nextValue)
     close()
     window.requestAnimationFrame(() => inputRef.current?.focus())
-  }, [close, format, onChange])
+  }, [close, format, onChange, onValidityChange])
   const openList = useCallback((): void => {
     setActiveIndex(nearestOptionIndex(value))
-    updatePosition()
+    setChoosingOption(false)
     setOpen(true)
-  }, [updatePosition, value])
-
-  useDismissLayer(open, close)
-
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (event: PointerEvent): void => {
-      if (rootRef.current !== null && !rootRef.current.contains(event.target as Node)) close()
-    }
-    const onViewportChange = (): void => updatePosition()
-    window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('resize', onViewportChange)
-    window.addEventListener('scroll', onViewportChange, { capture: true, passive: true })
-    return (): void => {
-      window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('resize', onViewportChange)
-      window.removeEventListener('scroll', onViewportChange, { capture: true })
-    }
-  }, [close, open, updatePosition])
+  }, [value])
 
   useEffect(() => {
     if (open) listRef.current?.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`)?.scrollIntoView({ block: 'nearest' })
   }, [activeIndex, open])
 
   const onInputBlur = (event: FocusEvent<HTMLInputElement>): void => {
-    if (rootRef.current?.contains(event.relatedTarget) !== true) commitText()
+    if (!rootRef.current?.contains(event.relatedTarget) && !listRef.current?.contains(event.relatedTarget)) commitText()
   }
   const onInputKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
       if (!open) openList()
       else setActiveIndex((current) => Math.min(95, Math.max(0, current + (event.key === 'ArrowDown' ? 1 : -1))))
+      setChoosingOption(true)
       return
     }
-    if (event.key === 'Home' && open) { event.preventDefault(); setActiveIndex(0); return }
-    if (event.key === 'End' && open) { event.preventDefault(); setActiveIndex(95); return }
+    if (event.key === 'Home' && open) { event.preventDefault(); setChoosingOption(true); setActiveIndex(0); return }
+    if (event.key === 'End' && open) { event.preventDefault(); setChoosingOption(true); setActiveIndex(95); return }
     if (event.key === 'Enter') {
       event.preventDefault()
-      if (open) pick(TIME_PICKER_OPTIONS[activeIndex] as string)
-      else commitText()
+      event.stopPropagation()
+      if (open && choosingOption) pick(TIME_PICKER_OPTIONS[activeIndex] as string)
+      else if (commitText()) close()
     }
   }
 
-  const menuStyle: CSSProperties | undefined = position === null ? undefined : position
-  const activeOptionId = useMemo(() => optionId(ariaLabel, activeIndex), [activeIndex, ariaLabel])
-  const listId = `${ariaLabel.replaceAll(' ', '-').toLocaleLowerCase()}-time-list`
-
   return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
     <div className="ui-timepicker" ref={rootRef}>
       <div ref={controlRef} className={`ui-timepicker-control${invalid ? ' is-invalid' : ''}${open ? ' is-open' : ''}`}>
-        <input ref={inputRef} className="ui-timepicker-input" type="text" inputMode="text" role="combobox" aria-label={ariaLabel} aria-expanded={open} aria-controls={listId} aria-activedescendant={open ? activeOptionId : undefined} aria-autocomplete="list" aria-invalid={invalid} value={text} onClick={() => { if (!open) openList() }} onChange={(event) => { setText(event.target.value); setInvalid(false) }} onBlur={onInputBlur} onKeyDown={onInputKeyDown} />
-        <button type="button" aria-label={`Choose ${ariaLabel.toLocaleLowerCase()}`} aria-expanded={open} onClick={() => open ? close() : openList()}><Clock3 size={14} /></button>
+        <input ref={inputRef} className="ui-timepicker-input" type="text" inputMode="text" role="combobox" aria-label={ariaLabel} aria-expanded={open} aria-controls={listId} aria-activedescendant={open && choosingOption ? `${listId}-${activeIndex}` : undefined} aria-autocomplete="list" aria-invalid={invalid} value={text} onClick={() => { if (!open) openList() }} onChange={(event) => { setText(event.target.value); setChoosingOption(false); setInvalid(false); const parsed = parseTimePickerText(event.target.value); onValidityChange?.(parsed !== null); if (parsed !== null) { typedValue.current = parsed; onChange(parsed) } }} onBlur={onInputBlur} onKeyDown={onInputKeyDown} />
+        <Popover.Trigger aria-label={`Choose ${ariaLabel.toLocaleLowerCase()}`}><Clock3 size={14} /></Popover.Trigger>
       </div>
       {invalid ? <span className="ui-timepicker-error" role="alert">Use a time such as 9:15 AM or 21:15</span> : null}
-      {open ? (
-        <div ref={listRef} id={listId} className="ui-timepicker-menu tnum" role="listbox" aria-label={`${ariaLabel} choices`} style={menuStyle}>
+    </div>
+    <Popover.Portal>
+      <Popover.Positioner anchor={controlRef} className="ui-popover-positioner" align="start" sideOffset={6} collisionPadding={12}>
+        <Popover.Popup initialFocus={inputRef} finalFocus={inputRef}>
+        <div ref={listRef} id={listId} className="ui-timepicker-menu tnum" role="listbox" aria-label={`${ariaLabel} choices`}>
           {TIME_PICKER_OPTIONS.map((option, index) => (
-            <button key={option} id={optionId(ariaLabel, index)} data-index={index} type="button" role="option" tabIndex={-1} aria-selected={option === value} className={`${index === activeIndex ? 'is-active' : ''}${option === value ? ' is-selected' : ''}`} onPointerDown={(event) => event.preventDefault()} onClick={() => pick(option)}>{formatTimePickerValue(option, format)}</button>
+            <button key={option} id={`${listId}-${index}`} data-index={index} type="button" role="option" tabIndex={-1} aria-selected={option === value} className={`${choosingOption && index === activeIndex ? 'is-active' : ''}${option === value ? ' is-selected' : ''}`} onPointerDown={(event) => event.preventDefault()} onClick={() => pick(option)}>{formatTimePickerValue(option, format)}</button>
           ))}
         </div>
-      ) : null}
-    </div>
+        </Popover.Popup>
+      </Popover.Positioner>
+    </Popover.Portal>
+    </Popover.Root>
   )
 }

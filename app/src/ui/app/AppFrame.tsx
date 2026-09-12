@@ -1,11 +1,10 @@
 import { PanelLeft } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 import { Tooltip } from '../components/ui'
 import { PageErrorBoundary } from './PageErrorBoundary'
-import { PaperBackdrop } from './PaperBackdrop'
 import { Sidebar } from './Sidebar'
 import { useSidebarDocked } from './sidebarState'
 
@@ -14,6 +13,16 @@ const FLOAT_DISMISS_MS = 240
 /** Docked or floating sidebar and route content. Authentication is owned by the web entry point. */
 export function AppFrame(): ReactNode {
   const location = useLocation()
+  const navigate = useNavigate()
+  useEffect(() => {
+    const open = (event: Event): void => {
+      if (!(event instanceof CustomEvent) || typeof event.detail !== 'string') throw new TypeError('Manor navigation requires a route')
+      if (!/^\/(home|habits|mood-focus|leetcode|jobs|notes|bookmarks|weekly-reviews|settings)(\?|$)/.test(event.detail)) throw new TypeError('Unsupported Manor route')
+      navigate(event.detail)
+    }
+    window.addEventListener('manor:navigate', open)
+    return () => window.removeEventListener('manor:navigate', open)
+  }, [navigate])
   const [docked, setDocked] = useSidebarDocked()
   const [floatOpen, setFloatOpen] = useState(false)
   const dismissTimer = useRef<number | null>(null)
@@ -105,7 +114,6 @@ export function AppFrame(): ReactNode {
         </main>
       </div>
 
-      <PaperBackdrop />
     </div>
   )
 }

@@ -1,0 +1,15 @@
+.streak-flame, .freeze-crystal { flex: 0 0 auto; display: block; }
+.streak-flame-body, .streak-flame-core { transition: fill 160ms ease, stroke 160ms ease; }
+.streak-flame-body { fill: var(--surface-soft); stroke: var(--ink-muted); }
+.streak-flame-core { fill: none; stroke: var(--ink-muted); }
+.streak-flame.is-dim .streak-flame-body { stroke: var(--today-warning); fill: var(--today-warning-tint); }
+.streak-flame.is-dim .streak-flame-core { fill: var(--today-warning); stroke: none; }
+.streak-flame.is-lit .streak-flame-body { fill: var(--streak-tint); stroke: var(--streak-deep); }
+.streak-flame.is-lit .streak-flame-core { fill: var(--streak); stroke: var(--streak-deep); }
+.streak-flame.is-blazing .streak-flame-body { fill: var(--streak); stroke: var(--streak-deep); }
+.streak-flame.is-blazing .streak-flame-core { fill: var(--streak-core); stroke: var(--streak-core); }
+.freeze-crystal { color: var(--frozen-info); }
+.freeze-crystal-shell { fill: var(--frozen-info-tint); stroke: currentColor; }
+.habits-freeze-dots { display: flex; gap: 5px; flex-wrap: wrap; }
+.habits-freeze-dot { border-radius: 4px; width: 16px; height: 7px; background: var(--surface-soft); border: 1px solid var(--hairline-strong); transition: background-color 160ms ease; }
+.habits-freeze-dot.is-left { border-color: var(--frozen-info); background: var(--frozen-info); }

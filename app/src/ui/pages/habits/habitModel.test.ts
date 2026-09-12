@@ -8,9 +8,9 @@ import type {
 } from '../../../shared/habits'
 import {
   earliestHistoryMonth,
+  habitTrend,
   historyMonthAfterNavigation,
-  monthSummary,
-  twelveMonthTrend
+  monthSummary
 } from './habitModel'
 
 const ACTIVE_HABIT: HabitDefinition = {
@@ -81,8 +81,8 @@ describe('habit history aggregation', () => {
       completedDays: 1,
       partialDays: 1,
       frozenDays: 1,
-      trackedDays: 5,
-      completionRate: 20
+      trackedDays: 4,
+      completionRate: 25
     })
     // Retired on the 4th: three tracked days of preserved history, then inactive.
     expect(retired).toMatchObject({
@@ -95,11 +95,26 @@ describe('habit history aggregation', () => {
   })
 
   it('keeps twelve-month history chronological and ending on the selected month', () => {
-    const trend = twelveMonthTrend(historyState(), '2026-08')
+    const trend = habitTrend(historyState(), '2026-08', 12, null)
 
     expect(trend).toHaveLength(12)
     expect(trend[0]?.month).toBe('2025-09')
     expect(trend.at(-1)?.month).toBe('2026-08')
+  })
+
+  it('excludes future and inactive days from trend denominators', () => {
+    const trend = habitTrend(historyState(), '2026-08', 3, null)
+
+    expect(trend.map((item) => item.month)).toEqual(['2026-06', '2026-07', '2026-08'])
+    expect(trend[0]).toMatchObject({ completionRate: null, completedDays: 0, trackedDays: 0 })
+    expect(trend[1]).toMatchObject({ completionRate: null, completedDays: 0, trackedDays: 0 })
+    expect(trend[2]).toMatchObject({ completionRate: 43, completedDays: 3, trackedDays: 7 })
+  })
+
+  it('keeps a retired habit selectable without counting dates after retirement', () => {
+    const trend = habitTrend(historyState(), '2026-08', 3, RETIRED_HABIT.id)
+
+    expect(trend.at(-1)).toMatchObject({ completionRate: 67, completedDays: 2, trackedDays: 3 })
   })
 })
 

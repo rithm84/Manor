@@ -92,4 +92,17 @@ describe('notes save queue', () => {
     expect(updatePage).toHaveBeenNthCalledWith(2, noteContentUpdate(second))
     expect(pending).toBeNull()
   })
+  it('stops the queue on a conflict and retains the protected draft', async () => {
+    const pending = { id: 'note-1', title: 'Local draft', contentJson: '[{"type":"paragraph","content":"Local"}]' }
+    const conflict = new Error('Record changed')
+    const updatePage = vi.fn(async (): Promise<NotePage> => { throw conflict })
+    const clear = vi.fn()
+    const save = createNoteSaveQueue({ updatePage }, () => pending, clear)
+    await expect(save()).rejects.toBe(conflict)
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(updatePage).toHaveBeenCalledTimes(1)
+    expect(clear).not.toHaveBeenCalled()
+  })
+
 })

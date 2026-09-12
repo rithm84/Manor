@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { noteEditorSchema } from './noteEditorSchema'
 
 describe('note editor document schema', () => {
-  it('keeps document blocks while intentionally excluding checklist blocks', () => {
+  it('keeps the rich document fundamentals including local checkboxes', () => {
     expect(Object.keys(noteEditorSchema.blockSchema)).toEqual(expect.arrayContaining([
       'paragraph',
       'heading',
@@ -25,7 +25,7 @@ describe('note editor document schema', () => {
       'webBookmark',
       'webEmbed'
     ]))
-    expect(noteEditorSchema.blockSchema).not.toHaveProperty('checkListItem')
+    expect(noteEditorSchema.blockSchema).toHaveProperty('checkListItem')
     expect(noteEditorSchema.inlineContentSchema).toHaveProperty('math')
   })
 
@@ -42,5 +42,21 @@ describe('note editor document schema', () => {
       props: { ratio: 50 }
     })
     expect(editor.document[0]?.children).toEqual([])
+  })
+
+  it('edits native child blocks inside columns and tabs by stable ID', () => {
+    const editor = BlockNoteEditor.create({ schema: noteEditorSchema, initialContent: [{
+      id: 'layout', type: 'documentTabs', children: [{
+        id: 'tab', type: 'documentTab', props: { title: 'Research' }, children: [{
+          id: 'columns', type: 'twoColumns', children: [{
+            id: 'left', type: 'noteColumn', children: [{ id: 'target', type: 'paragraph', content: 'Before' }]
+          }, { id: 'right', type: 'noteColumn', children: [{ type: 'paragraph', content: 'Right' }] }]
+        }]
+      }]
+    }] })
+    editor.updateBlock('target', { content: 'After' })
+    expect(editor.getBlock('target')).toMatchObject({ id: 'target', content: [{ text: 'After' }] })
+    expect(JSON.stringify(editor.document)).toContain('Right')
+    expect(JSON.stringify(editor.document)).not.toContain('leftContent')
   })
 })

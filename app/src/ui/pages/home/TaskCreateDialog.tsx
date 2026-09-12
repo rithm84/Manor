@@ -1,3 +1,4 @@
+import { CalendarDays, ChevronDown, Clock3, Flag, Layers3, Repeat2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 
@@ -11,12 +12,16 @@ import type {
 } from '../../data/mock'
 import { ContextSelect } from './ContextSelect'
 import { DueDatePicker } from './DueDatePicker'
+import { RecurrenceEditor } from './RecurrenceEditor'
+import { recurrenceLabel } from '../../../shared/recurrence'
 import {
   ESTIMATE_SELECT_OPTIONS,
   PRIORITY_OPTIONS,
   taskCreationDefaults
 } from './taskModel'
 import type { DraftTask } from './taskModel'
+import './homeDetails.css'
+import './taskDialogs.css'
 
 export interface TaskCreateDialogProps {
   bucket: TaskBucket | null
@@ -36,7 +41,8 @@ function emptyDraft(bucket: TaskBucket, today: string): DraftTask {
     context: defaults.context,
     due: defaults.due,
     estimateMinutes: null,
-    priority: null
+    priority: null,
+    recurrence: null
   }
 }
 
@@ -46,7 +52,8 @@ function sameDraft(left: DraftTask, right: DraftTask): boolean {
     left.context === right.context &&
     left.due === right.due &&
     left.estimateMinutes === right.estimateMinutes &&
-    left.priority === right.priority
+    left.priority === right.priority &&
+    left.recurrence === right.recurrence
   )
 }
 
@@ -73,6 +80,7 @@ export function TaskCreateDialog({
   const [saving, setSaving] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [recurrenceOpen, setRecurrenceOpen] = useState(false)
 
   useEffect(() => {
     if (bucket === null) return
@@ -80,6 +88,7 @@ export function TaskCreateDialog({
     setSaving(false)
     setConfirmDiscard(false)
     setCreateError(null)
+    setRecurrenceOpen(false)
   }, [bucket, today])
 
   const dirty = bucket !== null && !sameDraft(draft, emptyDraft(activeBucket, today))
@@ -113,18 +122,18 @@ export function TaskCreateDialog({
     <Modal
       open={bucket !== null}
       onClose={requestClose}
-      width={560}
+      width={520}
       ariaLabel={`New task for ${bucketName(activeBucket)}`}
     >
-      <form className="task-create-dialog" onSubmit={(event) => void submit(event)}>
-        <header className="task-create-header">
-          <div>
-            <span className="task-create-eyebrow">New task</span>
-            <h2>{bucketName(activeBucket)}</h2>
-          </div>
+      <form className="task-dialog" onSubmit={(event) => void submit(event)} data-testid="task-create-dialog">
+        <header className="task-dialog-header">
+          <h2>New task</h2>
+          <button type="button" className="task-dialog-close" aria-label="Close new task" onClick={requestClose}>
+            <X size={16} />
+          </button>
         </header>
 
-        <label className="task-create-title">
+        <label className="task-dialog-title">
           <input
             autoFocus
             required
@@ -136,54 +145,36 @@ export function TaskCreateDialog({
           />
         </label>
 
-        <div className="task-create-properties">
-          <div className="task-create-field">
-            <span className="task-create-label">Context <span aria-hidden="true">*</span></span>
+        <div className="task-property-list">
+          <div className="task-property-row">
+            <Layers3 size={15} aria-hidden="true" />
+            <span className="task-property-label">Context <span aria-hidden="true">*</span></span>
             <ContextSelect
               value={draft.context}
               contexts={contexts}
-              onChange={(context) => setDraft({ ...draft, context })}
+              onChange={(context) => setDraft((current) => ({ ...current, context }))}
               onAdd={onAddContext}
               onUpdate={onUpdateContext}
-              onDelete={onDeleteContext}
+              onDelete={async (name) => {
+                const selected = draft.context === name
+                setDraft((current) => current.context === name ? { ...current, context: null } : current)
+                try {
+                  await onDeleteContext(name)
+                } catch (error) {
+                  if (selected) setDraft((current) => current.context === null ? { ...current, context: name } : current)
+                  throw error
+                }
+              }}
               placeholder="Choose or add Context"
               ariaLabel="Context, required"
             />
           </div>
 
-          <div className="task-create-property-grid">
-            <div className="task-create-field">
-              <span className="task-create-label">Time estimate</span>
-              <Select
-                value={draft.estimateMinutes === null ? null : String(draft.estimateMinutes)}
-                options={ESTIMATE_SELECT_OPTIONS}
-                onChange={(value) =>
-                  setDraft({ ...draft, estimateMinutes: Number(value) as TaskEstimateMinutes })
-                }
-                placeholder="Choose time"
-                ariaLabel="Time estimate"
-              />
-            </div>
-            <div className="task-create-field">
-              <span className="task-create-label">Priority</span>
-              <Select
-                value={draft.priority}
-                options={PRIORITY_OPTIONS}
-                onChange={(value) => setDraft({ ...draft, priority: value as TaskPriority })}
-                placeholder="Choose priority"
-                ariaLabel="Priority"
-              />
-            </div>
-          </div>
-
-          <div className={`task-create-field task-create-due${activeBucket === 'week' ? ' is-exact' : ''}`}>
-            <div className="task-create-due-heading">
-              <span className="task-create-label">Due date <span aria-hidden="true">*</span></span>
-              {activeBucket === 'week' ? (
-                <span className="task-create-range">Choose the exact day</span>
-              ) : null}
-            </div>
+          <div className="task-property-row">
+            <CalendarDays size={15} aria-hidden="true" />
+            <span className="task-property-label">Due <span aria-hidden="true">*</span></span>
             <DueDatePicker
+              today={today}
               value={draft.due}
               onChange={(due) => setDraft({ ...draft, due })}
               ariaLabel="Due date"
@@ -191,14 +182,65 @@ export function TaskCreateDialog({
               max={null}
             />
           </div>
+
+          <div className="task-property-row">
+            <Clock3 size={15} aria-hidden="true" />
+            <span className="task-property-label">Estimate</span>
+            <Select
+              value={draft.estimateMinutes === null ? null : String(draft.estimateMinutes)}
+              options={ESTIMATE_SELECT_OPTIONS}
+              onChange={(value) => setDraft({ ...draft, estimateMinutes: Number(value) as TaskEstimateMinutes })}
+              placeholder="None"
+              ariaLabel="Time estimate"
+            />
+          </div>
+
+          <div className="task-property-row">
+            <Flag size={15} aria-hidden="true" />
+            <span className="task-property-label">Priority</span>
+            <Select
+              value={draft.priority}
+              options={PRIORITY_OPTIONS}
+              onChange={(value) => setDraft({ ...draft, priority: value as TaskPriority })}
+              placeholder="None"
+              ariaLabel="Priority"
+            />
+          </div>
+
+          <div className="task-property-row task-property-row--expandable">
+            <Repeat2 size={15} aria-hidden="true" />
+            <span className="task-property-label">Repeats</span>
+            <button
+              type="button"
+              className="task-recurrence-trigger"
+              aria-expanded={recurrenceOpen}
+              data-testid="task-create-recurrence-trigger"
+              onClick={() => setRecurrenceOpen((open) => !open)}
+            >
+              <span>{draft.recurrence === null ? "Doesn't repeat" : recurrenceLabel(draft.recurrence)}</span>
+              <ChevronDown size={14} aria-hidden="true" />
+            </button>
+          </div>
+          {recurrenceOpen ? (
+            <div className="task-recurrence-panel" data-testid="task-create-recurrence-panel">
+              <RecurrenceEditor
+                value={draft.recurrence}
+                onChange={(recurrence) => setDraft((current) => ({ ...current, recurrence }))}
+              />
+            </div>
+          ) : null}
         </div>
 
-        {createError !== null ? (
-          <span className="task-create-error" role="alert">{createError}</span>
+        {activeBucket === 'week' && draft.due === null ? (
+          <p className="task-dialog-hint">Choose an exact date in the next seven days.</p>
         ) : null}
 
-        <footer className="task-create-actions">
-          <Button variant="subtle" onClick={requestClose}>Cancel</Button>
+        {createError !== null ? (
+          <span className="task-dialog-error" role="alert">{createError}</span>
+        ) : null}
+
+        <footer className="task-dialog-footer">
+          <span className="task-dialog-shortcut"><kbd>Enter</kbd> to create</span>
           <button type="submit" className="ui-button ui-button--primary" disabled={!canSubmit}>
             {saving ? 'Creating…' : 'Create task'}
           </button>

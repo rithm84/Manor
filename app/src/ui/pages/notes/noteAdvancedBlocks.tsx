@@ -1,9 +1,7 @@
-import { BlockNoteSchema, defaultBlockSpecs } from '@blocknote/core'
-import { BlockNoteView } from '@blocknote/ariakit'
-import { createReactBlockSpec, useCreateBlockNote } from '@blocknote/react'
+import { createReactBlockSpec } from '@blocknote/react'
 import { ExternalLink, Globe2, Link2, ListTree } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, FormEvent, KeyboardEvent, PointerEvent, ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 
 interface DocumentBlock {
   id: string
@@ -16,7 +14,8 @@ interface DocumentBlock {
 interface DocumentInlineContent {
   type?: string
   text?: string
-  content?: string
+  content?: string | readonly DocumentInlineContent[]
+  props?: { title?: string }
 }
 
 interface HeadingEntry {
@@ -26,6 +25,7 @@ interface HeadingEntry {
 }
 
 interface DocumentEditor {
+  isEditable: boolean
   document: readonly DocumentBlock[]
   focus: () => void
   onChange: (callback: () => void) => () => void
@@ -35,7 +35,8 @@ interface DocumentEditor {
 
 function inlineText(content: readonly DocumentInlineContent[] | undefined): string {
   if (content === undefined) return ''
-  return content.map((item) => item.text ?? item.content ?? '').join('').trim()
+  return content.map((item) => item.text ?? item.props?.title
+    ?? (typeof item.content === 'string' ? item.content : inlineText(item.content))).join('').trim()
 }
 
 function documentHeadings(blocks: readonly DocumentBlock[]): HeadingEntry[] {
@@ -60,8 +61,11 @@ function TableOfContentsView({ editor }: { editor: DocumentEditor }): ReactNode 
           {headings.map((heading) => (
             <li key={heading.id} style={{ paddingLeft: `${Math.max(heading.level - 1, 0) * 14}px` }}>
               <button type="button" onClick={() => {
-                editor.setTextCursorPosition(heading.id, 'start')
-                editor.focus()
+                window.dispatchEvent(new CustomEvent('manor:reveal-block', { detail: heading.id }))
+                window.requestAnimationFrame(() => {
+                  editor.setTextCursorPosition(heading.id, 'start')
+                  editor.focus()
+                })
               }}>{heading.title}</button>
             </li>
           ))}
@@ -80,165 +84,6 @@ export const tableOfContentsBlock = createReactBlockSpec(
   {
     render: ({ editor }): ReactNode => <TableOfContentsView editor={editor as unknown as DocumentEditor} />,
     toExternalHTML: (): ReactNode => <nav data-manor-table-of-contents="true">Table of contents</nav>
-  }
-)()
-
-const emptyColumnContent = JSON.stringify([{ type: 'paragraph', content: [], children: [] }])
-const { checkListItem: _checkListItem, ...columnBlockSpecs } = defaultBlockSpecs
-const columnEditorSchema = BlockNoteSchema.create({ blockSpecs: columnBlockSpecs })
-type ColumnEditorBlock = typeof columnEditorSchema.Block
-
-function parseColumnContent(value: string): ColumnEditorBlock[] {
-  try {
-    const parsed: unknown = JSON.parse(value)
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed as ColumnEditorBlock[]
-  } catch {
-    return JSON.parse(emptyColumnContent) as ColumnEditorBlock[]
-  }
-  return JSON.parse(emptyColumnContent) as ColumnEditorBlock[]
-}
-
-function ColumnEditor({
-  blockId,
-  column,
-  contentJson,
-  onChange
-}: {
-  blockId: string
-  column: 'leftContent' | 'rightContent'
-  contentJson: string
-  onChange: (content: string) => void
-}): ReactNode {
-  const savedContentRef = useRef(contentJson)
-  const initialContent = useMemo(() => parseColumnContent(contentJson), [blockId, column])
-  const nestedEditor = useCreateBlockNote({ schema: columnEditorSchema, initialContent }, [blockId, column])
-
-  useEffect(() => {
-    if (savedContentRef.current === contentJson) return
-    nestedEditor.replaceBlocks(nestedEditor.document, parseColumnContent(contentJson))
-    savedContentRef.current = contentJson
-  }, [contentJson, nestedEditor])
-
-  return (
-    <section className="note-two-column-editor" aria-label={column === 'leftContent' ? 'Left document column' : 'Right document column'} contentEditable={false}>
-      <BlockNoteView
-        editor={nestedEditor}
-        theme="light"
-        className="note-two-column-editor-view"
-        formattingToolbar={false}
-        slashMenu={false}
-        emojiPicker={false}
-        onChange={(changedEditor) => {
-          const nextContent = JSON.stringify(changedEditor.document)
-          if (nextContent === savedContentRef.current) return
-          savedContentRef.current = nextContent
-          onChange(nextContent)
-        }}
-      />
-    </section>
-  )
-}
-
-function TwoColumnsView({ block, editor }: {
-  block: { id: string; props: { ratio: number; leftContent: string; rightContent: string } }
-  editor: DocumentEditor
-}): ReactNode {
-  const containerRef = useRef<HTMLElement | null>(null)
-  const draggingRef = useRef(false)
-  const ratio = Math.min(75, Math.max(25, block.props.ratio))
-
-  const updateFromClientX = (clientX: number): void => {
-    const container = containerRef.current
-    if (container === null) return
-    const rect = container.getBoundingClientRect()
-    if (rect.width === 0) return
-    const next = Math.round(Math.min(75, Math.max(25, ((clientX - rect.left) / rect.width) * 100)))
-    editor.updateBlock(block.id, { props: { ratio: next } })
-  }
-
-  const onPointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
-    draggingRef.current = true
-    event.currentTarget.setPointerCapture(event.pointerId)
-    updateFromClientX(event.clientX)
-  }
-
-  const onPointerMove = (event: PointerEvent<HTMLButtonElement>): void => {
-    if (!draggingRef.current) return
-    updateFromClientX(event.clientX)
-  }
-
-  const onPointerUp = (event: PointerEvent<HTMLButtonElement>): void => {
-    draggingRef.current = false
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
-  }
-
-  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>): void => {
-    const increment = event.shiftKey ? 10 : 5
-    const next = event.key === 'ArrowLeft'
-      ? ratio - increment
-      : event.key === 'ArrowRight'
-        ? ratio + increment
-        : event.key === 'Home'
-          ? 25
-          : event.key === 'End'
-            ? 75
-            : null
-    if (next === null) return
-    event.preventDefault()
-    editor.updateBlock(block.id, { props: { ratio: Math.min(75, Math.max(25, next)) } })
-  }
-
-  return (
-    <section
-      ref={containerRef}
-      className="note-two-columns"
-      contentEditable={false}
-      style={{ '--note-column-left': `${ratio}%` } as CSSProperties}
-    >
-      <ColumnEditor
-        blockId={block.id}
-        column="leftContent"
-        contentJson={block.props.leftContent}
-        onChange={(leftContent) => editor.updateBlock(block.id, { props: { leftContent } })}
-      />
-      <button
-        type="button"
-        className="note-columns-resizer"
-        role="separator"
-        aria-label="Resize document columns"
-        aria-orientation="vertical"
-        aria-valuemin={25}
-        aria-valuemax={75}
-        aria-valuenow={ratio}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onKeyDown={onKeyDown}
-      />
-      <ColumnEditor
-        blockId={block.id}
-        column="rightContent"
-        contentJson={block.props.rightContent}
-        onChange={(rightContent) => editor.updateBlock(block.id, { props: { rightContent } })}
-      />
-    </section>
-  )
-}
-
-export const twoColumnsBlock = createReactBlockSpec(
-  {
-    type: 'twoColumns',
-    propSchema: {
-      ratio: { default: 50 },
-      leftContent: { default: emptyColumnContent },
-      rightContent: { default: emptyColumnContent }
-    },
-    content: 'none'
-  },
-  {
-    render: ({ block, editor }): ReactNode => <TwoColumnsView block={block} editor={editor as unknown as DocumentEditor} />,
-    toExternalHTML: (): ReactNode => <section data-manor-columns="true" />
   }
 )()
 
@@ -280,6 +125,7 @@ function BookmarkView({ block, editor }: {
 }): ReactNode {
   const parsed = parseWebUrl(block.props.url)
   if (parsed === null) {
+    if (!editor.isEditable) return <p>Empty bookmark</p>
     return <UrlCapture label="Bookmark URL" onSubmit={(url) => editor.updateBlock(block.id, { props: { url, title: new URL(url).hostname } })} />
   }
   return (
@@ -287,6 +133,7 @@ function BookmarkView({ block, editor }: {
       <Globe2 size={18} aria-hidden="true" />
       <div>
         <input
+          readOnly={!editor.isEditable}
           value={block.props.title}
           aria-label="Bookmark title"
           onChange={(event) => editor.updateBlock(block.id, { props: { title: event.target.value } })}
@@ -304,6 +151,7 @@ function EmbedView({ block, editor }: {
 }): ReactNode {
   const parsed = parseWebUrl(block.props.url)
   if (parsed === null) {
+    if (!editor.isEditable) return <p>Empty embed</p>
     return <UrlCapture label="Embed URL" onSubmit={(url) => editor.updateBlock(block.id, { props: { url, title: new URL(url).hostname } })} />
   }
   return (

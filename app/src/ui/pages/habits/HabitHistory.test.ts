@@ -24,8 +24,8 @@ const PERFORMANCE_ROW: HabitMonthRow = {
   completedDays: 2,
   partialDays: 1,
   frozenDays: 1,
-  trackedDays: 6,
-  completionRate: 33
+  trackedDays: 5,
+  completionRate: 40
 }
 
 const FULL_ROW: HabitMonthRow = {
@@ -46,24 +46,26 @@ const ZERO_MIXED_ROW: HabitMonthRow = {
   completedDays: 0,
   partialDays: 0,
   frozenDays: 0,
-  trackedDays: 2,
+  trackedDays: 1,
   completionRate: 0
 }
 
 describe('habit performance donut data', () => {
-  it('preserves every tracked state as a purposeful chart slice', () => {
-    expect(habitPerformanceSlices(PERFORMANCE_ROW)).toEqual([
+  it('keeps the donut denominator aligned with eligible tracked days', () => {
+    const slices = habitPerformanceSlices(PERFORMANCE_ROW)
+    expect(slices).toEqual([
       { key: 'complete', label: 'Complete', value: 2, fill: 'var(--completion)' },
       { key: 'partial', label: 'Partial', value: 1, fill: 'var(--completion-soft)' },
       { key: 'frozen', label: 'Frozen', value: 1, fill: 'var(--frozen-info)' },
-      { key: 'missed', label: 'Missed', value: 1, fill: 'var(--overdue-error)' },
-      { key: 'pending', label: 'Pending', value: 1, fill: 'var(--surface-strong)' }
+      { key: 'missed', label: 'Missed', value: 1, fill: 'var(--overdue-error)' }
     ])
+    expect(slices.reduce((total, slice) => total + slice.value, 0)).toBe(PERFORMANCE_ROW.trackedDays)
+    expect(PERFORMANCE_ROW.completionRate).toBe(40)
   })
 
   it('announces status, rate, counts, and drill-in intent', () => {
     expect(habitPerformanceLabel(PERFORMANCE_ROW)).toBe(
-      'Read. Paused. 33% complete. 2 complete, 1 partial, 1 frozen, 1 missed, 1 pending. Open details.'
+      'Read. Paused. 40% complete. 2 complete, 1 partial, 1 frozen, 1 missed. Open details.'
     )
   })
 
@@ -79,12 +81,12 @@ describe('habit performance donut data', () => {
     expect(markup).not.toContain('recharts-sector')
   })
 
-  it('keeps zero-percent mixed composition as separated slices, not a seamless ring', () => {
+  it('does not add a pending slice to an otherwise missed period', () => {
     const markup = renderToStaticMarkup(
       createElement(HabitPerformanceDonut, { row: ZERO_MIXED_ROW })
     )
 
-    expect(habitDonutPresentation(ZERO_MIXED_ROW).seamlessFill).toBeNull()
-    expect(markup).not.toContain('habit-history-seamless-ring')
+    expect(habitDonutPresentation(ZERO_MIXED_ROW).seamlessFill).toBe('var(--overdue-error)')
+    expect(markup).toContain('habit-history-seamless-ring')
   })
 })

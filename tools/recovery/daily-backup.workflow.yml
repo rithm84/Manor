@@ -1,0 +1,59 @@
+# Activation: copy to .github/workflows/daily-backup.yml after provisioning the
+# independent bucket, protected recovery environment, and secrets below.
+name: Manor daily recovery point
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: manor-daily-recovery
+  cancel-in-progress: false
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: recovery
+    env:
+      MANOR_DATABASE_URL: ${{ secrets.MANOR_BACKUP_DATABASE_URL }}
+      MANOR_SOURCE_REMOTE: manor:manor-files
+      RCLONE_CONFIG_MANOR_TYPE: s3
+      RCLONE_CONFIG_MANOR_PROVIDER: Other
+      RCLONE_CONFIG_MANOR_ENDPOINT: ${{ secrets.MANOR_STORAGE_S3_ENDPOINT }}
+      RCLONE_CONFIG_MANOR_REGION: us-east-2
+      RCLONE_CONFIG_MANOR_FORCE_PATH_STYLE: 'true'
+      RCLONE_CONFIG_MANOR_ACCESS_KEY_ID: ${{ secrets.MANOR_STORAGE_S3_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_MANOR_SECRET_ACCESS_KEY: ${{ secrets.MANOR_STORAGE_S3_SECRET_ACCESS_KEY }}
+      RESTIC_REPOSITORY: ${{ secrets.MANOR_RESTIC_REPOSITORY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.MANOR_BACKUP_STORE_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.MANOR_BACKUP_STORE_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.MANOR_BACKUP_STORE_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm --prefix tools/recovery ci --ignore-scripts
+      - run: python3 tools/recovery/install-tools.py
+      - name: Load encryption key
+        env:
+          RECOVERY_PASSWORD: ${{ secrets.MANOR_RESTIC_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          destination = Path(os.environ['RUNNER_TEMP']) / 'restic-password'
+          destination.write_text(os.environ['RECOVERY_PASSWORD'])
+          destination.chmod(0o600)
+          with open(os.environ['GITHUB_ENV'], 'a') as target:
+              target.write(f'RESTIC_PASSWORD_FILE={destination}\n')
+          PY
+      - name: Back up and verify
+        run: |
+          export PATH="$GITHUB_WORKSPACE/tools/recovery/.bin:$PATH"
+          npm --prefix tools/recovery run backup
+          npm --prefix tools/recovery run status
+      - name: Remove temporary key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/restic-password"

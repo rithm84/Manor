@@ -1,0 +1,1 @@
+{"name":"manor-backend","private":true,"type":"module","scripts":{"typecheck":"deno check functions/manor-mcp/index.ts functions/signup-gate/index.ts"},"devDependencies":{"deno":"2.9.6"}}

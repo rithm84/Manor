@@ -1,17 +1,18 @@
-import { ArrowRight, MoreHorizontal, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { DragEvent, ReactNode } from 'react'
 
 import type { JobStage } from '../../../shared/jobs'
-import { Pill, useDismissLayer } from '../../components/ui'
+import { Pill } from '../../components/ui'
+import { PipelineCardMenu } from './PipelineCardMenu'
+import './pipeline.css'
 import type { BoardCard, DragPayload, JobColumn } from './jobsModel'
-import { appliedLabel, jobColumns, jobStageOptions, postedColorway, postedLabel, termColorway } from './jobsModel'
+import { appliedLabel, jobColumns, postedColorway, postedLabel, termColorway } from './jobsModel'
 
 export interface PipelineBoardProps {
   cards: readonly BoardCard[]
   /** Local today, for the posted-freshness chip. */
   today: string
-  /** Cards that just arrived from "Mark applied" get a brief highlight. */
+  /** Recently moved cards receive a brief arrival highlight. */
   arrivedIds: ReadonlySet<string>
   /** The active drag, owned by the page so to-apply rows can join in. */
   dragging: DragPayload | null
@@ -23,92 +24,6 @@ export interface PipelineBoardProps {
   onRemoveCard: (cardId: string) => void
 }
 
-interface CardMenuProps {
-  card: BoardCard
-  onMove: (stage: JobStage) => void
-  onRemove: () => void
-}
-
-function CardMenu({ card, onMove, onRemove }: CardMenuProps): ReactNode {
-  const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement | null>(null)
-  const triggerRef = useRef<HTMLButtonElement | null>(null)
-
-  const dismiss = (): void => {
-    setOpen(false)
-    triggerRef.current?.focus()
-  }
-  useDismissLayer(open, dismiss)
-
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-    const onPointerDown = (event: PointerEvent): void => {
-      if (rootRef.current !== null && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-    window.addEventListener('pointerdown', onPointerDown)
-    return (): void => {
-      window.removeEventListener('pointerdown', onPointerDown)
-    }
-  }, [open])
-
-  return (
-    <div
-      className="pipeline-card-menu"
-      ref={rootRef}
-      onClick={(event) => event.stopPropagation()}
-    >
-      <button
-        type="button"
-        ref={triggerRef}
-        className="pipeline-card-menu-btn"
-        aria-label={`Options for ${card.role.company}`}
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-      >
-        <MoreHorizontal size={14} />
-      </button>
-      {open ? (
-        <div className="pipeline-menu" role="menu" aria-label={`Move ${card.role.company}`}>
-          <div className="pipeline-menu-label">Move to</div>
-          {jobStageOptions
-            .filter((option) => option.value !== 'to_apply' && option.value !== card.role.stage)
-            .map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="menuitem"
-                className="pipeline-menu-item"
-                onClick={() => {
-                  setOpen(false)
-                  onMove(option.value)
-                }}
-              >
-                <ArrowRight size={14} />
-                {option.label}
-              </button>
-            ))}
-          <button
-            type="button"
-            role="menuitem"
-            className="pipeline-menu-item pipeline-menu-item--danger"
-            onClick={() => {
-              setOpen(false)
-              onRemove()
-            }}
-          >
-            <Trash2 size={14} />
-            Remove
-          </button>
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
 /** Whether the active drag may land on this column. */
 function accepts(
   dragging: DragPayload | null,
@@ -117,9 +32,6 @@ function accepts(
 ): boolean {
   if (dragging === null) {
     return false
-  }
-  if (dragging.kind === 'to_apply') {
-    return column === 'applied'
   }
   const card = cards.find((candidate) => candidate.role.id === dragging.id)
   return card !== undefined && card.column !== column
@@ -185,6 +97,7 @@ export function PipelineBoard({
         return (
           <div
             key={meta.column}
+            data-testid={`pipeline-column-${meta.column}`}
             className={`pipeline-col pipeline-col--${meta.column}${over ? ' is-dropover' : ''}`}
             {...columnDragProps(meta.column)}
           >
@@ -203,6 +116,7 @@ export function PipelineBoard({
                 columnCards.map((card) => (
                   <div
                     key={card.role.id}
+                    data-testid={`pipeline-card-${card.role.id}`}
                     className={`pipeline-card${arrivedIds.has(card.role.id) ? ' is-arrived' : ''}${
                       dragging !== null && dragging.kind === 'pipeline' && dragging.id === card.role.id
                         ? ' is-dragging'
@@ -255,7 +169,7 @@ export function PipelineBoard({
                         <Pill variant="tag" colorway={card.detailTone} label={card.detail} />
                       )}
                     </div>
-                    <CardMenu
+                    <PipelineCardMenu
                       card={card}
                       onMove={(stage) => onMoveCard(card.role.id, stage)}
                       onRemove={() => onRemoveCard(card.role.id)}

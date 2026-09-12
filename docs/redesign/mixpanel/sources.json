@@ -1,0 +1,107 @@
+[
+  {
+    "asset": "custom-event-dialog.png",
+    "archive": "Mixpanel Web Adding a custom event.zip",
+    "frame": "Mixpanel Web Adding a custom event 7.png",
+    "source_size": [
+      1920,
+      1320
+    ],
+    "crop_ltrb": [
+      360,
+      230,
+      1560,
+      975
+    ]
+  },
+  {
+    "asset": "nested-control-menu.png",
+    "archive": "Mixpanel Web Changing data type.zip",
+    "frame": "Mixpanel Web Changing data type 2.png",
+    "source_size": [
+      1920,
+      1320
+    ],
+    "crop_ltrb": [
+      1450,
+      570,
+      1905,
+      890
+    ]
+  },
+  {
+    "asset": "setup-type-and-feedback.png",
+    "archive": "Mixpanel Web Completing setup.zip",
+    "frame": "Mixpanel Web Completing setup 5.png",
+    "source_size": [
+      1920,
+      1320
+    ],
+    "crop_ltrb": [
+      510,
+      70,
+      1775,
+      850
+    ]
+  },
+  {
+    "asset": "date-range-popover.png",
+    "archive": "Mixpanel Web Customizing date.zip",
+    "frame": "Mixpanel Web Customizing date 3.png",
+    "source_size": [
+      1920,
+      1320
+    ],
+    "crop_ltrb": [
+      350,
+      110,
+      1300,
+      740
+    ]
+  },
+  {
+    "asset": "measurement-menu-tooltip.png",
+    "archive": "Mixpanel Web Updating measuring (advanced).zip",
+    "frame": "Mixpanel Web Updating measuring (advanced) 2.png",
+    "source_size": [
+      1920,
+      1320
+    ],
+    "crop_ltrb": [
+      1290,
+      415,
+      1875,
+      940
+    ]
+  },
+  {
+    "asset": "chart-toolbar.png",
+    "archive": "Mixpanel Web Updating queries.zip",
+    "frame": "Mixpanel Web Updating queries 7.png",
+    "source_size": [
+      1920,
+      1320
+    ],
+    "crop_ltrb": [
+      345,
+      105,
+      1495,
+      710
+    ]
+  },
+  {
+    "asset": "history-table.png",
+    "archive": "Mixpanel Web Updating queries.zip",
+    "frame": "Mixpanel Web Updating queries 7.png",
+    "source_size": [
+      1920,
+      1320
+    ],
+    "crop_ltrb": [
+      345,
+      725,
+      1495,
+      1095
+    ]
+  }
+]

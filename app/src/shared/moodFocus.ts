@@ -43,11 +43,20 @@ export interface MoodFocusNoteMutation {
   source: MoodFocusNoteWriteSource | null
 }
 
+export interface MoodFocusHistoryMutation {
+  date: string
+  mood: Mood | null
+  focus: Focus | null
+  expectedUpdatedAt: string | null
+}
+
 export interface MoodFocusApi {
   load: () => Promise<MoodFocusState>
   setMood: (mutation: MoodMutation) => Promise<MoodFocusState>
   setFocus: (mutation: FocusMutation) => Promise<MoodFocusState>
   setNote: (mutation: MoodFocusNoteMutation) => Promise<MoodFocusState>
+  setRatings: (mutation: MoodFocusHistoryMutation) => Promise<MoodFocusState>
+  correctHistory: (mutation: MoodFocusHistoryMutation) => Promise<MoodFocusState>
 }
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
@@ -204,6 +213,22 @@ export function parseMoodFocusNoteMutation(value: unknown): MoodFocusNoteMutatio
     date: parseMoodFocusDate(mutation.date, 'mutation.date'),
     note,
     source
+  }
+}
+
+export function parseMoodFocusHistoryMutation(value: unknown): MoodFocusHistoryMutation {
+  const mutation = recordValue(value, 'mood and focus history correction')
+  const mood = moodValue(mutation.mood, true)
+  const focus = focusValue(mutation.focus, true)
+  const expectedUpdatedAt = mutation.expectedUpdatedAt === null ? null : timestampValue(mutation.expectedUpdatedAt, 'history.expectedUpdatedAt')
+  if (mood === null && focus === null) {
+    throw new TypeError('a history correction must contain mood or focus')
+  }
+  return {
+    date: parseMoodFocusDate(mutation.date, 'history.date'),
+    mood,
+    focus,
+    expectedUpdatedAt
   }
 }
 

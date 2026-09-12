@@ -1,14 +1,10 @@
+import { Popover } from '@base-ui/react/popover'
 import { Check, ChevronDown, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { KeyboardEvent, ReactNode, RefObject } from 'react'
+import { useRef, useState } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 
-import type {
-  ContextColor,
-  ContextDefinition,
-  ContextDraft,
-  ContextIcon
-} from '../../../shared/home'
-import { useDismissLayer } from '../../components/ui'
+import type { ContextColor, ContextDefinition, ContextDraft, ContextIcon } from '../../../shared/home'
+import { accountErrorMessage } from '../welcome/accountSession'
 import { ContextPill } from './ContextPill'
 import {
   CONTEXT_ICON_CATEGORIES,
@@ -16,7 +12,6 @@ import {
   ContextGlyph,
   contextIconLabel
 } from './contextIcons'
-import { accountErrorMessage } from '../welcome/accountSession'
 import { contextDefinitionFor } from './taskModel'
 
 export interface ContextSelectProps {
@@ -24,9 +19,7 @@ export interface ContextSelectProps {
   contexts: readonly ContextDefinition[]
   onChange: (context: string) => void
   onAdd: (context: ContextDraft) => Promise<ContextDefinition>
-  /** Edit a context's name, color, or icon; renames follow the tasks. */
   onUpdate: (originalName: string, context: ContextDraft) => Promise<ContextDefinition>
-  /** Remove an unused context; rejections surface in the picker. */
   onDelete: (name: string) => Promise<void>
   placeholder: string
   ariaLabel: string
@@ -42,177 +35,21 @@ export const CONTEXT_COLOR_OPTIONS: readonly { value: ContextColor; label: strin
 ]
 
 type ContextPropertyPicker = 'icon' | 'color'
-type ContextPickerPlacement = 'above' | 'below'
 
-function useContextPickerPlacement(): readonly [RefObject<HTMLDivElement | null>, ContextPickerPlacement] {
-  const pickerRef = useRef<HTMLDivElement | null>(null)
-  const [placement, setPlacement] = useState<ContextPickerPlacement>('below')
-
-  useLayoutEffect(() => {
-    const picker = pickerRef.current
-    const trigger = picker?.parentElement
-    if (picker === null || picker === undefined || trigger === null || trigger === undefined) return
-
-    const clippingRoot = picker.closest<HTMLElement>('.task-detail-body, .ui-modal')
-    const boundary = clippingRoot?.getBoundingClientRect() ?? {
-      top: 0,
-      bottom: window.innerHeight
-    }
-    const triggerRect = trigger.getBoundingClientRect()
-    const pickerHeight = picker.getBoundingClientRect().height
-    const spaceBelow = boundary.bottom - triggerRect.bottom
-    const spaceAbove = triggerRect.top - boundary.top
-    setPlacement(spaceBelow < pickerHeight + 8 && spaceAbove > spaceBelow ? 'above' : 'below')
-  }, [])
-
-  return [pickerRef, placement]
-}
-
-function movePickerFocus(
-  event: KeyboardEvent<HTMLButtonElement>,
-  pickerSelector: string
-): void {
-  const picker = event.currentTarget.closest(pickerSelector)
-  if (picker === null) return
-  const options = Array.from(picker.querySelectorAll<HTMLButtonElement>('[role="radio"]'))
+function moveGridFocus(event: KeyboardEvent<HTMLButtonElement>, selector: string): void {
+  const grid = event.currentTarget.closest(selector)
+  if (grid === null) return
+  const options = Array.from(grid.querySelectorAll<HTMLButtonElement>('[role="radio"]'))
   const currentIndex = options.indexOf(event.currentTarget)
   if (currentIndex === -1) return
-
-  let nextIndex: number | null = null
-  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-    nextIndex = (currentIndex + 1) % options.length
-  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-    nextIndex = (currentIndex - 1 + options.length) % options.length
-  } else if (event.key === 'Home') {
-    nextIndex = 0
-  } else if (event.key === 'End') {
-    nextIndex = options.length - 1
-  }
-
-  if (nextIndex === null) return
+  const delta = event.key === 'ArrowRight' || event.key === 'ArrowDown'
+    ? 1
+    : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+      ? -1
+      : 0
+  if (delta === 0) return
   event.preventDefault()
-  options[nextIndex]?.focus()
-}
-
-interface ContextIconPickerProps {
-  value: ContextIcon
-  onChange: (value: ContextIcon) => void
-  onClose: () => void
-}
-
-function ContextIconPicker({ value, onChange, onClose }: ContextIconPickerProps): ReactNode {
-  const [query, setQuery] = useState('')
-  const [pickerRef, placement] = useContextPickerPlacement()
-  const normalizedQuery = query.trim().toLocaleLowerCase()
-  const matchingIcons = CONTEXT_ICON_OPTIONS.filter((option) =>
-    option.label.toLocaleLowerCase().includes(normalizedQuery)
-  )
-
-  return (
-    <div
-      ref={pickerRef}
-      className={`context-property-picker context-icon-picker is-${placement}`}
-      role="dialog"
-      aria-label="Choose context icon"
-    >
-      <div className="context-picker-search">
-        <Search size={13} aria-hidden="true" />
-        <input
-          autoFocus
-          value={query}
-          placeholder="Search icons"
-          aria-label="Search context icons"
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        <button type="button" aria-label="Close icon picker" onClick={onClose}>
-          <X size={13} />
-        </button>
-      </div>
-      <div className="context-icon-catalog" role="radiogroup" aria-label="Context icons">
-        {normalizedQuery === '' ? (
-          CONTEXT_ICON_CATEGORIES.map((category) => {
-            const categoryId = `context-icons-${category.toLocaleLowerCase()}`
-            return (
-              <div key={category} className="context-icon-category" role="group" aria-labelledby={categoryId}>
-                <span id={categoryId}>{category}</span>
-                <div className="context-icon-grid">
-                  {CONTEXT_ICON_OPTIONS.filter((option) => option.category === category).map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={value === option.value}
-                      aria-label={option.label}
-                      title={option.label}
-                      className={value === option.value ? 'is-selected' : ''}
-                      onKeyDown={(event) => movePickerFocus(event, '.context-icon-picker')}
-                      onClick={() => onChange(option.value)}
-                    >
-                      <ContextGlyph icon={option.value} size={15} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )
-          })
-        ) : matchingIcons.length > 0 ? (
-          <div className="context-icon-grid context-icon-grid--results">
-            {matchingIcons.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={value === option.value}
-                aria-label={option.label}
-                title={option.label}
-                className={value === option.value ? 'is-selected' : ''}
-                onKeyDown={(event) => movePickerFocus(event, '.context-icon-picker')}
-                onClick={() => onChange(option.value)}
-              >
-                <ContextGlyph icon={option.value} size={15} />
-              </button>
-            ))}
-          </div>
-        ) : (
-          <span className="context-picker-empty">No matching icons.</span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-interface ContextColorPickerProps {
-  value: ContextColor
-  onChange: (value: ContextColor) => void
-}
-
-function ContextColorPicker({ value, onChange }: ContextColorPickerProps): ReactNode {
-  const [pickerRef, placement] = useContextPickerPlacement()
-
-  return (
-    <div
-      ref={pickerRef}
-      className={`context-property-picker context-color-picker is-${placement}`}
-      role="radiogroup"
-      aria-label="Context color"
-    >
-      {CONTEXT_COLOR_OPTIONS.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          role="radio"
-          aria-checked={value === option.value}
-          className={value === option.value ? 'is-selected' : ''}
-          onKeyDown={(event) => movePickerFocus(event, '.context-color-picker')}
-          onClick={() => onChange(option.value)}
-        >
-          <span className={`context-color-swatch is-${option.value}`} aria-hidden="true" />
-          <span>{option.label}</span>
-          {value === option.value ? <Check size={13} aria-hidden="true" /> : null}
-        </button>
-      ))}
-    </div>
-  )
+  options[(currentIndex + delta + options.length) % options.length]?.focus()
 }
 
 export function ContextSelect({
@@ -226,68 +63,28 @@ export function ContextSelect({
   ariaLabel
 }: ContextSelectProps): ReactNode {
   const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
   const [draft, setDraft] = useState('')
   const [draftColor, setDraftColor] = useState<ContextColor>('plum')
   const [draftIcon, setDraftIcon] = useState<ContextIcon>('target')
-  /** Name of the context the composer is editing; null = creating a new one. */
   const [editing, setEditing] = useState<string | null>(null)
   const [propertyPicker, setPropertyPicker] = useState<ContextPropertyPicker | null>(null)
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const rootRef = useRef<HTMLDivElement | null>(null)
-  const triggerRef = useRef<HTMLButtonElement | null>(null)
-  const iconTriggerRef = useRef<HTMLButtonElement | null>(null)
-  const colorTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const searchRef = useRef<HTMLInputElement | null>(null)
 
-  const removeContext = async (name: string): Promise<void> => {
-    setError(null)
-    try {
-      await onDelete(name)
-    } catch (caught) {
-      setError(accountErrorMessage(caught, 'Could not delete context'))
-    }
-  }
-
-  const closeAndFocus = useCallback((): void => {
-    setOpen(false)
-    setPropertyPicker(null)
-    window.requestAnimationFrame(() => triggerRef.current?.focus())
-  }, [])
-
-  const closePropertyPicker = useCallback((picker: ContextPropertyPicker): void => {
-    setPropertyPicker(null)
-    window.requestAnimationFrame(() => {
-      if (picker === 'icon') iconTriggerRef.current?.focus()
-      else colorTriggerRef.current?.focus()
-    })
-  }, [])
-
-  // Two stacked dismiss layers: the menu, then the property picker above it,
-  // so Escape closes the picker before the menu (and never the host dialog).
-  useDismissLayer(open, closeAndFocus)
-  useDismissLayer(open && propertyPicker !== null, () => {
-    if (propertyPicker !== null) closePropertyPicker(propertyPicker)
-  })
-
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (event: PointerEvent): void => {
-      if (rootRef.current !== null && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false)
-        setPropertyPicker(null)
-      }
-    }
-    window.addEventListener('pointerdown', onPointerDown)
-    return (): void => {
-      window.removeEventListener('pointerdown', onPointerDown)
-    }
-  }, [open])
+  const selectedContext = value === null ? null : contextDefinitionFor(value, contexts)
+  const normalizedQuery = query.trim().toLocaleLowerCase()
+  const matchingContexts = contexts.filter((context) =>
+    context.name.toLocaleLowerCase().includes(normalizedQuery)
+  )
 
   const resetComposer = (): void => {
     setEditing(null)
     setDraft('')
     setDraftColor('plum')
     setDraftIcon('target')
+    setPropertyPicker(null)
   }
 
   const beginEdit = (context: ContextDefinition): void => {
@@ -299,22 +96,18 @@ export function ContextSelect({
     setError(null)
   }
 
-  const add = async (): Promise<void> => {
-    const next = draft.trim()
-    // The adding gate keeps a mashed Enter from firing repeated creates.
-    if (next === '' || adding) return
+  const saveContext = async (): Promise<void> => {
+    const nextName = draft.trim()
+    if (nextName === '' || adding) return
     setAdding(true)
+    setError(null)
     try {
-      const context =
-        editing === null
-          ? await onAdd({ name: next, color: draftColor, icon: draftIcon })
-          : await onUpdate(editing, { name: next, color: draftColor, icon: draftIcon })
-      // A saved edit follows the rename when the edited context was selected;
-      // a brand new context becomes the selection.
+      const context = editing === null
+        ? await onAdd({ name: nextName, color: draftColor, icon: draftIcon })
+        : await onUpdate(editing, { name: nextName, color: draftColor, icon: draftIcon })
       if (editing === null || editing === value) onChange(context.name)
       resetComposer()
-      setError(null)
-      closeAndFocus()
+      setOpen(false)
     } catch (caught) {
       setError(accountErrorMessage(caught, editing === null ? 'Could not add context' : 'Could not save context'))
     } finally {
@@ -322,176 +115,149 @@ export function ContextSelect({
     }
   }
 
-  const selectedContext = value === null ? null : contextDefinitionFor(value, contexts)
-
-  const onDraftKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      void add()
+  const removeContext = async (name: string): Promise<void> => {
+    setError(null)
+    try {
+      await onDelete(name)
+    } catch (caught) {
+      setError(accountErrorMessage(caught, 'Could not delete context'))
     }
   }
 
-  const selectedColorLabel = CONTEXT_COLOR_OPTIONS.find(
-    (option) => option.value === draftColor
-  )?.label
-
   return (
-    <div className="context-select" ref={rootRef}>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="ui-select-trigger"
-        aria-label={value === null ? ariaLabel : `${ariaLabel}: ${value}`}
-        aria-expanded={open}
-        onClick={() => {
-          setOpen((current) => !current)
+    <Popover.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen)
+        if (!nextOpen) {
+          setQuery('')
           setPropertyPicker(null)
-        }}
+        }
+      }}
+    >
+      <Popover.Trigger
+        className="ui-select-trigger task-property-control"
+        aria-label={value === null ? ariaLabel : `${ariaLabel}: ${value}`}
+        data-testid="context-select-trigger"
       >
         {selectedContext === null ? (
           <span className="ui-select-placeholder">{placeholder}</span>
         ) : (
           <ContextPill name={selectedContext.name} contexts={contexts} />
         )}
-        <ChevronDown size={14} />
-      </button>
-      {open ? (
-        <div className="context-menu" role="dialog" aria-label={ariaLabel}>
-          {propertyPicker === null ? (
-            <div className="context-options" role="listbox" aria-label="Contexts">
-              {contexts.map((context) => (
-                <div key={context.name} className="context-option-row">
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={context.name === value}
-                    className={`context-option${context.name === value ? ' is-selected' : ''}`}
-                    onClick={() => {
-                      onChange(context.name)
-                      closeAndFocus()
-                    }}
-                  >
-                    <ContextPill name={context.name} contexts={contexts} />
-                    {context.name === value ? <Check size={14} /> : null}
-                  </button>
-                  <button
-                    type="button"
-                    className="context-option-edit"
-                    aria-label={`Edit context ${context.name}`}
-                    title="Edit context"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      beginEdit(context)
-                    }}
-                  >
-                    <Pencil size={13} />
-                  </button>
-                  <button
-                    type="button"
-                    className="context-option-delete"
-                    aria-label={`Delete context ${context.name}`}
-                    title="Delete context"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      void removeContext(context.name)
-                    }}
-                  >
-                    <Trash2 size={13} />
-                  </button>
+        <ChevronDown size={14} aria-hidden="true" />
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner className="ui-popover-positioner" sideOffset={5} align="start" collisionPadding={12}>
+          <Popover.Popup
+            className="context-menu"
+            aria-label={ariaLabel}
+            initialFocus={searchRef}
+            data-testid="context-select-menu"
+          >
+            {propertyPicker === null ? (
+              <>
+                <div className="context-search">
+                  <Search size={14} aria-hidden="true" />
+                  <input
+                    ref={searchRef}
+                    value={query}
+                    placeholder="Search contexts"
+                    aria-label="Search contexts"
+                    onChange={(event) => setQuery(event.target.value)}
+                    onKeyDown={(event) => event.key === 'Enter' && event.preventDefault()}
+                  />
                 </div>
-              ))}
-            </div>
-          ) : null}
-          <div className="context-add">
-            {editing !== null ? (
-              <div className="context-editing-note">
-                <span>Editing {editing}</span>
-                <button
-                  type="button"
-                  aria-label="Stop editing context"
-                  onClick={() => {
-                    resetComposer()
+                <div className="context-options" role="listbox" aria-label="Contexts">
+                  {matchingContexts.map((context) => (
+                    <div key={context.name} className="context-option-row">
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={context.name === value}
+                        className={`context-option${context.name === value ? ' is-selected' : ''}`}
+                        onClick={() => {
+                          onChange(context.name)
+                          setOpen(false)
+                        }}
+                      >
+                        <ContextPill name={context.name} contexts={contexts} />
+                        {context.name === value ? <Check size={14} aria-hidden="true" /> : null}
+                      </button>
+                      <button type="button" className="context-option-edit" aria-label={`Edit context ${context.name}`} onClick={() => beginEdit(context)}><Pencil size={13} /></button>
+                      <button type="button" className="context-option-delete" aria-label={`Delete context ${context.name}`} onClick={() => void removeContext(context.name)}><Trash2 size={13} /></button>
+                    </div>
+                  ))}
+                  {matchingContexts.length === 0 ? <span className="context-picker-empty">No matching contexts</span> : null}
+                </div>
+              </>
+            ) : null}
+
+            <div className="context-add">
+              <div className="context-composer-heading">
+                <span>{editing === null ? 'Create context' : `Edit ${editing}`}</span>
+                {editing !== null ? <button type="button" aria-label="Stop editing context" onClick={resetComposer}><X size={13} /></button> : null}
+              </div>
+              <div className="context-composer">
+                <input
+                  value={draft}
+                  maxLength={48}
+                  placeholder="Context name"
+                  aria-label={editing === null ? 'New context' : `Context name for ${editing}`}
+                  onChange={(event) => {
+                    setDraft(event.target.value)
                     setError(null)
                   }}
-                >
-                  <X size={12} />
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter') return
+                    event.preventDefault()
+                    event.stopPropagation()
+                    void saveContext()
+                  }}
+                />
+                <button type="button" className="context-property-trigger" aria-label={`Context icon: ${contextIconLabel(draftIcon)}`} aria-expanded={propertyPicker === 'icon'} onClick={() => setPropertyPicker(propertyPicker === 'icon' ? null : 'icon')}><ContextGlyph icon={draftIcon} size={14} /></button>
+                <button type="button" className="context-property-trigger" aria-label={`Context color: ${draftColor}`} aria-expanded={propertyPicker === 'color'} onClick={() => setPropertyPicker(propertyPicker === 'color' ? null : 'color')}><span className={`context-color-swatch is-${draftColor}`} aria-hidden="true" /></button>
+                <button type="button" className="context-create-button" disabled={draft.trim() === '' || adding} onClick={() => void saveContext()}>
+                  {editing === null ? <Plus size={14} /> : <Check size={14} />}
+                  {editing === null ? 'Add' : 'Save'}
                 </button>
+              </div>
+            </div>
+
+            {propertyPicker === 'icon' ? (
+              <div className="context-inline-picker" data-testid="context-icon-picker">
+                <div className="context-inline-heading"><button type="button" onClick={() => setPropertyPicker(null)}>Back</button><span>Choose icon</span></div>
+                <div className="context-icon-catalog" role="radiogroup" aria-label="Context icons">
+                  {CONTEXT_ICON_CATEGORIES.map((category) => (
+                    <div key={category} className="context-icon-category">
+                      <span>{category}</span>
+                      <div className="context-icon-grid">
+                        {CONTEXT_ICON_OPTIONS.filter((option) => option.category === category).map((option) => (
+                          <button key={option.value} type="button" role="radio" aria-checked={draftIcon === option.value} aria-label={option.label} className={draftIcon === option.value ? 'is-selected' : ''} onKeyDown={(event) => moveGridFocus(event, '.context-icon-grid')} onClick={() => { setDraftIcon(option.value); setPropertyPicker(null) }}><ContextGlyph icon={option.value} size={15} /></button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
-            <div className="context-composer">
-              <input
-                value={draft}
-                maxLength={48}
-                placeholder={editing === null ? 'New context' : 'Context name'}
-                aria-label={editing === null ? 'New context' : `Context name for ${editing}`}
-                onChange={(event) => {
-                  setDraft(event.target.value)
-                  setError(null)
-                }}
-                onKeyDown={onDraftKeyDown}
-              />
-              <div className="context-property-control">
-                <button
-                  ref={iconTriggerRef}
-                  type="button"
-                  className="context-property-trigger"
-                  aria-label={`Context icon: ${contextIconLabel(draftIcon)}`}
-                  aria-haspopup="dialog"
-                  aria-expanded={propertyPicker === 'icon'}
-                  title="Choose icon"
-                  onClick={() => setPropertyPicker((current) => current === 'icon' ? null : 'icon')}
-                >
-                  <ContextGlyph icon={draftIcon} size={14} />
-                </button>
-                {propertyPicker === 'icon' ? (
-                  <ContextIconPicker
-                    value={draftIcon}
-                    onChange={(icon) => {
-                      setDraftIcon(icon)
-                      closePropertyPicker('icon')
-                    }}
-                    onClose={() => closePropertyPicker('icon')}
-                  />
-                ) : null}
+
+            {propertyPicker === 'color' ? (
+              <div className="context-inline-picker" data-testid="context-color-picker">
+                <div className="context-inline-heading"><button type="button" onClick={() => setPropertyPicker(null)}>Back</button><span>Choose color</span></div>
+                <div className="context-color-picker" role="radiogroup" aria-label="Context color">
+                  {CONTEXT_COLOR_OPTIONS.map((option) => (
+                    <button key={option.value} type="button" role="radio" aria-checked={draftColor === option.value} className={draftColor === option.value ? 'is-selected' : ''} onKeyDown={(event) => moveGridFocus(event, '.context-color-picker')} onClick={() => { setDraftColor(option.value); setPropertyPicker(null) }}>
+                      <span className={`context-color-swatch is-${option.value}`} aria-hidden="true" /><span>{option.label}</span>{draftColor === option.value ? <Check size={13} aria-hidden="true" /> : null}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="context-property-control">
-                <button
-                  ref={colorTriggerRef}
-                  type="button"
-                  className="context-property-trigger"
-                  aria-label={`Context color: ${selectedColorLabel ?? draftColor}`}
-                  aria-haspopup="dialog"
-                  aria-expanded={propertyPicker === 'color'}
-                  title="Choose color"
-                  onClick={() => setPropertyPicker((current) => current === 'color' ? null : 'color')}
-                >
-                  <span className={`context-color-swatch is-${draftColor}`} aria-hidden="true" />
-                </button>
-                {propertyPicker === 'color' ? (
-                  <ContextColorPicker
-                    value={draftColor}
-                    onChange={(color) => {
-                      setDraftColor(color)
-                      closePropertyPicker('color')
-                    }}
-                  />
-                ) : null}
-              </div>
-              <button
-                type="button"
-                className="context-create-button"
-                aria-label={editing === null ? 'Create context' : `Save context ${editing}`}
-                disabled={draft.trim() === '' || adding}
-                onClick={() => void add()}
-              >
-                {editing === null ? <Plus size={14} /> : <Check size={14} />}
-                {editing === null ? 'Add' : 'Save'}
-              </button>
-            </div>
-          </div>
-          {error !== null ? <span className="context-error">{error}</span> : null}
-        </div>
-      ) : null}
-    </div>
+            ) : null}
+            {error !== null ? <span className="context-error" role="alert">{error}</span> : null}
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
   )
 }

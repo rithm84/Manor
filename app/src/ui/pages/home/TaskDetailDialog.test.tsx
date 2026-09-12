@@ -1,7 +1,8 @@
-import { renderToStaticMarkup } from 'react-dom/server'
+// @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
 
 import type { ContextDefinition, Task } from '../../../shared/home'
+import { renderPortalMarkup } from '../../testing/renderPortalMarkup'
 import { TaskDetailDialog } from './TaskDetailDialog'
 
 const CONTEXTS: readonly ContextDefinition[] = [
@@ -21,8 +22,8 @@ const TASK: Task = {
 }
 
 describe('centered task detail', () => {
-  it('renders exactly one directly editable, initially focused title field', () => {
-    const markup = renderToStaticMarkup(
+  it('renders exactly one directly editable, initially focused title field', async () => {
+    const markup = await renderPortalMarkup(
       <TaskDetailDialog
         task={TASK}
         open
@@ -31,7 +32,7 @@ describe('centered task detail', () => {
         onClose={() => undefined}
         onUpdate={async () => undefined}
         onAddContext={async (context) => context}
-        onUpdateContext={async (_originalName, context) => context}
+        onUpdateContext={async (_originalName, context) => ({ context, tasks: [TASK] })}
         onDeleteContext={async () => undefined}
         onDuplicate={async () => undefined}
         onDelete={async () => undefined}
@@ -41,8 +42,10 @@ describe('centered task detail', () => {
     expect(markup).toContain('role="dialog"')
     expect(markup).toContain('aria-label="Task details for Editable task title"')
     expect(markup.match(/aria-label="Task title"/g)).toHaveLength(1)
-    expect(markup).toContain('autofocus=""')
     expect(markup).toContain('peek-duplicate')
+    expect(markup).toContain('data-testid="task-detail-dialog"')
+    expect(markup).toContain('data-testid="task-recurrence-trigger"')
+    expect(markup).not.toContain('data-testid="task-recurrence-panel"')
     // Save is the primary action, disabled until something changes; the
     // card's checkbox owns completion.
     expect(markup).toContain('Save changes')

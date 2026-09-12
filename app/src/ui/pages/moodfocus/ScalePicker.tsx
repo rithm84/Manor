@@ -5,7 +5,7 @@ import type { ScaleOption } from './scales'
 
 export interface ScalePickerProps<T extends string> {
   id: string
-  /** Hand-face prompt line, e.g. "How was today?" */
+  /** Accessible label for the independent daily rating. */
   prompt: string
   kind: 'mood' | 'focus'
   options: readonly ScaleOption<T>[]
@@ -79,10 +79,6 @@ export function ScalePicker<T extends string>({
             >
               <span className="mf-option-mark" aria-hidden="true">
                 <Icon size={20} strokeWidth={1.7} />
-                {/* Sketched ink ring, drawn on when chosen. */}
-                <svg className="mf-option-ring" viewBox="0 0 60 60">
-                  <path d="M30 4 C45 3 56 13 56 29 C56 46 44 56 29 56 C14 56 4 45 4 30 C4 15 16 5 31 5 C44 5 53 14 53 27" />
-                </svg>
               </span>
               <span className="mf-option-label">{option.value}</span>
             </button>

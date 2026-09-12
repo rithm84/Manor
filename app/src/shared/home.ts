@@ -52,6 +52,7 @@ export type MasterFilterRule =
   | { id: string; property: 'due'; operator: 'within'; from: string; to: string }
 
 export interface SavedTaskView {
+  readonly revision?: number
   id: string
   name: string
   rules: readonly MasterFilterRule[]
@@ -66,6 +67,9 @@ export interface ContextDefinition {
 export type ContextDraft = ContextDefinition
 
 export interface Task {
+  readonly seriesId?: string | null
+  recurrenceScope?: 'this' | 'future'
+  readonly revision?: number
   id: string
   title: string
   context: string
@@ -78,6 +82,7 @@ export interface Task {
 }
 
 export interface ScratchBlock {
+  readonly revision?: number
   id: string
   /** null = a freestanding sticky note (not time-blocking any task) */
   taskId: string | null
@@ -107,6 +112,8 @@ export interface HomeApi {
   load: () => Promise<HomeState>
   upsertTask: (task: Task) => Promise<Task>
   deleteTask: (taskId: string) => Promise<void>
+  restoreTask: (taskId: string) => Promise<Task>
+  skipOccurrence: (task: Task) => Promise<void>
   addContext: (context: ContextDraft) => Promise<ContextDefinition>
   updateContext: (originalName: string, context: ContextDraft) => Promise<ContextDefinition>
   deleteContext: (name: string) => Promise<void>

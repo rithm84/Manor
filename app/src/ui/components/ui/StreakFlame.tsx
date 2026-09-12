@@ -1,58 +1,22 @@
+import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
-import { useId } from 'react'
 
-/**
- * lit: streak alive and today handled. blazing: a freeze-free week on top.
- * dim: streak alive but today still pending (the flame is going out).
- * ember: no streak yet.
- */
 export type StreakFlameState = 'ember' | 'dim' | 'lit' | 'blazing'
+export interface StreakFlameProps { size: number; state: StreakFlameState }
 
-export interface StreakFlameProps {
-  size: number
-  state: StreakFlameState
-}
-
-const BODY_PATH =
-  'M12 2c.4 2.9-.7 4.6-2.3 6.4C8 10.2 6.4 12 6.4 14.6c0 3.8 2.5 6.6 5.6 6.6s5.6-2.8 5.6-6.6c0-1.9-.8-3.3-1.8-4.6-.3 1-.9 1.7-1.5 2.2.3-3-.6-6.8-2.3-10.2z'
-
-const CORE_PATH =
-  'M12 12.4c.2 1.6-.9 2.4-1.5 3.4-.4.7-.6 1.4-.4 2.3.3 1.3 1.4 2.1 2.6 1.9 1.3-.2 2.3-1.4 2.3-2.9 0-1.9-1.5-2.6-2.2-3.7-.3-.4-.6-.8-.8-1z'
-
-/** Two-layer flame mark: gradient body with a live core drawn over it. */
+/** A quiet outlined ember fills on completion; feedback runs once on an earned state change. */
 export function StreakFlame({ size, state }: StreakFlameProps): ReactNode {
-  const gradientId = useId()
-
-  return (
-    <svg
-      className={`streak-flame is-${state}`}
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          {state === 'blazing' ? (
-            <>
-              <stop offset="0%" stopColor="var(--streak-glow)" />
-              <stop offset="55%" stopColor="var(--streak)" />
-              <stop offset="100%" stopColor="var(--overdue-error)" />
-            </>
-          ) : (
-            <>
-              <stop offset="0%" stopColor="var(--streak-glow)" />
-              <stop offset="100%" stopColor="var(--streak-deep)" />
-            </>
-          )}
-        </linearGradient>
-      </defs>
-      <path
-        className="streak-flame-body"
-        d={BODY_PATH}
-        fill={state === 'lit' || state === 'blazing' ? `url(#${gradientId})` : 'currentColor'}
-      />
-      <path className="streak-flame-core" d={CORE_PATH} />
-    </svg>
-  )
+  const mark = useRef<SVGSVGElement>(null)
+  const previous = useRef(state)
+  useEffect(() => {
+    const earned = previous.current !== state && (state === 'lit' || state === 'blazing')
+    previous.current = state
+    if (!earned || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const animation = mark.current?.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.14)', offset: .4 }, { transform: 'scale(1)' }], { duration: 240, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' })
+    return () => animation?.cancel()
+  }, [state])
+  return <svg ref={mark} className={`streak-flame is-${state}`} width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path className="streak-flame-body" d="M13.1 2.6c.5 4.3-4.8 5.4-4.8 9.2 0 1.1.5 1.8 1.1 2.2-2-.4-3-1.8-3.2-3.1C4.9 12.6 4.3 14 4.3 15.7a7.7 7.7 0 0 0 15.4 0c0-4.7-3.4-6.7-3.9-9.8-.5 1.2-.5 2.5-.1 3.4-1.7-1.2-1-4.3-2.6-6.7Z" strokeWidth="1.5" strokeLinejoin="round" />
+    <path className="streak-flame-core" d="M12.8 12.9c.2 2.2-2.5 2.8-2.5 4.7a2.4 2.4 0 0 0 4.8 0c0-1.8-1.6-2.5-2.3-4.7Z" strokeWidth="1.2" strokeLinejoin="round" />
+  </svg>
 }

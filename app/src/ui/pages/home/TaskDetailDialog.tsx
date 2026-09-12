@@ -1,4 +1,4 @@
-import { AudioLines, Check, Copy, Trash2, UserRound, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronDown, Clock3, Copy, Flag, Layers3, Repeat2, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 
@@ -11,16 +11,17 @@ import type {
   TaskPriority,
   TaskStatus
 } from '../../data/mock'
+import { recurrenceLabel } from '../../../shared/recurrence'
 import { ContextSelect } from './ContextSelect'
 import { DueDatePicker } from './DueDatePicker'
 import { RecurrenceEditor } from './RecurrenceEditor'
 import {
   ESTIMATE_SELECT_OPTIONS,
   PRIORITY_OPTIONS,
-  STATUS_OPTIONS,
-  provenanceFor
+  STATUS_OPTIONS
 } from './taskModel'
 import './homeDetails.css'
+import './taskDialogs.css'
 
 export interface TaskDetailDialogProps {
   /** The open task; null renders the closed dialog. */
@@ -28,10 +29,14 @@ export interface TaskDetailDialogProps {
   open: boolean
   contexts: readonly ContextDefinition[]
   dueAttention: boolean
+  today?: string
   onClose: () => void
   onUpdate: (task: Task) => Promise<void>
   onAddContext: (context: ContextDraft) => Promise<ContextDefinition>
-  onUpdateContext: (originalName: string, context: ContextDraft) => Promise<ContextDefinition>
+  onUpdateContext: (
+    originalName: string,
+    context: ContextDraft
+  ) => Promise<{ context: ContextDefinition; tasks: readonly Task[] }>
   onDeleteContext: (name: string) => Promise<void>
   onDuplicate: (task: Task) => Promise<void>
   onDelete: (taskId: string) => void
@@ -48,6 +53,7 @@ export function TaskDetailDialog({
   open,
   contexts,
   dueAttention,
+  today,
   onClose,
   onUpdate,
   onAddContext,
@@ -56,7 +62,11 @@ export function TaskDetailDialog({
   onDuplicate,
   onDelete
 }: TaskDetailDialogProps): ReactNode {
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [draft, setDraft] = useState<Task | null>(task)
+  const [savedTask, setSavedTask] = useState<Task | null>(task)
+  const [recurrenceOpen, setRecurrenceOpen] = useState(false)
 
   /* Reset only when a different task opens, never on a background refresh
      replacing the same task's object identity, so in-progress edits survive
@@ -64,25 +74,52 @@ export function TaskDetailDialog({
   const taskId = task?.id ?? null
   useEffect(() => {
     setDraft(task)
+    setSavedTask(task)
+    setSaveError(null)
+    setRecurrenceOpen(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId, open])
 
   if (task === null || draft === null) {
     return null
   }
-  const provenance = provenanceFor(task)
 
-  /** The draft with the title normalized; an emptied title keeps the old one. */
+  /** The draft with surrounding title whitespace removed. */
   const normalizedDraft = (): Task => {
-    const trimmed = draft.title.trim()
-    return { ...draft, title: trimmed === '' ? task.title : trimmed }
+    return { ...draft, title: draft.title.trim() }
   }
 
-  const dirty = JSON.stringify(normalizedDraft()) !== JSON.stringify(task)
+  const dirty = savedTask !== null && JSON.stringify(normalizedDraft()) !== JSON.stringify(savedTask)
 
-  const saveDraft = (): void => {
-    if (!dirty) return
-    void onUpdate(normalizedDraft())
+  const saveDraft = async (): Promise<void> => {
+    if (normalizedDraft().title === '') throw new Error('Enter a task title')
+    if (dirty) await onUpdate(normalizedDraft())
+  }
+
+  const updateContextDefinition = async (
+    originalName: string,
+    context: ContextDraft
+  ): Promise<ContextDefinition> => {
+    const result = await onUpdateContext(originalName, context)
+    const refreshedTask = result.tasks.find((candidate) => candidate.id === draft.id)
+    if (refreshedTask === undefined) {
+      throw new Error(`Task ${draft.id} was not returned after updating Context`)
+    }
+    const baselineAfterMutation = savedTask === null ? null : {
+      ...savedTask,
+      context: refreshedTask.context,
+      revision: refreshedTask.revision
+    }
+    if (baselineAfterMutation === null || JSON.stringify(baselineAfterMutation) !== JSON.stringify(refreshedTask)) {
+      throw new Error('This task changed while its Context was being updated. Close and reopen it before saving.')
+    }
+    setSavedTask(baselineAfterMutation)
+    setDraft((current) => current === null ? null : {
+      ...current,
+      context: current.context === originalName ? result.context.name : current.context,
+      revision: refreshedTask.revision
+    })
+    return result.context
   }
 
   const onTitleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
@@ -94,44 +131,45 @@ export function TaskDetailDialog({
   // Closing commits too; blur does not fire on unmount and an edit must
   // never be lost to clicking away.
   const closeWithSave = (): void => {
-    saveDraft()
-    onClose()
+    if (saving) return
+    setSaving(true)
+    setSaveError(null)
+    void saveDraft().then(onClose).catch((error: Error) => setSaveError(error.message)).finally(() => setSaving(false))
   }
+
 
   return (
     <Modal
       open={open}
       onClose={closeWithSave}
-      width={620}
+      width={520}
       ariaLabel={`Task details for ${task.title}`}
     >
-      <section className="task-detail-dialog">
-        <header className="task-detail-header">
+      <section className="task-dialog" data-testid="task-detail-dialog">
+        <header className="task-dialog-header">
+          <h2>Task</h2>
+          <button type="button" className="task-dialog-close" onClick={closeWithSave} aria-label="Close task details">
+            <X size={16} />
+          </button>
+        </header>
+        <div className="task-dialog-title">
           <input
-            className="peek-title-input"
             autoFocus
             value={draft.title}
             aria-label="Task title"
             onChange={(event) => setDraft({ ...draft, title: event.target.value })}
             onKeyDown={onTitleKeyDown}
           />
-          <button
-            type="button"
-            className="task-detail-close"
-            onClick={closeWithSave}
-            aria-label="Close task details"
-          >
-            <X size={16} />
-          </button>
-        </header>
-        <div className="task-detail-body">
-          <div className="peek">
+        </div>
+        <div className="task-dialog-body">
             {dueAttention ? (
-              <div className="peek-attention">Choose the exact day. This Week is a range.</div>
+              <div className="task-dialog-attention">Choose an exact date in the next seven days.</div>
             ) : null}
-            <div className="peek-props">
-              <div className="peek-row">
-                <span className="peek-label">Status</span>
+            <div className="task-property-list">
+              {task.seriesId ? <div className="task-property-row"><Repeat2 size={15} aria-hidden="true" /><span className="task-property-label">Apply to</span><Select value={draft.recurrenceScope ?? 'this'} options={[{ value: 'this', label: 'This occurrence' }, { value: 'future', label: 'This and future occurrences' }]} onChange={(value) => setDraft({ ...draft, recurrenceScope: value as 'this' | 'future' })} placeholder="Scope" ariaLabel="Recurring task edit scope" /></div> : null}
+              <div className="task-property-row">
+                <Check size={15} aria-hidden="true" />
+                <span className="task-property-label">Status</span>
                 <Select
                   value={draft.status}
                   options={STATUS_OPTIONS}
@@ -140,9 +178,11 @@ export function TaskDetailDialog({
                   ariaLabel="Status"
                 />
               </div>
-              <div className="peek-row">
-                <span className="peek-label">Due</span>
+              <div className="task-property-row">
+                <CalendarDays size={15} aria-hidden="true" />
+                <span className="task-property-label">Due</span>
                 <DueDatePicker
+                  today={today}
                   value={draft.due}
                   onChange={(due) => setDraft({ ...draft, due })}
                   ariaLabel="Due date"
@@ -150,21 +190,32 @@ export function TaskDetailDialog({
                   max={null}
                 />
               </div>
-              <div className="peek-row">
-                <span className="peek-label">Context</span>
+              <div className="task-property-row">
+                <Layers3 size={15} aria-hidden="true" />
+                <span className="task-property-label">Context</span>
                 <ContextSelect
                   value={draft.context}
                   contexts={contexts}
-                  onChange={(context) => setDraft({ ...draft, context })}
+                  onChange={(context) => setDraft((current) => current === null ? null : { ...current, context })}
                   onAdd={onAddContext}
-                  onUpdate={onUpdateContext}
-                  onDelete={onDeleteContext}
+                  onUpdate={updateContextDefinition}
+                  onDelete={async (name) => {
+                    const selected = draft.context === name
+                    setDraft((current) => current !== null && current.context === name ? { ...current, context: task.context } : current)
+                    try {
+                      await onDeleteContext(name)
+                    } catch (error) {
+                      if (selected) setDraft((current) => current !== null && current.context === task.context ? { ...current, context: name } : current)
+                      throw error
+                    }
+                  }}
                   placeholder="Empty"
                   ariaLabel="Context"
                 />
               </div>
-              <div className="peek-row">
-                <span className="peek-label">Time needed</span>
+              <div className="task-property-row">
+                <Clock3 size={15} aria-hidden="true" />
+                <span className="task-property-label">Estimate</span>
                 <Select
                   value={draft.estimateMinutes === null ? null : String(draft.estimateMinutes)}
                   options={ESTIMATE_SELECT_OPTIONS}
@@ -178,8 +229,9 @@ export function TaskDetailDialog({
                   ariaLabel="Time needed"
                 />
               </div>
-              <div className="peek-row">
-                <span className="peek-label">Priority</span>
+              <div className="task-property-row">
+                <Flag size={15} aria-hidden="true" />
+                <span className="task-property-label">Priority</span>
                 <Select
                   value={draft.priority}
                   options={PRIORITY_OPTIONS}
@@ -188,37 +240,47 @@ export function TaskDetailDialog({
                   ariaLabel="Priority"
                 />
               </div>
-              <div className="peek-row peek-row--tall">
-                <span className="peek-label">Repeats</span>
-                <RecurrenceEditor
-                  key={task.id}
-                  value={draft.recurrence}
-                  onChange={(recurrence) => setDraft({ ...draft, recurrence })}
-                />
+              <div className="task-property-row task-property-row--expandable">
+                <Repeat2 size={15} aria-hidden="true" />
+                <span className="task-property-label">Repeats</span>
+                <button
+                  type="button"
+                  className="task-recurrence-trigger"
+                  aria-expanded={recurrenceOpen}
+                  data-testid="task-recurrence-trigger"
+                  onClick={() => setRecurrenceOpen(!recurrenceOpen)}
+                >
+                  <span>{draft.recurrence === null ? "Doesn't repeat" : recurrenceLabel(draft.recurrence)}</span>
+                  <ChevronDown size={14} aria-hidden="true" />
+                </button>
               </div>
+              {recurrenceOpen ? (
+                <div className="task-recurrence-panel" data-testid="task-recurrence-panel">
+                  <RecurrenceEditor key={task.id} value={draft.recurrence} onChange={(recurrence) => setDraft({ ...draft, recurrence })} />
+                </div>
+              ) : null}
             </div>
 
-            <div className="peek-activity">
-              {provenance.byCodex ? <AudioLines size={14} /> : <UserRound size={14} />}
-              <span>{provenance.line}</span>
-            </div>
+            {saveError !== null ? <p className="task-dialog-error" role="alert">{saveError}</p> : null}
 
-            <div className="peek-actions">
+            <div className="task-dialog-footer task-dialog-footer--detail">
               <Button
                 variant="primary"
                 icon={<Check size={16} />}
-                disabled={!dirty}
+                disabled={!dirty || saving}
                 onClick={closeWithSave}
               >
                 Save changes
               </Button>
-              <div className="peek-actions-side">
+              <div className="task-dialog-secondary-actions">
                 <button
                   type="button"
                   className="peek-duplicate"
                   onClick={() => {
-                    saveDraft()
-                    void onDuplicate(normalizedDraft())
+                    if (saving) return
+                    setSaving(true)
+                    setSaveError(null)
+                    void saveDraft().then(() => onDuplicate(normalizedDraft())).catch((error: Error) => setSaveError(error.message)).finally(() => setSaving(false))
                   }}
                 >
                   <Copy size={15} />
@@ -234,7 +296,6 @@ export function TaskDetailDialog({
                 </button>
               </div>
             </div>
-          </div>
         </div>
       </section>
     </Modal>

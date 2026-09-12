@@ -85,6 +85,7 @@ function seedData(): LeetCodeSeed {
       streak: leetcodeStats.streak,
       freezesLeft: leetcodeStats.freezesLeft,
       freezesPerMonth: leetcodeStats.freezesPerMonth,
+      freezeAction: { date: '2026-08-19', applied: false, canApply: true, canClear: false, revision: 0 },
       legacyProgress
     }
   }

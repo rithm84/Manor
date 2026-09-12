@@ -1,3 +1,4 @@
+import { recurrenceLabel } from '../../../shared/recurrence'
 import { Repeat } from 'lucide-react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
@@ -130,7 +131,7 @@ export function TaskCard({
           <Pill key={tag} variant="tag" colorway="tomorrow" label={tag} />
         ))}
         {task.recurrence !== null ? (
-          <span className="task-card-recur" title={task.recurrence} aria-label={`Repeats: ${task.recurrence}`}>
+          <span className="task-card-recur" title={recurrenceLabel(task.recurrence)} aria-label={`Repeats: ${recurrenceLabel(task.recurrence)}`}>
             <Repeat size={12} />
           </span>
         ) : null}

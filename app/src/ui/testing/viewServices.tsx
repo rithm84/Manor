@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { AccountApi } from '../../shared/account'
 import type { ResumesApi } from '../../shared/resumes'
 import { ManorServicesProvider } from '../services/ManorServices'
+import { AccountProvider } from '../../web/accountContext'
 
 /** Layout tests may read session state; mutations fail if accidentally invoked. */
 function unexpectedMutation(): never {
@@ -9,10 +10,11 @@ function unexpectedMutation(): never {
 }
 
 const account: AccountApi = {
+  connections: async () => [],
+  revokeConnection: unexpectedMutation,
   current: async () => null,
   avatarUrl: async () => null,
-  signIn: unexpectedMutation,
-  signUp: unexpectedMutation,
+  signInWithGoogle: unexpectedMutation,
   signOut: unexpectedMutation,
   setAvatar: unexpectedMutation
 }
@@ -23,5 +25,5 @@ const resumes: ResumesApi = {
 }
 
 export function ViewTestServices({ children }: { children: ReactNode }): ReactNode {
-  return <ManorServicesProvider services={{ account, resumes }}>{children}</ManorServicesProvider>
+  return <AccountProvider account={{ id: 'layout-test', name: 'Test user', email: 'layout@example.invalid', timezone: 'America/Los_Angeles' }}><ManorServicesProvider services={{ account, resumes }}>{children}</ManorServicesProvider></AccountProvider>
 }

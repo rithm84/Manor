@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 
@@ -65,7 +66,12 @@ export function AddRoleModal({ open, onClose, onAdd }: AddRoleModalProps): React
     <>
     <Modal open={open} onClose={requestClose} width={520} ariaLabel="Add a role">
       <form className="addrole" onSubmit={submit}>
-        <div className="addrole-title">Add a role</div>
+        <header className="addrole-head">
+          <h2 className="addrole-title">Add a role</h2>
+          <button type="button" className="addrole-close" aria-label="Close role editor" onClick={requestClose} disabled={submitting}>
+            <X size={17} />
+          </button>
+        </header>
         <div className="addrole-fields">
           <label className="addrole-field">
             <span className="addrole-label">Company</span>

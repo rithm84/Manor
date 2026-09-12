@@ -35,6 +35,7 @@ export interface JobRoleFields {
 }
 
 export interface JobRole extends JobRoleFields {
+  readonly revision?: number
   id: string
   createdAt: string
   updatedAt: string
@@ -61,6 +62,7 @@ export interface JobsState {
 }
 
 export interface JobRoleUpdate {
+  expectedRevision?: number
   id: string
   fields: JobRoleFields
 }

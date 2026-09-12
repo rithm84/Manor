@@ -53,5 +53,5 @@ export function useDismissLayer(active: boolean, onDismiss: () => void): void {
 
 /** True while any dismiss layer is open (e.g. to scope page-level shortcuts). */
 export function hasOpenDismissLayer(): boolean {
-  return stack.length > 0
+  return stack.length > 0 || (typeof document !== 'undefined' && document.querySelector('[role="dialog"], [role="listbox"], [role="menu"]') !== null)
 }

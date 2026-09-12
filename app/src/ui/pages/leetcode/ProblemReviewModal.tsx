@@ -87,6 +87,7 @@ export function ProblemReviewModal({
 }: ProblemReviewModalProps): ReactNode {
   const [newDate, setNewDate] = useState(today)
   const [newSolution, setNewSolution] = useState('')
+  const [editingRevision, setEditingRevision] = useState<number | undefined>(undefined)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDate, setEditDate] = useState(today)
   const [editSolution, setEditSolution] = useState('')
@@ -141,7 +142,7 @@ export function ProblemReviewModal({
     setSubmitting(true)
     setError(null)
     try {
-      await onUpdateAttempt({ attemptId: editingId, date: editDate, solution: editSolution })
+      await onUpdateAttempt({ attemptId: editingId, date: editDate, solution: editSolution, expectedRevision: editingRevision })
       setEditingId(null)
     } catch (saveError) {
       setError(errorMessage(saveError))
@@ -271,6 +272,7 @@ export function ProblemReviewModal({
                                 type="button"
                                 onClick={() => {
                                   setEditingId(attempt.id)
+                                  setEditingRevision(attempt.revision)
                                   setEditDate(attempt.date)
                                   setEditSolution(attempt.solution)
                                   setDeleteCandidate(null)

@@ -9,6 +9,8 @@ export interface XConnectionStatus {
 }
 
 export interface XApi {
+  connect: () => Promise<void>
+  completeConnection: (code: string, state: string) => Promise<void>
   /** Current connection state; reports disconnected when signed out of Manor. */
   status: () => Promise<XConnectionStatus>
   disconnect: () => Promise<void>

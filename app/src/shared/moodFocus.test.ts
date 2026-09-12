@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   parseMoodFocusEntry,
+  parseMoodFocusHistoryMutation,
   parseMoodFocusNoteMutation,
   parseMoodFocusSeed,
   parseMoodMutation
@@ -34,5 +35,10 @@ describe('mood and focus validation', () => {
   it('rejects invalid scales and duplicate seed dates', () => {
     expect(() => parseMoodMutation({ date: ENTRY.date, mood: 'Fine' })).toThrow(/mood must be one of/)
     expect(() => parseMoodFocusSeed({ today: '2026-08-20', entries: [ENTRY, ENTRY] })).toThrow(/unique dates/)
+  })
+
+  it('requires at least one explicit rating in a history correction', () => {
+    expect(parseMoodFocusHistoryMutation({ date: ENTRY.date, mood: 'Good', focus: null, expectedUpdatedAt: ENTRY.updatedAt })).toEqual({ date: ENTRY.date, mood: 'Good', focus: null, expectedUpdatedAt: ENTRY.updatedAt })
+    expect(() => parseMoodFocusHistoryMutation({ date: ENTRY.date, mood: null, focus: null, expectedUpdatedAt: null })).toThrow(/must contain mood or focus/)
   })
 })

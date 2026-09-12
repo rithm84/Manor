@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   Area,
@@ -14,15 +15,15 @@ import {
 } from 'recharts'
 
 import type { HabitsState } from '../../../shared/habits'
-import { FreezeCrystal } from '../../components/ui'
+import { FreezeCrystal, Select } from '../../components/ui'
 import {
   earliestHistoryMonth,
+  habitTrend,
   historyMonthAfterNavigation,
   monthShift,
-  monthSummary,
-  twelveMonthTrend
+  monthSummary
 } from './habitModel'
-import type { HabitMonthRow } from './habitModel'
+import type { HabitMonthRow, HabitTrendRange } from './habitModel'
 import './habitHistory.css'
 
 export interface HabitHistoryProps {
@@ -32,13 +33,13 @@ export interface HabitHistoryProps {
   onOpenHabit: (habitId: string) => void
 }
 
-/** Retired habits never reach the history rows; only pauses are labeled. */
+/** Retirement is evident from the finite history window; only pauses need a label. */
 function statusLabel(status: 'active' | 'paused' | 'retired' | null): string | null {
   return status === 'paused' ? 'Paused' : null
 }
 
 export interface HabitPerformanceSlice {
-  key: 'complete' | 'partial' | 'frozen' | 'missed' | 'pending' | 'untracked'
+  key: 'complete' | 'partial' | 'frozen' | 'missed' | 'untracked'
   label: string
   value: number
   fill: string
@@ -82,12 +83,6 @@ export function habitPerformanceSlices(row: HabitMonthRow): readonly HabitPerfor
       label: 'Missed',
       value: markCount(row, 'missed'),
       fill: 'var(--overdue-error)'
-    },
-    {
-      key: 'pending',
-      label: 'Pending',
-      value: markCount(row, 'pending'),
-      fill: 'var(--surface-strong)'
     }
   ]
   return slices.filter((slice) => slice.value > 0)
@@ -162,14 +157,25 @@ export function HabitHistory({
   onMonthChange,
   onOpenHabit
 }: HabitHistoryProps): ReactNode {
+  const [trendRange, setTrendRange] = useState<HabitTrendRange>(6)
+  const [trendHabitId, setTrendHabitId] = useState<string | null>(null)
   const summary = monthSummary(state, month)
-  const trend = twelveMonthTrend(state, month)
+  const trend = habitTrend(state, month, trendRange, trendHabitId)
   const nextMonth = historyMonthAfterNavigation(month, 1, state.today)
   const canMoveForward = nextMonth !== month
   const canMoveBack = month > earliestHistoryMonth(state)
-  const averageCompletion = Math.round(
-    trend.reduce((total, item) => total + item.completionRate, 0) / trend.length
-  )
+  const trendCompleted = trend.reduce((total, item) => total + item.completedDays, 0)
+  const trendTracked = trend.reduce((total, item) => total + item.trackedDays, 0)
+  const averageCompletion = trendTracked === 0
+    ? null
+    : Math.round((trendCompleted / trendTracked) * 100)
+  const selectedHabit = trendHabitId === null
+    ? null
+    : state.habits.find((habit) => habit.id === trendHabitId) ?? null
+  const habitOptions = [
+    { value: 'all', label: 'All habits' },
+    ...state.habits.map((habit) => ({ value: habit.id, label: habit.name }))
+  ]
   const rankedRows = [...summary.rows].sort(
     (left, right) =>
       right.completionRate - left.completionRate || left.habit.name.localeCompare(right.habit.name)
@@ -226,25 +232,48 @@ export function HabitHistory({
       <section className="habit-history-trend" aria-labelledby="habit-history-trend-title">
         <div className="habit-history-sectionhead">
           <div>
-            <h3 id="habit-history-trend-title">12-month completion</h3>
-            <p>Full completions across all tracked habits.</p>
+            <h3 id="habit-history-trend-title">{trendRange}-month completion</h3>
+            <p>{selectedHabit === null ? 'Across all habits.' : `For ${selectedHabit.name}.`}</p>
           </div>
-          <div className="habit-history-trendstat">
-            <span className="tnum">{averageCompletion}%</span>
-            <span>12-month average</span>
+          <div className="habit-history-trendcontrols">
+            <Select
+              value={trendHabitId ?? 'all'}
+              options={habitOptions}
+              onChange={(value) => setTrendHabitId(value === 'all' ? null : value)}
+              placeholder="All habits"
+              ariaLabel="Habit trend scope"
+            />
+            <div className="habit-history-range" role="group" aria-label="Trend range">
+              {([3, 6, 12] as const).map((range) => (
+                <button
+                  key={range}
+                  type="button"
+                  className={trendRange === range ? 'is-selected' : ''}
+                  aria-label={`Show ${range} months`}
+                  aria-pressed={trendRange === range}
+                  onClick={() => setTrendRange(range)}
+                >
+                  {range}m
+                </button>
+              ))}
+            </div>
+            <div className="habit-history-trendstat">
+              <span className="tnum">{averageCompletion === null ? '—' : `${averageCompletion}%`}</span>
+              <span>{trendTracked === 0 ? 'No tracked days' : `${trendCompleted} of ${trendTracked} completed`}</span>
+            </div>
           </div>
         </div>
 
         <div
           className="habit-history-chart"
           role="img"
-          aria-label={`Monthly habit completion ending ${summary.label}`}
+          aria-label={`${trendRange}-month habit completion ending ${summary.label}`}
         >
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               accessibilityLayer
               data={trend}
-              margin={{ top: 12, right: 8, bottom: 0, left: -8 }}
+              margin={{ top: 12, right: 8, bottom: 0, left: 0 }}
             >
               <defs>
                 <linearGradient id="habit-history-fill" x1="0" y1="0" x2="0" y2="1">
@@ -290,6 +319,7 @@ export function HabitHistory({
                   strokeWidth: 2
                 }}
                 dataKey="completionRate"
+                connectNulls={false}
                 dot={{
                   fill: 'var(--surface-card)',
                   r: 2.5,
@@ -314,7 +344,7 @@ export function HabitHistory({
             <h3 id="habit-history-breakdown-title">Habit performance</h3>
             <p>Completed days among days tracked in {summary.label}.</p>
           </div>
-          <div className="habit-history-donutlegend" aria-label="Performance chart legend">
+          {rankedRows.length > 0 ? <div className="habit-history-donutlegend" aria-label="Performance chart legend">
             <span>
               <span className="habit-history-legenddot is-complete" aria-hidden="true" />
               Complete
@@ -331,10 +361,10 @@ export function HabitHistory({
               <span className="habit-history-legenddot is-missed" aria-hidden="true" />
               Missed
             </span>
-          </div>
+          </div> : null}
         </div>
 
-        <ol className="habit-history-ranking">
+        {rankedRows.length === 0 ? <p className="habit-history-empty">No habits tracked this month.</p> : <ol className="habit-history-ranking">
           {rankedRows.map((row, index) => {
             const lifecycleLabel = statusLabel(row.status)
             const missedDays = markCount(row, 'missed')
@@ -379,7 +409,7 @@ export function HabitHistory({
               </li>
             )
           })}
-        </ol>
+        </ol>}
       </section>
     </div>
   )

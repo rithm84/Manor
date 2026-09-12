@@ -1,3 +1,5 @@
+import { Popover } from '@base-ui/react/popover'
+import { useCommitVersion } from '../services/useCommitVersion'
 import { useManorService } from '../services/ManorServices'
 import {
   ChevronLeft,
@@ -13,10 +15,11 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { addDays, monthKey, statusOn } from '../../shared/habits'
-import { playCelebrationChime, playClick } from '../sound/sounds'
+import { playClick, playCompletionTick } from '../sound/sounds'
 import type { HabitDraft, HabitsState } from '../../shared/habits'
-import { Button, EmptyState, FreezeCrystal, HandCircle, Modal } from '../components/ui'
-import { TODAY_ISO } from '../data/mock'
+import { Button, EmptyState, FreezeCrystal, Modal } from '../components/ui'
+import { useAccountTimezone } from '../../web/accountContext'
+import { dateInTimezone } from '../../shared/timezone'
 import { HabitEditorModal } from './habits/AddHabitModal'
 import { HabitDetailDialog } from './habits/HabitDetailDialog'
 import { HabitRow } from './habits/HabitRow'
@@ -41,14 +44,17 @@ function errorMessage(error: unknown): string {
 }
 
 export function HabitsPage(): ReactNode {
+  const commitVersion = useCommitVersion()
   const habitsApi = useManorService('habits')
   const [state, setState] = useState<HabitsState | null>(null)
   const [loading, setLoading] = useState(true)
   const [persistError, setPersistError] = useState<string | null>(null)
   const [view, setView] = useState<HabitsView>('daily')
-  const [selectedDate, setSelectedDate] = useState(TODAY_ISO)
-  const [historyMonth, setHistoryMonth] = useState(monthKey(TODAY_ISO))
-  const [detailMonth, setDetailMonth] = useState(monthKey(TODAY_ISO))
+  const timezone = useAccountTimezone()
+  const [initialDate] = useState(() => dateInTimezone(new Date(), timezone))
+  const [selectedDate, setSelectedDate] = useState(initialDate)
+  const [historyMonth, setHistoryMonth] = useState(monthKey(initialDate))
+  const [detailMonth, setDetailMonth] = useState(monthKey(initialDate))
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [peekOpen, setPeekOpen] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
@@ -56,7 +62,6 @@ export function HabitsPage(): ReactNode {
   const [retireTargetId, setRetireTargetId] = useState<string | null>(null)
   const [confirmBusy, setConfirmBusy] = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
-  const [freezeInfoOpen, setFreezeInfoOpen] = useState(false)
   const [reorderArmedId, setReorderArmedId] = useState<string | null>(null)
   const [reorderDragId, setReorderDragId] = useState<string | null>(null)
   const [reorderOverId, setReorderOverId] = useState<string | null>(null)
@@ -70,9 +75,11 @@ export function HabitsPage(): ReactNode {
           return
         }
         setState(loaded)
-        setSelectedDate(loaded.today)
-        setHistoryMonth(monthKey(loaded.today))
-        setDetailMonth(monthKey(loaded.today))
+        if (state === null) {
+          setSelectedDate(loaded.today)
+          setHistoryMonth(monthKey(loaded.today))
+        }
+        if (state === null) setDetailMonth(monthKey(loaded.today))
         setLoading(false)
       })
       .catch((error: unknown) => {
@@ -85,7 +92,7 @@ export function HabitsPage(): ReactNode {
     return (): void => {
       cancelled = true
     }
-  }, [])
+  }, [habitsApi, commitVersion])
 
   const persist = async (
     operation: string,
@@ -319,7 +326,7 @@ export function HabitsPage(): ReactNode {
 
           <div className="habits-main">
             <div className="habits-left">
-              <section className="habits-list ui-card">
+              {activeModels.length > 0 ? <section className="habits-list ui-card">
                 {activeModels.map((habit) => (
                   <div
                     key={habit.definition.id}
@@ -376,8 +383,7 @@ export function HabitsPage(): ReactNode {
                       const wasComplete =
                         activeModels.find((model) => model.definition.id === habitId)?.entry?.value === 100
                       if (value === 100 && !wasComplete) {
-                        if (selectedDate === today && remaining === 1) playCelebrationChime()
-                        else playClick()
+                        playCompletionTick()
                       }
                       await persist('Could not save habit entry', () =>
                         habitsApi.setEntry({ habitId, date: selectedDate, value })
@@ -390,7 +396,7 @@ export function HabitsPage(): ReactNode {
                     />
                   </div>
                 ))}
-              </section>
+              </section> : <p className="habits-empty-day">No active habits for this day.</p>}
 
               {pausedModels.length > 0 ? (
                 <section className="habits-paused">
@@ -451,60 +457,54 @@ export function HabitsPage(): ReactNode {
 
             <aside className="habits-rail">
               <div className="habits-status ui-card">
-                <div className="habits-progress">
-                  <span className="habits-card-label">{dateLabel(selectedDate, today)}</span>
-                  <div className="habits-progress-line">
-                    <HandCircle active={perfect && selectedDate === today}>
-                      <span className="habits-progress-value tnum">
-                        {completed}
-                        <span className="habits-progress-total"> of {active.length}</span>
-                      </span>
-                    </HandCircle>
-                    {perfect ? (
-                      <span className="habits-progress-perfect display">A perfect day.</span>
-                    ) : (
-                      <span className="habits-progress-note">
-                        {uncovered > 0 ? `${uncovered} left.` : `${frozenCount} frozen.`}
-                      </span>
-                    )}
-                  </div>
-                  <div className={`habits-progress-bar${perfect ? ' is-perfect' : ''}`}>
-                    <div
-                      className="habits-progress-fill"
-                      style={{ width: `${active.length === 0 ? 0 : (completed / active.length) * 100}%` }}
-                    />
-                  </div>
-                </div>
+                {activeModels.length > 0 ? (
+                  <>
+                    <div className="habits-progress">
+                      <span className="habits-card-label">{dateLabel(selectedDate, today)}</span>
+                      <div className="habits-progress-line">
+                        <span className={perfect && selectedDate === today ? 'habit-perfect-complete' : undefined}>
+                          <span className="habits-progress-value tnum">
+                            {completed}
+                            <span className="habits-progress-total"> of {active.length}</span>
+                          </span>
+                        </span>
+                        {perfect ? (
+                          <span className="habits-progress-perfect display">A perfect day.</span>
+                        ) : (
+                          <span className="habits-progress-note">
+                            {uncovered > 0 ? `${uncovered} left.` : `${frozenCount} frozen.`}
+                          </span>
+                        )}
+                      </div>
+                      <div className={`habits-progress-bar${perfect ? ' is-perfect' : ''}`}>
+                        <div
+                          className="habits-progress-fill"
+                          style={{ width: `${active.length === 0 ? 0 : (completed / active.length) * 100}%` }}
+                        />
+                      </div>
+                    </div>
 
-                <div className="habits-status-divider" />
+                    <div className="habits-status-divider" />
+                  </>
+                ) : null}
 
                 <div className="habits-freeze">
                   <div className="habits-freeze-head">
                     <span className="habits-card-label">
                       <FreezeCrystal size={14} /> Freeze pool
                     </span>
-                    <span className={`habits-freeze-hint${freezeInfoOpen ? ' is-open' : ''}`}>
-                      <button
-                        type="button"
-                        className="habit-row-iconbtn"
-                        aria-label="About streak freezes"
-                        aria-expanded={freezeInfoOpen}
-                        aria-controls="habits-freeze-pop"
-                        onClick={() => setFreezeInfoOpen((open) => !open)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Escape' && freezeInfoOpen) {
-                            setFreezeInfoOpen(false)
-                          }
-                        }}
-                        onBlur={() => setFreezeInfoOpen(false)}
-                      >
-                        <Info size={13} />
-                      </button>
-                      <span className="habits-freeze-pop" id="habits-freeze-pop">
-                        <span>Every month starts with a full pool, one freeze per habit.</span>
-                        <span>Spend one on a habit you missed yesterday; perfect days earn spent freezes back.</span>
-                      </span>
-                    </span>
+                    <Popover.Root>
+                      <Popover.Trigger className="habit-row-iconbtn" aria-label="About streak freezes"><Info size={14} /></Popover.Trigger>
+                      <Popover.Portal>
+                        <Popover.Positioner className="ui-popover-positioner" align="end" sideOffset={6} collisionPadding={12}>
+                          <Popover.Popup className="habits-freeze-pop" aria-label="About streak freezes">
+                            <strong>Keep a streak going</strong>
+                            <p>One freeze covers one habit missed yesterday. Checking it off later returns the freeze.</p>
+                            <p>Perfect days replenish the pool. Each month starts full, with one freeze per active habit.</p>
+                          </Popover.Popup>
+                        </Popover.Positioner>
+                      </Popover.Portal>
+                    </Popover.Root>
                   </div>
                   <div className="habits-freeze-line">
                     <span className="habits-freeze-value tnum">{currentPool?.balance ?? 0}</span>
@@ -537,6 +537,7 @@ export function HabitsPage(): ReactNode {
           month={detailMonth}
           onMonthChange={setDetailMonth}
           onEdit={() => {
+            setPeekOpen(false)
             setEditTargetId(selected.definition.id)
             setEditorOpen(true)
           }}

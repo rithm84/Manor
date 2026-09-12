@@ -1,13 +1,26 @@
-/* Manor sound layer — completion moments only (see docs/DESIGN.md "Sound").
-   Synthesized via WebAudio; no assets. Master toggle lives in Settings.
-   The voice is tactile, not tonal: filtered noise taps with a low thump,
-   like a pen landing on paper, instead of pure sine beeps. */
+/* Checkbox completion uses the supplied tap recording. Placement feedback
+   uses WebAudio. Both respect the master Sounds setting. */
 
 const STORAGE_KEY = 'manor.sounds.enabled'
 
 let audioContext: AudioContext | null = null
 let cachedNoise: AudioBuffer | null = null
 let warnedUnavailable = false
+let completionAudio: HTMLAudioElement | null = null
+
+function completionPlayer(): HTMLAudioElement {
+  if (completionAudio === null) {
+    completionAudio = new Audio(new URL('./checkbox-tap.wav', import.meta.url).href)
+    completionAudio.preload = 'auto'
+    completionAudio.load()
+  }
+  return completionAudio
+}
+
+/** Decode the short recording before the first checkbox interaction. */
+export function preloadCompletionSound(): void {
+  completionPlayer()
+}
 
 export function soundsEnabled(): boolean {
   return window.localStorage.getItem(STORAGE_KEY) !== '0'
@@ -126,55 +139,13 @@ export function playClick(): void {
   )
 }
 
-/** Soft felt-tip tap for checking something off. Quiet by design. */
+/** Replay the original tap without delaying the completion save. */
 export function playCompletionTick(): void {
-  playTexture(
-    [{ startOffset: 0, duration: 0.05, peakGain: 0.085, filterFrequency: 1900, filterQ: 0.9 }],
-    [
-      {
-        startOffset: 0,
-        duration: 0.085,
-        peakGain: 0.055,
-        startFrequency: 195,
-        endFrequency: 145,
-        type: 'sine'
-      }
-    ]
-  )
-}
-
-/** Three soft mallet strikes reserved for perfect-day moments. */
-export function playCelebrationChime(): void {
-  const strikes = [
-    { startOffset: 0, frequency: 523.25 },
-    { startOffset: 0.095, frequency: 659.25 },
-    { startOffset: 0.19, frequency: 783.99 }
-  ]
-  playTexture(
-    strikes.map(({ startOffset }) => ({
-      startOffset,
-      duration: 0.03,
-      peakGain: 0.028,
-      filterFrequency: 2600,
-      filterQ: 1.1
-    })),
-    strikes.flatMap(({ startOffset, frequency }) => [
-      {
-        startOffset,
-        duration: 0.3,
-        peakGain: 0.036,
-        startFrequency: frequency,
-        endFrequency: frequency * 0.995,
-        type: 'sine' as OscillatorType
-      },
-      {
-        startOffset,
-        duration: 0.07,
-        peakGain: 0.012,
-        startFrequency: frequency * 4,
-        endFrequency: frequency * 4,
-        type: 'sine' as OscillatorType
-      }
-    ])
-  )
+  if (!soundsEnabled()) return
+  const player = completionPlayer()
+  player.pause()
+  player.currentTime = 0
+  void player.play().catch((cause: Error) => {
+    throw new Error('Could not play the checkbox completion sound.', { cause })
+  })
 }
