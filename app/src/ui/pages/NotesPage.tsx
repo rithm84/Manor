@@ -1,4 +1,3 @@
-import { browserSurfaces } from '../../web/browserTools'
 import { useManorService } from '../services/ManorServices'
 import {
   Archive,
@@ -174,10 +173,6 @@ export function NotesPage(): ReactNode {
   )
   const rows = useMemo(() => treeRows(scopedPages), [scopedPages])
 
-  useEffect(() => browserSurfaces.attachNotes({
-    context: () => ({ selected_note_id: selectedPage?.id ?? null, scope, search: query, visible_note_ids: scopedPages.map(page => page.id) }),
-    filter: (nextScope, search) => { setScope(nextScope); setQuery(search) }
-  }), [selectedPage, scope, query, scopedPages])
 
 
   const runPendingSave = useCallback(async (): Promise<boolean> => {

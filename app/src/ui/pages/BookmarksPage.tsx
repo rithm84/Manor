@@ -1,4 +1,3 @@
-import { browserSurfaces } from '../../web/browserTools'
 import { useManorService } from '../services/ManorServices'
 import { RefreshCw, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -42,21 +41,6 @@ export function BookmarksPage(): ReactNode {
   const screens = visible.filter((entry) => entry.source === 'capture')
   const xEntries = visible.filter((entry) => entry.source === 'x_bookmark')
 
-  useEffect(() => browserSurfaces.attachModule({
-    module: 'bookmarks',
-    context: () => ({ ready: captures.state.kind === 'ready', selected_object_id: expandedId, navigation_blocked: removeTarget !== null, filters: { search: query }, presentation: 'inline_expansion' }),
-    open: id => {
-      const entry = entries.find(candidate => candidate.id === id)
-      if (!entry) throw new Error(`Bookmark ${id} is not available in the current account`)
-      if (entry.author === null) throw new Error(`Bookmark ${id} has no expandable detail in this interface`)
-      if (removeTarget !== null) throw new Error('Close the bookmark removal dialog before opening a bookmark')
-      setQuery(''); setExpandedId(id)
-    },
-    filter: request => {
-      if (request.module !== 'bookmarks') throw new TypeError('Bookmarks requires a search query')
-      setQuery(request.search)
-    }
-  }), [captures.state.kind, entries, expandedId, query, removeTarget])
 
   function closeRemove(): void {
     if (removeBusy) return

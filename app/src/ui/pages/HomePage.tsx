@@ -1,4 +1,3 @@
-import { browserSurfaces } from '../../web/browserTools'
 import { useCommitVersion } from '../services/useCommitVersion'
 import { useAccountTimezone } from '../../web/accountContext'
 import { dateInTimezone, timeInTimezone } from '../../shared/timezone'
@@ -129,19 +128,6 @@ export function HomePage(): ReactNode {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  useEffect(() => browserSurfaces.attachModule({
-    module: 'home',
-    context: () => ({ ready: !loading, selected_object_id: peekOpen ? peekId : null, navigation_blocked: peekOpen || composerBucket !== null || blockPeekOpen, filters: { view, schedule_day: scheduleDay }, presentation: 'dialog' }),
-    open: id => {
-      if (!tasks.some(task => task.id === id)) throw new Error(`Task ${id} is not available in the current account`)
-      if (composerBucket !== null || blockPeekOpen) throw new Error('Close the task composer or time-block dialog before opening a task')
-      setPeekId(id); setDueAttention(false); setPeekOpen(true)
-    },
-    filter: request => {
-      if (request.module !== 'home') throw new TypeError('Home requires Home view controls')
-      setView(request.view); setScheduleDay(request.schedule_day)
-    }
-  }), [loading, tasks, peekOpen, peekId, view, scheduleDay, composerBucket, blockPeekOpen])
 
   useEffect(() => {
     const clock = window.setInterval(() => setNow(new Date()), 60_000)

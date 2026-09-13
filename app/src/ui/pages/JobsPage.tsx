@@ -1,4 +1,3 @@
-import { browserSurfaces } from '../../web/browserTools'
 import { useCommitVersion } from '../services/useCommitVersion'
 import { useManorService } from '../services/ManorServices'
 import { Briefcase, Plus } from 'lucide-react'
@@ -56,19 +55,6 @@ export function JobsPage(): ReactNode {
   const timers = useRef<Set<number>>(new Set())
   const suppressClick = useRef(false)
 
-  useEffect(() => browserSurfaces.attachModule({
-    module: 'jobs',
-    context: () => ({ ready: !loading && state !== null, selected_object_id: detailOpen ? detailRoleId : null, navigation_blocked: detailOpen || addOpen || removeCandidateId !== null, filters: { view }, presentation: 'dialog' }),
-    open: id => {
-      if (!state?.roles.some(role => role.id === id)) throw new Error(`Application ${id} is not available in the current account`)
-      if (addOpen || removeCandidateId !== null) throw new Error('Close the application creation or removal dialog before opening another application')
-      setStageRequest(null); setDetailRoleId(id); setDetailOpen(true)
-    },
-    filter: request => {
-      if (request.module !== 'jobs') throw new TypeError('Jobs requires Jobs view controls')
-      setView(request.view)
-    }
-  }), [loading, state, detailOpen, detailRoleId, view, setView, addOpen, removeCandidateId])
 
   useEffect(() => {
     let cancelled = false
