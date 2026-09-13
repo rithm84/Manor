@@ -1,4 +1,3 @@
-import { browserSurfaces } from '../../web/browserTools'
 import { useCommitVersion } from '../services/useCommitVersion'
 import { CalendarCheck, ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -20,16 +19,6 @@ export function WeeklyReviewsPage(): ReactNode {
   const [snapshot, setSnapshot] = useState<ReviewsSnapshot | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<WeeklyReview | null>(null)
-  useEffect(() => browserSurfaces.attachModule({
-    module: 'weekly-reviews',
-    context: () => ({ ready: snapshot !== null, selected_object_id: selected?.id ?? null, navigation_blocked: false, filters: {}, presentation: 'dialog' }),
-    open: id => {
-      const review = snapshot?.reviews.find(candidate => candidate.id === id)
-      if (!review) throw new Error(`Weekly review ${id} is not available in the current account`)
-      setSelected(review)
-    },
-    filter: null
-  }), [snapshot, selected])
 
   useEffect(() => {
     let disposed = false

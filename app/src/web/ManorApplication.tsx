@@ -12,7 +12,6 @@ import { ManorGateway } from './ManorGateway'
 import { NoteDraftStore } from './notes/NoteDraftStore'
 import { createServices } from './services/createServices'
 import { OAuthConsent } from './OAuthConsent'
-import { WebMCP } from './WebMCP'
 
 interface ReadyAccount { account: ManorAccount; services: ManorServices; gateway: ManorGateway }
 const App = lazy(() => import('../ui/App').then(module => ({ default: module.App })))
@@ -21,7 +20,6 @@ function SignedInManor({ session, client, queries }: { session: Session; client:
   const [ready, setReady] = useState<ReadyAccount | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
-  const [toolError, setToolError] = useState<string | null>(null)
   const [connected, setConnected] = useState(navigator.onLine)
   useEffect(() => {
     const update = (event: Event): void => {
@@ -64,7 +62,7 @@ function SignedInManor({ session, client, queries }: { session: Session; client:
   if (error) return <main className="web-status"><h1>Manor could not open your account</h1><p role="alert">{error}</p><button className="ui-button" onClick={() => { setError(null); setAttempt(attempt + 1) }}>Try again</button></main>
   if (!ready) return <main className="web-status" role="status">Opening Manor…</main>
   if (location.pathname === '/oauth/consent') return <OAuthConsent client={client} />
-  return <AccountProvider account={ready.account}>{!connected && <p className="web-connection-status" role="status">Offline. Notes edits are protected on this device until they sync.</p>}<WebMCP gateway={ready.gateway} notes={ready.services.notes} onFailure={setToolError} />{toolError && <p className="web-tool-error" role="alert">Site tools could not connect: {toolError}</p>}<Suspense fallback={<main className="web-status" role="status">Opening Manor…</main>}><App services={ready.services} /></Suspense></AccountProvider>
+  return <AccountProvider account={ready.account}>{!connected && <p className="web-connection-status" role="status">Offline. Notes edits are protected on this device until they sync.</p>}<Suspense fallback={<main className="web-status" role="status">Opening Manor…</main>}><App services={ready.services} /></Suspense></AccountProvider>
 }
 
 export function ManorApplication({ client, queries }: { client: SupabaseClient; queries: QueryClient }): ReactNode {

@@ -1,4 +1,3 @@
-import { browserSurfaces } from '../../../web/browserTools'
 import { useManorService } from '../../services/ManorServices'
 import { BlockNoteEditor } from '@blocknote/core'
 import {
@@ -440,40 +439,6 @@ function RichNoteEditorComponent({ page, allPages, onChange, onMoveBlocks }: Ric
     }
   }, [])
 
-  useEffect(() => browserSurfaces.attachEditor({
-    noteId: page.id,
-    selection: () => {
-      const selected = editor.getSelection()
-      return { block_ids: selected?.blocks.map(block => block.id) ?? [editor.getTextCursorPosition().block.id],
-        selected_text: editor.getSelectedText().slice(0, 10000), content_json: JSON.stringify(editor.document),
-        focused: editor.domElement?.contains(document.activeElement) ?? false }
-    },
-    reveal: blockIds => {
-      const elements = blockIds.map(id => {
-        if (editor.getBlock(id) === undefined) throw new Error(`Block ${id} does not exist in note ${page.id}`)
-        const element = editor.domElement?.querySelector<HTMLElement>(`.bn-block[data-id="${CSS.escape(id)}"]`)
-        if (!element) throw new Error(`Block ${id} is not rendered in the current editor`)
-        return { id, element }
-      })
-      return { note_id: page.id, caret_preserved: true, scroll_preserved: true, blocks: elements.map(({ id, element }) => {
-        const bounds = element.getBoundingClientRect()
-        const previous = browserHighlightsRef.current.get(element)
-        if (previous) window.clearTimeout(previous.timer)
-        const outline = previous?.outline ?? element.style.outline
-        const offset = previous?.offset ?? element.style.outlineOffset
-        element.style.outline = '2px solid currentColor'
-        element.style.outlineOffset = '2px'
-        const timer = window.setTimeout(() => {
-          element.style.outline = outline
-          element.style.outlineOffset = offset
-          browserHighlightsRef.current.delete(element)
-        }, 2000)
-        browserHighlightsRef.current.set(element, { outline, offset, timer })
-        return { id, x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height,
-          visible: bounds.bottom > 0 && bounds.top < window.innerHeight && bounds.right > 0 && bounds.left < window.innerWidth }
-      }) }
-    }
-  }), [editor, page.id])
 
   useEffect(() => {
     if (canonicalDocument(page.contentJson) === canonicalDocument(visibleContentRef.current)) return

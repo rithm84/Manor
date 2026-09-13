@@ -1,8 +1,8 @@
 # Manor web app
 
-_Last updated: 2026-09-11_
+_Last updated: 2026-09-13_
 
-This package runs the Manor React application with real Supabase services, account-scoped query state, durable Notes drafts, and the shared WebMCP catalog. Production release acceptance is still pending; [ARCHITECTURE §1](../docs/ARCHITECTURE.md#1-status-and-scope) records the verified boundaries and remaining work.
+This package runs the Manor React application with real Supabase services, account-scoped query state, durable Notes drafts, and the shared tool catalog. Production release acceptance is still pending; [ARCHITECTURE §1](../docs/ARCHITECTURE.md#1-status-and-scope) records the verified boundaries and remaining work.
 
 Run from the repository root:
 

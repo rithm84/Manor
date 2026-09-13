@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-09-12_
+_Last updated: 2026-09-13_
 
 Operational guide for coding agents working on Manor.
 
@@ -9,7 +9,7 @@ Operational guide for coding agents working on Manor.
 Manor is a personal productivity web app replacing the legacy Notion system. The accepted
 product behavior, business rules, and scope are in [docs/PRD.md](docs/PRD.md).
 Technical design lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-Codex operates Manor through WebMCP and remote MCP. Backend jobs own ingestion, embeddings, and maintenance; hosted ChatGPT Work owns scheduled review generation.
+Codex operates Manor through remote MCP. Backend jobs own ingestion, embeddings, and maintenance; hosted ChatGPT Work owns scheduled review generation.
 The UI redesign uses Mixpanel aesthetics and Notion editing UX, with
 deliberately designed light and dark modes. See docs/DESIGN.md and the
 evidence in docs/REDESIGN-REPORT.md; retained Paper styles are superseded.
@@ -29,7 +29,7 @@ manor/
 ├── app/src/
 │   ├── ui/                  # React components, view services, styles, fixtures
 │   ├── shared/              # Domain types, validation, and calculations
-│   └── web/                 # Authentication, Supabase adapters, drafts, WebMCP
+│   └── web/                 # Authentication, Supabase adapters, drafts, services
 ├── supabase/                # Migrations, remote MCP, ingestion, and workers
 ├── tools/recovery/          # Encrypted backup and isolated restore operations
 ├── tools/diagrams/          # Official Excalidraw SVG export tooling
@@ -77,7 +77,7 @@ charter) and `docs/NOTION-DESIGN.md` (micro-interaction craft reference).
 
 ## Domain Language
 
-Use **module**, **Codex**, **WebMCP tools**, **daily synthesis**, and
+Use **module**, **Codex**, **MCP tools**, **daily synthesis**, and
 **weekly review** as defined in the PRD. Use **perfect day**, **freeze pool**,
 and **Earn-Back** for streak mechanics; **scratch blocks** for disposable
 Manor-only time blocks; **legacy Notion system** for the system being replaced.

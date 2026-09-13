@@ -1,12 +1,12 @@
 # Manor PRD
 
-_Last updated: 2026-09-12_
+_Last updated: 2026-09-13_
 
 This document owns product behavior, business rules, and scope. [ARCHITECTURE.md](ARCHITECTURE.md) owns the technical design, storage, execution, deployment, and recovery mechanisms.
 
 ## 1. Product Thesis
 
-Manor is a personal productivity web app: habits, mood and focus, tasks, LeetCode, job applications, notes, and a knowledge base. Fitness ingestion is planned. Codex supplies interactive reasoning and conversation, using Manor's WebMCP and remote MCP tools to read and act on the same data as the UI.
+Manor is a personal productivity web app: habits, mood and focus, tasks, LeetCode, job applications, notes, and a knowledge base. Fitness ingestion is planned. Codex supplies interactive reasoning and conversation, using Manor's MCP tools to read and act on the same data as the UI.
 
 It replaces the user’s legacy Notion system (private reference: [workflow workarounds](NOTION-REPORT.md#5-workflow-workarounds)). Logging and maintaining the system should take little effort. Manor has a product bar: account isolation, sign-in, onboarding, settings, empty states, and durable data, even with one primary user.
 
@@ -30,7 +30,7 @@ A **module** is a tracker or feature unit. Simple trackers are internally config
 
 ### Platform
 
-Manor is a web app with WebMCP for live browser interaction and remote MCP for authenticated operations without an open Manor page. Codex supplies interactive conversation and agent capabilities. Remove Electron support and embedded Alfred; recreating native summon UI, desktop hotkeys, permission onboarding, or notifications is not required. The technical migration and current implementation status live in [ARCHITECTURE.md](ARCHITECTURE.md).
+Manor is a web app; agents operate it through remote MCP, which needs no open Manor page. Codex supplies interactive conversation and agent capabilities. Remove Electron support and embedded Alfred; recreating native summon UI, desktop hotkeys, permission onboarding, or notifications is not required. The technical migration and current implementation status live in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Reliable data and offline work
 
@@ -62,9 +62,9 @@ Preserve ordinary module records and files through migration. A read-only cutove
 
 Explicitly requested reads, creates, edits, archiving, deletion, and restoration execute directly, subject to domain rules and account authorization. Manor adds no blanket confirm-back or approval screen. Codex operates when invoked by the user; it is not independently rewriting notes. Real ambiguity or conflicting edits can require clarification. Host-level permissions remain outside Manor's control.
 
-Tools must offer comprehensive reads, search, filters, summaries, aggregates, precise edits, useful bulk actions, lifecycle operations, and meaningful action history across permitted modules. The accepted capability catalog is in [ARCHITECTURE §5](ARCHITECTURE.md#accepted-tool-surface). Depth and speed are requirements: complete meaningful operations in bounded batches and minimize intermediate calls when intent and targets are clear. The agent should not need to navigate to each page before acting. It should understand the open object, selection, and unsaved state where relevant. No unrestricted database access.
+Tools must offer comprehensive reads, search, filters, summaries, aggregates, precise edits, useful bulk actions, lifecycle operations, and meaningful action history across permitted modules. The accepted capability catalog is in [ARCHITECTURE §5](ARCHITECTURE.md#accepted-tool-surface). Depth and speed are requirements: complete meaningful operations in bounded batches and minimize intermediate calls when intent and targets are clear. The agent should not need to navigate to each page before acting. No unrestricted database access.
 
-Authorized note edits apply directly, preserving unsaved user text and surfacing genuine conflicts. When the user requests suggestions or selects suggestion mode, proposed edits persist in Notes until individually or collectively accepted/rejected. This review mode is optional, not a mandatory gate for ordinary requested edits. Fast execution and accurate UI reflection are acceptance requirements. Tool contracts and state coordination belong in [ARCHITECTURE §5](ARCHITECTURE.md#5-queries-realtime-and-webmcp).
+Authorized note edits apply directly, preserving unsaved user text and surfacing genuine conflicts. When the user requests suggestions or selects suggestion mode, proposed edits persist in Notes until individually or collectively accepted/rejected. This review mode is optional, not a mandatory gate for ordinary requested edits. Fast execution and accurate UI reflection are acceptance requirements. Tool contracts and state coordination belong in [ARCHITECTURE §5](ARCHITECTURE.md#5-queries-realtime-and-mcp).
 
 ### Integration boundary
 
@@ -171,7 +171,7 @@ The application mock data is the single canonical showroom story. Signed-in surf
 
 ## 10. Delivery Priorities
 
-**P0: correct, complete web foundation.** Account gating and isolation; authoritative data and shared operations; preservation and migration of existing data; robust WebMCP and remote MCP coverage; cache consistency and conflict handling; offline note protection; file storage; seven-day Trash and purge; saved timezone; existing module mechanics; daily synthesis; durable tool-accessible action history. The retained UI must be connected to the web foundation before release.
+**P0: correct, complete web foundation.** Account gating and isolation; authoritative data and shared operations; preservation and migration of existing data; robust remote MCP coverage; cache consistency and conflict handling; offline note protection; file storage; seven-day Trash and purge; saved timezone; existing module mechanics; daily synthesis; durable tool-accessible action history. The retained UI must be connected to the web foundation before release.
 
 **P1: synthesis and refinement.** Scheduled weekly reviews with their dedicated surface, richer retrieval and analysis over retained history, and the Mobbin-informed UI redesign. Essential tool reads, writes, search, and useful bulk operations are P0; P1 must not become a reason to ship a narrow toolset. Final design sequencing can run alongside the foundation once data contracts are stable.
 
@@ -191,18 +191,19 @@ This is a concise record of decisions that govern the current target; superseded
 |---|---|
 | 2026-08-19 | Manor product and core tracker mechanics selected (§§1–3, 6). |
 | 2026-08-22 | Merged task workspace, attempt-based LeetCode history, rich Notes, and centered object details established (§§7–8). |
+| 2026-09-13 | WebMCP removed; remote MCP is the only agent transport, with no live-browser context, selection, or presentation tools (§§4–5). |
 | 2026-09-12 | Journal removed entirely: no encrypted writing surface, package, schema, or tooling (§§1, 11). |
 | 2026-09-11 | Google Calendar sync runs every minute, with a hard limit of twelve calendars across all connected Google accounts; over-limit connections are rejected and later over-limit calendars are skipped without interrupting sync (§5). |
 | 2026-08-23 | Standalone calendar workspace removed (§7.3). |
 | 2026-08-26 | Manual habit freezes and non-destructive retirement selected; Jobs Browse requires explicit pipeline addition (§§6, 7.6). |
 | 2026-08-27 | Monthly freeze pool starts full (§6). |
 | 2026-08-29 | Editable contexts, LeetCode mistakes log, and note finding/lifecycle refinements established (§7). |
-| 2026-09-09 | Full WebMCP web migration, Codex as interactive agent, and UI redesign chosen (§§4–5, 9); technical design is owned by ARCHITECTURE.md. |
+| 2026-09-09 | Full web migration, Codex as interactive agent, and UI redesign chosen (§§4–5, 9); technical design is owned by ARCHITECTURE.md. |
 | 2026-09-09 | Signup gate, direct requested operations, saved timezone, seven-day Trash, recurrence occurrences, daily synthesis, and private tool-accessible history resolved (§§4–7). |
 | 2026-09-09 | Final follow-up: Notes included in Trash; structural history survives content purge; dedicated weekly-review surface; voice and typed Codex debriefs (§§4–8). |
 | 2026-09-09 | Automatic cancellation of sign-out with unsynced drafts and daily database/file backups selected (§§4–5). |
 | 2026-09-09 | Mixpanel aesthetic, Notion Notes editing parity, retirement of paper/ink styling, and intentional light/dark modes selected; high-level layouts retained (§§7.7, 9). |
-| 2026-09-09 | Google-only gated signup, remote MCP alongside WebMCP, scheduled ChatGPT weekly reviews, persistent optional Notes suggestions, document tabs, seven-day Notes versions, and recurrence edit scope resolved (§§4–7). |
+| 2026-09-09 | Google-only gated signup, remote MCP, scheduled ChatGPT weekly reviews, persistent optional Notes suggestions, document tabs, seven-day Notes versions, and recurrence edit scope resolved (§§4–7). |
 | 2026-09-10 | The last unused context can be removed; task references remain protected (§7.3). |
 | 2026-09-10 | Mood/focus History allows ratings to be added or corrected for any past day; quick capture retains its today/yesterday window (§7.2). |
 

@@ -1,4 +1,3 @@
-import { browserSurfaces } from '../../web/browserTools'
 import { useCommitVersion } from '../services/useCommitVersion'
 import { useAccountTimezone } from '../../web/accountContext'
 import { dateInTimezone } from '../../shared/timezone'
@@ -89,22 +88,6 @@ export function LeetCodePage(): ReactNode {
     () => state === null ? null : buildLeetCodeView(state, topicDefinitions(state)),
     [state]
   )
-  useEffect(() => browserSurfaces.attachModule({
-    module: 'leetcode',
-    context: () => ({ ready: state !== null, selected_object_id: selectedProblemId, navigation_blocked: selectedProblemId !== null, filters: { expanded_topics: [...expanded] }, presentation: 'dialog' }),
-    open: id => {
-      if (!state?.problems.some(problem => problem.id === id)) throw new Error(`Problem ${id} is not available in the current account`)
-      setSelectedProblemId(id)
-    },
-    filter: request => {
-      if (request.module !== 'leetcode') throw new TypeError('LeetCode requires topic expansion controls')
-      for (const topic of request.expanded_topics) {
-        if (!view?.topics.some(candidate => candidate.name === topic && candidate.problems !== null)) throw new Error(`Topic ${topic} has no expandable problem list`)
-      }
-      if (new Set(request.expanded_topics).size !== request.expanded_topics.length) throw new TypeError('expanded_topics must contain unique names')
-      setExpanded(new Set(request.expanded_topics))
-    }
-  }), [state, selectedProblemId, expanded, view])
 
   const week = useMemo(
     () => state === null ? [] : recentAttemptCounts(state.attempts, today, 7),
