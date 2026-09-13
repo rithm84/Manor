@@ -1,12 +1,12 @@
 # Manor
 
-_Last updated: 2026-09-09_
+_Last updated: 2026-09-12_
 
 Manor brings daily planning, habits, learning, job applications, and personal knowledge into one workspace. It is being rebuilt as a web app that can be used directly or operated by Codex through WebMCP and remote MCP.
 
 Manor provides the productivity interface and durable records. Codex brings conversation, voice, and context from connected sources to help maintain them. The aim is to spend less time organizing the system and more time using what it knows.
 
-**Status: runnable web app with staging verification.** The interface, real backend adapters, transactional commands, durable Notes editing, and agent-tool catalog are implemented. The encrypted Journal builds separately. Production release acceptance is not complete; [architecture status](docs/ARCHITECTURE.md#1-status-and-scope) distinguishes verified flows from outstanding OAuth, deployment, and recovery work.
+**Status: runnable web app with staging verification.** The interface, real backend adapters, transactional commands, durable Notes editing, and agent-tool catalog are implemented. Production release acceptance is not complete; [architecture status](docs/ARCHITECTURE.md#1-status-and-scope) distinguishes verified flows from outstanding OAuth, deployment, and recovery work.
 
 ## The experience
 
@@ -18,7 +18,6 @@ Manor provides the productivity interface and durable records. Codex brings conv
 | **LeetCode** | Curriculum progress, solve and review attempts, saved solutions, and mistakes to revisit. |
 | **Jobs** | A browsable internship catalog, an application pipeline, stage history, and resume versions. |
 | **Notes and knowledge** | Rich documents, attachments, captured material, X bookmarks, and retrieval across saved content. |
-| **Journal** | A separate encrypted writing surface, kept outside agent access. |
 
 Scheduled weekly reviews will bring patterns and unfinished work back into view. The [design charter](docs/DESIGN.md) sets a Mixpanel-informed aesthetic, Notion-style Notes editing, and deliberately designed light and dark modes.
 
@@ -32,11 +31,11 @@ The intended workflow is to keep Manor open in Codex's browser and use either th
 
 The shared catalog exposes domain operations for finding records, making precise changes, and inspecting saved results. Native WebMCP host behavior and real remote OAuth authorization still require verification. When context comes from email or another connected source, Codex uses its own integration and then invokes the relevant Manor operation.
 
-Backend jobs own ingestion and embeddings. Scheduled ChatGPT Work tasks generate weekly reviews and save them through remote MCP without an open Manor tab. The Journal has a separate privacy boundary and does not participate in synthesis, search, or agent tools.
+Backend jobs own ingestion and embeddings. Scheduled ChatGPT Work tasks generate weekly reviews and save them through remote MCP without an open Manor tab.
 
 ## What is in this repository
 
-The repository includes the React web app, a BlockNote editor with protected drafts, shared domain types and tool contracts, Supabase migrations and workers, anonymous fixtures, and tests. The separate Journal package implements browser encryption. Recovery tools use restic and rclone for encrypted snapshots and isolated file restoration.
+The repository includes the React web app, a BlockNote editor with protected drafts, shared domain types and tool contracts, Supabase migrations and workers, anonymous fixtures, and tests. Recovery tools use restic and rclone for encrypted snapshots and isolated file restoration.
 
 The stack is React, TypeScript, and Vite on Vercel, with Supabase for backend services and TanStack Query for browser server state. The [architecture document](docs/ARCHITECTURE.md) defines the boundaries and contains editable Excalidraw diagrams.
 
@@ -44,7 +43,7 @@ Before release, complete production data import, real Google and remote OAuth au
 
 ## Working locally
 
-Start with the [web app guide](app/README.md) for connection settings, development, and verification. `npm --prefix app run dev` starts the app on port 5173; the independent Journal uses port 5180. The production web build writes `app/dist/`. The [recovery guide](tools/recovery/README.md) covers backup credentials, daily scheduling, and isolated restore requirements.
+Start with the [web app guide](app/README.md) for connection settings, development, and verification. `npm --prefix app run dev` starts the app on port 5173. The production web build writes `app/dist/`. The [recovery guide](tools/recovery/README.md) covers backup credentials, daily scheduling, and isolated restore requirements.
 
 Documentation diagrams live in `docs/diagrams/` as editable `.excalidraw` scenes alongside their exported SVGs. To regenerate the SVGs using the local export tool and an installed Google Chrome browser:
 

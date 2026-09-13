@@ -1,8 +1,8 @@
 # Manor recovery operations
 
-_Last updated: 2026-09-09_
+_Last updated: 2026-09-12_
 
-The recovery policy is [ARCHITECTURE §10](../../docs/ARCHITECTURE.md#10-backups-and-disaster-recovery). These scripts orchestrate **restic 0.19.1** and **rclone 1.75.1**; they do not implement snapshot storage, encryption, retention, or transfer protocols.
+The recovery policy is [ARCHITECTURE §9](../../docs/ARCHITECTURE.md#9-backups-and-disaster-recovery). These scripts orchestrate **restic 0.19.1** and **rclone 1.75.1**; they do not implement snapshot storage, encryption, retention, or transfer protocols.
 
 ## Provisioning
 
@@ -27,6 +27,6 @@ Copy `daily-backup.workflow.yml` into `.github/workflows/` only after configurin
 1. Restore the chosen managed database backup into a **separate Supabase recovery project**, with all ingestion, outbound integrations, scheduled review generation, and user access disabled. Apply current recovery migrations there before reconciliation. Prepare an empty private `manor-files` bucket in that project.
 2. Set the restore-only environment values and an explicit full `MANOR_RECOVERY_SNAPSHOT` ID. Keep the source configuration for identity checks; the source database does not need to be online.
 3. Run `npm --prefix tools/recovery run restore`. It checks the repository, restores the explicit daily snapshot and latest independent ledger, rejects the production database cluster identity, applies content-free purge tombstones, verifies every remaining database file reference, copies only matching files, and downloads them again for comparison. It never enables app access or workers.
-4. Before enabling access, verify account ownership, parent-child relationships, representative module reads, row counts against the chosen database backup, and synthetic Journal ciphertext availability. If any reconciliation or file check fails, keep recovery isolated and investigate the specific missing recovery point.
+4. Before enabling access, verify account ownership, parent-child relationships, representative module reads, and row counts against the chosen database backup. If any reconciliation or file check fails, keep recovery isolated and investigate the specific missing recovery point.
 
 `npm --prefix tools/recovery test` exercises real local restic/rclone transfer, encrypted restore, wrong-key rejection, byte-tamper detection, and actual expired-snapshot pruning using synthetic files only. This is not a substitute for the remote database-plus-files rehearsal.

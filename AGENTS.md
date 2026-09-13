@@ -10,12 +10,11 @@ Manor is a personal productivity web app replacing the legacy Notion system. The
 product behavior, business rules, and scope are in [docs/PRD.md](docs/PRD.md).
 Technical design lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Codex operates Manor through WebMCP and remote MCP. Backend jobs own ingestion, embeddings, and maintenance; hosted ChatGPT Work owns scheduled review generation.
-The Journal has a separate encrypted, non-agent-accessible browser surface.
 The UI redesign uses Mixpanel aesthetics and Notion editing UX, with
 deliberately designed light and dark modes. See docs/DESIGN.md and the
 evidence in docs/REDESIGN-REPORT.md; retained Paper styles are superseded.
 
-**Implementation status:** `app/` is a runnable Vite web app with real Supabase adapters, transactional commands, shared agent tools, and durable Notes editing. `journal/` builds separately. The production backend and `mymanor.vercel.app` are deployed with the preserved user data; release acceptance items remain in ARCHITECTURE §1. See ARCHITECTURE §1 for precise verification limits and §11 for acceptance checks. Preserve existing user data and unrelated uncommitted work.
+**Implementation status:** `app/` is a runnable Vite web app with real Supabase adapters, transactional commands, shared agent tools, and durable Notes editing. The production backend and `mymanor.vercel.app` are deployed with the preserved user data; release acceptance items remain in ARCHITECTURE §1. See ARCHITECTURE §1 for precise verification limits and §10 for acceptance checks. Preserve existing user data and unrelated uncommitted work.
 
 Supabase configuration lives in repo-root `.env.local` (never commit or print
 it). Migrations live in `supabase/migrations/`; the existing deployment uses
@@ -31,7 +30,6 @@ manor/
 │   ├── ui/                  # React components, view services, styles, fixtures
 │   ├── shared/              # Domain types, validation, and calculations
 │   └── web/                 # Authentication, Supabase adapters, drafts, WebMCP
-├── journal/                 # Separate encrypted browser app
 ├── supabase/                # Migrations, remote MCP, ingestion, and workers
 ├── tools/recovery/          # Encrypted backup and isolated restore operations
 ├── tools/diagrams/          # Official Excalidraw SVG export tooling
@@ -46,8 +44,6 @@ Run from the repository root:
 - `npm --prefix app run typecheck` — required after code changes.
 - `npm --prefix app test` — domain and UI checks.
 - `npm --prefix app run dev` — local web app on port 5173.
-- `npm --prefix journal run dev` — isolated Journal on port 5180.
-- `npm --prefix journal run typecheck` and `npm --prefix journal test` — Journal checks.
 - `npm --prefix app run build` — build the Vite web application.
 - `npm --prefix tools/diagrams run render` — export documentation SVGs.
 
@@ -72,7 +68,7 @@ charter) and `docs/NOTION-DESIGN.md` (micro-interaction craft reference).
   If they conflict, flag the conflict instead of silently picking a side.
 - Settled decisions are not re-litigated unless user reopens them. Consult
   PRD §§4–8 for authority, privacy, retention, dates, and module rules.
-  PRD §13 lists open product choices; ARCHITECTURE §12 lists technical details.
+  PRD §13 lists open product choices; ARCHITECTURE §11 lists technical details.
 - When user changes a decision, update its owning document in the same
   change unless the user explicitly asks to defer documentation. Record
   significant product decisions in the PRD log; keep technical design current

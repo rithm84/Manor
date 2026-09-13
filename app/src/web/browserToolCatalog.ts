@@ -26,7 +26,7 @@ const domains: readonly DomainDefinition[] = [
     'query_habits', 'query_habit_history', 'clear_habit_entries', 'get_streak_status', 'create_habit', 'update_habit', 'set_habit_status',
     'log_habits', 'apply_habit_freeze', 'clear_habit_freeze'
   ] },
-  { name: 'mood', description: 'Daily Mood and Focus records and evolving daily synthesis from debriefs. Never includes Journal.', operations: [
+  { name: 'mood', description: 'Daily Mood and Focus records and evolving daily synthesis from debriefs.', operations: [
     'query_daily_records', 'commit_debrief'
   ] },
   { name: 'jobs', description: 'Job catalog, applications, application history, stages, and recoverable lifecycle.', operations: [

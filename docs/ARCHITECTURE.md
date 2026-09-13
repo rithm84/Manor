@@ -8,9 +8,9 @@ This document owns the technical design of the web migration. [PRD.md](PRD.md) o
 
 **Production backend and website are deployed; release acceptance has remaining items.** The production Supabase project carries all 47 migrations applied over the preserved Electron-era data (2026-09-12), the ten web functions, the four `manor-*` schedules, Google-only Auth with both hooks and the OAuth server, and the migrated resume and capture files; the legacy functions and schedules are removed. `mymanor.vercel.app` serves the production build against it. `app/` now has a Vite web entry point, Supabase view adapters, transactional commands, account-scoped query refresh, and the redesigned light/dark interface. The Notes editor includes native columns/tabs, durable browser drafts, attachment queues, conflicts, versions, and suggestions. A real private-file upload, retry, and byte-for-byte download flow has passed in staging.
 
-The shared domain catalog has WebMCP registration and unsaved Notes context support. Native WebMCP discovery of all 29 grouped/browser tools, signed-in workspace and curriculum reads, opening an existing problem dialog, and changing the actual Home view have passed. Complete browser mutation and draft-conflict workflows remain acceptance work. The staging remote MCP endpoint has passed synthetic OAuth dynamic registration, PKCE authorization-code exchange, resource-audience validation, read/write tool access, idempotent Notes import, find/export/duplication, relationships, change-feed catch-up, atomic Trash batches, write-scope downgrade, token refresh, and immediate revocation. Google-only signup gating and the OAuth token hooks are enabled and their persisted configuration is verified, and interactive Google sign-in completes on the hosted staging site. Google Calendar and X accounts are connected in staging: the calendar job resyncs at each minute boundary and the X job completes without errors. Integration and jobs workers use dedicated worker authentication. Attachment tools enforce account ownership and live OAuth grants; a synthetic signed upload, finalization, and exact-byte download passed. Jobs ingestion populated the staging catalog. Embedding activation and actual synthetic OpenAI indexing/search checks passed, including stale-result rejection, unchanged-text reuse, Trash exclusion, and Journal exclusion (§8). Integration, jobs, embeddings, and maintenance schedules are active in staging. Staging browser access is restricted to the canonical staging website; localhost origins and sign-in return URLs are disabled.
+The shared domain catalog has WebMCP registration and unsaved Notes context support. Native WebMCP discovery of all 29 grouped/browser tools, signed-in workspace and curriculum reads, opening an existing problem dialog, and changing the actual Home view have passed. Complete browser mutation and draft-conflict workflows remain acceptance work. The staging remote MCP endpoint has passed synthetic OAuth dynamic registration, PKCE authorization-code exchange, resource-audience validation, read/write tool access, idempotent Notes import, find/export/duplication, relationships, change-feed catch-up, atomic Trash batches, write-scope downgrade, token refresh, and immediate revocation. Google-only signup gating and the OAuth token hooks are enabled and their persisted configuration is verified, and interactive Google sign-in completes on the hosted staging site. Google Calendar and X accounts are connected in staging: the calendar job resyncs at each minute boundary and the X job completes without errors. Integration and jobs workers use dedicated worker authentication. Attachment tools enforce account ownership and live OAuth grants; a synthetic signed upload, finalization, and exact-byte download passed. Jobs ingestion populated the staging catalog. Embedding activation and actual synthetic OpenAI indexing/search checks passed, including stale-result rejection, unchanged-text reuse, and Trash exclusion (§8). Integration, jobs, embeddings, and maintenance schedules are active in staging. Staging browser access is restricted to the canonical staging website; localhost origins and sign-in return URLs are disabled.
 
-`journal/` is an independently buildable encrypted browser app. Synthetic cryptographic and SQL isolation checks pass; it is not deployed, and host/browser exclusions still require verification. Database daily backup metadata is verified. File recovery tooling has local encrypted snapshot/restore and staging purge-checkpoint verification; independent remote storage credentials and a complete remote restore rehearsal remain outstanding (§10).
+Database daily backup metadata is verified. File recovery tooling has local encrypted snapshot/restore and staging purge-checkpoint verification; independent remote storage credentials and a complete remote restore rehearsal remain outstanding (§9).
 
 Native agent-host verification against the production endpoint, reconnecting the X account whose legacy token production rejects, and remote database-plus-files recovery are release acceptance work. Migration bookkeeping is reconciled in both projects: 47 unique versions are recorded and all 34 web migration sources match their stored hashes; the same 34 applied cleanly in production over live data. A replay from an empty database remains unverified. The exact inventory is in [current-status.json](../tools/recovery/current-status.json). Existing user data and unrelated uncommitted work remain protected. The presence of an implementation or staging deployment does not establish that these checks have passed.
 
@@ -24,11 +24,9 @@ The main app is hosted for testing at [mymanor-staging.vercel.app](https://myman
 
 [Edit the Excalidraw scene](diagrams/runtime.excalidraw).
 
-The diagram's shared database does not grant ordinary Manor queries or workers access to Journal records. Journal access uses its own restricted path (§9).
-
 ### Web hosting
 
-Use Vercel Pro to serve the Vite application. The production address is `mymanor.vercel.app`. The separate `mymanor-staging` project serves the test website. Vercel labels that project’s deployment target production, but its configuration and data are staging only. Google OAuth configuration alone does not reserve the address. Use a separately deployed Journal app on a different origin, with its own build and browser storage. Neither application needs server rendering for the selected scope. Keep browser navigation/deep-link rewrites compatible with the client router.
+Use Vercel Pro to serve the Vite application. The production address is `mymanor.vercel.app`. The separate `mymanor-staging` project serves the test website. Vercel labels that project’s deployment target production, but its configuration and data are staging only. Google OAuth configuration alone does not reserve the address. Neither application needs server rendering for the selected scope. Keep browser navigation/deep-link rewrites compatible with the client router.
 
 Supabase hosts authoritative data, authentication, private files, realtime changes, and backend jobs. Avoid introducing a second general-purpose API server or proxying ordinary database reads through Vercel. External credentials and privileged operations belong in server-side functions.
 
@@ -42,7 +40,7 @@ Build production with production configuration. Do not promote a static staging 
 
 ### Code organization
 
-Keep one repository. Separate application UI, pure domain logic/contracts, Supabase adapters, WebMCP and remote MCP registration, Notes persistence, and the isolated Journal entry point. Backend functions and migrations remain under `supabase/`. Share types and validation where runtimes permit; browser modules must not import Node filesystem or Electron code. Keep exact folder moves in implementation changes rather than maintaining a second directory inventory here.
+Keep one repository. Separate application UI, pure domain logic/contracts, Supabase adapters, WebMCP and remote MCP registration, and Notes persistence. Backend functions and migrations remain under `supabase/`. Share types and validation where runtimes permit; browser modules must not import Node filesystem or Electron code. Keep exact folder moves in implementation changes rather than maintaining a second directory inventory here.
 
 ## 3. Authentication and Authorization
 
@@ -78,7 +76,6 @@ Keep domain records relational, with JSON reserved for structured document conte
 | Knowledge | Source entries, supplied capture content, file references, extracted search text, versioned embedding chunks |
 | Reviews | Account/review-period record, input watermark, generation state, generated content, model metadata |
 | Infrastructure | Command receipts, meaningful action events, jobs, file lifecycle records, purge tombstones |
-| Journal | Restricted encrypted envelopes and key metadata, outside ordinary module access |
 
 This is a logical inventory, not an additional physical schema. SQL migrations will define actual tables, keys, indexes, and allowed transitions. Preserve module rules by reference to PRD §§6–7.
 
@@ -132,7 +129,7 @@ The [shared catalog](../supabase/functions/_shared/toolCatalog.ts) contains 112 
 
 Workspace/calendar/habit retrieval, named metrics, command status, a content-free change cursor, current integration-job status/retry, record links, safe preferences, saved task views, precise Notes duplication/media operations, and atomic cross-module lifecycle batches are implemented. Some accepted names share operations: `update_tasks` completes/reschedules tasks, `set_habit_status` manages habit lifecycle, and `update_applications` changes stages/resumes. `query_weekly_reviews` accepts an ID for a single review.
 
-Remaining capability limits are explicit: agent import/export supports lossless `block_json`, not Markdown; automatic bookmark-preview fetching needs a controlled egress/extraction boundary before arbitrary URLs can be fetched safely. Job status covers current Google/X synchronization jobs, not a general historical run archive. Browser filters expose existing controls rather than invented filters. Bookmarks open only their existing expandable details. No Journal access is registered. These limits also appear in tool descriptions or workspace restrictions.
+Remaining capability limits are explicit: agent import/export supports lossless `block_json`, not Markdown; automatic bookmark-preview fetching needs a controlled egress/extraction boundary before arbitrary URLs can be fetched safely. Job status covers current Google/X synchronization jobs, not a general historical run archive. Browser filters expose existing controls rather than invented filters. Bookmarks open only their existing expandable details. These limits also appear in tool descriptions or workspace restrictions.
 
 Browser Notes selections report stable block IDs, committed revision, protected draft base revision, and a document fingerprint. An unsaved selection is distinguished from a committed revision. Presentation handlers preserve editing dialogs and protected drafts; Notes lifecycle guards inspect descendants and nested batch targets. Browser appearance changes notify mounted Settings controls.
 
@@ -185,15 +182,15 @@ Example compositions:
 - **Edit this paragraph and add a screenshot:** read the revision-bound selection, finalize the supplied asset through the supported upload path, then apply an anchored content edit and media insertion. Return block IDs so `reveal_blocks` can show the result on request.
 - **Explain a pattern:** query dated metrics plus meaningful history and source records; Codex performs the interpretation. No second backend model call is required for that conversation.
 
-The current [WebMCP draft](https://webmachinelearning.github.io/webmcp/) defines browser tools with structured schemas and execution callbacks. It does not supply Manor's persistence, transactions, retry receipts, or background scheduler. Exact registration and result transport must be checked against the actual host at implementation time. These tools never expose Journal data, unrestricted infrastructure controls, or Codex conversation/notification management.
+The current [WebMCP draft](https://webmachinelearning.github.io/webmcp/) defines browser tools with structured schemas and execution callbacks. It does not supply Manor's persistence, transactions, retry receipts, or background scheduler. Exact registration and result transport must be checked against the actual host at implementation time. These tools never expose unrestricted infrastructure controls or Codex conversation/notification management.
 
 ### Search and embeddings
 
-Use Postgres text search for exact/content retrieval and pgvector for semantic retrieval where needed. Search results include source IDs, revision identifiers, and useful snippets; fetch full records on demand. Index only authorized, live content. Journal data has no search or embedding path.
+Use Postgres text search for exact/content retrieval and pgvector for semantic retrieval where needed. Search results include source IDs, revision identifiers, and useful snippets; fetch full records on demand. Index only authorized, live content.
 
 Embedding jobs carry a source ID, content revision/hash, and model/index version. Discard stale results if the source changed or entered Trash. Repeated ingestion of unchanged content must not repeat embedding work. Store deterministic extraction separately from model output. Search indexes are derived data and must be rebuildable from retained source records.
 
-Staging automatically indexes Notes and Knowledge with separately billed OpenAI `text-embedding-3-small` embeddings at 1,536 dimensions. The index version is `text-embedding-3-small:1536:v1`. The worker uses `cl100k_base` tokenization, lossless Unicode boundaries, at most eight 1,500-token chunks per run, and a durable source offset. Metadata-only changes advance indexed revisions without another embedding request. Trash removes derived chunks; restoration queues fresh indexing. Provider-reported token usage is recorded per request in a private table. The scoped-secret Cron worker and authenticated semantic-search endpoint are active in staging; production activation is separate. Synthetic staging checks cover semantic retrieval, stale commits, unchanged content, Trash, restoration, and Journal rejection.
+Staging automatically indexes Notes and Knowledge with separately billed OpenAI `text-embedding-3-small` embeddings at 1,536 dimensions. The index version is `text-embedding-3-small:1536:v1`. The worker uses `cl100k_base` tokenization, lossless Unicode boundaries, at most eight 1,500-token chunks per run, and a durable source offset. Metadata-only changes advance indexed revisions without another embedding request. Trash removes derived chunks; restoration queues fresh indexing. Provider-reported token usage is recorded per request in a private table. The scoped-secret Cron worker and authenticated semantic-search endpoint are active in staging; production activation is separate. Synthetic staging checks cover semantic retrieval, stale commits, unchanged content, Trash, and restoration.
 
 ## 6. Notes Drafts and Editing
 
@@ -241,7 +238,7 @@ Purge source rows and content-bearing derivatives: document versions, file objec
 
 Remove or redact attributable deleted-source excerpts from retained generated reviews/syntheses; preserve unrelated user content and structural conclusions. Because this can be ambiguous for old free-form output, source attribution and targeted purge verification must be part of the generated-content design. Do not claim successful erasure while a recoverable copy remains in ordinary application data.
 
-Deletion from database and object storage spans systems. Persist purge progress and retry incomplete steps with explicit failure status. Reconnecting clients reconcile tombstones and evict stale caches. Retained operational backups have their own expiry (§10); restoration must not resurrect previously purged content.
+Deletion from database and object storage spans systems. Persist purge progress and retry incomplete steps with explicit failure status. Reconnecting clients reconcile tombstones and evict stale caches. Retained operational backups have their own expiry (§9); restoration must not resurrect previously purged content.
 
 ## 8. Background Work and Integrations
 
@@ -269,21 +266,7 @@ Validate structured, source-attributed content before saving. Record available e
 
 Keep the OpenAI key for separately billed embeddings. Select the embedding model and limits during implementation, track usage, and bound per-job work without inventing a user spending ceiling. Weekly-review reasoning consumes the selected ChatGPT host's allowance rather than Manor's OpenAI API key. Embedding/index migrations must record the model version rather than silently mixing incompatible vectors.
 
-## 9. Journal Encryption Boundary
-
-Implement the product privacy contract in PRD §7.9 with an independently deployed browser entry point. It registers no agent tools, embeds no ordinary Manor app, and includes no capture, analytics replay, search, embedding, or model integration. Keep its client code, browser storage, and data adapter separate; ordinary authenticated Manor sessions must not acquire the Journal's decrypted state or keys.
-
-Use authenticated encryption in the browser with a random data-encryption key. Derive a wrapping key from the separate Journal passphrase using a reviewed password-based KDF; store only the wrapped data key, salt, versioned KDF parameters, and authenticated ciphertext on the server. Bind ciphertext to its account/entry/version with authenticated metadata and use correct fresh nonces. Use established cryptographic primitives/libraries, not custom cryptography. [Web Crypto key wrapping](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/wrapKey)
-
-Passphrase changes unwrap and rewrap the data key while the current secret is available. There is **no recovery key, server escrow, or Google-account-recovery decryption route**. Backups retain ciphertext and wrapped-key metadata, never the unwrapped key or passphrase. The implementation uses native WebCrypto AES-256-GCM with fresh 96-bit nonces and 128-bit tags, and PBKDF2-HMAC-SHA256 with 600,000 iterations and a random 32-byte salt for key wrapping. Ciphertext authenticates its account, date, and revision. Browser performance and the separate-host privacy checks remain release verification work.
-
-Keep unlocked key material in memory for the active Journal session; locking releases references and removes decrypted content from the UI. Do not claim guaranteed memory zeroization from JavaScript. Do not persist an unlocked key to enable silent cross-session unlock. An account session identifies the owner but does not replace the Journal passphrase.
-
-The Journal's restricted API may share Supabase infrastructure while keeping its tables and operations outside ordinary exposed module access and worker grants. A shared administrative credential can still access ciphertext; end-to-end encryption protects content, not all metadata. Browser origin isolation alone cannot exclude computer-use or screen capture. The separate browser, host exclusions, and no-screen-sharing condition from the PRD must be verified before real use. Encryption does not protect an unlocked page from a compromised browser or maliciously served client code.
-
-The user reports no current Journal entries worth retaining and has authorized discarding legacy Journal data during migration. Do not read it into agent context or migrate it through ordinary data import. This exception does not authorize deleting other module data.
-
-## 10. Backups and Disaster Recovery
+## 9. Backups and Disaster Recovery
 
 Use **daily database backups and daily file backups with seven-day retention**. This is an approximately one-day recovery-point target, contingent on successful runs; monitor actual backup age and failed jobs. It is not a promise of zero data loss or instantaneous recovery. No point-in-time recovery add-on is required for the selected baseline.
 
@@ -293,35 +276,34 @@ Supabase Pro supplies daily database backups with the selected retention. Databa
 
 [Edit the Excalidraw scene](diagrams/recovery.excalidraw).
 
-Each file manifest includes immutable object versions. Record object IDs, paths, checksums, ownership metadata, and the database/export watermark needed to reconcile references. Retain the file versions needed by every retained recovery point; do not simply overwrite a mirror or immediately propagate source deletions into all backup copies. Encrypt backups and restrict restore credentials separately from app credentials. Journal material remains ciphertext throughout.
+Each file manifest includes immutable object versions. Record object IDs, paths, checksums, ownership metadata, and the database/export watermark needed to reconcile references. Retain the file versions needed by every retained recovery point; do not simply overwrite a mirror or immediately propagate source deletions into all backup copies. Encrypt backups and restrict restore credentials separately from app credentials.
 
 The [recovery tooling](../tools/recovery/README.md) uses pinned restic for encrypted snapshots and retention, rclone for file transfer, and a daily GitHub Actions workflow template. An independent managed backup store and its credentials must be provisioned before activating the schedule. Coordinate database and file recovery points: a database row is not successfully backed up if its referenced object cannot be restored. Expire snapshots and unreferenced backup objects according to retention, and verify the actual deletion behavior.
 
-Rehearse a restore into an isolated recovery environment before release. Keep ingestion, outbound messages, and generation jobs disabled there. Verify record counts, ownership, relationships, checksums, representative reads, and ciphertext availability. Apply lifecycle tombstones newer than the restored snapshot before serving recovered data so purged objects do not return. Keep the required content-free deletion ledger independently recoverable from the snapshot being restored. The implemented prepare/checkpoint/acknowledge protocol prevents physical purge until a verified independent ledger snapshot exists. Restoration applies the latest ledger before file reconciliation; recurring occurrence identities prevent rematerialization, and Journal deletion revisions preserve later rewritten days.
+Rehearse a restore into an isolated recovery environment before release. Keep ingestion, outbound messages, and generation jobs disabled there. Verify record counts, ownership, relationships, checksums, and representative reads. Apply lifecycle tombstones newer than the restored snapshot before serving recovered data so purged objects do not return. Keep the required content-free deletion ledger independently recoverable from the snapshot being restored. The implemented prepare/checkpoint/acknowledge protocol prevents physical purge until a verified independent ledger snapshot exists. Restoration applies the latest ledger before file reconciliation; recurring occurrence identities prevent rematerialization.
 
 Operational backups can contain subsequently deleted data until their retention expires. They are restricted recovery material, not a second user-accessible archive or a tool-accessible source. If a restore fails or a daily backup is missing, report the gap explicitly rather than silently presenting an older recovery point as current.
 
-## 11. Migration and Verification
+## 10. Migration and Verification
 
 The user is not using Manor before the web release, so a read-only cutover window is acceptable. There is no requirement for simultaneous desktop/web writing.
 
-1. Inventory local and cloud ordinary-module data, ownership, file locations, preferences, and legacy history. Snapshot sources without printing private contents. Apply the Journal exception in §9.
+1. Inventory local and cloud ordinary-module data, ownership, file locations, preferences, and legacy history. Snapshot sources without printing private contents.
 2. Reconcile duplicates and divergent versions in staging. Preserve both sides of an unresolved conflict until it can be resolved; never let last-write-wins silently discard user work. Preserve existing source/date provenance, mapping the historical `alfred` origin to `codex` only through an explicit, reviewed import transformation. Existing migration files describe deployed history and must not be silently edited to match the target schema.
 3. Implement the new schema, shared commands, drafts, files, jobs, and WebMCP and remote MCP adapters. Verify the target behavior before importing into production.
 4. Verify that previously deployed writers and scheduled functions being replaced are disabled; removing their source does not undeploy them. Import/reconcile ordinary records and local files, then validate identities, relationships, hashes, and representative workflows.
 5. Enable web writes only after checks pass. Keep rollback snapshots protected through the agreed recovery period. Remove retired deployment configuration and secrets after data reconciliation, while preserving unrelated user work.
 
-Verification must include real integrated flows for account isolation, direct-signup bypass, Google identity verification, unauthorized direct writes, retry after an uncertain commit, concurrent edits, route-independent tools, immediate UI refresh, Notes offline reload and sign-out cancellation, file finalization, parent/child Trash restoration, purge across derivatives, scheduled execution without the browser, and a database-plus-files restore. Journal verification uses synthetic entries and never exposes real plaintext to agent tooling.
+Verification must include real integrated flows for account isolation, direct-signup bypass, Google identity verification, unauthorized direct writes, retry after an uncertain commit, concurrent edits, route-independent tools, immediate UI refresh, Notes offline reload and sign-out cancellation, file finalization, parent/child Trash restoration, purge across derivatives, scheduled execution without the browser, and a database-plus-files restore.
 
 Use the repository's required typecheck/build checks after code changes, plus focused integration/end-to-end coverage appropriate to each migration step. No broad mock-based test suite is implied by this document. Keep operational logs structured with command/job IDs and timings; redact secrets and content. Operational diagnostics are distinct from meaningful action history.
 
-## 12. Implementation Details Still to Finalize
+## 11. Implementation Details Still to Finalize
 
 The architecture choices above are settled. The following require implementation work or deployment configuration, not another broad product-design round:
 
 - Claiming the selected Vercel name, environment/project identifiers, Google callbacks, and remote MCP OAuth registration.
 - End-to-end OAuth and native WebMCP host verification against the implemented schema and shared catalog; measured latency budgets.
-- Journal deployment and validation of host/browser exclusions.
 - Independent file backup destination credentials, scheduler activation, and demonstrated remote database-plus-files restore.
 - Hosted schedule and write-permission verification before reviews are enabled.
 

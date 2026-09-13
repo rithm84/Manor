@@ -6,7 +6,7 @@ This document owns product behavior, business rules, and scope. [ARCHITECTURE.md
 
 ## 1. Product Thesis
 
-Manor is a personal productivity web app: habits, mood and focus, tasks, LeetCode, job applications, notes, a knowledge base, and a private encrypted Journal. Fitness ingestion is planned. Codex supplies interactive reasoning and conversation, using Manor's WebMCP and remote MCP tools to read and act on the same data as the UI.
+Manor is a personal productivity web app: habits, mood and focus, tasks, LeetCode, job applications, notes, and a knowledge base. Fitness ingestion is planned. Codex supplies interactive reasoning and conversation, using Manor's WebMCP and remote MCP tools to read and act on the same data as the UI.
 
 It replaces the user’s legacy Notion system (private reference: [workflow workarounds](NOTION-REPORT.md#5-workflow-workarounds)). Logging and maintaining the system should take little effort. Manor has a product bar: account isolation, sign-in, onboarding, settings, empty states, and durable data, even with one primary user.
 
@@ -46,15 +46,15 @@ Each account saves a timezone, initially taken from the system. Travel does not 
 
 ### Recovery and retention
 
-Tasks, job applications, and Notes share recoverable Trash for seven days, then automatic purge. Deleting a note includes its subpages; restoration preserves their relationships. Archiving is distinct from Trash. Habit retirement remains archival under §6. Journal has its separate lifecycle (§7.9).
+Tasks, job applications, and Notes share recoverable Trash for seven days, then automatic purge. Deleting a note includes its subpages; restoration preserves their relationships. Archiving is distinct from Trash. Habit retirement remains archival under §6.
 
 Attached files follow the parent lifecycle, but purging one record must not delete a file still used elsewhere. After purge, ordinary application data and tools must not recover the deleted content through history, old versions, search, or derived outputs. Structural behavioral history may remain (§5). Stale clients must not resurrect deleted records.
 
-Disaster recovery uses daily database and file backups with seven-day retention; up to a day of recent changes may be lost after a failure. Restricted backups can retain subsequently deleted content until they expire. They are not an additional user-visible archive. See ARCHITECTURE for [purge enforcement](ARCHITECTURE.md#7-files-history-and-purge) and [disaster recovery](ARCHITECTURE.md#10-backups-and-disaster-recovery).
+Disaster recovery uses daily database and file backups with seven-day retention; up to a day of recent changes may be lost after a failure. Restricted backups can retain subsequently deleted content until they expire. They are not an additional user-visible archive. See ARCHITECTURE for [purge enforcement](ARCHITECTURE.md#7-files-history-and-purge) and [disaster recovery](ARCHITECTURE.md#9-backups-and-disaster-recovery).
 
 ### Existing data
 
-Preserve ordinary module records and files through migration. A read-only cutover window is acceptable; the user does not plan to use Manor until the web release. The user reports no Journal content to preserve and authorizes discarding its legacy data. This exception does not apply to other modules.
+Preserve ordinary module records and files through migration. A read-only cutover window is acceptable; the user does not plan to use Manor until the web release. Legacy Journal data is discarded along with the removed Journal feature (§11); every other module keeps its data.
 
 ## 5. Codex, Agent Tools, and Background Work
 
@@ -82,7 +82,7 @@ A scheduled ChatGPT Work task generates the weekly review and saves it through r
 
 Keep account-scoped, durable history of meaningful state changes by the user, Codex, and background operations. Expose it through agent tools; **do not provide an Activity/history page in Manor**. Record field changes and useful provenance for analysis, not navigation, clicks, keystrokes, reads, or no-op writes. History survives sign-out and is retained until explicitly cleared, subject to content scrubbing on purge (§4).
 
-After an object is purged, keep only structural information useful for behavior analysis, such as that an unidentified task was postponed or an application changed stage. Remove identifying titles, document contents, old text values, source excerpts, and other recoverable deleted content. Journal operations never enter this history.
+After an object is purged, keep only structural information useful for behavior analysis, such as that an unidentified task was postponed or an application changed stage. Remove identifying titles, document contents, old text values, source excerpts, and other recoverable deleted content.
 
 ### Notifications
 
@@ -109,7 +109,7 @@ Daily check-off and streak home (check-off lives here, not on Home). History com
 
 One date-keyed record per day with independently loggable Mood (Great/Good/Neutral/Bad/Awful) and Focus (Locked In/High/Medium/Low/Locked Out/Resting). Either signal saves in one tap; a missing signal differs from Resting. Save explicitly stated ratings directly; ask before saving an inferred rating. Narrative synthesis may be inferred from the conversation without inventing explicit ratings.
 
-Each day has one evolving synthesis updated through Codex (§5). The page has no manual typed-context composer; typed debriefs happen in Codex. Existing manually written context remains readable with its original provenance. Quick capture permits today and yesterday. In History, users may edit ratings for any past day or add a missing day, using the saved account timezone; future dates are unavailable. Historical rating corrections preserve the daily synthesis and other existing fields. History supports navigable months, compact daily records, and a shared longer-range Mood/Focus view. Debrief content is AI-accessible; private journaling belongs in §7.9.
+Each day has one evolving synthesis updated through Codex (§5). The page has no manual typed-context composer; typed debriefs happen in Codex. Existing manually written context remains readable with its original provenance. Quick capture permits today and yesterday. In History, users may edit ratings for any past day or add a missing day, using the saved account timezone; future dates are unavailable. Historical rating corrections preserve the daily synthesis and other existing fields. History supports navigable months, compact daily records, and a shared longer-range Mood/Focus view. Debrief content is AI-accessible.
 
 ### 7.3 Tasks
 - **One merged task system** for academic and personal work with contexts (Uni, Personal, Leetcode, Apps, Hackathons). Contexts carry a user-chosen icon and semantic color that persist anywhere the context is shown. Fields: status, due, context, difficulty (time-estimate), priority, recurrence with full rule granularity (specific weekdays, intervals, end dates).
@@ -155,18 +155,10 @@ X bookmarks and Codex-supplied captures share the knowledge base. Codex or the u
 
 X bookmarks (not likes) are ingested periodically, including linked article content where available. Preserve source bookmark order. Captures show meaningful pending/failed states and retry. Text and semantic retrieval are available through Manor tools. The page uses compact rows, with no read/unread state; capture screenshots need not appear in the list. See [ARCHITECTURE §8](ARCHITECTURE.md#8-background-work-and-integrations) for ingestion and model boundaries.
 
-### 7.9 Journal
-
-The Journal remains part of Manor, with Manor branding, on a separate browser surface outside Codex. It is **end-to-end encrypted and unlocked with a separate Journal passphrase**. There is **no recovery key**. Losing the passphrase means losing access; Google account recovery and backups do not bypass encryption.
-
-Zero AI access remains binding: no Journal content in tools, embeddings, search, daily synthesis, reviews, or action history. Keep it outside Computer History and screen sharing. It must not decrypt inside the agent's browser. The technical privacy boundary and its limits live in [ARCHITECTURE §9](ARCHITECTURE.md#9-journal-encryption-boundary).
-
-Retain one entry per day and explicit confirmed permanent deletion within the Journal. Journal entries do not use ordinary Manor Trash. The legacy Journal can be discarded as specified in §4.
-
 ## 8. Surfaces
 
 - **Home = tasks kanban + Today timeline.** Events, scratch blocks, now-line, and scheduling live here; habit logging lives on Habits.
-- **Sidebar:** docked by default; one toggle, no pin concept. Collapsed mode reveals a floating overlay on left-edge hover and dismisses on leave; toggling docks it. Persist the choice. Provide navigation to the modules and dedicated weekly reviews. The Journal entry opens its separate external surface (§7.9).
+- **Sidebar:** docked by default; one toggle, no pin concept. Collapsed mode reveals a floating overlay on left-edge hover and dismisses on leave; toggling docks it. Persist the choice. Provide navigation to the modules and dedicated weekly reviews.
 - **Product surfaces:** gated signup, login, onboarding, Settings, account and integration management, appearance preferences, recovery/Trash, and designed empty states. Remove desktop hotkey/permission onboarding and embedded-agent settings. No Activity page.
 - **Object details:** centered dialogs. Side peeks, drawers, sheets, right-edge detail panels, and detail rails are prohibited. This does not change primary page layouts, the sidebar, inline popovers, menus, or tooltips.
 - **iOS, later:** native companion, primarily for notifications, with capture, widgets, and HealthKit relay to be scoped after the web work.
@@ -179,15 +171,15 @@ The application mock data is the single canonical showroom story. Signed-in surf
 
 ## 10. Delivery Priorities
 
-**P0: correct, complete web foundation.** Account gating and isolation; authoritative data and shared operations; preservation and migration of existing data; robust WebMCP and remote MCP coverage; cache consistency and conflict handling; offline note protection; file storage; seven-day Trash and purge; saved timezone; existing module mechanics; daily synthesis; durable tool-accessible action history; the separate encrypted Journal boundary. The retained UI must be connected to the web foundation before release.
+**P0: correct, complete web foundation.** Account gating and isolation; authoritative data and shared operations; preservation and migration of existing data; robust WebMCP and remote MCP coverage; cache consistency and conflict handling; offline note protection; file storage; seven-day Trash and purge; saved timezone; existing module mechanics; daily synthesis; durable tool-accessible action history. The retained UI must be connected to the web foundation before release.
 
 **P1: synthesis and refinement.** Scheduled weekly reviews with their dedicated surface, richer retrieval and analysis over retained history, and the Mobbin-informed UI redesign. Essential tool reads, writes, search, and useful bulk operations are P0; P1 must not become a reason to ship a narrow toolset. Final design sequencing can run alongside the foundation once data contracts are stable.
 
-This is planned delivery scope, not a claim that the features already exist. Technical acceptance and migration checks live in [ARCHITECTURE §11](ARCHITECTURE.md#11-migration-and-verification).
+This is planned delivery scope, not a claim that the features already exist. Technical acceptance and migration checks live in [ARCHITECTURE §10](ARCHITECTURE.md#10-migration-and-verification).
 
 ## 11. Non-Goals and Deferred
 
-**Non-goals:** Electron support; an embedded conversational/voice agent; recreating native summon UI; unrestricted agent database access; any AI access to the Journal; a user-facing action log; multi-user collaboration, teams, or sharing; a general-purpose Notion competitor; a standalone calendar workspace; mascots or characters.
+**Non-goals:** Electron support; an embedded conversational/voice agent; recreating native summon UI; unrestricted agent database access; a Journal or any private encrypted writing surface; a user-facing action log; multi-user collaboration, teams, or sharing; a general-purpose Notion competitor; a standalone calendar workspace; mascots or characters.
 
 **Deferred:** native iOS and proactive notification delivery; finance and media modules; additional jobs sources; Google Calendar push updates and iCloud CalDAV; fitness ingestion until its schemas are agreed. Notes cloud storage is part of the web foundation, not deferred.
 
@@ -199,6 +191,7 @@ This is a concise record of decisions that govern the current target; superseded
 |---|---|
 | 2026-08-19 | Manor product and core tracker mechanics selected (§§1–3, 6). |
 | 2026-08-22 | Merged task workspace, attempt-based LeetCode history, rich Notes, and centered object details established (§§7–8). |
+| 2026-09-12 | Journal removed entirely: no encrypted writing surface, package, schema, or tooling (§§1, 11). |
 | 2026-09-11 | Google Calendar sync runs every minute, with a hard limit of twelve calendars across all connected Google accounts; over-limit connections are rejected and later over-limit calendars are skipped without interrupting sync (§5). |
 | 2026-08-23 | Standalone calendar workspace removed (§7.3). |
 | 2026-08-26 | Manual habit freezes and non-destructive retirement selected; Jobs Browse requires explicit pipeline addition (§§6, 7.6). |
@@ -206,8 +199,8 @@ This is a concise record of decisions that govern the current target; superseded
 | 2026-08-29 | Editable contexts, LeetCode mistakes log, and note finding/lifecycle refinements established (§7). |
 | 2026-09-09 | Full WebMCP web migration, Codex as interactive agent, and UI redesign chosen (§§4–5, 9); technical design is owned by ARCHITECTURE.md. |
 | 2026-09-09 | Signup gate, direct requested operations, saved timezone, seven-day Trash, recurrence occurrences, daily synthesis, and private tool-accessible history resolved (§§4–7). |
-| 2026-09-09 | Final follow-up: separate encrypted external-browser Journal; Notes included in Trash; structural history survives content purge; dedicated weekly-review surface; voice and typed Codex debriefs (§§4–8). |
-| 2026-09-09 | Passphrase-only Journal without recovery key, automatic cancellation of sign-out with unsynced drafts, and daily database/file backups selected (§§4–5, 7.9). |
+| 2026-09-09 | Final follow-up: Notes included in Trash; structural history survives content purge; dedicated weekly-review surface; voice and typed Codex debriefs (§§4–8). |
+| 2026-09-09 | Automatic cancellation of sign-out with unsynced drafts and daily database/file backups selected (§§4–5). |
 | 2026-09-09 | Mixpanel aesthetic, Notion Notes editing parity, retirement of paper/ink styling, and intentional light/dark modes selected; high-level layouts retained (§§7.7, 9). |
 | 2026-09-09 | Google-only gated signup, remote MCP alongside WebMCP, scheduled ChatGPT weekly reviews, persistent optional Notes suggestions, document tabs, seven-day Notes versions, and recurrence edit scope resolved (§§4–7). |
 | 2026-09-10 | The last unused context can be removed; task references remain protected (§7.3). |
@@ -217,4 +210,4 @@ This is a concise record of decisions that govern the current target; superseded
 
 The first-release decisions above are settled. Detailed component and chart design follows DESIGN.md; it does not require another broad product round. The jobs catalog retains its current standing filters until explicitly revised. Custom tracker creation, Bevel ingestion, native iOS notifications, and HealthKit relay remain deferred and do not block the first web release.
 
-Remaining technical configuration and verification are tracked only in [ARCHITECTURE §12](ARCHITECTURE.md#12-implementation-details-still-to-finalize).
+Remaining technical configuration and verification are tracked only in [ARCHITECTURE §11](ARCHITECTURE.md#11-implementation-details-still-to-finalize).

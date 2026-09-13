@@ -8,5 +8,4 @@ app/dist/
 *.tsbuildinfo
 /docs/NOTION-REPORT.md
 .vercel
-journal/dist/
 tools/recovery/.bin/
