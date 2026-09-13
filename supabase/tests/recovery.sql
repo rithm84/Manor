@@ -24,33 +24,4 @@ set local role manor_commands;
 select manor_private.materialize_series('recovery-series');
 reset role;
 do $$begin if exists(select 1 from public.tasks where id='recovery-series') then raise exception 'Recurrence recreated purged occurrence'; end if; end $$;
--- Synthetic byte envelopes exercise lifecycle only; browser WebCrypto tests cover real authentication.
-set local role authenticated;
-select public.journal_save_keyring(jsonb_build_object('version',1,'kdf','PBKDF2-SHA256','iterations',600000,'salt',encode(decode(repeat('01',32),'hex'),'base64'),'nonce',encode(decode(repeat('02',12),'hex'),'base64'),'wrappedKey',encode(decode(repeat('03',48),'hex'),'base64')),0);
-select public.journal_save_entry('2026-09-08',jsonb_build_object('version',1,'nonce',encode(decode(repeat('04',12),'hex'),'base64'),'ciphertext',encode(decode(repeat('05',32),'hex'),'base64')),0);
-select public.journal_save_entry('2026-09-09',jsonb_build_object('version',1,'nonce',encode(decode(repeat('06',12),'hex'),'base64'),'ciphertext',encode(decode(repeat('07',32),'hex'),'base64')),0);
-select public.journal_delete_entry('2026-09-08',1,true);
-select public.journal_delete_entry('2026-09-09',1,true);
-do $$begin
- if exists(select 1 from jsonb_array_elements(public.journal_read_state()->'entries') entry where entry->'envelope'<>'null'::jsonb) then raise exception 'Deleted Journal ciphertext remained visible'; end if;
-end $$;
-reset role;
-do $$begin
- if (select count(*) from journal_private.entries where user_id='55555555-5555-4555-8555-555555555555' and envelope is not null and deleted_at is not null)<>2 then raise exception 'Journal bytes removed before independent ledger checkpoint'; end if;
-end $$;
-select public.manor_acknowledge_recovery(repeat('b',64),(select jsonb_agg(to_jsonb(t)) from manor_private.purge_tombstones t where user_id='55555555-5555-4555-8555-555555555555'));
-do $$begin
- if exists(select 1 from journal_private.entries where user_id='55555555-5555-4555-8555-555555555555' and envelope is not null) then raise exception 'Acknowledged Journal bytes remained'; end if;
-end $$;
-set local role authenticated;
-select public.journal_save_entry('2026-09-09',jsonb_build_object('version',1,'nonce',encode(decode(repeat('08',12),'hex'),'base64'),'ciphertext',encode(decode(repeat('09',32),'hex'),'base64')),2);
-reset role;
--- Simulate an old database snapshot resurrecting the other deleted day's ciphertext.
-update journal_private.entries set revision=1,deleted_at=null,envelope=jsonb_build_object('version',1,'nonce',encode(decode(repeat('04',12),'hex'),'base64'),'ciphertext',encode(decode(repeat('05',32),'hex'),'base64')) where user_id='55555555-5555-4555-8555-555555555555' and date='2026-09-08';
-select set_config('manor.recovery_isolated','yes',true);
-select public.manor_reconcile_recovery((select jsonb_agg(to_jsonb(t)) from manor_private.purge_tombstones t where user_id='55555555-5555-4555-8555-555555555555'));
-do $$begin
- if exists(select 1 from journal_private.entries where user_id='55555555-5555-4555-8555-555555555555' and date='2026-09-08' and (envelope is not null or revision<>2)) then raise exception 'Restore resurrected a deleted Journal revision'; end if;
- if not exists(select 1 from journal_private.entries where user_id='55555555-5555-4555-8555-555555555555' and date='2026-09-09' and envelope is not null and revision=3 and deleted_at is null) then raise exception 'Old Journal tombstone destroyed a newer written day'; end if;
-end $$;
 rollback;

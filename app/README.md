@@ -18,6 +18,4 @@ The development server binds `127.0.0.1:5173` for unauthenticated UI work, typec
 
 `App` receives stable `ManorServices` instances for the active account. Web adapters send mutations through the shared transactional command boundary and preserve edited revisions for conflict detection. Account changes reset session-scoped state. Anonymous fixtures remain in `src/ui/data/mock.ts`; signed-in loaders never substitute them for account records.
 
-The Notes draft layer protects unfinished edits and pending attachments across reloads, navigation, and sign-out attempts. File and agent-host behavior must still be verified against the deployed environment rather than inferred from unit tests. See the [architecture acceptance checks](../docs/ARCHITECTURE.md#11-migration-and-verification).
-
-The Journal has its own package and build under `journal/`, its own Google session, and a required separate browser origin. Do not import Journal state, keys, or adapters into this application. Run its typecheck, tests, and build independently with the corresponding `npm --prefix journal` commands.
+The Notes draft layer protects unfinished edits and pending attachments across reloads, navigation, and sign-out attempts. File and agent-host behavior must still be verified against the deployed environment rather than inferred from unit tests. See the [architecture acceptance checks](../docs/ARCHITECTURE.md#10-migration-and-verification).

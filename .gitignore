@@ -8,5 +8,4 @@ app/dist/
 *.tsbuildinfo
 /docs/*-REPORT.md
 .vercel
-journal/dist/
 tools/recovery/.bin/

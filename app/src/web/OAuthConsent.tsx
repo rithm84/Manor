@@ -48,7 +48,7 @@ export function OAuthConsent({ client }: { client: SupabaseClient }): ReactNode 
         <p className="access-description"><strong>{details.client.name}</strong> is requesting access to your Manor account.</p>
         <p>Read your tasks, habits, notes, mood, focus, job applications, and weekly reviews.</p>
         <label className="access-permission"><input type="checkbox" checked={canWrite} onChange={event => setCanWrite(event.target.checked)} disabled={busy} /> Allow updates when I ask</label>
-        <p className="access-hint">Your private Journal is excluded. You can revoke this connection in Settings.</p>
+        <p className="access-hint">You can revoke this connection in Settings.</p>
         <p className="access-hint">Return address: {details.redirect_uri}</p>
         <div className="access-actions">
           <button className="ui-button ui-button--primary" disabled={busy} onClick={() => perform(approve)} data-testid="approve-mcp">Allow access</button>

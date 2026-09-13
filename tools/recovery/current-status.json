@@ -209,13 +209,19 @@
       "sha256": "d1489633fa6835559881c658a2ac19100219f1a4716e9eb03463cbf18a1b4d64",
       "staging_state": "applied_and_recorded",
       "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20260912213000_remove_journal.sql",
+      "sha256": "61d2af31e15127ce9fb93cef933f04866b3700645c910799f1cc383072f861a3",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
     }
   ],
   "validation": {
     "sql_rollback_passed": [
       "web_commands",
       "signup_gate",
-      "mcp_and_journal",
+      "mcp_authorization",
       "integrations",
       "recovery",
       "leetcode_freezes",
@@ -262,7 +268,6 @@
       "note_pages",
       "kb_entries",
       "file_objects",
-      "journal_entries",
       "leetcode_attempts",
       "leetcode_notes",
       "note_folders"
@@ -288,8 +293,7 @@
       "stale_result_rejected": true,
       "unchanged_text_reuses_vectors": true,
       "trash_excluded": true,
-      "restore_requeues": true,
-      "journal_excluded": true
+      "restore_requeues": true
     },
     "file_upload_limit": {
       "max_bytes": 1000000000,
@@ -382,10 +386,9 @@
       "active_remaining": 0
     },
     "exact_staging_origin_allowlist": "Hosted staging only: https://mymanor-staging.vercel.app. Localhost browser origins and Auth redirect entries are removed.",
-    "journal_deployed": false,
     "hosted_google_sign_in": "Google sign-in completes on the hosted staging site with the staging Supabase project."
   },
-  "migration_history_verified_count": 41,
+  "migration_history_verified_count": 42,
   "production_migration": {
     "date": "2026-09-12",
     "applied_versions": 34,
@@ -423,5 +426,6 @@
       "jobs-ingest"
     ],
     "snapshot": "output/prod-snapshot-2026-09-12 (local, gitignored)"
-  }
+  },
+  "journal_removed": "2026-09-12: schema, functions, package, and tooling removed; the 20260910041753 migration remains as deployed history"
 }
