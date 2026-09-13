@@ -107,13 +107,8 @@ export function TodayPanel({ tasks, scratchBlocks, date, dateLabel, day, nowTime
   useEffect(() => {
     let cancelled = false
     const load = (): void => {
-      Promise.resolve()
-        .then(() => {
-          const api = gcalApi
-          return api
-            .accounts()
-            .then((accounts) => (accounts.length === 0 ? null : api.eventsFor([date])))
-        })
+      gcalApi
+        .eventsFor([date])
         .then((eventsForDay) => {
           if (!cancelled) { setLiveEvents(eventsForDay); setCalendarError(null) }
         })

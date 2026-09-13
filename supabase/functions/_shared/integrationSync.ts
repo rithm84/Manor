@@ -60,5 +60,3 @@ export async function syncX(client:IntegrationClient,credentials:Credentials,pag
  const result=z.object({added:z.number().int()}).parse(await store(client,'x_page',credentials.user_id,{entries:z.json().parse(entries)}))
  return {added:result.added,pageToken:page.meta?.next_token??null}
 }
-
-export const storedEventSchema=z.object({id:z.string(),account_id:z.string(),calendar_id:z.string(),title:z.string(),starts_at:z.string().nullable(),ends_at:z.string().nullable(),start_date:z.string().nullable(),end_date:z.string().nullable(),all_day:z.boolean()})

@@ -1,11 +1,13 @@
 import { z } from 'zod'
 import type { CalendarApi, CalendarAccount, GoogleCalendar, CalendarDayEvent } from '../../shared/calendar'
 import type { XApi, XConnectionStatus } from '../../shared/xConnection'
-import type { ManorGateway, JsonObject } from '../ManorGateway'
+import { ManorRequestError, type ManorGateway, type JsonObject } from '../ManorGateway'
+import { calendarDays } from '../../shared/calendarDays'
+import { accountToday } from './rows'
 
 const accountSchema = z.object({ id: z.string(), email: z.email(), connectedAt: z.string() })
 const calendarSchema = z.object({ id: z.string(), accountId: z.string(), name: z.string(), colorId: z.string().nullable(), enabled: z.boolean() })
-const eventSchema = z.object({ id: z.string(), calendarId: z.string(), accountId: z.string(), title: z.string(), date: z.string(), start: z.string(), end: z.string(), allDay: z.boolean(), color: z.string().nullable() })
+const storedEventSchema = z.object({ id: z.string(), account_id: z.string(), calendar_id: z.string(), title: z.string(), starts_at: z.string().nullable(), ends_at: z.string().nullable(), start_date: z.string().nullable(), end_date: z.string().nullable(), all_day: z.boolean() })
 
 export class IntegrationService {
   private readonly gateway: ManorGateway
@@ -39,14 +41,41 @@ export class IntegrationService {
   }
 }
 
+/** Calendar reads go straight to the owner-scoped tables; only OAuth and visibility changes need the integrations function. */
 export class CalendarService implements CalendarApi {
+  private readonly gateway: ManorGateway
   private readonly integration: IntegrationService
-  constructor(gateway: ManorGateway) { this.integration = new IntegrationService(gateway) }
+  constructor(gateway: ManorGateway) { this.gateway = gateway; this.integration = new IntegrationService(gateway) }
   connect(): Promise<void> { return this.integration.connect('google') }
   completeConnection(code: string, state: string): Promise<void> { return this.integration.completeConnection(code, state) }
-  accounts(): Promise<CalendarAccount[]> { return this.integration.request('calendar_accounts', {}, z.array(accountSchema)) }
-  calendars(): Promise<GoogleCalendar[]> { return this.integration.request('calendars', {}, z.array(calendarSchema)) }
-  eventsFor(dates: readonly string[]): Promise<CalendarDayEvent[]> { return this.integration.request('calendar_events', { dates: [...dates] }, z.array(eventSchema)) }
+  async accounts(): Promise<CalendarAccount[]> {
+    return (await this.gateway.rows('calendar_accounts')).map((row) => accountSchema.parse({ id: row.id, email: row.email, connectedAt: row.connected_at }))
+  }
+  async calendars(): Promise<GoogleCalendar[]> {
+    return (await this.gateway.rows('calendars')).map((row) => calendarSchema.parse({ id: row.id, accountId: row.account_id, name: row.name, colorId: row.color, enabled: row.enabled }))
+  }
+  eventsFor(dates: readonly string[]): Promise<CalendarDayEvent[]> {
+    const ordered = [...dates].sort()
+    if (ordered.length === 0 || ordered.length > 14) throw new RangeError('Calendar reads cover 1 to 14 days')
+    return this.gateway.cached(['calendar_days', ordered.join(',')], () => this.readEvents(ordered))
+  }
+
+  private async readEvents(ordered: readonly string[]): Promise<CalendarDayEvent[]> {
+    const [{ timezone }, calendars] = await Promise.all([accountToday(this.gateway), this.calendars()])
+    const enabled = calendars.filter((calendar) => calendar.enabled)
+    if (enabled.length === 0) return []
+    const earliest = new Date(`${ordered[0]}T00:00:00Z`); earliest.setUTCDate(earliest.getUTCDate() - 1)
+    const latest = new Date(`${ordered[ordered.length - 1]}T00:00:00Z`); latest.setUTCDate(latest.getUTCDate() + 2)
+    const { data, error } = await this.gateway.client.from('calendar_events').select('*').eq('user_id', this.gateway.accountId)
+      .or(`and(all_day.eq.true,start_date.lte.${ordered[ordered.length - 1]},end_date.gt.${ordered[0]}),and(all_day.eq.false,starts_at.lt.${latest.toISOString()},ends_at.gt.${earliest.toISOString()})`)
+    if (error) throw new ManorRequestError('Read calendar_events', error.code, error.message)
+    const records = z.array(storedEventSchema).parse(data)
+    if (records.length > 5000) throw new RangeError('This date range contains more than 5,000 events. Choose fewer dates.')
+    return records.flatMap((event) => {
+      const calendar = enabled.find((item) => item.id === event.calendar_id && item.accountId === event.account_id)
+      return calendar === undefined ? [] : calendarDays(event, ordered, timezone, calendar.colorId)
+    })
+  }
   async setCalendarEnabled(calendarId: string, accountId: string, enabled: boolean): Promise<void> {
     await this.integration.request('calendar_visibility', { calendarId, accountId, enabled }, z.object({ committed: z.literal(true) }))
   }
@@ -56,12 +85,15 @@ export class CalendarService implements CalendarApi {
 }
 
 export class XService implements XApi {
+  private readonly gateway: ManorGateway
   private readonly integration: IntegrationService
-  constructor(gateway: ManorGateway) { this.integration = new IntegrationService(gateway) }
+  constructor(gateway: ManorGateway) { this.gateway = gateway; this.integration = new IntegrationService(gateway) }
   connect(): Promise<void> { return this.integration.connect('x') }
   completeConnection(code: string, state: string): Promise<void> { return this.integration.completeConnection(code, state) }
-  status(): Promise<XConnectionStatus> {
-    return this.integration.request('x_status', {}, z.object({ connected: z.boolean(), username: z.string().nullable(), connectedAt: z.string().nullable() }))
+  async status(): Promise<XConnectionStatus> {
+    const { data, error } = await this.gateway.client.rpc('manor_x_status')
+    if (error) throw new ManorRequestError('manor_x_status', error.code, error.message)
+    return z.object({ connected: z.boolean(), username: z.string().nullable(), connectedAt: z.string().nullable() }).parse(data)
   }
   async disconnect(): Promise<void> { await this.integration.request('x_disconnect', {}, z.object({ committed: z.literal(true) })) }
   ingestNow(): Promise<{ added: number }> { return this.integration.request('x_sync', {}, z.object({ added: z.number().int().nonnegative() })) }

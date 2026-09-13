@@ -46,6 +46,7 @@ Run from the repository root:
 - `npm --prefix app run dev` — local web app on port 5173.
 - `npm --prefix app run build` — build the Vite web application.
 - `npm --prefix tools/diagrams run render` — export documentation SVGs.
+- `npm --prefix tools/perf run bench -- <session.json> <origin> <label>` — signed-in performance benchmark; see docs/PERFORMANCE.md.
 
 Local dev servers cover unauthenticated UI work, typecheck, and tests only; localhost is not an authorized staging origin, so signed-in and end-to-end testing happens on the hosted staging site. Never substitute showroom fixtures for signed-in data. Setup is in app/README.md. Recovery tooling and its provisioning requirements are in tools/recovery/README.md.
 

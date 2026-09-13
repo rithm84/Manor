@@ -12,9 +12,12 @@ import { ManorGateway } from './ManorGateway'
 import { NoteDraftStore } from './notes/NoteDraftStore'
 import { createServices } from './services/createServices'
 import { OAuthConsent } from './OAuthConsent'
+import { prefetchRoute } from './prefetch'
+import { preloadRoute } from '../ui/routes'
 
 interface ReadyAccount { account: ManorAccount; services: ManorServices; gateway: ManorGateway }
-const App = lazy(() => import('../ui/App').then(module => ({ default: module.App })))
+const loadApp = (): Promise<typeof import('../ui/App')> => import('../ui/App')
+const App = lazy(() => loadApp().then(module => ({ default: module.App })))
 
 function SignedInManor({ session, client, queries }: { session: Session; client: SupabaseClient; queries: QueryClient }): ReactNode {
   const [ready, setReady] = useState<ReadyAccount | null>(null)
@@ -35,12 +38,16 @@ function SignedInManor({ session, client, queries }: { session: Session; client:
     let drafts: NoteDraftStore | null = null
     const gateway = new ManorGateway(client, queries, session.user.id)
     const initialize = async (): Promise<void> => {
+      // The shell, the current page's chunk, and the account load are independent; start them together.
+      void loadApp()
+      preloadRoute(location.pathname)
       drafts = await NoteDraftStore.open(indexedDB)
       const email = session.user.email
       if (!email) throw new Error('Your Google account did not provide an email address')
       const name = typeof session.user.user_metadata.full_name === 'string' ? session.user.user_metadata.full_name : email.split('@')[0]
       const account = await loadAccount(gateway, email, name)
-      if (active) setReady({ account, gateway, services: createServices(gateway, drafts) })
+      const services = createServices(gateway, drafts)
+      if (active) { prefetchRoute(services, account, location.pathname); setReady({ account, gateway, services }) }
       else drafts.close()
     }
     void initialize().catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : 'Account setup failed') })
