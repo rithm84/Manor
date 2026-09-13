@@ -1,6 +1,6 @@
 # Manor Architecture
 
-_Last updated: 2026-09-12_
+_Last updated: 2026-09-13_
 
 This document owns the technical design of the web migration. [PRD.md](PRD.md) owns product behavior, authority, business rules, and delivery scope; [DESIGN.md](DESIGN.md) owns the visual baseline. Refer to those rules rather than restating them here. Physical schemas and tool contracts live in migrations and typed source.
 
@@ -200,7 +200,7 @@ Use IndexedDB for account-scoped drafts, base revisions, ordered pending mutatio
 
 The Workbox service worker caches only the static app shell, never API responses. The app owns registration and checks for releases when a visible tab opens, regains focus or connectivity, and every minute while visible. A waiting release shows an explicit Reload action; activation reloads only the tab that requested it. Other tabs retain their open work and offer their own Reload action. Open dialogs and Notes edits not yet protected in IndexedDB block the update action. The `/auth/update` entry bypasses the worker's navigation cache to bootstrap clients whose older shell lacks update controls; it returns to Home without clearing account or draft storage.
 
-Only one browser writer may replay a given document queue at a time. Coordinate tabs and preserve idempotency across reloads. Compare base, local, and server revisions. Merge demonstrably non-overlapping block changes; return a real conflict for overlapping text, deletion, movement, or hierarchy edits that cannot be safely combined. Agent operations use stable block IDs and expected versions. Never refetch over unsaved keystrokes.
+Only one browser writer may replay a given document queue at a time, and within that tab the saves for one note run strictly in order so each replay reads the base revision committed by the save before it. Coordinate tabs and preserve idempotency across reloads. Compare base, local, and server revisions. Merge demonstrably non-overlapping block changes; return a real conflict for overlapping text, deletion, movement, or hierarchy edits that cannot be safely combined. Agent operations use stable block IDs and expected versions. Never refetch over unsaved keystrokes.
 
 After a cloud-save failure, Notes navigation verifies that the exact current draft is committed in IndexedDB before allowing another note or scope to open. The failed draft and attachment bytes remain protected, with a notice linking back to the note for retry. Actions requiring cloud consistency retain their save guard; failed local protection still blocks leaving the note.
 

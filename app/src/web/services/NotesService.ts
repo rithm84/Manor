@@ -119,6 +119,7 @@ export class NotesService implements NotesApi {
   private readonly revisions = new Map<string, number>()
   private readonly writerLocks: NoteWriterLocks
   private readonly conflicts = new Set<string>()
+  private readonly saves = new Map<string, Promise<unknown>>()
   private readonly confirmed = new Map<string, { page: NotePage; title: string; contentJson: string }>()
   private readonly attachmentUrls = new Map<string, string>()
 
@@ -211,8 +212,20 @@ export class NotesService implements NotesApi {
       revisions: Object.fromEntries(this.revisions) })
   }
 
-  async updatePage(input: NotePageContentUpdate): Promise<NotePage> {
+  /** Saves for one note run in order, so each one replays the draft as re-based by the save before it. */
+  private serializeSave<T>(noteId: string, work: () => Promise<T>): Promise<T> {
+    const previous = this.saves.get(noteId) ?? Promise.resolve()
+    const run = previous.then(work, work)
+    this.saves.set(noteId, run.catch(() => undefined))
+    return run
+  }
+
+  updatePage(input: NotePageContentUpdate): Promise<NotePage> {
     const update = parseNotePageContentUpdate(input)
+    return this.serializeSave(update.id, () => this.savePage(update))
+  }
+
+  private async savePage(update: NotePageContentUpdate): Promise<NotePage> {
     if (this.conflicts.has(update.id)) throw new Error('This note changed elsewhere. Compare versions before saving your draft.')
     const pending = await this.drafts.read(this.gateway.accountId, update.id)
     if (pending === null) {
