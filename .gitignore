@@ -7,5 +7,6 @@ node_modules/
 app/dist/
 *.tsbuildinfo
 /docs/NOTION-REPORT.md
+/docs/REDESIGN-REPORT.md
 .vercel
 tools/recovery/.bin/
