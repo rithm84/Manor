@@ -47,6 +47,11 @@ export class ManorGateway {
     this.accountId = accountId
   }
 
+  /** Share one in-flight or fresh read between a route prefetch and the page that later asks for it. */
+  cached<T>(key: readonly (string | number)[], load: () => Promise<T>): Promise<T> {
+    return this.queries.fetchQuery({ queryKey: ['manor', this.accountId, ...key], queryFn: load })
+  }
+
   async rows(table: ManorTable): Promise<JsonObject[]> {
     return this.readRows(table, [])
   }

@@ -5,16 +5,17 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense, type ReactNode } from 'react'
 
 import { AppFrame } from './app/AppFrame'
-const BookmarksPage = lazy(() => import('./pages/BookmarksPage').then(module => ({ default: module.BookmarksPage })))
-const HabitsPage = lazy(() => import('./pages/HabitsPage').then(module => ({ default: module.HabitsPage })))
-const HomePage = lazy(() => import('./pages/HomePage').then(module => ({ default: module.HomePage })))
-const JobsPage = lazy(() => import('./pages/JobsPage').then(module => ({ default: module.JobsPage })))
-const LeetCodePage = lazy(() => import('./pages/LeetCodePage').then(module => ({ default: module.LeetCodePage })))
-const MoodFocusPage = lazy(() => import('./pages/MoodFocusPage').then(module => ({ default: module.MoodFocusPage })))
-const NotesPage = lazy(() => import('./pages/NotesPage').then(module => ({ default: module.NotesPage })))
+import { routeLoaders } from './routes'
+const BookmarksPage = lazy(routeLoaders['/bookmarks'])
+const HabitsPage = lazy(routeLoaders['/habits'])
+const HomePage = lazy(routeLoaders['/home'])
+const JobsPage = lazy(routeLoaders['/jobs'])
+const LeetCodePage = lazy(routeLoaders['/leetcode'])
+const MoodFocusPage = lazy(routeLoaders['/mood-focus'])
+const NotesPage = lazy(routeLoaders['/notes'])
 import { SecondaryModuleSurface } from './pages/SecondaryModuleSurface'
-const WeeklyReviewsPage = lazy(() => import('./pages/WeeklyReviewsPage').then(module => ({ default: module.WeeklyReviewsPage })))
-const SettingsPage = lazy(() => import('./pages/SettingsPage').then(module => ({ default: module.SettingsPage })))
+const WeeklyReviewsPage = lazy(routeLoaders['/weekly-reviews'])
+const SettingsPage = lazy(routeLoaders['/settings'])
 
 export function App({ services }: { services: ManorServices }): ReactNode {
   return (

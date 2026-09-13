@@ -1,0 +1,7 @@
+{
+  "name": "manor-perf",
+  "private": true,
+  "type": "module",
+  "scripts": { "bench": "node bench.mjs" },
+  "dependencies": { "playwright": "1.58.2" }
+}
