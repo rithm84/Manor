@@ -17,7 +17,7 @@ export function createServices(gateway: ManorGateway, drafts: NoteDraftStore): M
   return {
     account: new AccountService(gateway, drafts), home: new HomeService(gateway), habits: new HabitsService(gateway),
     moodFocus: new MoodFocusService(gateway), jobs: new JobsService(gateway), leetcode: new LeetCodeService(gateway),
-    notes: new NotesService(gateway, drafts), kb: new KnowledgeService(gateway), resumes: new ResumesService(gateway),
+    notes: new NotesService(gateway, drafts, navigator.locks), kb: new KnowledgeService(gateway), resumes: new ResumesService(gateway),
     gcal: new CalendarService(gateway), x: new XService(gateway), reviews: new ReviewsService(gateway)
   }
 }

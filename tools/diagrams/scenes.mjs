@@ -114,7 +114,8 @@ export const scenes = {
       N('queue', 'Per-note save queue', 500, 120, { note: 'one save in flight per note', icon: I.bus, fill: fill.neutral, stroke: S.neutral }),
       N('save', 'update_note', 750, 120, { note: 'expected revision equals the base', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
       N('ok', 'Committed?', 1000, 130, { shape: 'diamond', w: 190, h: 120, fill: fill.storage, stroke: S.storage }),
-      N('rebase', 'Re-base or clear', 1000, 360, { note: 'same mutation id: clear the draft; newer typing: adopt the new revision', icon: I.broom, fill: fill.storage, stroke: S.storage }),
+      N('rebase', 'Re-base or clear', 1250, 120, { note: 'same mutation id: clear the draft; newer typing: adopt the new revision', icon: I.broom, fill: fill.storage, stroke: S.storage }),
+      N('changed', 'Same block changed on both sides?', 980, 340, { shape: 'diamond', w: 230, h: 130, fill: fill.jobs, stroke: S.jobs }),
       N('conflict', 'Compare versions', 750, 360, { note: 'another device changed the note; you choose, then save again', icon: I.documents, fill: fill.external, stroke: S.external }),
       N('attach', 'Attachment bytes', 0, 360, { note: 'kept as blobs until the upload is finalized', icon: I.attachment, fill: fill.jobs, stroke: S.jobs }),
       N('storage', 'Resumable upload', 250, 360, { note: 'TUS, 6 MiB chunks, server-side checksum', icon: I.upload, fill: fill.storage, stroke: S.storage })
@@ -122,8 +123,10 @@ export const scenes = {
     edges: [
       E('editor', 'draft', { label: 'edits', color: S.app }), E('draft', 'queue', { color: S.jobs }), E('queue', 'save', { color: S.neutral }), E('save', 'ok', { color: S.supabase }),
       E('ok', 'rebase', { label: 'yes', color: S.storage }),
-      E('ok', 'conflict', { label: 'revision changed', color: S.external, via: [[960, 190], [960, 430]] }),
-      E('rebase', 'draft', { label: 'next save uses the committed revision', color: S.storage, style: 'dashed', via: [[1250, 470], [1250, 80], [800, 80], [340, 80]] }),
+      E('ok', 'changed', { label: 'revision moved', color: S.jobs }),
+      E('changed', 'rebase', { label: 'no: merge by block', color: S.storage, via: [[1340, 405]] }),
+      E('changed', 'conflict', { label: 'yes', color: S.external }),
+      E('rebase', 'draft', { label: 'next save uses the committed revision', color: S.storage, style: 'dashed', via: [[1340, 80], [800, 80], [340, 80]] }),
       E('conflict', 'queue', { color: S.external, style: 'dashed', via: [[835, 330], [590, 330]] }),
       E('editor', 'attach', { color: S.app }), E('attach', 'storage', { color: S.jobs }),
       E('storage', 'draft', { label: 'finalized file id', color: S.storage, style: 'dashed' })
@@ -131,7 +134,7 @@ export const scenes = {
   },
   purge: {
     title: 'Trash, purge, and scrubbed history',
-    subtitle: 'Seven days of recovery, then a purge that waits for an independent backup of its own ledger.',
+    subtitle: 'Seven days of recovery, then a purge that waits for an independent backup of its own ledger; an explicit permanent delete skips the wait.',
     nodes: [
       N('record', 'Task, application, or note', 0, 120, { icon: I.documents, fill: fill.app, stroke: S.app }),
       N('trash', 'Trash', 250, 120, { note: 'deleted_at set, subpages included', icon: I.del, fill: fill.jobs, stroke: S.jobs }),
@@ -144,7 +147,8 @@ export const scenes = {
     edges: [
       E('record', 'trash', { label: 'delete', color: S.app }), E('trash', 'restore', { label: 'within 7 days', color: S.storage }), E('restore', 'record', { color: S.storage, via: [[85, 430]] }),
       E('trash', 'ledger', { label: 'after 7 days', color: S.jobs }), E('ledger', 'ack', { color: S.neutral }), E('ack', 'purge', { label: 'yes', color: S.external }),
-      E('ack', 'ledger', { label: 'no: wait', color: S.neutral, style: 'dashed', via: [[890, 95], [620, 95]] }), E('purge', 'history', { color: S.neutral })
+      E('ack', 'ledger', { label: 'no: wait', color: S.neutral, style: 'dashed', via: [[890, 95], [620, 95]] }), E('purge', 'history', { color: S.neutral }),
+      E('trash', 'purge', { label: 'Delete permanently: tombstone and purge now', color: S.external, via: [[400, 310], [1100, 310]] })
     ]
   },
   background: {

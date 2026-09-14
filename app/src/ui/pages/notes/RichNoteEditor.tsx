@@ -42,10 +42,12 @@ import {
   PanelsTopLeft,
   TextQuote
 } from 'lucide-react'
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactElement, ReactNode } from 'react'
+import { memo, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import type { ReactElement, ReactNode, RefObject } from 'react'
 
 import type { NotePage } from '../../../shared/notes'
+import { applyBlockOps, documentOps, parseBlocks } from '../../../shared/noteMerge'
+import type { BlockOp, NoteBlock } from '../../../shared/noteMerge'
 import { validateFileUploadSize } from '../../../shared/fileUploadPolicy'
 import { MoveBlocksDialog } from './MoveBlocksDialog'
 import { NoteBlockMenu } from './NoteBlockMenu'
@@ -53,9 +55,15 @@ import { useNoteTheme } from './useNoteTheme'
 import { noteEditorSchema } from './noteEditorSchema'
 import type { NoteEditor, NoteEditorBlock } from './noteEditorSchema'
 
+export interface RichNoteEditorHandle {
+  /** Applies block edits from elsewhere to the live document without replacing it, and returns the resulting content. */
+  applyBlockOps: (ops: readonly BlockOp[]) => string
+}
+
 export interface RichNoteEditorProps {
   page: NotePage
   allPages: readonly NotePage[]
+  handle: RefObject<RichNoteEditorHandle | null>
   onChange: (contentJson: string) => void
   onMoveBlocks: (blockIds: readonly string[], targetNoteId: string) => Promise<void>
 }
@@ -131,6 +139,24 @@ export function blocksFromJson(contentJson: string): NoteEditorBlock[] {
     throw new TypeError('Persisted note content must be a block array')
   }
   return normalizeLegacyColumns(parsed as PortableBlock[]) as NoteEditorBlock[]
+}
+
+const editorBlock = (block: NoteBlock): NoteEditorBlock => {
+  const converted = blocksFromJson(JSON.stringify([block]))[0]
+  if (converted === undefined) throw new Error(`Block ${block.id} did not convert to an editor block`)
+  return converted
+}
+
+/** Block-scoped edits keep the cursor and undo history in untouched blocks; the first insertion into an empty document replaces its placeholder. */
+function applyOpsToEditor(editor: NoteEditor, ops: readonly BlockOp[]): void {
+  for (const op of ops) {
+    if (op.kind === 'remove') { editor.removeBlocks([op.id]); continue }
+    if (op.kind === 'replace') { editor.replaceBlocks([op.id], [editorBlock(op.block)]); continue }
+    if (op.afterId !== null) { editor.insertBlocks([editorBlock(op.block)], op.afterId, 'after'); continue }
+    const first = editor.document[0]
+    if (first === undefined) editor.replaceBlocks(editor.document, [editorBlock(op.block)])
+    else editor.insertBlocks([editorBlock(op.block)], first.id, 'before')
+  }
 }
 
 function canonicalDocument(contentJson: string): string {
@@ -390,7 +416,7 @@ function attachmentId(stableUrl: string): string | null {
 }
 
 /** The heavy BlockNote editor is lazy-loaded by NotesPage. */
-function RichNoteEditorComponent({ page, allPages, onChange, onMoveBlocks }: RichNoteEditorProps): ReactNode {
+function RichNoteEditorComponent({ page, allPages, handle, onChange, onMoveBlocks }: RichNoteEditorProps): ReactNode {
   const [movingBlocks, setMovingBlocks] = useState<readonly string[] | null>(null)
   const [menuError, setMenuError] = useState<string | null>(null)
   const browserHighlightsRef = useRef(new Map<HTMLElement, { outline: string; offset: string; timer: number }>())
@@ -440,13 +466,25 @@ function RichNoteEditorComponent({ page, allPages, onChange, onMoveBlocks }: Ric
   }, [])
 
 
+  /** External content lands as block ops; a document the ops cannot address (ids gone from the editor) is replaced whole. */
+  const applyExternal = (ops: readonly BlockOp[], target: string): string => {
+    applyingExternalRef.current = true
+    try {
+      try { applyOpsToEditor(editor, ops) }
+      catch (cause) {
+        console.warn('Replacing the note document: block ops did not apply', { noteId: page.id, ops: ops.length, cause })
+        editor.replaceBlocks(editor.document, blocksFromJson(target))
+      }
+    } finally { applyingExternalRef.current = false }
+    visibleContentRef.current = JSON.stringify(editor.document)
+    return visibleContentRef.current
+  }
+
+  useImperativeHandle(handle, () => ({ applyBlockOps: (ops) => applyExternal(ops, JSON.stringify(applyBlockOps(parseBlocks(JSON.stringify(editor.document)), ops))) }), [editor])
+
   useEffect(() => {
     if (canonicalDocument(page.contentJson) === canonicalDocument(visibleContentRef.current)) return
-    visibleContentRef.current = page.contentJson
-    applyingExternalRef.current = true
-    try { editor.replaceBlocks(editor.document, blocksFromJson(page.contentJson)) }
-    finally { applyingExternalRef.current = false }
-    visibleContentRef.current = JSON.stringify(editor.document)
+    applyExternal(documentOps(parseBlocks(visibleContentRef.current), parseBlocks(page.contentJson)), page.contentJson)
   }, [editor, page.contentJson])
 
   useEffect(() => {

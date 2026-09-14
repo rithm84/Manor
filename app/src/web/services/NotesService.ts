@@ -9,6 +9,7 @@ import {
 } from '../../shared/notes'
 import { ManorGateway, ManorConnectionError, ManorRequestError, type JsonObject, type JsonValue } from '../ManorGateway'
 import { NoteDraftStore } from '../notes/NoteDraftStore'
+import { mergeDocuments, type BlockOp } from '../../shared/noteMerge'
 
 function note(row: JsonObject): NotePage {
   return parseNotePage({ id: row.id, title: row.title, folderId: row.folder_id, parentPageId: row.parent_page_id,
@@ -24,7 +25,7 @@ function nativeBlocks(contentJson: string): JsonValue[] {
     ...(Array.isArray(block.children) ? { children: nativeBlocks(JSON.stringify(block.children)) } : {}) }))
 }
 
-interface WriterLockManager {
+export interface WriterLockManager {
   request: (name: string, options: LockOptions, callback: (lock: Lock | null) => Promise<void>) => Promise<void>
 }
 
@@ -116,17 +117,35 @@ export class NoteWriterLocks {
 export class NotesService implements NotesApi {
   private readonly gateway: ManorGateway
   private readonly drafts: NoteDraftStore
+  private readonly locks: WriterLockManager
+  /** Highest revision seen per note. Reads that overtake a save cannot lower it. */
   private readonly revisions = new Map<string, number>()
   private readonly writerLocks: NoteWriterLocks
   private readonly conflicts = new Set<string>()
   private readonly saves = new Map<string, Promise<unknown>>()
   private readonly confirmed = new Map<string, { page: NotePage; title: string; contentJson: string }>()
   private readonly attachmentUrls = new Map<string, string>()
+  /** Foreign block edits merged into the last save, until the open editor collects them. */
+  private readonly mergedOps = new Map<string, BlockOp[]>()
 
-  constructor(gateway: ManorGateway, drafts: NoteDraftStore) {
+  constructor(gateway: ManorGateway, drafts: NoteDraftStore, locks: WriterLockManager) {
     this.gateway = gateway
     this.drafts = drafts
-    this.writerLocks = new NoteWriterLocks(gateway.accountId, navigator.locks)
+    this.locks = locks
+    this.writerLocks = new NoteWriterLocks(gateway.accountId, locks)
+  }
+
+  /** Draft reads and writes for this account run one at a time, so a keystroke and a save re-base cannot interleave. */
+  private async accountLock<T>(work: () => Promise<T>): Promise<T> {
+    let result!: T
+    await this.locks.request(`manor-account:${this.gateway.accountId}`, {}, async () => { result = await work() })
+    return result
+  }
+
+  private adoptRevision(noteId: string, revision: number): number {
+    const known = Math.max(this.revisions.get(noteId) ?? 0, revision)
+    this.revisions.set(noteId, known)
+    return known
   }
 
   async acquireWriter(noteId: string): Promise<() => void> {
@@ -136,7 +155,7 @@ export class NotesService implements NotesApi {
 
   async protectDraft(draft: NotePageContentUpdate): Promise<void> {
     if (!this.writerLocks.owns(draft.id)) throw new Error('This tab does not own the Notes editor. Reopen the note before editing.')
-    await navigator.locks.request(`manor-account:${this.gateway.accountId}`, async () => {
+    await this.accountLock(async () => {
       const current = await this.drafts.read(this.gateway.accountId, draft.id)
       if (current?.contentJson === draft.contentJson && current.title === draft.title) return
       const revision = current?.baseRevision ?? this.revisions.get(draft.id)
@@ -163,7 +182,7 @@ export class NotesService implements NotesApi {
   private async cachedState(): Promise<NotesState> {
     const snapshot = await this.drafts.snapshot(this.gateway.accountId)
     if (snapshot === null) throw new Error('Connect once to load your Notes on this device')
-    Object.entries(snapshot.revisions).forEach(([id, revision]) => this.revisions.set(id, revision))
+    Object.entries(snapshot.revisions).forEach(([id, revision]) => this.adoptRevision(id, revision))
     return snapshot.state
   }
 
@@ -172,11 +191,16 @@ export class NotesService implements NotesApi {
     if (!navigator.onLine) state = await this.cachedState()
     else {
       try {
-        const [folders, pages] = await Promise.all([this.gateway.rows('note_folders'), this.gateway.rows('note_pages')])
-        pages.forEach((row) => this.revisions.set(z.string().parse(row.id), z.number().int().parse(row.revision)))
+        const [folders, pages, previous] = await Promise.all([this.gateway.rows('note_folders'), this.gateway.rows('note_pages'), this.drafts.snapshot(this.gateway.accountId)])
         state = {
           folders: folders.map((row) => parseNoteFolder({ id: row.id, name: row.name, parentFolderId: row.parent_folder_id, createdAt: row.created_at, updatedAt: row.updated_at })),
-          pages: pages.map(note)
+          // A read that started before a save finished returns the note as it was; keep the newer copy this device already has.
+          pages: pages.map((row) => {
+            const id = z.string().parse(row.id), revision = z.number().int().parse(row.revision)
+            const known = this.adoptRevision(id, revision)
+            const newer = revision < known ? previous?.state.pages.find((page) => page.id === id) : undefined
+            return newer ?? note(row)
+          })
         }
         await this.drafts.saveSnapshot({ accountId: this.gateway.accountId, state, revisions: Object.fromEntries(this.revisions) })
       } catch (error) {
@@ -192,13 +216,14 @@ export class NotesService implements NotesApi {
   }
 
   private async command(operation: string, id: string, input: JsonObject): Promise<NotePage> {
+    await this.saves.get(id) // a save already in flight lands first, so its draft does not block this change
     const pending = await this.drafts.read(this.gateway.accountId, id)
     if (pending !== null) throw new Error('Finish syncing your local changes before changing this note')
     const revision = this.revisions.get(id)
     if (revision === undefined) throw new Error('Load the note before changing it')
     const result = await this.gateway.command(operation, { ...input, id, expected_revision: revision }, crypto.randomUUID())
     if (!result.record) throw new Error(`${operation} did not return the saved note`)
-    this.revisions.set(id, z.number().int().parse(result.record.revision))
+    this.adoptRevision(id, z.number().int().parse(result.record.revision))
     const saved = note(result.record)
     await this.remember(saved)
     return saved
@@ -222,10 +247,10 @@ export class NotesService implements NotesApi {
 
   updatePage(input: NotePageContentUpdate): Promise<NotePage> {
     const update = parseNotePageContentUpdate(input)
-    return this.serializeSave(update.id, () => this.savePage(update))
+    return this.serializeSave(update.id, () => this.savePage(update, 0))
   }
 
-  private async savePage(update: NotePageContentUpdate): Promise<NotePage> {
+  private async savePage(update: NotePageContentUpdate, rebases: number): Promise<NotePage> {
     if (this.conflicts.has(update.id)) throw new Error('This note changed elsewhere. Compare versions before saving your draft.')
     const pending = await this.drafts.read(this.gateway.accountId, update.id)
     if (pending === null) {
@@ -239,17 +264,69 @@ export class NotesService implements NotesApi {
       result = await this.gateway.command('update_note', { id: update.id, title: pending.title.trim() || 'Untitled',
         content_json: nativeBlocks(pending.contentJson), expected_revision: pending.baseRevision }, pending.mutationId)
     } catch (error) {
-      if (error instanceof ManorRequestError && (error.code === 'PT409' || error.code === '40001')) this.conflicts.add(update.id)
-      throw error
+      if (!(error instanceof ManorRequestError) || error.code !== 'PT409') throw error
+      // The revision moved. Blocks are the unit of conflict: the draft is re-based onto the server document when the
+      // two sides changed different blocks (or nothing but the revision moved), and sent once more.
+      if (rebases === 0 && await this.rebaseOntoServer(update.id)) return this.savePage(update, rebases + 1)
+      this.conflicts.add(update.id)
+      throw new Error('This note changed elsewhere. Compare versions before saving your draft.')
     }
     if (!result.record) throw new Error('Saving the note did not return the committed document')
-    const revision = z.number().int().parse(result.record.revision)
-    this.revisions.set(update.id, revision)
+    const revision = this.adoptRevision(update.id, z.number().int().parse(result.record.revision))
     const saved = note(result.record)
     await this.remember(saved)
-    await this.drafts.commitRevision(pending, revision)
+    await this.accountLock(async () => {
+      await this.drafts.commitRevision(pending, revision)
+      // Typing that continued during a merged save was built on the sent draft; carry the merged-in foreign blocks over.
+      const newer = await this.drafts.read(this.gateway.accountId, update.id)
+      if (newer === null || newer.mutationId === pending.mutationId || saved.contentJson === pending.contentJson) return
+      const outcome = mergeDocuments(pending.contentJson, newer.contentJson, saved.contentJson)
+      if (outcome.status === 'conflict') { this.conflicts.add(update.id); return }
+      await this.drafts.protect({ ...newer, contentJson: outcome.contentJson })
+    })
     this.confirmed.set(update.id, { page: saved, title: pending.title.trim() || 'Untitled', contentJson: pending.contentJson })
     return saved
+  }
+
+  takeMergedBlockOps(pageId: string): readonly BlockOp[] {
+    const ops = this.mergedOps.get(pageId) ?? []
+    this.mergedOps.delete(pageId)
+    return ops
+  }
+
+  private async currentRow(noteId: string): Promise<JsonObject> {
+    const response = await this.gateway.client.from('note_pages').select('*').eq('user_id', this.gateway.accountId).eq('id', noteId).single()
+    if (response.error) throw new Error(`Loading the current note: ${response.error.message}`)
+    return z.record(z.string(), z.json()).parse(response.data)
+  }
+
+  /**
+   * Re-bases the pending draft onto the current server document using the version the draft started from, which the
+   * server keeps for every superseded revision. Returns false when the same block (or the title) changed on both sides.
+   */
+  private async rebaseOntoServer(noteId: string): Promise<boolean> {
+    const draft = await this.drafts.read(this.gateway.accountId, noteId)
+    if (draft === null) return false
+    const [current, base] = await Promise.all([this.currentRow(noteId),
+      this.gateway.client.from('note_versions').select('title, content_json').eq('user_id', this.gateway.accountId).eq('note_id', noteId).eq('revision', draft.baseRevision).maybeSingle()])
+    if (base.error) throw new Error(`Loading the note's base version: ${base.error.message}`)
+    if (base.data === null) return false
+    const version = z.object({ title: z.string(), content_json: z.json() }).parse(base.data)
+    const server = note(current)
+    const outcome = mergeDocuments(JSON.stringify(version.content_json), draft.contentJson, server.contentJson)
+    if (outcome.status === 'conflict') return false
+    const mineTitle = draft.title.trim() || 'Untitled'
+    if (mineTitle !== version.title && server.title !== version.title && mineTitle !== server.title) return false
+    const title = mineTitle !== version.title ? draft.title : server.title
+    const revision = this.adoptRevision(noteId, z.number().int().parse(current.revision))
+    await this.accountLock(async () => {
+      const latest = await this.drafts.read(this.gateway.accountId, noteId)
+      if (latest === null) return
+      if (latest.mutationId !== draft.mutationId) throw new Error('The draft changed while it was re-based; the next save carries it')
+      await this.drafts.protect({ ...latest, title, contentJson: outcome.contentJson, baseRevision: revision })
+    })
+    if (outcome.ops.length > 0) this.mergedOps.set(noteId, [...(this.mergedOps.get(noteId) ?? []), ...outcome.ops])
+    return true
   }
 
   async createPage(draft: NotePageDraft): Promise<NotesState> {
@@ -285,8 +362,17 @@ export class NotesService implements NotesApi {
   async movePage(change: NotePageMove): Promise<NotesState> { await this.command('move_note', change.id, { folder_id: change.folderId, parent_page_id: change.parentPageId }); return this.load() }
   async setFavorite(change: NotePageFavoriteMutation): Promise<NotesState> { await this.command('update_note', change.id, { favorite: change.favorite }); return this.load() }
   async archivePage(id: string): Promise<NotesState> { await this.command('archive_note', id, {}); return this.load() }
-  async trashPage(id: string): Promise<NotesState> { await this.command('trash_note', id, {}); return this.load() }
-  async restorePage(id: string): Promise<NotesState> { await this.command('restore_note', id, {}); return this.load() }
+  async trashPages(ids: readonly string[]): Promise<NotesState> { for (const id of ids) await this.command('trash_note', id, {}); return this.load() }
+  async restorePages(ids: readonly string[]): Promise<NotesState> { for (const id of ids) await this.command('restore_note', id, {}); return this.load() }
+  async purgePages(ids: readonly string[]): Promise<NotesState> {
+    for (const id of ids) {
+      const revision = this.revisions.get(id)
+      if (revision === undefined) throw new Error('Load the note before deleting it permanently')
+      await this.gateway.command('purge_note', { id, expected_revision: revision }, crypto.randomUUID())
+      this.revisions.delete(id); this.confirmed.delete(id); this.conflicts.delete(id)
+    }
+    return this.load()
+  }
   async duplicatePage(id: string): Promise<NotesState> {
     const state = await this.load()
     const source = state.pages.find((page) => page.id === id)
@@ -317,14 +403,12 @@ export class NotesService implements NotesApi {
   async readConflict(noteId: string): Promise<NoteConflict> {
     const local = await this.drafts.read(this.gateway.accountId, noteId)
     if (local === null) throw new Error('There is no local draft to compare')
-    const response = await this.gateway.client.from('note_pages').select('*').eq('user_id', this.gateway.accountId).eq('id', noteId).single()
-    if (response.error) throw new Error(`Loading the current note: ${response.error.message}`)
-    const row = z.record(z.string(), z.json()).parse(response.data)
+    const row = await this.currentRow(noteId)
     return { current: note(row), local: { id: noteId, title: local.title, contentJson: local.contentJson }, revision: z.number().int().parse(row.revision) }
   }
 
   async resolveConflict(conflict: NoteConflict): Promise<NotePage> {
-    await navigator.locks.request(`manor-account:${this.gateway.accountId}`, async () => {
+    await this.accountLock(async () => {
       const current = await this.drafts.read(this.gateway.accountId, conflict.local.id)
       if (current === null || current.title !== conflict.local.title || current.contentJson !== conflict.local.contentJson) {
         throw new Error('Your local draft changed. Reopen the comparison before resolving it.')
@@ -351,7 +435,7 @@ export class NotesService implements NotesApi {
   async uploadAttachment(input: NoteAttachmentUpload): Promise<NoteAttachment> {
     const upload = parseNoteAttachmentUpload(input)
     const id = crypto.randomUUID()
-    await navigator.locks.request(`manor-account:${this.gateway.accountId}`, () => this.drafts.protectAttachment({
+    await this.accountLock(() => this.drafts.protectAttachment({
       accountId: this.gateway.accountId, noteId: upload.noteId, attachmentId: id,
       name: upload.name, mimeType: upload.mimeType, bytes: upload.bytes
     }))

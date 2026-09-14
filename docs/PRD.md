@@ -46,7 +46,7 @@ Each account saves a time zone, initially taken from the system, and travel does
 
 ### Recovery and retention
 
-Tasks, job applications, and Notes share a recoverable Trash for seven days, then purge automatically. Deleting a note includes its subpages, and restoration preserves their relationships. Archiving is distinct from Trash, and habit retirement is archival under the streak system.
+Tasks, job applications, and Notes share a recoverable Trash for seven days, then purge automatically. Deleting a note includes its subpages, and restoration preserves their relationships. Notes in Trash can also be deleted permanently at once, one or many, after a confirmation; that is yours alone, and agents can only move records to Trash and restore them. Archiving is distinct from Trash, and habit retirement is archival under the streak system.
 
 Attached files follow the parent lifecycle, but purging one record never deletes a file still used elsewhere. After purge, ordinary application data and tools can't recover the deleted content through history, old versions, search, or derived outputs; structural behavioral history can remain (see [action history](#action-history)). Stale clients can't resurrect deleted records.
 
@@ -155,7 +155,7 @@ Block selection, insertion, reordering, duplication, movement, conversion, slash
 
 Notes expose seven days of meaningful document versions through a version-history UI, separate from tool-only action history. Restoring a version creates a new current revision while preserving newer work in retained history, and purging a note purges its versions and suggestions.
 
-Documents preserve their full native structure. Markdown is an explicitly lossy interchange format: math uses LaTeX, the live contents block becomes anchor links, bookmarks and embeds become ordinary links, and columns become sequential sections. Unsupported conversions disclose their losses instead of dropping content. Autosave failures stay visible and retryable. Find-in-note highlights matches with next and previous navigation without changing contents. Moving a page to Trash includes its subpages, with recovery and purge following the [retention policy](#recovery-and-retention). Editor structure and persistence are in the architecture's [Notes drafts and editing](ARCHITECTURE.md#notes-drafts-and-editing) section.
+Documents preserve their full native structure. Markdown is an explicitly lossy interchange format: math uses LaTeX, the live contents block becomes anchor links, bookmarks and embeds become ordinary links, and columns become sequential sections. Unsupported conversions disclose their losses instead of dropping content. Autosave failures stay visible and retryable. Find-in-note highlights matches with next and previous navigation without changing contents. Moving a page to Trash includes its subpages, with recovery and purge following the [retention policy](#recovery-and-retention). The note list is a multi-select list: Shift-click selects a range, Cmd or Ctrl-click toggles a note, Cmd or Ctrl+A selects the visible list, Escape clears, Delete moves the selection to Trash (or deletes permanently inside Trash), and a right-click menu carries the same actions. A move to Trash shows a toast with **Undo** while it can still be reversed in place. Concurrent edits to a note from two devices or an agent merge by block when they touch different blocks; only edits to the same block ask you to compare versions. Editor structure and persistence are in the architecture's [Notes drafts and editing](ARCHITECTURE.md#notes-drafts-and-editing) section.
 
 ### Knowledge base
 
@@ -214,6 +214,7 @@ The following table is the concise record of decisions that govern the current t
 | 2026-09-11 | Google Calendar sync runs every minute with a hard limit of twelve calendars across all connected Google accounts; over-limit connections are rejected and later over-limit calendars are skipped without interrupting sync (integration boundary). |
 | 2026-09-12 | Journal removed entirely: no encrypted writing surface, package, schema, or tooling (non-goals). |
 | 2026-09-13 | WebMCP removed; remote MCP is the only agent transport, with no live-browser context, selection, or presentation tools (platform, agent tools). |
+| 2026-09-13 | Permanent deletion from Trash as a user-only action that purges at once; multi-select note list with batch Trash, restore, and permanent delete; block-level merge of concurrent note edits, with compare-versions reserved for same-block conflicts (notes, recovery and retention). |
 
 ## Remaining product detail
 
