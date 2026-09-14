@@ -2,6 +2,7 @@
 //!
 //! The shell owns window creation, deep-link receipt, single-instance
 //! forwarding, external-link opening, window-state persistence, file logging,
+//! keeping the app alive behind a closed window,
 //! signed update delivery, relaunch, and the one command that reports which URL
 //! scheme the build registered and when the process started. Everything a
 //! person sees or edits belongs to
@@ -14,7 +15,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use log::{error, info, kv, warn, LevelFilter, Record};
 use tauri::plugin::TauriPlugin;
-use tauri::{Manager, Runtime};
+use tauri::{Manager, RunEvent, Runtime, WindowEvent};
+use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_log::fern::FormatCallback;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 use tauri_plugin_window_state::StateFlags;
@@ -70,6 +72,18 @@ pub fn run() {
         // installed: on macOS the new bundle only takes effect on relaunch.
         .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![info::desktop_info])
+        // Closing the window hides it so the next open is instant; Quit still
+        // ends the process through the application menu.
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() == MAIN_WINDOW {
+                    api.prevent_close();
+                    if let Err(cause) = window.hide() {
+                        error!(cause = cause.to_string().as_str(); "the shell could not hide the window");
+                    }
+                }
+            }
+        })
         .setup(|app| {
             let name = app.package_info().name.clone();
             let version = app.package_info().version.to_string();
@@ -78,6 +92,9 @@ pub fn run() {
                 .ok_or_else(|| format!("tauri.conf.json declares no `{MAIN_WINDOW}` window"))?;
             window.set_title(&name)?;
             reveal_if_still_hidden(window);
+            // A link that arrives while the window is hidden brings it back.
+            let handle = app.handle().clone();
+            app.deep_link().on_open_url(move |_event| present_window(&handle));
             info!(
                 version = version.as_str(),
                 identifier = app.config().identifier.as_str();
@@ -85,8 +102,25 @@ pub fn run() {
             );
             Ok(())
         })
-        .run(tauri::generate_context!())
+        .build(tauri::generate_context!())
         .expect("Manor desktop failed to start")
+        .run(|app, event| {
+            // Clicking the Dock icon while the window is hidden reopens it.
+            if let RunEvent::Reopen { has_visible_windows: false, .. } = event {
+                present_window(app);
+            }
+        })
+}
+
+/// Shows and focuses the main window, logging instead of failing when the
+/// window is gone, which only happens while the app is quitting.
+fn present_window<R: Runtime>(app: &tauri::AppHandle<R>) {
+    let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
+        return;
+    };
+    if let Err(cause) = window.show().and_then(|()| window.set_focus()) {
+        error!(cause = cause.to_string().as_str(); "the shell could not present the window");
+    }
 }
 
 /// Shows the window if the frontend has not done so by the deadline.

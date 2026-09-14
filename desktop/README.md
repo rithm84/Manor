@@ -127,6 +127,12 @@ them against a staging bundle that Launch Services knows about.
 The shell never logs a deep link's query or fragment, because they carry the
 authorization code and the session tokens.
 
+## Closing and quitting
+
+Closing the window hides it and leaves the app running with the account
+loaded, so the Dock icon, a deep link, or reopening the app brings it back at
+once. Quit from the application menu or Cmd+Q ends the process.
+
 ## Logging
 
 The shell appends to `~/Library/Logs/<identifier>/manor.log`, rotating at 2 MiB
