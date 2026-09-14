@@ -209,13 +209,17 @@ export function HomePage(): ReactNode {
     setPersistError(`${operation}: ${errorMessage(error)}`)
   }
 
+  /** The board reflects the change at once; the committed record replaces it, or the previous one returns on failure. */
   const updateTask = async (updated: Task): Promise<Task> => {
+    const previous = tasks.find((task) => task.id === updated.id)
+    setTasks((current) => current.map((task) => (task.id === updated.id ? updated : task)))
     try {
       const persisted = await homeApi.upsertTask(updated)
       setTasks((current) => current.map((task) => (task.id === persisted.id ? persisted : task)))
       setPersistError(null)
       return persisted
     } catch (error) {
+      if (previous !== undefined) setTasks((current) => current.map((task) => (task.id === previous.id ? previous : task)))
       reportPersistenceError('Could not save task', error)
       throw error
     }
@@ -401,29 +405,36 @@ export function HomePage(): ReactNode {
     }
   }
 
+  const placeScratchBlock = (block: ScratchBlock): void => {
+    setScratchBlocks((current) => current.some((candidate) => candidate.id === block.id)
+      ? current.map((candidate) => (candidate.id === block.id ? block : candidate))
+      : [...current, block])
+  }
+
+  /** A dropped or edited block lands on the timeline immediately and settles on the committed record. */
   const upsertScratchBlock = async (block: ScratchBlock): Promise<void> => {
+    const previous = scratchBlocks.find((candidate) => candidate.id === block.id)
+    placeScratchBlock(block)
     try {
-      const persisted = await homeApi.upsertScratchBlock(block)
-      setScratchBlocks((current) => {
-        const exists = current.some((candidate) => candidate.id === persisted.id)
-        return exists
-          ? current.map((candidate) => (candidate.id === persisted.id ? persisted : candidate))
-          : [...current, persisted]
-      })
+      placeScratchBlock(await homeApi.upsertScratchBlock(block))
       setPersistError(null)
     } catch (error) {
+      if (previous === undefined) setScratchBlocks((current) => current.filter((candidate) => candidate.id !== block.id))
+      else placeScratchBlock(previous)
       reportPersistenceError('Could not save time block', error)
       throw error
     }
   }
 
   const deleteScratchBlock = async (blockId: string): Promise<void> => {
+    const previous = scratchBlocks.find((block) => block.id === blockId)
+    setBlockPeekOpen(false)
+    setScratchBlocks((current) => current.filter((block) => block.id !== blockId))
     try {
       await homeApi.deleteScratchBlock(blockId)
-      setBlockPeekOpen(false)
-      setScratchBlocks((current) => current.filter((block) => block.id !== blockId))
       setPersistError(null)
     } catch (error) {
+      if (previous !== undefined) placeScratchBlock(previous)
       reportPersistenceError('Could not delete time block', error)
       throw error
     }

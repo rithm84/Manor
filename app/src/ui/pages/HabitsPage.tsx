@@ -187,7 +187,11 @@ export function HabitsPage(): ReactNode {
     const without = order.filter((id) => id !== dragId)
     const targetIndex = without.indexOf(targetId)
     without.splice(from < to ? targetIndex + 1 : targetIndex, 0, dragId)
-    await persist('Could not reorder habits', () => habitsApi.reorder(without))
+    // The row lands where it was dropped; the committed order replaces it, or the old order returns on failure.
+    const before = state
+    const byId = new Map(state.habits.map((habit) => [habit.id, habit]))
+    setState({ ...state, habits: without.flatMap((id) => { const habit = byId.get(id); return habit === undefined ? [] : [habit] }) })
+    if (await persist('Could not reorder habits', () => habitsApi.reorder(without)) === null) setState(before)
   }
 
   const freezeHabit = async (habitId: string): Promise<void> => {
@@ -385,9 +389,17 @@ export function HabitsPage(): ReactNode {
                       if (value === 100 && !wasComplete) {
                         playCompletionTick()
                       }
-                      await persist('Could not save habit entry', () =>
+                      // The check-off shows at once; streaks and the pool settle on the committed state.
+                      const before = state
+                      const stamp = new Date().toISOString()
+                      setState((current) => current === null ? current : { ...current, entries: [
+                        ...current.entries.filter((entry) => !(entry.habitId === habitId && entry.date === selectedDate)),
+                        ...(value === 0 ? [] : [{ habitId, date: selectedDate, value, createdAt: stamp, updatedAt: stamp }])
+                      ] })
+                      const saved = await persist('Could not save habit entry', () =>
                         habitsApi.setEntry({ habitId, date: selectedDate, value })
                       )
+                      if (saved === null) setState(before)
                     }}
                     onOpen={openHabit}
                     onResume={(habitId) => void setLifecycle(habitId, 'active')}
