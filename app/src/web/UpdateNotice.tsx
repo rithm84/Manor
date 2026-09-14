@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, X } from 'lucide-react'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { check } from '@tauri-apps/plugin-updater'
 import type { Update } from '@tauri-apps/plugin-updater'
@@ -8,8 +8,6 @@ import './updateNotice.css'
 
 /** How often Manor asks the release feed for a newer build, and how stale a check must be for a window focus to repeat it. */
 const CHECK_INTERVAL_MS = 60 * 60 * 1000
-
-const FEED_ERROR = 'Could not reach the update feed. Check your network connection, and Manor will try again within the hour.'
 
 /** Names what stops a restart right now, or null when Manor may restart. */
 function restartBlockReason(): string | null {
@@ -24,9 +22,10 @@ function restartBlockReason(): string | null {
  * Offers the release that the update feed is holding.
  *
  * Manor checks on mount, every hour, whenever the window regains focus after an
- * idle hour, and when the machine comes back online. Once a release is in hand
- * the checks stop, so the version the notice names stays the version a restart
- * installs. Installing replaces the bundle on disk and only a relaunch runs it,
+ * idle hour, and when the machine comes back online. A check that fails is logged
+ * and repeated on that schedule, never shown: nothing in it needs the person.
+ * Once a release is in hand the checks stop, so the version the notice names
+ * stays the version a restart installs. Installing replaces the bundle on disk and only a relaunch runs it,
  * which is why the button restarts rather than reloads.
  */
 export function UpdateNotice(): ReactNode {
@@ -45,12 +44,9 @@ export function UpdateNotice(): ReactNode {
       checking = true
       checkedAt = Date.now()
       void check().then((found) => {
-        if (!active) return
-        setError((current) => current === FEED_ERROR ? null : current)
-        if (found !== null) setUpdate(found)
+        if (active && found !== null) setUpdate(found)
       }).catch((cause: unknown) => {
         console.error('Manor could not check for updates', { cause })
-        if (active) setError(FEED_ERROR)
       }).finally(() => { checking = false })
     }
     const recheckWhenStale = (): void => {
@@ -84,19 +80,19 @@ export function UpdateNotice(): ReactNode {
     })
   }
 
-  if (update === null && error === null) return null
+  if (update === null) return null
   return (
     <aside className="app-update-notice" role="status" data-testid="app-update-notice">
       <div className="app-update-copy">
-        <strong>{update === null ? 'Update check interrupted' : 'Update available'}</strong>
-        {error !== null ? <p role="alert">{error}</p> : null}
-        {update !== null && error === null ? <p>Version {update.version} is ready to install.</p> : null}
+        <strong>Update available</strong>
+        {error !== null ? <p role="alert">{error}</p> : <p>Version {update.version} is ready to install.</p>}
       </div>
-      {update !== null ? (
-        <button type="button" className="ui-button ui-button--primary" data-testid="app-update-restart" disabled={installing} onClick={() => restartInto(update)}>
-          <RefreshCw size={14} />
-          {installing ? 'Updating…' : 'Restart to update'}
-        </button>
+      <button type="button" className="ui-button ui-button--primary" data-testid="app-update-restart" disabled={installing} onClick={() => restartInto(update)}>
+        <RefreshCw size={14} />
+        {installing ? 'Updating…' : 'Restart to update'}
+      </button>
+      {error !== null ? (
+        <button type="button" className="app-update-dismiss" aria-label="Dismiss" onClick={() => setError(null)}><X size={14} /></button>
       ) : null}
     </aside>
   )

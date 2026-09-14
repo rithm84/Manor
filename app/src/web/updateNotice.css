@@ -20,3 +20,17 @@
 .app-update-copy strong { font-weight: 600; }
 .app-update-copy p { margin: 3px 0 0; color: var(--ink-muted); }
 .app-update-notice > button { flex-shrink: 0; }
+.app-update-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-left: -6px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-muted);
+}
+.app-update-dismiss:hover { color: var(--ink); background: var(--surface-hover); }
