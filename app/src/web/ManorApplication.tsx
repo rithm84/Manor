@@ -58,6 +58,7 @@ function SignedInManor({ session, client, queries }: { session: Session; client:
     if (!ready) return
     const channel = client.channel(`manor:${session.user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'action_events', filter: `user_id=eq.${session.user.id}` }, payload => {
+        if ('command_id' in payload.new && typeof payload.new.command_id === 'string' && ready.gateway.issuedCommand(payload.new.command_id)) return
         const operation = 'operation' in payload.new && typeof payload.new.operation === 'string' ? payload.new.operation : 'remote_change'
         void ready.gateway.invalidateOperation(operation).then(() => window.dispatchEvent(new CustomEvent('manor:committed', { detail: { operation } })))
       }).subscribe(status => {

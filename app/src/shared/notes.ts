@@ -1,3 +1,4 @@
+import type { BlockOp } from './noteMerge'
 import { validateFileUploadSize } from './fileUploadPolicy'
 
 export type NotePageStatus = 'active' | 'archived' | 'trash'
@@ -138,8 +139,12 @@ export interface NotesApi {
   duplicatePage: (pageId: string) => Promise<NotesState>
   setFavorite: (mutation: NotePageFavoriteMutation) => Promise<NotesState>
   archivePage: (pageId: string) => Promise<NotesState>
-  trashPage: (pageId: string) => Promise<NotesState>
-  restorePage: (pageId: string) => Promise<NotesState>
+  trashPages: (pageIds: readonly string[]) => Promise<NotesState>
+  restorePages: (pageIds: readonly string[]) => Promise<NotesState>
+  /** Permanently deletes notes that are already in Trash, with their subpages; nothing recovers them afterwards. */
+  purgePages: (pageIds: readonly string[]) => Promise<NotesState>
+  /** Editor ops from the latest save that merged foreign block changes into this note, handed over once. */
+  takeMergedBlockOps: (pageId: string) => readonly BlockOp[]
   uploadAttachment: (upload: NoteAttachmentUpload) => Promise<NoteAttachment>
   resolveAttachment: (attachmentId: string) => Promise<string>
 }

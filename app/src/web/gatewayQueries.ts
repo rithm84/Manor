@@ -17,6 +17,7 @@ const groups: readonly {operations:readonly string[];tables:readonly ManorTable[
  {operations:['create_note_folder','update_note_folder'],tables:['note_folders']},
  {operations:['create_note','update_note','move_note','archive_note','trash_note','restore_note','restore_note_version','edit_note_blocks','move_note_block','move_note_blocks'],tables:['note_pages','note_versions','note_suggestions']},
  {operations:['remove_note_folder'],tables:['note_folders','note_pages','note_versions']},
+ {operations:['purge_note'],tables:['note_pages','note_versions','note_suggestions','note_attachments']},
  {operations:['touch_note'],tables:['note_pages']},
  {operations:['propose_note_edits'],tables:['note_suggestions']},
  {operations:['resolve_note_suggestions'],tables:['note_pages','note_versions','note_suggestions']},

@@ -13,14 +13,17 @@ export function noteContentUpdate(draft: PendingNoteDraft): NotePageContentUpdat
   }
 }
 
+/** Saves every pending draft in turn. Each save waits for the device-side protection of the draft it sends. */
 export async function persistPendingNotes(
   api: Pick<NotesApi, 'updatePage'>,
   readPending: () => PendingNoteDraft | null,
-  clearIfCurrent: (draft: PendingNoteDraft) => void
+  clearIfCurrent: (draft: PendingNoteDraft) => void,
+  awaitProtection: () => Promise<void>
 ): Promise<readonly NotePage[]> {
   const savedPages: NotePage[] = []
   let pending = readPending()
   while (pending !== null) {
+    await awaitProtection()
     const saved = await api.updatePage(noteContentUpdate(pending))
     savedPages.push(saved)
     clearIfCurrent(pending)
@@ -34,12 +37,13 @@ export type NoteSaveQueue = () => Promise<readonly NotePage[]>
 export function createNoteSaveQueue(
   api: Pick<NotesApi, 'updatePage'>,
   readPending: () => PendingNoteDraft | null,
-  clearIfCurrent: (draft: PendingNoteDraft) => void
+  clearIfCurrent: (draft: PendingNoteDraft) => void,
+  awaitProtection: () => Promise<void>
 ): NoteSaveQueue {
   let active: Promise<readonly NotePage[]> | null = null
   const save = (): Promise<readonly NotePage[]> => {
     if (active !== null) return active
-    const request = persistPendingNotes(api, readPending, clearIfCurrent)
+    const request = persistPendingNotes(api, readPending, clearIfCurrent, awaitProtection)
     let tracked: Promise<readonly NotePage[]>
     tracked = request.then(
       async (savedPages) => {

@@ -103,8 +103,15 @@ export class ManorGateway {
     return z.number().int().nonnegative().parse(row.revision)
   }
 
+  /** Commands this tab issued; their own realtime echoes carry nothing the local refresh did not already apply. */
+  private readonly issued = new Set<string>()
+
+  issuedCommand(commandId: string): boolean { return this.issued.has(commandId) }
+
   async command(operation: string, input: JsonObject, commandId: string): Promise<CommandResult> {
     z.uuid().parse(commandId)
+    this.issued.add(commandId)
+    if (this.issued.size > 500) this.issued.delete(this.issued.values().next().value as string)
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const { data, error, status } = await this.client.rpc('manor_command', {
         p_command_id: commandId, p_operation: operation, p_input: input
@@ -116,7 +123,8 @@ export class ManorGateway {
         window.dispatchEvent(new CustomEvent('manor:committed', { detail: { operation, commandId } }))
         return receipt
       }
-      if (attempt === 2 || (error.code === '40001' || error.code === 'PT409') || (status !== 0 && status !== 429 && status < 500)) {
+      // A revision conflict is final. A serialization failure (40001) is transient and the command id makes a retry a replay.
+      if (attempt === 2 || error.code === 'PT409' || (error.code !== '40001' && status !== 0 && status !== 429 && status < 500)) {
         throw new ManorRequestError(operation, error.code, error.message)
       }
       console.warn('Retrying Manor command', { operation, commandId, status, attempt: attempt + 1 })

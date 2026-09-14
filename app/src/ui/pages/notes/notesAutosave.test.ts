@@ -41,7 +41,8 @@ describe('notes save queue', () => {
     const save = persistPendingNotes(
       { updatePage },
       () => pending,
-      (confirmed) => { if (pending === confirmed) pending = null }
+      (confirmed) => { if (pending === confirmed) pending = null },
+      async () => {}
     )
 
     await Promise.resolve()
@@ -49,7 +50,7 @@ describe('notes save queue', () => {
     const firstResolve = resolvers[0]
     if (firstResolve === undefined) throw new Error('The first update was not started')
     firstResolve({ ...savedPage, title: 'First', contentJson: first.contentJson })
-    await Promise.resolve()
+    await new Promise((resolve) => setTimeout(resolve, 0))
     const secondResolve = resolvers[1]
     if (secondResolve === undefined) throw new Error('The second update was not started')
     secondResolve({ ...savedPage, title: 'Second', contentJson: second.contentJson })
@@ -75,7 +76,7 @@ describe('notes save queue', () => {
         void save()
       })
     }
-    save = createNoteSaveQueue({ updatePage }, () => pending, clearIfCurrent)
+    save = createNoteSaveQueue({ updatePage }, () => pending, clearIfCurrent, async () => {})
 
     const saving = save()
     await Promise.resolve()
@@ -83,7 +84,7 @@ describe('notes save queue', () => {
     if (firstResolve === undefined) throw new Error('The first update was not started')
     firstResolve({ ...savedPage, title: first.title, contentJson: first.contentJson })
     await Promise.resolve()
-    await Promise.resolve()
+    await new Promise((resolve) => setTimeout(resolve, 0))
     const secondResolve = resolvers[1]
     if (secondResolve === undefined) throw new Error('The queued update was not restarted')
     secondResolve({ ...savedPage, title: second.title, contentJson: second.contentJson })
@@ -97,7 +98,7 @@ describe('notes save queue', () => {
     const conflict = new Error('Record changed')
     const updatePage = vi.fn(async (): Promise<NotePage> => { throw conflict })
     const clear = vi.fn()
-    const save = createNoteSaveQueue({ updatePage }, () => pending, clear)
+    const save = createNoteSaveQueue({ updatePage }, () => pending, clear, async () => {})
     await expect(save()).rejects.toBe(conflict)
     await Promise.resolve()
     await Promise.resolve()
@@ -105,4 +106,22 @@ describe('notes save queue', () => {
     expect(clear).not.toHaveBeenCalled()
   })
 
+
+  it('waits for the latest device-side protection before each save', async () => {
+    const order: string[] = []
+    const updatePage = vi.fn(async (update: { title: string }) => { order.push(`save ${update.title}`); return { ...savedPage, title: update.title } })
+    const first = { id: 'note-1', title: 'First', contentJson: '[{"type":"paragraph","content":"First"}]' }
+    const second = { id: 'note-1', title: 'Second', contentJson: '[{"type":"paragraph","content":"Second"}]' }
+    let pending: typeof first | null = first
+    const awaitProtection = vi.fn(async () => { order.push(`protected ${pending?.title ?? 'none'}`) })
+    const saved = await persistPendingNotes(
+      { updatePage },
+      () => pending,
+      (confirmed) => { pending = confirmed === first ? second : null },
+      awaitProtection
+    )
+
+    expect(saved).toHaveLength(2)
+    expect(order).toEqual(['protected First', 'save First', 'protected Second', 'save Second'])
+  })
 })
