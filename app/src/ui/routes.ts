@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react'
 
+import { loadRichNoteEditor } from './pages/notes/loadRichNoteEditor'
+
 type PageModule = { default: ComponentType }
 
 /** One loader per route so the shell can start fetching a page chunk before React asks for it. */
@@ -11,7 +13,7 @@ export const routeLoaders: Readonly<Record<string, () => Promise<PageModule>>> =
   '/jobs': () => import('./pages/JobsPage').then((module) => ({ default: module.JobsPage })),
   '/notes': () => {
     // Opening Notes nearly always opens a note; fetch the editor chunk alongside the page instead of after it.
-    void import('./pages/notes/RichNoteEditor')
+    void loadRichNoteEditor()
     return import('./pages/NotesPage').then((module) => ({ default: module.NotesPage }))
   },
   '/bookmarks': () => import('./pages/BookmarksPage').then((module) => ({ default: module.BookmarksPage })),

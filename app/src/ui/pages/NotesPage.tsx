@@ -37,23 +37,26 @@ import { NotesList } from './notes/NotesList'
 import { EMPTY_SELECTION, pruneSelection, selectOne } from './notes/notesSelection'
 import type { NoteSelection } from './notes/notesSelection'
 import type { RichNoteEditorHandle } from './notes/RichNoteEditor'
+import { loadRichNoteEditor } from './notes/loadRichNoteEditor'
 import { NoteFindBar } from './notes/NoteFindBar'
 import { NotesPaneToggle } from './notes/NotesPaneToggle'
 import { useNotesPaneVisibility } from './notes/useNotesPaneVisibility'
 import './notes/notes.css'
 
 const NoteReviewDialog = lazy(async () => {
+  await loadRichNoteEditor()
   const module = await import('./notes/NoteReviewDialog')
   return { default: module.NoteReviewDialog }
 })
 
 const NoteReadOnlyPreview = lazy(async () => {
+  await loadRichNoteEditor()
   const module = await import('./notes/NoteReadOnlyPreview')
   return { default: module.NoteReadOnlyPreview }
 })
 
 const RichNoteEditor = lazy(async () => {
-  const module = await import('./notes/RichNoteEditor')
+  const module = await loadRichNoteEditor()
   return { default: module.RichNoteEditor }
 })
 
@@ -622,7 +625,7 @@ export function NotesPage(): ReactNode {
     if (!(await savePending())) return
     setMenuOpen(false)
     try {
-      const module = await import('./notes/RichNoteEditor')
+      const module = await loadRichNoteEditor()
       const markdown = module.contentJsonToMarkdown(contentJson)
       const anchor = document.createElement('a')
       anchor.href = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown' }))
@@ -667,7 +670,7 @@ export function NotesPage(): ReactNode {
     let lastState: NotesState | null = null
     let module: typeof import('./notes/RichNoteEditor')
     try {
-      module = await import('./notes/RichNoteEditor')
+      module = await loadRichNoteEditor()
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : String(loadError))
       return

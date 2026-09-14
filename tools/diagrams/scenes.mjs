@@ -245,7 +245,8 @@ export const scenes = {
     notes: [
       { text: 'Each page commits its own last cursor, so an interrupted pull repeats a page instead of skipping one.', x: 0, y: 1090, size: 13 },
       { text: 'A change to job_roles also re-pulls job_stage_transitions, which carries no feed trigger of its own.', x: 0, y: 1115, size: 13 },
-      { text: 'A connection error keeps the mirror serving reads; any other failure parks them on the server until a pull succeeds.', x: 0, y: 1140, size: 13 }
+      { text: 'A connection error keeps the mirror serving reads; any other failure parks them on the server until a pull succeeds.', x: 0, y: 1140, size: 13 },
+      { text: 'note_pages is always re-read, because opening a note moves last_opened_at without moving its revision.', x: 0, y: 1165, size: 13 }
     ]
   },
   'notes-drafts': {
