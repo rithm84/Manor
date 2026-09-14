@@ -18,6 +18,11 @@ function note(row: JsonObject): NotePage {
     archivedAt: row.archived_at, deletedAt: row.deleted_at })
 }
 
+/** Whether this device opened the note after the moment the row it just read records. */
+function openedLater(kept: NotePage, read: NotePage): boolean {
+  return Date.parse(kept.lastOpenedAt) > Date.parse(read.lastOpenedAt)
+}
+
 /** Fill absent imported IDs once, preserving every existing ID and unrelated JSON property. */
 function nativeBlocks(contentJson: string): JsonValue[] {
   const blocks = z.array(z.record(z.string(), z.json())).parse(JSON.parse(contentJson))
@@ -194,12 +199,14 @@ export class NotesService implements NotesApi {
         const [folders, pages, previous] = await Promise.all([this.gateway.rows('note_folders'), this.gateway.rows('note_pages'), this.drafts.snapshot(this.gateway.accountId)])
         state = {
           folders: folders.map((row) => parseNoteFolder({ id: row.id, name: row.name, parentFolderId: row.parent_folder_id, createdAt: row.created_at, updatedAt: row.updated_at })),
-          // A read that started before a save finished returns the note as it was; keep the newer copy this device already has.
+          // A read that started before a save finished returns the note as it was, and one after an opening whose pull
+          // failed still carries the earlier last_opened_at; keep the newer copy this device already has.
           pages: pages.map((row) => {
-            const id = z.string().parse(row.id), revision = z.number().int().parse(row.revision)
-            const known = this.adoptRevision(id, revision)
-            const newer = revision < known ? previous?.state.pages.find((page) => page.id === id) : undefined
-            return newer ?? note(row)
+            const current = note(row), revision = z.number().int().parse(row.revision)
+            const known = this.adoptRevision(current.id, revision)
+            const kept = previous?.state.pages.find((page) => page.id === current.id)
+            if (kept === undefined) return current
+            return revision < known || (revision === known && openedLater(kept, current)) ? kept : current
           })
         }
         await this.drafts.saveSnapshot({ accountId: this.gateway.accountId, state, revisions: Object.fromEntries(this.revisions) })
@@ -356,6 +363,10 @@ export class NotesService implements NotesApi {
     const result = await this.gateway.command('touch_note', { id, expected_revision: this.revisions.get(id) ?? 0 }, crypto.randomUUID())
     if (!result.record) throw new Error('Opening the note did not return its document')
     const saved = note(result.record)
+    this.adoptRevision(id, z.number().int().parse(result.record.revision))
+    // Opening moves last_opened_at without moving the revision, so the snapshot carries the receipt's row for a
+    // read that still sees the earlier timestamp to be overruled.
+    await this.remember(saved)
     const pending = await this.drafts.read(this.gateway.accountId, id)
     return pending === null ? saved : { ...saved, title: pending.title, contentJson: pending.contentJson }
   }

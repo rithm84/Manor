@@ -73,6 +73,7 @@ class MemoryDraftStore {
 }
 
 const NOW = '2026-09-13T20:00:00Z'
+const LATER = '2026-09-13T20:05:00Z'
 const row = (revision: number, title: string, content = JSON.parse(CONTENT) as JsonObject[]): JsonObject => ({ id: NOTE, title, folder_id: null, parent_page_id: null,
   content_json: content, favorite: false, status: 'active', created_at: NOW, updated_at: NOW, last_opened_at: NOW, archived_at: null, deleted_at: null, revision })
 
@@ -90,6 +91,10 @@ class RevisionCheckingGateway {
   async rows(table: string): Promise<JsonObject[]> { return table === 'note_pages' ? this.reads.shift() ?? [{ ...this.stored, revision: this.revision }] : [] }
   async command(operation: string, input: JsonObject): Promise<{ command_id: string; operation: string; replayed: boolean; record: JsonObject }> {
     await new Promise((resolve) => setTimeout(resolve, 20))
+    if (operation === 'touch_note') { // opening moves last_opened_at and nothing else
+      this.stored = { ...this.stored, last_opened_at: LATER }
+      return { command_id: 'c', operation, replayed: false, record: { ...this.stored, revision: this.revision } }
+    }
     this.sent.push(input.expected_revision as number)
     if (input.expected_revision !== this.revision) throw new ManorRequestError(operation, 'PT409', 'Record changed. Reload and resolve the edit.')
     this.versions.set(this.revision, { ...this.stored, revision: this.revision })
@@ -214,5 +219,23 @@ describe('NotesService.load', () => {
     await notes.acquireWriter(NOTE)
     await notes.protectDraft({ id: NOTE, title: 'Edited again', contentJson: CONTENT })
     expect(drafts.drafts.get(NOTE)?.baseRevision).toBe(2)
+  })
+})
+
+describe('NotesService.touchPage', () => {
+  it('keeps the later last-opened time when a read after opening still holds the earlier one at the same revision', async () => {
+    const gateway = new RevisionCheckingGateway()
+    const drafts = new MemoryDraftStore()
+    const notes = service(gateway, drafts)
+    gateway.reads.push([row(1, 'Stored')])
+    await notes.load()
+
+    const opened = await notes.touchPage(NOTE)
+    expect(Date.parse(opened.lastOpenedAt)).toBe(Date.parse(LATER))
+
+    gateway.reads.push([row(1, 'Stored')]) // a copy that never saw the opening, at the same revision
+    const state = await notes.load()
+
+    expect(Date.parse(state.pages[0]?.lastOpenedAt ?? '')).toBe(Date.parse(LATER))
   })
 })
