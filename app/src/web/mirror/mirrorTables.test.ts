@@ -1,6 +1,25 @@
 import { describe, expect, it } from 'vitest'
 
-import { identityFromObjectKey, keyFromIdentity, needsRebuild, rowKey, rowRevisionOf, standingFilters } from './mirrorTables'
+import {
+  identityFromObjectKey, isMirrored, keyFromIdentity, needsRebuild,
+  rowKey, rowRevisionOf, standingFilters, touchedWithoutRevision
+} from './mirrorTables'
+
+describe('the mirrored tables', () => {
+  it('include the notes rows a page reads, and not the version history', () => {
+    expect(isMirrored('note_folders')).toBe(true)
+    expect(isMirrored('note_pages')).toBe(true)
+    expect(isMirrored('note_suggestions')).toBe(true)
+    // A whole document per superseded revision, read only by version history and the conflict re-base.
+    expect(isMirrored('note_versions')).toBe(false)
+  })
+
+  it('mark note pages as a table that changes without its revision moving', () => {
+    // `touch_note` moves `last_opened_at` alone, so the feed reports the revision the local row already has.
+    expect(touchedWithoutRevision('note_pages')).toBe(true)
+    expect(touchedWithoutRevision('tasks')).toBe(false)
+  })
+})
 
 describe('mirror row keys', () => {
   it('joins composite keys in column order', () => {

@@ -54,11 +54,11 @@ describe('groupFeedChanges', () => {
 
   it('names the tables the mirror does not hold, and still advances the cursor', () => {
     const batch = groupFeedChanges([
-      change(9, 'note_pages', { id: 'note-1' }, 'update', 3),
+      change(9, 'note_versions', { note_id: 'note-1', revision: 3 }, 'insert', 3),
       change(10, 'purge_tombstones', { object_type: 'note', object_id: 'note-1' }, 'purge', null)
     ], 8)
     expect(batch.tables.size).toBe(0)
-    expect([...batch.ignored]).toEqual(['note_pages', 'purge_tombstones'])
+    expect([...batch.ignored]).toEqual(['note_versions', 'purge_tombstones'])
     expect(batch.lastCursor).toBe(10)
   })
 

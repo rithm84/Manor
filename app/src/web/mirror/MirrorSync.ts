@@ -6,7 +6,7 @@ import { IDENTITY_BATCH_LIMITS, readIdentityRows } from './identityReads'
 import type { DerivedName, MirrorRow, MirrorStatus, MirrorStore } from './MirrorStore'
 import {
   HOURLY_TABLES, JOB_ROLE_DEPENDENTS, LAUNCH_REFRESH_TABLES, MIRROR_TABLES,
-  needsRebuild, rowKey, rowRevisionOf, standingFilters, type MirrorTable
+  needsRebuild, rowKey, rowRevisionOf, standingFilters, touchedWithoutRevision, type MirrorTable
 } from './mirrorTables'
 import { groupFeedChanges, planTableApply, type TableChanges } from './pullPlan'
 import { FEED_PAGE_SIZE, WorkspaceFeed } from './WorkspaceFeed'
@@ -193,11 +193,12 @@ export class MirrorSync {
       if (!this.isReady || this.firstRun) {
         const head = await this.feed.cursor()
         if (needsRebuild({ ready: this.isReady, cursor: this.cursor }, head)) {
+          // The feed walk below then applies whatever committed while the fill ran, including this tab's
+          // own commands, which skip their after-commit pull until the mirror is serving.
           await this.bootstrap(head)
-          this.firstRun = false
-          return
+        } else {
+          await this.refreshTables(LAUNCH_REFRESH_TABLES)
         }
-        await this.refreshTables(LAUNCH_REFRESH_TABLES)
         this.firstRun = false
       }
       await this.applyFeed()
@@ -217,7 +218,7 @@ export class MirrorSync {
 
   /**
    * Fills an empty or stale mirror from the server, a few tables at a time. The head cursor is read first,
-   * so any change committed during the fill lands after it and the next pull applies it.
+   * so any change committed during the fill lands after it and the feed walk that follows the fill applies it.
    */
   private async bootstrap(head: number): Promise<void> {
     for (let offset = 0; offset < MIRROR_TABLES.length; offset += BOOTSTRAP_CONCURRENCY) {
@@ -288,8 +289,10 @@ export class MirrorSync {
       return
     }
     // Local revisions are worth a read only when the feed offers a revision to compare them to; tables
-    // without a revision column (calendar rows, listings) and recreated rows are always re-read.
-    const comparable = [...changes.byKey.values()].some((change) => change.action === 'reread' && change.revision !== null && !change.recreated)
+    // without a revision column (calendar rows, listings) and recreated rows are always re-read, and so is
+    // every row of a table an update can touch without moving its revision.
+    const comparable = !touchedWithoutRevision(table)
+      && [...changes.byKey.values()].some((change) => change.action === 'reread' && change.revision !== null && !change.recreated)
     const local = new Map<string, number | null>(
       comparable ? (await this.store.revisions(this.gateway.accountId, table)).map((row) => [row.key, row.revision]) : []
     )

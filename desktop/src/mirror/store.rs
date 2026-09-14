@@ -28,8 +28,12 @@ use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-/// Layout of the mirror file. Raising it discards every existing file.
-pub const MIRROR_SCHEMA_VERSION: u32 = 1;
+/// What a ready mirror file holds: the layout of its tables and the set of
+/// account tables the frontend copies into `rows`. Raising it discards every
+/// existing file, so the next launch rebuilds the copy from the server. Without
+/// the bump, a file built under the previous set stays `ready` while missing the
+/// tables that were added, and their reads would come back empty forever.
+pub const MIRROR_SCHEMA_VERSION: u32 = 2;
 
 /// Keys of the `meta` table.
 const META_SCHEMA_VERSION: &str = "schema_version";

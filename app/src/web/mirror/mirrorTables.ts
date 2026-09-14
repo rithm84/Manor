@@ -1,13 +1,18 @@
 import type { JsonObject, JsonValue, ManorTable, RowFilter } from '../ManorGateway'
 
 /**
- * The tables the local mirror holds. Notes keep their draft store and merge layer, files and task series
- * are reached through functions or storage, and the legacy habit tables are never read by a page, so none
- * of them are mirrored. Everything listed here is read straight from SQLite once the mirror is ready.
+ * The tables the local mirror holds. Notes folders, pages (whole rows, `content_json` included), and
+ * suggestions are among them. `note_versions` is not: it keeps a full document per superseded revision and
+ * only version history and the conflict re-base read it, and both stay on the server. `note_attachments`,
+ * files, task series, and the legacy habit tables are never read through `rows`, so they are not mirrored
+ * either. Everything listed here is read straight from SQLite once the mirror is ready. Adding or removing
+ * a table changes what a ready copy holds, so `MIRROR_SCHEMA_VERSION` in `desktop/src/mirror/store.rs`
+ * rises with it and the copies built under the old set are discarded.
  */
 export const MIRROR_TABLES = [
   'profiles', 'contexts', 'tasks', 'scratch_blocks', 'saved_task_views',
   'habits', 'habit_entries', 'mood_focus_entries',
+  'note_folders', 'note_pages', 'note_suggestions',
   'leetcode_attempts', 'leetcode_notes', 'leetcode_problems',
   'job_roles', 'job_stage_transitions', 'job_listings',
   'kb_entries', 'resumes', 'weekly_reviews',
@@ -22,6 +27,7 @@ export type MirrorTable = (typeof MIRROR_TABLES)[number]
 const KEY_COLUMNS: Record<MirrorTable, readonly string[]> = {
   profiles: ['user_id'], contexts: ['id'], tasks: ['id'], scratch_blocks: ['id'], saved_task_views: ['id'],
   habits: ['id'], habit_entries: ['habit_id', 'date'], mood_focus_entries: ['date'],
+  note_folders: ['id'], note_pages: ['id'], note_suggestions: ['id'],
   leetcode_attempts: ['id'], leetcode_notes: ['id'], leetcode_problems: ['id'],
   job_roles: ['id'], job_stage_transitions: ['id'], job_listings: ['id'],
   kb_entries: ['id'], resumes: ['id'], weekly_reviews: ['id'],
@@ -46,6 +52,19 @@ export const JOB_ROLE_DEPENDENTS: readonly MirrorTable[] = ['job_stage_transitio
 
 /** Feed-less tables, replaced in full whenever the app launches against a mirror that is already built. */
 export const LAUNCH_REFRESH_TABLES: readonly MirrorTable[] = [...HOURLY_TABLES, ...JOB_ROLE_DEPENDENTS]
+
+/**
+ * Tables an update can touch without moving `revision`. `touch_note` sets `last_opened_at` alone (see
+ * `supabase/migrations/20260910040945_web_recurrence_and_lifecycle.sql:134`) while the feed still reports
+ * the row's current revision, so a local revision equal to the feed's says nothing about such a row. For
+ * these tables the feed's revision must never excuse a skipped re-read.
+ */
+const TOUCHED_WITHOUT_REVISION: readonly MirrorTable[] = ['note_pages']
+
+/** Whether a row of this table can change without its revision moving, which makes every re-read mandatory. */
+export function touchedWithoutRevision(table: MirrorTable): boolean {
+  return TOUCHED_WITHOUT_REVISION.includes(table)
+}
 
 /** Key columns hold ids, dates, and months, never this control character, so a join on it cannot collide. */
 const KEY_SEPARATOR = '\u001f'
