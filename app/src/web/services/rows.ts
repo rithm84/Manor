@@ -38,3 +38,16 @@ export async function accountToday(gateway: ManorGateway): Promise<{ today: stri
   const today = dateInTimezone(new Date(), timezone)
   return { today, timezone }
 }
+
+/**
+ * Rows from a read, with any row the cache already holds at a higher revision kept in its place. A read that
+ * started before a command finished returns that record as it was, and the cache must not fall back to it.
+ */
+export function newerRows(cached: readonly JsonObject[] | null, read: readonly JsonObject[]): JsonObject[] {
+  if (cached === null) return [...read]
+  const held = new Map(cached.map((row) => [row.id, row] as const))
+  return read.map((row) => {
+    const known = held.get(row.id)
+    return known !== undefined && rowRevision(known) > rowRevision(row) ? known : row
+  })
+}

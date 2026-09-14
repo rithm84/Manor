@@ -395,7 +395,9 @@ export function HomePage(): ReactNode {
       try {
         await updateTask(record.task)
       } catch {
-        // updateTask already surfaced the error.
+        // updateTask already surfaced the error; the entry stays so the next Cmd+Z tries again.
+        undoStack.current = [...undoStack.current, entry]
+        settleUndo()
       }
       return
     }
@@ -404,6 +406,8 @@ export function HomePage(): ReactNode {
       setTasks((current) => [...current, persisted])
       setPersistError(null)
     } catch (error) {
+      undoStack.current = [...undoStack.current, entry]
+      settleUndo()
       reportPersistenceError('Could not restore task', error)
     }
   }
