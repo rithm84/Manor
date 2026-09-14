@@ -12,6 +12,9 @@ function unexpectedMutation(): never {
 const account: AccountApi = {
   connections: async () => [],
   revokeConnection: unexpectedMutation,
+  connectionRequest: unexpectedMutation,
+  approveConnection: unexpectedMutation,
+  denyConnection: unexpectedMutation,
   current: async () => null,
   avatarUrl: async () => null,
   signInWithGoogle: unexpectedMutation,

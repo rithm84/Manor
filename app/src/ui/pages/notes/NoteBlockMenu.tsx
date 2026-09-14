@@ -3,6 +3,7 @@ import { BlockColorsItem, DragHandleMenu, RemoveBlockItem, TableColumnHeaderItem
   useComponentsContext, useExtensionState } from '@blocknote/react'
 import { Copy, Link2, Move, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useShell } from '../../../web/shell/ShellContext'
 import type { NoteEditor, NoteEditorBlock } from './noteEditorSchema'
 
 function copiedBlocks(blocks: readonly NoteEditorBlock[]): NoteEditorBlock[] {
@@ -11,6 +12,7 @@ function copiedBlocks(blocks: readonly NoteEditorBlock[]): NoteEditorBlock[] {
 
 export function NoteBlockMenu({ editor, noteId, onError, onMove }: { editor: NoteEditor; noteId: string; onError: (message: string) => void; onMove: (blockIds: readonly string[]) => void }): ReactNode {
   const components = useComponentsContext()
+  const shell = useShell()
   const target = useExtensionState(SideMenuExtension, { editor, selector: (state) => state?.block })
   if (components === undefined || target === undefined) return null
   const selected = editor.getSelection()?.blocks
@@ -24,7 +26,8 @@ export function NoteBlockMenu({ editor, noteId, onError, onMove }: { editor: Not
       editor.focus()
     }}><span data-testid="duplicate-note-block">Duplicate</span></Item>
     <Item className="bn-menu-item" icon={<Link2 size={14} />} onClick={() => {
-      const url = new URL(window.location.href)
+      // A copied link travels outside the window, so it has to address the app itself.
+      const url = new URL(shell.appUrl(`${window.location.pathname}${window.location.search}`))
       url.searchParams.set('note', noteId)
       url.hash = `block=${encodeURIComponent(block.id)}`
       void navigator.clipboard.writeText(url.toString()).catch((failure: unknown) => onError(failure instanceof Error ? failure.message : String(failure)))

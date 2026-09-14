@@ -6,7 +6,7 @@ Operational guide for coding agents working on Manor.
 
 ## Project Overview
 
-Manor is a personal productivity web app replacing the legacy Notion system. The accepted
+Manor is a personal productivity app for macOS replacing the legacy Notion system. The accepted
 product behavior, business rules, and scope are in [docs/PRD.md](docs/PRD.md).
 Technical design lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Codex operates Manor through remote MCP. Backend jobs own ingestion, embeddings, and maintenance; hosted ChatGPT Work owns scheduled review generation.
@@ -14,7 +14,7 @@ The UI redesign uses Mixpanel aesthetics and Notion editing UX, with
 deliberately designed light and dark modes. See docs/DESIGN.md and the
 evidence in docs/REDESIGN-REPORT.md; retained Paper styles are superseded.
 
-**Implementation status:** `app/` is a runnable Vite web app with real Supabase adapters, transactional commands, shared agent tools, and durable Notes editing. The production backend and `mymanor.vercel.app` are deployed with the preserved user data; ARCHITECTURE's "Status" section lists what is verified and what remains, and its "Migration and verification" section lists the acceptance checks. Preserve existing user data and unrelated uncommitted work.
+**Implementation status:** `app/` is the React frontend (Vite) with real Supabase adapters, transactional commands, shared agent tools, and durable Notes editing, and `desktop/` is the Tauri shell that packages it as the macOS app and ships signed updates from GitHub Releases. The production backend is deployed with the preserved user data; ARCHITECTURE's "Status" section lists what is verified and what remains, and its "Migration and verification" section lists the acceptance checks. Preserve existing user data and unrelated uncommitted work.
 
 Supabase configuration lives in repo-root `.env.local` (never commit or print
 it). Migrations live in `supabase/migrations/`; the existing deployment uses
@@ -31,6 +31,7 @@ manor/
 │   ├── shared/              # Domain types, validation, and calculations
 │   └── web/                 # Authentication, Supabase adapters, drafts, services
 ├── supabase/                # Migrations, remote MCP, ingestion, and workers
+├── desktop/                 # Tauri 2 desktop shell: Rust crate, config, icons
 ├── tools/recovery/          # Encrypted backup and isolated restore operations
 ├── tools/diagrams/          # Official Excalidraw SVG export tooling
 ├── .agents/skills/          # Vendored skill groups and canonical inventory
@@ -43,12 +44,12 @@ Run from the repository root:
 
 - `npm --prefix app run typecheck` — required after code changes.
 - `npm --prefix app test` — domain and UI checks.
-- `npm --prefix app run dev` — local web app on port 5173.
-- `npm --prefix app run build` — build the Vite web application.
+- `npm --prefix app run dev` — the Vite dev server that `npm --prefix desktop run dev` opens the app window against.
+- `npm --prefix app run build` — build the frontend bundle that the desktop shell embeds.
+- `npm --prefix desktop run build` and `npm --prefix desktop run build:staging` — build the macOS app for production or staging; `npm --prefix desktop run release` and `release:staging` build, sign, and publish an update; `desktop/README.md` covers setup, env files, and installation.
 - `npm --prefix tools/diagrams run compose && npm --prefix tools/diagrams run render` — rebuild the documentation diagrams from `tools/diagrams/scenes.mjs` and export their SVGs.
-- `npm --prefix tools/perf run bench -- <session.json> <origin> <label>` — signed-in performance benchmark; see docs/PERFORMANCE.md.
 
-Local dev servers cover unauthenticated UI work, typecheck, and tests only; localhost is not an authorized staging origin, so signed-in and end-to-end testing happens on the hosted staging site. Never substitute showroom fixtures for signed-in data. Setup is in app/README.md. Recovery tooling and its provisioning requirements are in tools/recovery/README.md.
+The dev server covers unauthenticated UI work, typecheck, and tests only; the dev origin is not an authorized backend origin, so signed-in and end-to-end testing happens on a staging build bundle (`build:staging -- --debug`, registered with Launch Services), never with `tauri dev` against an authorized backend. The Rust crate must pass `npm --prefix desktop run fmt`, `lint`, and `test`. Never substitute showroom fixtures for signed-in data. Setup is in app/README.md. Recovery tooling and its provisioning requirements are in tools/recovery/README.md.
 
 ## Required Read Order
 

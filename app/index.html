@@ -6,8 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="description" content="Your tasks, habits, notes, and daily perspective. Together in Manor." />
     <link rel="icon" type="image/svg+xml" href="/brand/manor-mark.svg" />
-    <link rel="apple-touch-icon" href="/brand/manor-icon-192.png" />
-    <meta name="theme-color" content="#805096" />
     <title>Manor</title>
     <script>
       // Paint the splash in the saved theme before any bundle loads; the app's theme module takes over on boot.
@@ -16,7 +14,6 @@
         var hour = new Date().getHours()
         var dark = theme === 'dark' || (theme === 'temporal' ? (hour < 6 || hour >= 18) : theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-        document.querySelector('meta[name="theme-color"]').content = dark ? '#19181d' : '#ffffff'
       } catch (error) {}
     </script>
     <style>

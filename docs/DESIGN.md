@@ -16,7 +16,7 @@ Light and dark modes are both required, and each mode's surfaces, contrast, cont
 
 ## Manor mark
 
-The logo is the **Flowing M**: a continuous, rounded monogram with a restrained plum treatment. The canonical standalone asset is `app/public/brand/manor-mark.svg`, and `app/src/ui/components/brand/ManorLogo.tsx` renders the same SVG geometry inline for the app sidebar and account surface, at its established proportions and theme-aware color. The installable app's icons (`app/public/brand/manor-icon-*.png`) are the same mark in white on the plum tile, with a maskable variant padded for rounded tiles. There are no alternate marks, sketched treatments, or character imagery.
+The logo is the **Flowing M**: a continuous, rounded monogram with a restrained plum treatment. The canonical standalone asset is `app/public/brand/manor-mark.svg`, and `app/src/ui/components/brand/ManorLogo.tsx` renders the same SVG geometry inline for the app sidebar and account surface, at its established proportions and theme-aware color. The desktop app's icon (`desktop/icons/`) is the same mark in white on the plum tile; macOS applies its own rounded mask. There are no alternate marks, sketched treatments, or character imagery.
 
 ## Typography and density
 
@@ -51,6 +51,8 @@ Typing, keyboard navigation, selection, and repeated editor actions respond imme
 ## Shared components and motion
 
 Each button, menu row, property editor, tooltip, date picker, dialog, filter, table, chart legend, empty state, and focus treatment has one shared recipe, adapting Notion's contextual layout to Manor's aesthetic. Object details are centered dialogs; sidebar navigation and small anchored controls keep their separate purposes.
+
+The desktop app draws its own title bar: the window controls sit at the top left over the sidebar's top space, that space and the top bar act as drag handles, and the controls inside them keep their clicks. The window opens hidden and appears once the saved theme is applied, so neither theme flashes on launch.
 
 Create and detail dialogs use compact property rows with the label in a stable column and the control beside it. Common properties stay visible; conditional or advanced properties expand in place inside a scrolling body. Each dialog has a plain DM Sans title, an obvious top-right close control, a neutral Cancel action, and one primary save action. Dirty dismissal asks before discarding, failed saves keep the draft and show an actionable error, and destructive actions use a separate confirmation when reversal is not immediate.
 

@@ -6,7 +6,7 @@ This page defines what Manor does: its behavior, business rules, and scope. The 
 
 ## Product thesis
 
-Manor is a personal productivity web app for habits, mood and focus, tasks, LeetCode practice, job applications, notes, and a knowledge base. Fitness ingestion is planned. Codex supplies interactive reasoning and conversation, using Manor's MCP tools to read and act on the same data as the UI.
+Manor is a personal productivity app for macOS covering habits, mood and focus, tasks, LeetCode practice, job applications, notes, and a knowledge base. Fitness ingestion is planned. Codex supplies interactive reasoning and conversation, using Manor's MCP tools to read and act on the same data as the UI.
 
 Manor replaces your legacy Notion system (private reference: [workflow workarounds](NOTION-REPORT.md#5-workflow-workarounds)). Logging and maintaining it takes little effort. Even with one primary user, Manor meets a product bar: account isolation, sign-in, onboarding, settings, empty states, and durable data.
 
@@ -30,7 +30,7 @@ A **module** is a tracker or feature unit. Simple trackers are config-defined in
 
 ### Platform
 
-Manor is a web app. Agents operate it through remote MCP, which needs no open Manor page, and Codex supplies the conversation and agent capabilities. There is no Electron app, embedded Alfred assistant, native summon UI, desktop hotkey, permission onboarding, or desktop notification. Implementation status is in the architecture's [status section](ARCHITECTURE.md#status).
+Manor is a macOS desktop app: a React frontend inside a Tauri shell, installed from a signed build and updated automatically from Manor's releases. There is no website. Signing in opens Google in the system browser, which hands the result back to the app through a link the app registered with macOS; an agent asking for access opens the same way, and you approve it inside the app. Links that leave the app open in the browser, and a copied link opens the app. Agents operate Manor through remote MCP, which needs no open Manor window, and Codex supplies the conversation and agent capabilities. There is no Electron shell, embedded Alfred assistant, native summon UI, desktop hotkey, permission onboarding, or desktop notification. Implementation status is in the architecture's [status section](ARCHITECTURE.md#status).
 
 ### Reliable data and offline work
 
@@ -147,7 +147,7 @@ Cross-column board drops and stage-menu moves open the role dialog as an unsaved
 
 ### Notes
 
-Notes is a cloud-backed document workspace with protected browser-local drafts and queued saves. Pages keep folders, their hierarchy, favorites, recents, archive, Trash, full-text search, duplication, movement, Markdown import and export, and durable app-owned attachments. The Notion parity target concerns document editing; it doesn't extend Manor into Notion databases, shared workspaces, or general project management. Notes navigation and the note list collapse independently into slim rails, preserving the open editor and remembering each panel's visibility on the device.
+Notes is a cloud-backed document workspace with protected device-local drafts and queued saves. Pages keep folders, their hierarchy, favorites, recents, archive, Trash, full-text search, duplication, movement, Markdown import and export, and durable app-owned attachments. The Notion parity target concerns document editing; it doesn't extend Manor into Notion databases, shared workspaces, or general project management. Notes navigation and the note list collapse independently into slim rails, preserving the open editor and remembering each panel's visibility on the device.
 
 The target is full Notion parity for note-taking fundamentals and rich content, including the editing UX: paragraphs, headings, lists (including document-local checkboxes), toggles, quotes, dividers, callouts, highlighted code, inline formatting and links, text and background colors, simple tables, images, audio, video, files, internal page mentions, equations, a live table of contents, web bookmarks, sandboxed embeds, and responsive column layouts. Document checkboxes don't create or synchronize Manor tasks. Image handling includes distinct captions and alt text, resizing, and cropping, and attachment insertion, replacement, and failure recovery are complete workflows.
 
@@ -187,7 +187,7 @@ This is planned delivery scope, not a claim that every feature exists. Technical
 
 ## Non-goals and deferred work
 
-**Non-goals:** Electron support; an embedded conversational or voice agent; recreating a native summon UI; unrestricted agent database access; a Journal or any private encrypted writing surface; a user-facing action log; multi-user collaboration, teams, or sharing; a general-purpose Notion competitor; a standalone calendar workspace; mascots or characters.
+**Non-goals:** an Electron shell; an embedded conversational or voice agent; recreating a native summon UI; unrestricted agent database access; a Journal or any private encrypted writing surface; a user-facing action log; multi-user collaboration, teams, or sharing; a general-purpose Notion competitor; a standalone calendar workspace; mascots or characters.
 
 **Deferred:** native iOS and proactive notification delivery; finance and media modules; additional jobs sources; Google Calendar push updates and iCloud CalDAV; fitness ingestion until its schemas are agreed. Notes cloud storage is part of the web foundation, not deferred.
 
@@ -214,6 +214,7 @@ The following table is the concise record of decisions that govern the current t
 | 2026-09-11 | Google Calendar sync runs every minute with a hard limit of twelve calendars across all connected Google accounts; over-limit connections are rejected and later over-limit calendars are skipped without interrupting sync (integration boundary). |
 | 2026-09-12 | Journal removed entirely: no encrypted writing surface, package, schema, or tooling (non-goals). |
 | 2026-09-13 | WebMCP removed; remote MCP is the only agent transport, with no live-browser context, selection, or presentation tools (platform, agent tools). |
+| 2026-09-13 | Manor becomes a macOS desktop app built with Tauri and the website and its Vercel deployments are retired: one frontend, sign-in and agent consent through the system browser and a link back into the app, separate staging and production identities, and automatic signed updates from GitHub Releases (platform). |
 | 2026-09-13 | Course calendar feed connection: the Canvas feed link is saved in Settings and read live by an agent tool; no ingestion and no automatic tasks (integration boundary). |
 | 2026-09-13 | Day-and-night theme preference: light from 6 AM to 6 PM local time, dark otherwise (design system). |
 | 2026-09-13 | Permanent deletion from Trash as a user-only action that purges at once; multi-select note list with batch Trash, restore, and permanent delete; block-level merge of concurrent note edits, with compare-versions reserved for same-block conflicts (notes, recovery and retention). |

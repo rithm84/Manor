@@ -27,13 +27,14 @@ export class IntegrationService {
     return schema.parse(data)
   }
 
-  async connect(provider: 'google' | 'x'): Promise<void> {
+  /** Starts an OAuth flow: the browser goes to the provider, and the callback returns to Settings. */
+  async connect(provider: 'google' | 'x', openAuthorization: (url: string) => Promise<void>): Promise<void> {
     const verifier = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '')
     const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))
     const challenge = btoa(String.fromCharCode(...hash)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '')
     const result = await this.request('oauth_start', { provider, codeChallenge: challenge }, z.object({ url: z.url(), state: z.string() }))
     sessionStorage.setItem(`manor-connection:${result.state}`, verifier)
-    window.location.assign(result.url)
+    await openAuthorization(result.url)
   }
 
   async completeConnection(code: string, state: string): Promise<void> {
@@ -48,8 +49,11 @@ export class IntegrationService {
 export class CalendarService implements CalendarApi {
   private readonly gateway: ManorGateway
   private readonly integration: IntegrationService
-  constructor(gateway: ManorGateway) { this.gateway = gateway; this.integration = new IntegrationService(gateway, 'integrations') }
-  connect(): Promise<void> { return this.integration.connect('google') }
+  private readonly openAuthorization: (url: string) => Promise<void>
+  constructor(gateway: ManorGateway, openAuthorization: (url: string) => Promise<void>) {
+    this.gateway = gateway; this.integration = new IntegrationService(gateway, 'integrations'); this.openAuthorization = openAuthorization
+  }
+  connect(): Promise<void> { return this.integration.connect('google', this.openAuthorization) }
   completeConnection(code: string, state: string): Promise<void> { return this.integration.completeConnection(code, state) }
   async accounts(): Promise<CalendarAccount[]> {
     return (await this.gateway.rows('calendar_accounts')).map((row) => accountSchema.parse({ id: row.id, email: row.email, connectedAt: row.connected_at }))
@@ -90,8 +94,11 @@ export class CalendarService implements CalendarApi {
 export class XService implements XApi {
   private readonly gateway: ManorGateway
   private readonly integration: IntegrationService
-  constructor(gateway: ManorGateway) { this.gateway = gateway; this.integration = new IntegrationService(gateway, 'integrations') }
-  connect(): Promise<void> { return this.integration.connect('x') }
+  private readonly openAuthorization: (url: string) => Promise<void>
+  constructor(gateway: ManorGateway, openAuthorization: (url: string) => Promise<void>) {
+    this.gateway = gateway; this.integration = new IntegrationService(gateway, 'integrations'); this.openAuthorization = openAuthorization
+  }
+  connect(): Promise<void> { return this.integration.connect('x', this.openAuthorization) }
   completeConnection(code: string, state: string): Promise<void> { return this.integration.completeConnection(code, state) }
   async status(): Promise<XConnectionStatus> {
     const { data, error } = await this.gateway.client.rpc('manor_x_status')
