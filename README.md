@@ -120,7 +120,7 @@ docs/              PRD, architecture, design charter, research
 
 ## Status
 
-Production runs at [mymanor.vercel.app](https://mymanor.vercel.app) on the migrated Electron-era data. Remaining release items, such as the off-site file backup drill, are tracked in [Architecture §1](docs/ARCHITECTURE.md#1-status-and-scope). Manor is built for one account; collaboration and sharing are out of scope.
+Production runs at [mymanor.vercel.app](https://mymanor.vercel.app) on the migrated Electron-era data. Remaining release items, such as the off-site file backup drill, are tracked in [architecture status](docs/ARCHITECTURE.md#status). Manor is built for one account; collaboration and sharing are out of scope.
 
 ## Credits
 
