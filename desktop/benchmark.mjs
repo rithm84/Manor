@@ -116,6 +116,26 @@ function quit(identity) {
 }
 
 /**
+ * Launches the app, retrying while Launch Services still sees the process that just quit (error -600).
+ *
+ * @param {typeof IDENTITIES.production} identity The app to launch.
+ * @returns {void}
+ */
+function launch(identity) {
+  let last = null
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      execFileSync('open', [identity.app], { stdio: 'pipe' })
+      return
+    } catch (cause) {
+      last = cause
+      execFileSync('sleep', ['0.5'])
+    }
+  }
+  throw new Error(`${identity.name} did not launch after 10 attempts: ${last instanceof Error ? last.message : String(last)}`)
+}
+
+/**
  * Launches the app cold and records its boot milestones and first settled route.
  *
  * @param {typeof IDENTITIES.production} identity The app to launch.
@@ -125,13 +145,14 @@ function quit(identity) {
 async function measureLaunch(identity, logPath) {
   quit(identity)
   const start = statSync(logPath).size
-  execFileSync('open', [identity.app])
+  launch(identity)
   const milestone = (name) => (entry) => entry.message === 'boot' && entry.fields.milestone === name
   const shell = await waitForLine(logPath, start, milestone('shell'), LAUNCH_TIMEOUT_MS)
   const session = await waitForLine(logPath, shell.offset, milestone('session'), LAUNCH_TIMEOUT_MS)
   if (session.entry.fields.signed_in !== 'true') throw new Error(`${identity.name} is not signed in; sign in once, then run the benchmark again`)
   const account = await waitForLine(logPath, session.offset, milestone('account'), LAUNCH_TIMEOUT_MS)
-  const route = await waitForLine(logPath, account.offset, (entry) => entry.message === 'route settled', LAUNCH_TIMEOUT_MS)
+  // The router lands on `/` first and redirects to Home; the launch measurement is the Home settle.
+  const route = await waitForLine(logPath, account.offset, (entry) => entry.message === 'route settled' && entry.fields.path !== '/', LAUNCH_TIMEOUT_MS)
   return {
     shell: Number(shell.entry.fields.since_launch_ms),
     session: Number(session.entry.fields.since_launch_ms),
