@@ -67,7 +67,7 @@ The sidebar docks or collapses to a hover overlay; it is docked above and collap
 
 ## Working with an agent
 
-Manor exposes 112 operations (46 reads, 66 writes) at `https://<project-ref>.supabase.co/functions/v1/manor-mcp`. Connect it as an MCP server in ChatGPT, Codex, or any OAuth-capable client, approve the client on Manor's consent screen, and ask for work in plain language:
+Manor exposes 113 operations (47 reads, 66 writes) at `https://<project-ref>.supabase.co/functions/v1/manor-mcp`. Connect it as an MCP server in ChatGPT, Codex, or any OAuth-capable client, approve the client on Manor's consent screen, and ask for work in plain language:
 
 - "Add this posting to my applications and attach the resume I used for NVIDIA."
 - "Read my inbox and create tasks for anything with a deadline this week."

@@ -506,3 +506,8 @@
 }
 .set-connected-account { border-top: 1px solid var(--hairline); padding-left: 12px; }
 .set-integration-notice { color: var(--ink-body); background: var(--surface-soft); border-radius: 6px; padding: 10px 12px; font-size: 13px; line-height: 1.5; }
+
+/* Course calendar link: the field and its Save sit on one line and stack when narrow. */
+.set-feed-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; max-width: 420px; }
+.set-feed-form .ui-input-wrap { flex: 1 1 240px; min-width: 0; }
+.set-inline-actions { display: inline-flex; gap: 8px; }
