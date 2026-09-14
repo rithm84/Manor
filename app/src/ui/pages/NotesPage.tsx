@@ -14,6 +14,7 @@ import {
   Library,
   Move,
   Pencil,
+  RefreshCw,
   Search,
   Star,
   Trash2,
@@ -796,7 +797,7 @@ export function NotesPage(): ReactNode {
               setData((current) => ({ ...current, pages: current.pages.map((page) => pages.find((saved) => saved.id === page.id) ?? page) }))
               setDeferredNoteIds((current) => current.filter((id) => !pages.some((page) => page.id === id)))
               setError(null)
-            }).catch((failure: unknown) => setError(failure instanceof Error ? failure.message : String(failure)))}><Upload size={14} />Sync changes</button>
+            }).catch((failure: unknown) => setError(failure instanceof Error ? failure.message : String(failure)))}><RefreshCw size={14} />Sync changes</button>
             <button type="button" onClick={() => importRef.current?.click()}><Upload size={14} /> Import notes</button>
             <input ref={importRef} type="file" accept=".md,.markdown,.json,text/markdown,application/json" multiple onChange={(event) => void importMarkdown(event)} hidden />
           </div>

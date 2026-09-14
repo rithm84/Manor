@@ -273,7 +273,7 @@ export function SettingsPage(): ReactNode {
               <h2 className="set-section-title">About</h2>
               <div className="set-card">
                 <SettingsRow label="Manor" description="Version">
-                  <span className="set-version tnum">0.1.0</span>
+                  <span className="set-version tnum">{__MANOR_VERSION__}</span>
                 </SettingsRow>
               </div>
             </section>
