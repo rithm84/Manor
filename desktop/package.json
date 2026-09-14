@@ -13,6 +13,7 @@
     "lint": "cargo clippy --all-targets -- -D warnings",
     "test": "cargo test",
     "icon": "tauri icon icons/manor-icon-1024.png",
+    "benchmark": "node benchmark.mjs",
     "release": "node release.mjs --env production",
     "release:staging": "node release.mjs --env staging"
   },

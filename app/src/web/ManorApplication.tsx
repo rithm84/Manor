@@ -14,6 +14,7 @@ import { NoteDraftStore } from './notes/NoteDraftStore'
 import { AUTH_CALLBACK_ROUTE } from './shell/deepLinks'
 import type { DesktopShell } from './shell/DesktopShell'
 import type { RouteRequest } from './shell/DeepLinkNavigation'
+import { logBootMilestone } from './shell/timing'
 import { createServices } from './services/createServices'
 import { prefetchRoute } from './prefetch'
 import { preloadRoute } from '../ui/routes'
@@ -49,13 +50,17 @@ function SignedInManor({ session, client, queries, shell, routeRequest, onRouteA
       if (!email) throw new Error('Your Google account did not provide an email address')
       const name = typeof session.user.user_metadata.full_name === 'string' ? session.user.user_metadata.full_name : email.split('@')[0]
       const services = createServices(gateway, drafts, shell)
-      const open = (account: ManorAccount): void => { prefetchRoute(services, account, location.pathname); setReady({ account, gateway, services }) }
+      const open = (account: ManorAccount, cached: boolean): void => {
+        prefetchRoute(services, account, location.pathname)
+        setReady({ account, gateway, services })
+        logBootMilestone('account', shell.launchedAt, { cached: String(cached) })
+      }
       // A device that opened this account before renders at once; the profile round trip reconciles name and time zone afterwards.
       const cached = cachedAccount(session.user.id, email)
-      if (cached !== null && active) open(cached)
+      if (cached !== null && active) open(cached, true)
       const account = await loadAccount(gateway, email, name)
       if (!active) { drafts.close(); return }
-      if (cached === null) open(account)
+      if (cached === null) open(account, false)
       else if (account.name !== cached.name || account.timezone !== cached.timezone) setReady((current) => current === null ? current : { ...current, account })
     }
     void initialize().catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : 'Account setup failed') })
@@ -108,10 +113,13 @@ export function ManorApplication({ client, queries, shell }: { client: SupabaseC
     void client.auth.getSession().then(({ data, error: failure }) => {
       if (!active) return
       if (failure) setError(failure.message)
-      else setSession(data.session)
+      else {
+        logBootMilestone('session', shell.launchedAt, { signed_in: String(data.session !== null) })
+        setSession(data.session)
+      }
     })
     return () => { active = false; listener.subscription.unsubscribe() }
-  }, [client])
+  }, [client, shell])
   useEffect(() => { if (session === null) queries.clear() }, [session, queries])
   return <QueryClientProvider client={queries}>
     {error ? <main className="web-status" role="alert">{error}</main>

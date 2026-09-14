@@ -8,6 +8,7 @@ import { createDesktopShell, type DesktopShell } from './web/shell/DesktopShell'
 import { initializeTheme } from './web/theme'
 import { preloadCompletionSound } from './ui/sound/sounds'
 import { UpdateNotice } from './web/UpdateNotice'
+import { logBootMilestone } from './web/shell/timing'
 
 class AppBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
   state = { error: null as string | null }
@@ -26,6 +27,7 @@ const root = createRoot(element)
 let shell: DesktopShell | null = null
 try {
   shell = await createDesktopShell()
+  logBootMilestone('shell', shell.launchedAt, {})
   const client = createManorClient()
   const queries = createManorQueryClient()
   root.render(<AppBoundary>

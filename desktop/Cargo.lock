@@ -2184,6 +2184,7 @@ name = "manor-desktop"
 version = "0.1.0"
 dependencies = [
  "log",
+ "serde",
  "serde_json",
  "tauri",
  "tauri-build",

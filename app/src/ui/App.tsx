@@ -6,6 +6,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 
 import { DeepLinkNavigation, useLaunchRoute, type RouteRequest } from '../web/shell/DeepLinkNavigation'
 import type { DesktopShell } from '../web/shell/DesktopShell'
+import { RouteTiming } from '../web/shell/RouteTiming'
 import { ShellProvider } from '../web/shell/ShellContext'
 
 import { AgentConsentPage } from './pages/AgentConsentPage'
@@ -29,6 +30,7 @@ export function App({ services, shell, routeRequest, onRouteApplied }: { service
     <ShellProvider shell={shell}>
     <Tooltip.Provider delay={400} timeout={500}><BrowserRouter>
       <DeepLinkNavigation request={pendingRoute} onApplied={onRouteApplied} />
+      <RouteTiming />
       <Suspense fallback={<div role="status" className="web-status">Opening page…</div>}><Routes>
         <Route element={<AppFrame />}>
           <Route path="/home" element={<HomePage />} />

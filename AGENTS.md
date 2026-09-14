@@ -46,7 +46,7 @@ Run from the repository root:
 - `npm --prefix app test` — domain and UI checks.
 - `npm --prefix app run dev` — the Vite dev server that `npm --prefix desktop run dev` opens the app window against.
 - `npm --prefix app run build` — build the frontend bundle that the desktop shell embeds.
-- `npm --prefix desktop run build` and `npm --prefix desktop run build:staging` — build the macOS app for production or staging; `npm --prefix desktop run release` and `release:staging` build, sign, and publish an update; `desktop/README.md` covers setup, env files, and installation.
+- `npm --prefix desktop run build` and `npm --prefix desktop run build:staging` — build the macOS app for production or staging; `npm --prefix desktop run release` and `release:staging` build, sign, and publish an update; `npm --prefix desktop run benchmark` measures launch and navigation on the installed app; `desktop/README.md` covers setup, env files, and installation.
 - `npm --prefix tools/diagrams run compose && npm --prefix tools/diagrams run render` — rebuild the documentation diagrams from `tools/diagrams/scenes.mjs` and export their SVGs.
 
 The dev server covers unauthenticated UI work, typecheck, and tests only; the dev origin is not an authorized backend origin, so signed-in and end-to-end testing happens on a staging build bundle (`build:staging -- --debug`, registered with Launch Services), never with `tauri dev` against an authorized backend. The Rust crate must pass `npm --prefix desktop run fmt`, `lint`, and `test`. Never substitute showroom fixtures for signed-in data. Setup is in app/README.md. Recovery tooling and its provisioning requirements are in tools/recovery/README.md.
