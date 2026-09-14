@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { parseTask, parseContextDefinition, parseSavedTaskView, parseScratchBlock } from '../../shared/home'
 import type { HomeApi, HomeState, Task, ContextDefinition, ContextDraft, SavedTaskView, ScratchBlock } from '../../shared/home'
 import type { ManorGateway, JsonObject } from '../ManorGateway'
-import { camelRow, commandRecord, rowRevision } from './rows'
+import { camelRow, commandRecord, newerRows, rowRevision } from './rows'
 
 function taskFromRow(row: JsonObject): Task { return { ...parseTask(camelRow(row)), revision: rowRevision(row), seriesId: z.string().nullable().parse(row.series_id) } }
 function scratchFromRow(row: JsonObject): ScratchBlock { return { ...parseScratchBlock({ ...camelRow(row), start: row.start_time, end: row.end_time }), revision: rowRevision(row) } }
@@ -16,9 +16,12 @@ export class HomeService implements HomeApi {
   constructor(gateway: ManorGateway) { this.gateway = gateway }
 
   async load(): Promise<HomeState> {
-    const [tasks, contexts, blocks, views] = await Promise.all([
+    const read = await Promise.all([
       this.gateway.rows('tasks'), this.gateway.rows('contexts'), this.gateway.rows('scratch_blocks'), this.gateway.rows('saved_task_views')
     ])
+    // A read that overlapped a command sees the record as it was; the copy a receipt already updated wins.
+    const tasks = newerRows(this.taskRows, read[0]), contexts = newerRows(this.contextRows, read[1])
+    const blocks = newerRows(this.scratchRows, read[2]), views = newerRows(this.viewRows, read[3])
     const result: HomeState = {
       tasks: tasks.filter((row) => row.deleted_at === null && row.skipped_at === null && row.superseded_at === null).map(taskFromRow),
       contexts: contexts.map((row) => parseContextDefinition(camelRow(row))),
