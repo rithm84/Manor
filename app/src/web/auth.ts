@@ -27,12 +27,20 @@ const profileSchema = z.object({
   name: z.string().nullable(), timezone: z.string().nullable(), revision: z.number().int(), settings: z.record(z.string(), z.json())
 })
 
+const accountCacheKey = (accountId: string): string => `manor.account:${accountId}`
+
+/** The account as this device last loaded it, so a returning visit renders before the profile round trip. */
+export function cachedAccount(accountId: string, email: string): ManorAccount | null {
+  const cached = localStorage.getItem(accountCacheKey(accountId))
+  if (cached === null) return null
+  return z.object({ id: z.literal(accountId), email: z.literal(email), name: z.string(), timezone: z.string() }).parse(JSON.parse(cached))
+}
+
 export async function loadAccount(gateway: ManorGateway, email: string, googleName: string): Promise<ManorAccount> {
-  const cacheKey = `manor.account:${gateway.accountId}`
+  const cacheKey = accountCacheKey(gateway.accountId)
   const readProtectedAccount = (): ManorAccount => {
-    const cached = localStorage.getItem(cacheKey)
-    if (cached === null) throw new Error('Connect once to open this account before using Notes offline')
-    const account = z.object({ id: z.literal(gateway.accountId), email: z.literal(email), name: z.string(), timezone: z.string() }).parse(JSON.parse(cached))
+    const account = cachedAccount(gateway.accountId, email)
+    if (account === null) throw new Error('Connect once to open this account before using Notes offline')
     return account
   }
   if (!navigator.onLine) return readProtectedAccount()

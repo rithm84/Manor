@@ -226,9 +226,9 @@ export function SettingsPage(): ReactNode {
             <section className="set-section">
               <h2 className="set-section-title">Appearance</h2>
               <div className="set-card">
-                <SettingsRow label="Theme" description="Choose how Manor looks.">
+                <SettingsRow label="Theme" description="Choose how Manor looks. Day and night is light from 6 AM to 6 PM.">
                   <div className="set-segment" role="group" aria-label="Theme">
-                    {(['system', 'light', 'dark'] as const).map((value) => <button type="button" key={value} data-testid={`theme-${value}`} aria-pressed={theme === value} className={`set-segment-btn${theme === value ? ' is-active' : ''}`} onClick={() => { setThemePreference(value); setTheme(value) }}>{value.charAt(0).toUpperCase() + value.slice(1)}</button>)}
+                    {([['system', 'System'], ['light', 'Light'], ['dark', 'Dark'], ['temporal', 'Day and night']] as const).map(([value, label]) => <button type="button" key={value} data-testid={`theme-${value}`} aria-pressed={theme === value} className={`set-segment-btn${theme === value ? ' is-active' : ''}`} onClick={() => { setThemePreference(value); setTheme(value) }}>{label}</button>)}
                   </div>
                 </SettingsRow>
                 <SettingsRow label="Sounds" description="A soft tick when you check something off.">

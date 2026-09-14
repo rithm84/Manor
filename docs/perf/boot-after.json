@@ -1,0 +1,774 @@
+{
+  "label": "boot-after",
+  "origin": "https://mymanor-staging.vercel.app",
+  "at": "2026-09-14T02:10:45.519Z",
+  "runs": 3,
+  "pages": {
+    "home": {
+      "cold": {
+        "ttfbMs": 32,
+        "domContentLoadedMs": 40,
+        "loadMs": 121,
+        "fcpMs": 80,
+        "lcpMs": 596,
+        "settledMs": 1076,
+        "lastResponseMs": 576,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 29,
+        "layoutMs": 4,
+        "styleMs": 2,
+        "taskMs": 70,
+        "heapMB": 8.6,
+        "domNodes": 581,
+        "listeners": 400
+      },
+      "coldNetwork": {
+        "requests": 30,
+        "transferKB": 155.2,
+        "jsKB": 72,
+        "cssKB": 8.5,
+        "fontKB": 68,
+        "apiRequests": 6,
+        "apiKB": 5.5,
+        "apiCalls": [
+          "rest/v1/profiles",
+          "rest/v1/tasks",
+          "rest/v1/contexts",
+          "rest/v1/scratch_blocks",
+          "rest/v1/calendars",
+          "rest/v1/saved_task_views"
+        ],
+        "jsChunks": [
+          "index-CyNv_j4f.js",
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "App-CRgpe7JJ.js",
+          "HomePage-BgNEH_9M.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "DueDatePicker-B5FgEUo3.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "ManorServices-g9TDz1Og.js",
+          "mock-CLnYFieZ.js",
+          "sidebarState-Bfe46-9p.js",
+          "accountSession-DfxIP0am.js",
+          "chunk-62JRHF6Z-bSauHd6k.js"
+        ]
+      },
+      "warm": {
+        "ttfbMs": 5,
+        "domContentLoadedMs": 32,
+        "loadMs": 43,
+        "fcpMs": 36,
+        "lcpMs": 372,
+        "settledMs": 872,
+        "lastResponseMs": 372,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 21,
+        "layoutMs": 6,
+        "styleMs": 3,
+        "taskMs": 69,
+        "heapMB": 11.9,
+        "domNodes": 1074,
+        "listeners": 655
+      },
+      "warmNetwork": {
+        "requests": 31,
+        "transferKB": 5.5,
+        "jsKB": 0,
+        "cssKB": 0,
+        "fontKB": 0,
+        "apiRequests": 6,
+        "apiKB": 5.5,
+        "apiCalls": [
+          "rest/v1/contexts",
+          "rest/v1/saved_task_views",
+          "rest/v1/tasks",
+          "rest/v1/profiles",
+          "rest/v1/calendars",
+          "rest/v1/scratch_blocks"
+        ],
+        "jsChunks": [
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "index-CyNv_j4f.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "App-CRgpe7JJ.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js",
+          "sidebarState-Bfe46-9p.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "chunk-62JRHF6Z-bSauHd6k.js",
+          "DueDatePicker-B5FgEUo3.js",
+          "mock-CLnYFieZ.js",
+          "HomePage-BgNEH_9M.js"
+        ]
+      }
+    },
+    "habits": {
+      "cold": {
+        "ttfbMs": 31,
+        "domContentLoadedMs": 42,
+        "loadMs": 90,
+        "fcpMs": 80,
+        "lcpMs": 744,
+        "settledMs": 1236,
+        "lastResponseMs": 735,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 30,
+        "layoutMs": 5,
+        "styleMs": 2,
+        "taskMs": 70,
+        "heapMB": 7.9,
+        "domNodes": 471,
+        "listeners": 393
+      },
+      "coldNetwork": {
+        "requests": 30,
+        "transferKB": 109.4,
+        "jsKB": 31.5,
+        "cssKB": 4.2,
+        "fontKB": 68,
+        "apiRequests": 5,
+        "apiKB": 4.2,
+        "apiCalls": [
+          "rest/v1/profiles",
+          "rest/v1/rpc/manor_habits_state",
+          "rest/v1/habits",
+          "rest/v1/habit_entries",
+          "rest/v1/rpc/manor_habits_state"
+        ],
+        "jsChunks": [
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "index-CyNv_j4f.js",
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "App-CRgpe7JJ.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js",
+          "sidebarState-Bfe46-9p.js",
+          "HabitsPage-D72fxxIN.js",
+          "chunk-62JRHF6Z-bSauHd6k.js",
+          "useCommitVersion-B3doVOyQ.js"
+        ]
+      },
+      "warm": {
+        "ttfbMs": 2,
+        "domContentLoadedMs": 25,
+        "loadMs": 37,
+        "fcpMs": 28,
+        "lcpMs": 464,
+        "settledMs": 960,
+        "lastResponseMs": 460,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 16,
+        "layoutMs": 6,
+        "styleMs": 3,
+        "taskMs": 56,
+        "heapMB": 10.9,
+        "domNodes": 842,
+        "listeners": 641
+      },
+      "warmNetwork": {
+        "requests": 26,
+        "transferKB": 4.2,
+        "jsKB": 0,
+        "cssKB": 0,
+        "fontKB": 0,
+        "apiRequests": 5,
+        "apiKB": 4.2,
+        "apiCalls": [
+          "rest/v1/habits",
+          "rest/v1/habit_entries",
+          "rest/v1/rpc/manor_habits_state",
+          "rest/v1/profiles",
+          "rest/v1/rpc/manor_habits_state"
+        ],
+        "jsChunks": [
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "index-CyNv_j4f.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "App-CRgpe7JJ.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js",
+          "sidebarState-Bfe46-9p.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "HabitsPage-D72fxxIN.js",
+          "chunk-62JRHF6Z-bSauHd6k.js"
+        ]
+      }
+    },
+    "notes": {
+      "cold": {
+        "ttfbMs": 29,
+        "domContentLoadedMs": 42,
+        "loadMs": 90,
+        "fcpMs": 84,
+        "lcpMs": 604,
+        "settledMs": 1116,
+        "lastResponseMs": 615,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 34,
+        "layoutMs": 12,
+        "styleMs": 3,
+        "taskMs": 81,
+        "heapMB": 10.2,
+        "domNodes": 601,
+        "listeners": 496
+      },
+      "coldNetwork": {
+        "requests": 31,
+        "transferKB": 551.3,
+        "jsKB": 453.3,
+        "cssKB": 26,
+        "fontKB": 68,
+        "apiRequests": 3,
+        "apiKB": 2.5,
+        "apiCalls": [
+          "rest/v1/profiles",
+          "rest/v1/note_folders",
+          "rest/v1/note_pages"
+        ],
+        "jsChunks": [
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "index-CyNv_j4f.js",
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "ManorServices-g9TDz1Og.js",
+          "PageShell-B43kG7pL.js",
+          "sidebarState-Bfe46-9p.js",
+          "NotesPage-DzyGzU6H.js",
+          "accountSession-DfxIP0am.js",
+          "chunk-62JRHF6Z-bSauHd6k.js",
+          "App-CRgpe7JJ.js",
+          "RichNoteEditor-CmJvln1v.js"
+        ]
+      },
+      "warm": {
+        "ttfbMs": 2,
+        "domContentLoadedMs": 22,
+        "loadMs": 31,
+        "fcpMs": 12,
+        "lcpMs": 368,
+        "settledMs": 869,
+        "lastResponseMs": 366,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 24,
+        "layoutMs": 10,
+        "styleMs": 5,
+        "taskMs": 75,
+        "heapMB": 17.3,
+        "domNodes": 1114,
+        "listeners": 847
+      },
+      "warmNetwork": {
+        "requests": 28,
+        "transferKB": 2.5,
+        "jsKB": 0,
+        "cssKB": 0,
+        "fontKB": 0,
+        "apiRequests": 3,
+        "apiKB": 2.5,
+        "apiCalls": [
+          "rest/v1/note_folders",
+          "rest/v1/profiles",
+          "rest/v1/note_pages"
+        ],
+        "jsChunks": [
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "index-CyNv_j4f.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "App-CRgpe7JJ.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js",
+          "sidebarState-Bfe46-9p.js",
+          "chunk-62JRHF6Z-bSauHd6k.js",
+          "PageShell-B43kG7pL.js",
+          "NotesPage-DzyGzU6H.js",
+          "RichNoteEditor-CmJvln1v.js"
+        ]
+      }
+    },
+    "jobs": {
+      "cold": {
+        "ttfbMs": 26,
+        "domContentLoadedMs": 42,
+        "loadMs": 87,
+        "fcpMs": 84,
+        "lcpMs": 608,
+        "settledMs": 947,
+        "lastResponseMs": 445,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 23,
+        "layoutMs": 5,
+        "styleMs": 2,
+        "taskMs": 63,
+        "heapMB": 7.7,
+        "domNodes": 470,
+        "listeners": 396
+      },
+      "coldNetwork": {
+        "requests": 30,
+        "transferKB": 119.5,
+        "jsKB": 41,
+        "cssKB": 6.5,
+        "fontKB": 68,
+        "apiRequests": 3,
+        "apiKB": 2.5,
+        "apiCalls": [
+          "rest/v1/profiles",
+          "rest/v1/job_roles",
+          "rest/v1/job_stage_transitions"
+        ],
+        "jsChunks": [
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "index-CyNv_j4f.js",
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "ManorServices-g9TDz1Og.js",
+          "App-CRgpe7JJ.js",
+          "sidebarState-Bfe46-9p.js",
+          "DueDatePicker-B5FgEUo3.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "accountSession-DfxIP0am.js",
+          "chunk-62JRHF6Z-bSauHd6k.js",
+          "JobsPage-CusJ2WWI.js"
+        ]
+      },
+      "warm": {
+        "ttfbMs": 1,
+        "domContentLoadedMs": 20,
+        "loadMs": 34,
+        "fcpMs": 24,
+        "lcpMs": 348,
+        "settledMs": 845,
+        "lastResponseMs": 345,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 14,
+        "layoutMs": 4,
+        "styleMs": 2,
+        "taskMs": 46,
+        "heapMB": 10.8,
+        "domNodes": 840,
+        "listeners": 647
+      },
+      "warmNetwork": {
+        "requests": 26,
+        "transferKB": 2.5,
+        "jsKB": 0,
+        "cssKB": 0,
+        "fontKB": 0,
+        "apiRequests": 3,
+        "apiKB": 2.5,
+        "apiCalls": [
+          "rest/v1/job_stage_transitions",
+          "rest/v1/job_roles",
+          "rest/v1/profiles"
+        ],
+        "jsChunks": [
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "index-CyNv_j4f.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "App-CRgpe7JJ.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js",
+          "sidebarState-Bfe46-9p.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "chunk-62JRHF6Z-bSauHd6k.js",
+          "DueDatePicker-B5FgEUo3.js",
+          "JobsPage-CusJ2WWI.js"
+        ]
+      }
+    },
+    "leetcode": {
+      "cold": {
+        "ttfbMs": 32,
+        "domContentLoadedMs": 42,
+        "loadMs": 93,
+        "fcpMs": 76,
+        "lcpMs": 708,
+        "settledMs": 1191,
+        "lastResponseMs": 692,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 33,
+        "layoutMs": 7,
+        "styleMs": 3,
+        "taskMs": 76,
+        "heapMB": 9.6,
+        "domNodes": 900,
+        "listeners": 450
+      },
+      "coldNetwork": {
+        "requests": 32,
+        "transferKB": 110.5,
+        "jsKB": 28.7,
+        "cssKB": 3.8,
+        "fontKB": 68,
+        "apiRequests": 6,
+        "apiKB": 8.6,
+        "apiCalls": [
+          "rest/v1/profiles",
+          "rest/v1/leetcode_attempts",
+          "rest/v1/rpc/manor_leetcode_summary",
+          "rest/v1/leetcode_problems",
+          "rest/v1/leetcode_notes",
+          "rest/v1/rpc/manor_leetcode_summary"
+        ],
+        "jsChunks": [
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "index-CyNv_j4f.js",
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "App-CRgpe7JJ.js",
+          "LeetCodePage-BBG8KzmX.js",
+          "sidebarState-Bfe46-9p.js",
+          "DueDatePicker-B5FgEUo3.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "chunk-62JRHF6Z-bSauHd6k.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js"
+        ]
+      },
+      "warm": {
+        "ttfbMs": 1,
+        "domContentLoadedMs": 25,
+        "loadMs": 35,
+        "fcpMs": 16,
+        "lcpMs": 464,
+        "settledMs": 951,
+        "lastResponseMs": 449,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 19,
+        "layoutMs": 7,
+        "styleMs": 4,
+        "taskMs": 64,
+        "heapMB": 12.5,
+        "domNodes": 1712,
+        "listeners": 755
+      },
+      "warmNetwork": {
+        "requests": 29,
+        "transferKB": 8.6,
+        "jsKB": 0,
+        "cssKB": 0,
+        "fontKB": 0,
+        "apiRequests": 6,
+        "apiKB": 8.6,
+        "apiCalls": [
+          "rest/v1/leetcode_problems",
+          "rest/v1/profiles",
+          "rest/v1/leetcode_attempts",
+          "rest/v1/leetcode_notes",
+          "rest/v1/rpc/manor_leetcode_summary",
+          "rest/v1/rpc/manor_leetcode_summary"
+        ],
+        "jsChunks": [
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "index-CyNv_j4f.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "App-CRgpe7JJ.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js",
+          "sidebarState-Bfe46-9p.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "DueDatePicker-B5FgEUo3.js",
+          "LeetCodePage-BBG8KzmX.js",
+          "chunk-62JRHF6Z-bSauHd6k.js"
+        ]
+      }
+    },
+    "mood": {
+      "cold": {
+        "ttfbMs": 25,
+        "domContentLoadedMs": 39,
+        "loadMs": 91,
+        "fcpMs": 68,
+        "lcpMs": 592,
+        "settledMs": 918,
+        "lastResponseMs": 417,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 21,
+        "layoutMs": 4,
+        "styleMs": 2,
+        "taskMs": 58,
+        "heapMB": 7.7,
+        "domNodes": 578,
+        "listeners": 404
+      },
+      "coldNetwork": {
+        "requests": 28,
+        "transferKB": 101.8,
+        "jsKB": 27.6,
+        "cssKB": 3,
+        "fontKB": 68,
+        "apiRequests": 2,
+        "apiKB": 1.7,
+        "apiCalls": [
+          "rest/v1/profiles",
+          "rest/v1/mood_focus_entries"
+        ],
+        "jsChunks": [
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "index-CyNv_j4f.js",
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "ManorServices-g9TDz1Og.js",
+          "App-CRgpe7JJ.js",
+          "sidebarState-Bfe46-9p.js",
+          "accountSession-DfxIP0am.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "mock-CLnYFieZ.js",
+          "MoodFocusPage-DVoUxnTs.js",
+          "chunk-62JRHF6Z-bSauHd6k.js"
+        ]
+      },
+      "warm": {
+        "ttfbMs": 2,
+        "domContentLoadedMs": 27,
+        "loadMs": 38,
+        "fcpMs": 16,
+        "lcpMs": 356,
+        "settledMs": 854,
+        "lastResponseMs": 354,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 17,
+        "layoutMs": 5,
+        "styleMs": 3,
+        "taskMs": 54,
+        "heapMB": 10.7,
+        "domNodes": 1056,
+        "listeners": 663
+      },
+      "warmNetwork": {
+        "requests": 25,
+        "transferKB": 1.7,
+        "jsKB": 0,
+        "cssKB": 0,
+        "fontKB": 0,
+        "apiRequests": 2,
+        "apiKB": 1.7,
+        "apiCalls": [
+          "rest/v1/profiles",
+          "rest/v1/mood_focus_entries"
+        ],
+        "jsChunks": [
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "index-CyNv_j4f.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "App-CRgpe7JJ.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js",
+          "sidebarState-Bfe46-9p.js",
+          "MoodFocusPage-DVoUxnTs.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "chunk-62JRHF6Z-bSauHd6k.js",
+          "mock-CLnYFieZ.js"
+        ]
+      }
+    },
+    "bookmarks": {
+      "cold": {
+        "ttfbMs": 29,
+        "domContentLoadedMs": 42,
+        "loadMs": 114,
+        "fcpMs": 96,
+        "lcpMs": 628,
+        "settledMs": 1310,
+        "lastResponseMs": 809,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 26,
+        "layoutMs": 4,
+        "styleMs": 2,
+        "taskMs": 64,
+        "heapMB": 7.7,
+        "domNodes": 463,
+        "listeners": 390
+      },
+      "coldNetwork": {
+        "requests": 28,
+        "transferKB": 100.1,
+        "jsKB": 25.3,
+        "cssKB": 2.8,
+        "fontKB": 68,
+        "apiRequests": 3,
+        "apiKB": 2.5,
+        "apiCalls": [
+          "rest/v1/profiles",
+          "rest/v1/kb_entries",
+          "rest/v1/rpc/manor_x_status"
+        ],
+        "jsChunks": [
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "index-CyNv_j4f.js",
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "sidebarState-Bfe46-9p.js",
+          "App-CRgpe7JJ.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js",
+          "chunk-62JRHF6Z-bSauHd6k.js",
+          "BookmarksPage-DrWsyOk9.js",
+          "useCommitVersion-B3doVOyQ.js"
+        ]
+      },
+      "warm": {
+        "ttfbMs": 2,
+        "domContentLoadedMs": 26,
+        "loadMs": 36,
+        "fcpMs": 16,
+        "lcpMs": 356,
+        "settledMs": 952,
+        "lastResponseMs": 451,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "scriptMs": 15,
+        "layoutMs": 5,
+        "styleMs": 2,
+        "taskMs": 55,
+        "heapMB": 10.7,
+        "domNodes": 838,
+        "listeners": 635
+      },
+      "warmNetwork": {
+        "requests": 25,
+        "transferKB": 2.5,
+        "jsKB": 0,
+        "cssKB": 0,
+        "fontKB": 0,
+        "apiRequests": 3,
+        "apiKB": 2.5,
+        "apiCalls": [
+          "rest/v1/profiles",
+          "rest/v1/kb_entries",
+          "rest/v1/rpc/manor_x_status"
+        ],
+        "jsChunks": [
+          "icons-CAaEC3ZQ.js",
+          "ui-6N6Q2I55.js",
+          "index-CyNv_j4f.js",
+          "workbox-window.prod.es5-BBnX5xw4.js",
+          "App-CRgpe7JJ.js",
+          "ManorServices-g9TDz1Og.js",
+          "accountSession-DfxIP0am.js",
+          "sidebarState-Bfe46-9p.js",
+          "useCommitVersion-B3doVOyQ.js",
+          "BookmarksPage-DrWsyOk9.js",
+          "chunk-62JRHF6Z-bSauHd6k.js"
+        ]
+      }
+    }
+  },
+  "coverage": {
+    "totalKB": 1796.3,
+    "usedKB": 1128.1,
+    "usedPct": 63,
+    "files": [
+      {
+        "file": "index-CyNv_j4f.js",
+        "kb": 676.8,
+        "usedPct": 1
+      },
+      {
+        "file": "index-CyNv_j4f.js",
+        "kb": 676.8,
+        "usedPct": 100
+      },
+      {
+        "file": "ui-6N6Q2I55.js",
+        "kb": 186.6,
+        "usedPct": 100
+      },
+      {
+        "file": "HomePage-BgNEH_9M.js",
+        "kb": 151.9,
+        "usedPct": 100
+      },
+      {
+        "file": "icons-CAaEC3ZQ.js",
+        "kb": 38.4,
+        "usedPct": 100
+      },
+      {
+        "file": "chunk-62JRHF6Z-bSauHd6k.js",
+        "kb": 37.2,
+        "usedPct": 100
+      },
+      {
+        "file": "mock-CLnYFieZ.js",
+        "kb": 7.3,
+        "usedPct": 100
+      },
+      {
+        "file": "App-CRgpe7JJ.js",
+        "kb": 7.2,
+        "usedPct": 100
+      },
+      {
+        "file": "workbox-window.prod.es5-BBnX5xw4.js",
+        "kb": 5.6,
+        "usedPct": 100
+      },
+      {
+        "file": "workbox-window.prod.es5-BBnX5xw4.js",
+        "kb": 5.6,
+        "usedPct": 100
+      }
+    ]
+  },
+  "navigationLoop": {
+    "first": {
+      "heapMB": 4.4,
+      "domNodes": 280,
+      "listeners": 201
+    },
+    "laps": [
+      {
+        "heapMB": 4.8,
+        "domNodes": 280,
+        "listeners": 201
+      },
+      {
+        "heapMB": 4.8,
+        "domNodes": 280,
+        "listeners": 201
+      },
+      {
+        "heapMB": 4.8,
+        "domNodes": 280,
+        "listeners": 201
+      }
+    ]
+  },
+  "idle": {
+    "seconds": 65,
+    "requests": 2,
+    "apiRequests": 2,
+    "urls": [
+      "rest/v1/calendars",
+      "rest/v1/profiles"
+    ]
+  }
+}

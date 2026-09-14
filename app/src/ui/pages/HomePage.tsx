@@ -56,15 +56,17 @@ import type { DraftTask } from './home/taskModel'
 import './home/home.css'
 
 const COMPLETE_FADE_MS = 480
-const UNDO_WINDOW_MS = 10_000
+const UNDO_WINDOW_MS = 60_000
 const DROP_NOTICE_MS = 4_000
 type HomeView = 'weekly' | 'master'
 
-/** The one undoable action inside the Cmd+Z window; `task` is the snapshot
-    to restore (previous status for completions, full row for deletes). */
+/** An undoable action; `task` is the snapshot to restore (previous status for
+    completions, full row for deletes). Cmd+Z walks the stack newest first. */
 type UndoRecord =
   | { kind: 'complete'; task: Task }
   | { kind: 'delete'; task: Task }
+
+interface UndoEntry { record: UndoRecord; expiresAt: number }
 
 interface TaskQuickTarget {
   taskId: string
@@ -115,12 +117,12 @@ export function HomePage(): ReactNode {
   const [blockPeekId, setBlockPeekId] = useState<string | null>(null)
   const [blockPeekOpen, setBlockPeekOpen] = useState(false)
   const [quickTarget, setQuickTarget] = useState<TaskQuickTarget | null>(null)
-  const [undoHintVisible, setUndoHintVisible] = useState(false)
+  const [undoDeleteCount, setUndoDeleteCount] = useState(0)
   /** Transient validation feedback for a rejected timeline drop; never a
       persistence error, so it clears itself. */
   const [dropNotice, setDropNotice] = useState<string | null>(null)
   const dropNoticeTimer = useRef<number | null>(null)
-  const undoRecord = useRef<UndoRecord | null>(null)
+  const undoStack = useRef<UndoEntry[]>([])
   const undoTimer = useRef<number | null>(null)
   const completeTimers = useRef<Map<string, number>>(new Map())
   const sensors = useSensors(
@@ -183,25 +185,25 @@ export function HomePage(): ReactNode {
     }, DROP_NOTICE_MS)
   }
 
-  const clearUndo = (): void => {
-    if (undoTimer.current !== null) {
-      window.clearTimeout(undoTimer.current)
-      undoTimer.current = null
-    }
-    undoRecord.current = null
-    setUndoHintVisible(false)
+  /** Drops expired entries, refreshes the hint, and arms the timer for the next expiry. */
+  const settleUndo = (): void => {
+    const now = Date.now()
+    undoStack.current = undoStack.current.filter((entry) => entry.expiresAt > now)
+    // Completions are too frequent to hint; Cmd+Z still covers them.
+    setUndoDeleteCount(undoStack.current.filter((entry) => entry.record.kind === 'delete').length)
+    if (undoTimer.current !== null) window.clearTimeout(undoTimer.current)
+    const next = undoStack.current[0]
+    undoTimer.current = next === undefined ? null : window.setTimeout(settleUndo, Math.max(0, next.expiresAt - now))
   }
 
   const recordUndo = (record: UndoRecord): void => {
-    if (undoTimer.current !== null) window.clearTimeout(undoTimer.current)
-    undoRecord.current = record
-    // Completions are too frequent to hint; Cmd+Z still covers them.
-    setUndoHintVisible(record.kind === 'delete')
-    undoTimer.current = window.setTimeout(() => {
-      undoTimer.current = null
-      undoRecord.current = null
-      setUndoHintVisible(false)
-    }, UNDO_WINDOW_MS)
+    undoStack.current = [...undoStack.current, { record, expiresAt: Date.now() + UNDO_WINDOW_MS }]
+    settleUndo()
+  }
+
+  const dropUndo = (keep: (record: UndoRecord) => boolean): void => {
+    undoStack.current = undoStack.current.filter((entry) => keep(entry.record))
+    settleUndo()
   }
 
   const reportPersistenceError = (operation: string, error: unknown): void => {
@@ -348,9 +350,7 @@ export function HomePage(): ReactNode {
       completeTimers.current.delete(taskId)
       removeCompleting(taskId)
       // The un-tick already reverts this completion; its undo record is stale.
-      if (undoRecord.current?.kind === 'complete' && undoRecord.current.task.id === taskId) {
-        clearUndo()
-      }
+      dropUndo((record) => !(record.kind === 'complete' && record.task.id === taskId))
       const task = tasks.find((candidate) => candidate.id === taskId)
       if (task !== undefined) {
         void updateTask({ ...task, status: 'Not started' })
@@ -379,9 +379,11 @@ export function HomePage(): ReactNode {
   }
 
   const performUndo = async (): Promise<void> => {
-    const record = undoRecord.current
-    if (record === null) return
-    clearUndo()
+    const entry = undoStack.current.at(-1)
+    if (entry === undefined) return
+    undoStack.current = undoStack.current.slice(0, -1)
+    settleUndo()
+    const record = entry.record
     if (record.kind === 'complete') {
       const pending = completeTimers.current.get(record.task.id)
       if (pending !== undefined) {
@@ -469,7 +471,7 @@ export function HomePage(): ReactNode {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.altKey) return
       if (event.key.toLowerCase() !== 'z') return
-      if (undoRecord.current === null) return
+      if (undoStack.current.length === 0) return
       const target = event.target
       if (
         target instanceof HTMLInputElement ||
@@ -862,9 +864,9 @@ export function HomePage(): ReactNode {
             onClose={() => setQuickTarget(null)}
           />
         ) : null}
-        {undoHintVisible ? (
+        {undoDeleteCount > 0 ? (
           <div className="ui-undo-hint" role="status">
-            Task deleted. Press ⌘Z to bring it back.
+            {undoDeleteCount === 1 ? 'Task deleted. Press ⌘Z to bring it back.' : `${undoDeleteCount} tasks deleted. Press ⌘Z to bring them back one at a time.`}
           </div>
         ) : dropNotice !== null ? (
           <div className="ui-undo-hint" role="status">

@@ -7,7 +7,8 @@ import type { ManorServices } from '../ui/services/ManorServices'
 import { AccessPanel } from './AccessPanel'
 import { AccountProvider } from './accountContext'
 import type { ManorAccount } from './accountContext'
-import { loadAccount } from './auth'
+import { cachedAccount, loadAccount } from './auth'
+import { BootSplash } from './BootSplash'
 import { ManorGateway } from './ManorGateway'
 import { NoteDraftStore } from './notes/NoteDraftStore'
 import { createServices } from './services/createServices'
@@ -45,10 +46,15 @@ function SignedInManor({ session, client, queries }: { session: Session; client:
       const email = session.user.email
       if (!email) throw new Error('Your Google account did not provide an email address')
       const name = typeof session.user.user_metadata.full_name === 'string' ? session.user.user_metadata.full_name : email.split('@')[0]
-      const account = await loadAccount(gateway, email, name)
       const services = createServices(gateway, drafts)
-      if (active) { prefetchRoute(services, account, location.pathname); setReady({ account, gateway, services }) }
-      else drafts.close()
+      const open = (account: ManorAccount): void => { prefetchRoute(services, account, location.pathname); setReady({ account, gateway, services }) }
+      // A device that opened this account before renders at once; the profile round trip reconciles name and time zone afterwards.
+      const cached = cachedAccount(session.user.id, email)
+      if (cached !== null && active) open(cached)
+      const account = await loadAccount(gateway, email, name)
+      if (!active) { drafts.close(); return }
+      if (cached === null) open(account)
+      else if (account.name !== cached.name || account.timezone !== cached.timezone) setReady((current) => current === null ? current : { ...current, account })
     }
     void initialize().catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : 'Account setup failed') })
     return () => { active = false; drafts?.close() }
@@ -68,9 +74,9 @@ function SignedInManor({ session, client, queries }: { session: Session; client:
   }, [client, ready, session.user.id])
 
   if (error) return <main className="web-status"><h1>Manor could not open your account</h1><p role="alert">{error}</p><button className="ui-button" onClick={() => { setError(null); setAttempt(attempt + 1) }}>Try again</button></main>
-  if (!ready) return <main className="web-status" role="status">Opening Manor…</main>
+  if (!ready) return <BootSplash />
   if (location.pathname === '/oauth/consent') return <OAuthConsent client={client} />
-  return <AccountProvider account={ready.account}>{!connected && <p className="web-connection-status" role="status">Offline. Notes edits are protected on this device until they sync.</p>}<Suspense fallback={<main className="web-status" role="status">Opening Manor…</main>}><App services={ready.services} /></Suspense></AccountProvider>
+  return <AccountProvider account={ready.account}>{!connected && <p className="web-connection-status" role="status">Offline. Notes edits are protected on this device until they sync.</p>}<Suspense fallback={<BootSplash />}><App services={ready.services} /></Suspense></AccountProvider>
 }
 
 export function ManorApplication({ client, queries }: { client: SupabaseClient; queries: QueryClient }): ReactNode {
@@ -98,7 +104,7 @@ export function ManorApplication({ client, queries }: { client: SupabaseClient; 
   useEffect(() => { if (session === null) queries.clear() }, [session, queries])
   return <QueryClientProvider client={queries}>
     {error ? <main className="web-status" role="alert">{error}</main>
-      : session === undefined ? <main className="web-status" role="status">Opening Manor…</main>
+      : session === undefined ? <BootSplash />
       : session === null ? <AccessPanel client={client} />
       : <SignedInManor key={session.user.id} session={session} client={client} queries={queries} />}
   </QueryClientProvider>
