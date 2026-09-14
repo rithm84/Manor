@@ -60,10 +60,11 @@ The sidebar docks or collapses to a hover overlay; it is docked above and collap
 ## How it works
 
 1. The React app talks to Supabase directly: Postgres for records, private Storage for files, Realtime for change notifications, Edge Functions for anything that needs a secret.
-2. Every mutation is a named command executed in a transaction. Commands carry an idempotency key and an expected revision, return a receipt with the committed record, and write field-level events to an account-scoped history.
-3. Agents reach the same commands through a remote MCP endpoint secured by OAuth 2.1 with per-client read or read/write scope. There is no separate agent database access.
-4. Background workers own the outside world: Google Calendar syncs every minute, X bookmarks and the jobs catalog refresh on schedules, an embedding worker indexes notes and captures, and a maintenance job materializes recurrences, reconciles streaks, and purges Trash after seven days.
-5. Notes edits are written to IndexedDB before any network call, replayed in order per note, and merged against the server revision, so a dropped connection or a reload never loses typing.
+2. The desktop shell is Rust (Tauri 2) and keeps a SQLite copy of the account's records on disk. A [sync engine](docs/ARCHITECTURE.md#local-mirror-and-sync) fills that copy once and keeps it current from the database's change feed, so pages read their records from disk in milliseconds; writes, files, and note history still go to Supabase.
+3. Every mutation is a named command executed in a transaction. Commands carry an idempotency key and an expected revision, return a receipt with the committed record, and write field-level events to an account-scoped history.
+4. Agents reach the same commands through a remote MCP endpoint secured by OAuth 2.1 with per-client read or read/write scope. There is no separate agent database access.
+5. Background workers own the outside world: Google Calendar syncs every minute, X bookmarks and the jobs catalog refresh on schedules, an embedding worker indexes notes and captures, and a maintenance job materializes recurrences, reconciles streaks, and purges Trash after seven days.
+6. Notes edits are written to IndexedDB before any network call, replayed in order per note, and merged against the server revision, so a dropped connection or a reload never loses typing.
 
 ## Working with an agent
 

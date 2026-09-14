@@ -1,25 +1,53 @@
-/* Checkbox completion uses the supplied tap recording. Placement feedback
-   uses WebAudio. Both respect the master Sounds setting. */
+/* Every Manor sound runs through one WebAudio context: checkbox completion
+   plays the supplied tap recording, placement feedback is synthesized. Both
+   respect the master Sounds setting. */
+
+import tapDataUrl from './checkbox-tap.wav?inline'
 
 const STORAGE_KEY = 'manor.sounds.enabled'
+const BASE64_MARKER = ';base64,'
 
 let audioContext: AudioContext | null = null
 let cachedNoise: AudioBuffer | null = null
 let warnedUnavailable = false
-let completionAudio: HTMLAudioElement | null = null
+let completionTick: AudioBuffer | null = null
 
-function completionPlayer(): HTMLAudioElement {
-  if (completionAudio === null) {
-    completionAudio = new Audio(new URL('./checkbox-tap.wav', import.meta.url).href)
-    completionAudio.preload = 'auto'
-    completionAudio.load()
+/** The bundler inlines the recording as a base64 data URL, so its bytes come
+    straight out of the bundle rather than back over the network. */
+function completionTickBytes(): ArrayBuffer {
+  const marker = tapDataUrl.indexOf(BASE64_MARKER)
+  if (!tapDataUrl.startsWith('data:') || marker === -1) {
+    throw new TypeError(
+      `The checkbox recording was not inlined as a base64 data URL: "${tapDataUrl.slice(0, 40)}"`
+    )
   }
-  return completionAudio
+  const binary = window.atob(tapDataUrl.slice(marker + BASE64_MARKER.length))
+  const bytes = new Uint8Array(binary.length)
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index)
+  return bytes.buffer
 }
 
-/** Decode the short recording before the first checkbox interaction. */
+/** Decode the recording and open the context before the first checkbox
+    interaction. WebKit holds a new context suspended until a user gesture, so
+    the session's first gesture resumes it, so every tick after that gesture is on time. */
 export function preloadCompletionSound(): void {
-  completionPlayer()
+  const context = audioContextOrNull()
+  if (context === null) return
+  // Reading the bytes inside the chain keeps a broken inline from taking the
+  // renderer down at startup; it surfaces as a console error instead.
+  void Promise.resolve()
+    .then(() => context.decodeAudioData(completionTickBytes()))
+    .then((decoded) => {
+      completionTick = decoded
+    })
+    .catch((error: unknown) => {
+      console.error('Manor could not decode the checkbox completion sound', { error })
+    })
+  const resume = (): void => {
+    contextForPlayback()
+  }
+  window.addEventListener('pointerdown', resume, { capture: true, once: true })
+  window.addEventListener('keydown', resume, { capture: true, once: true })
 }
 
 export function soundsEnabled(): boolean {
@@ -30,7 +58,7 @@ export function setSoundsEnabled(enabled: boolean): void {
   window.localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0')
 }
 
-function contextForPlayback(): AudioContext | null {
+function audioContextOrNull(): AudioContext | null {
   if (!('AudioContext' in window)) {
     if (!warnedUnavailable) {
       warnedUnavailable = true
@@ -39,8 +67,13 @@ function contextForPlayback(): AudioContext | null {
     return null
   }
   if (audioContext === null) audioContext = new AudioContext()
-  if (audioContext.state === 'suspended') void audioContext.resume()
   return audioContext
+}
+
+function contextForPlayback(): AudioContext | null {
+  const context = audioContextOrNull()
+  if (context !== null && context.state === 'suspended') void context.resume()
+  return context
 }
 
 function noiseBuffer(context: AudioContext): AudioBuffer {
@@ -139,13 +172,17 @@ export function playClick(): void {
   )
 }
 
-/** Replay the original tap without delaying the completion save. */
+/** Replay the original tap. The recording is decoded at startup, so the sound
+    starts on the click itself rather than after a media element warms up. */
 export function playCompletionTick(): void {
   if (!soundsEnabled()) return
-  const player = completionPlayer()
-  player.pause()
-  player.currentTime = 0
-  void player.play().catch((cause: Error) => {
-    throw new Error('Could not play the checkbox completion sound.', { cause })
-  })
+  const context = contextForPlayback()
+  if (context === null) return
+  // A tick that beats the startup decode plays nothing rather than waiting on
+  // the decoder; a decode that failed already reported itself.
+  if (completionTick === null) return
+  const source = context.createBufferSource()
+  source.buffer = completionTick
+  source.connect(context.destination)
+  source.start()
 }

@@ -76,6 +76,10 @@ type DialogState =
 
 const EMPTY_CONTENT = JSON.stringify([{ type: 'paragraph', content: [], children: [] }])
 
+/** How long the syncing label stays up once it appears, so a save that lands in
+    a few frames reads as a save rather than a flicker. */
+const SYNCING_HOLD_MS = 450
+
 function newestCreatedPage(previousIds: ReadonlySet<string>, state: NotesState): NotePage {
   const created = state.pages.find((page) => !previousIds.has(page.id))
   if (created === undefined) throw new Error('The note was created but could not be found')
@@ -136,6 +140,8 @@ export function NotesPage(): ReactNode {
   const [writerAttempt, setWriterAttempt] = useState(0)
   const protectionRef = useRef<Promise<void>>(Promise.resolve())
   const [saveState, setSaveState] = useState<SaveState>('saved')
+  const [shownSaveState, setShownSaveState] = useState<SaveState>('saved')
+  const syncingSinceRef = useRef<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deferredNoteIds, setDeferredNoteIds] = useState<readonly string[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
@@ -424,6 +430,28 @@ export function NotesPage(): ReactNode {
       window.removeEventListener('manor:before-update', onBeforeUpdate)
     }
   }, [notesApi, saveState])
+
+  /** Holds the syncing label for a beat once it appears; every other state
+      shows the moment it arrives. */
+  useEffect(() => {
+    if (saveState === 'saving') {
+      syncingSinceRef.current = Date.now()
+      setShownSaveState('saving')
+      return
+    }
+    const since = syncingSinceRef.current
+    const remaining = since === null ? 0 : SYNCING_HOLD_MS - (Date.now() - since)
+    if (remaining <= 0) {
+      syncingSinceRef.current = null
+      setShownSaveState(saveState)
+      return
+    }
+    const timer = window.setTimeout(() => {
+      syncingSinceRef.current = null
+      setShownSaveState(saveState)
+    }, remaining)
+    return (): void => window.clearTimeout(timer)
+  }, [saveState])
 
   useEffect(() => {
     if (selectedPage === null) {
@@ -820,7 +848,7 @@ export function NotesPage(): ReactNode {
               <div className="notes-editor-toolbar">
                 <div className="notes-breadcrumb"><span>{folderName}</span><ChevronRight size={13} /><strong>{draft.title || 'Untitled'}</strong></div>
                 <div ref={actionsRef} className="notes-editor-actions">
-                  <span className={`notes-save-state is-${saveState}`}>{saveState === 'unsaved' ? 'Unsaved' : saveState === 'protecting' ? 'Protecting changes…' : saveState === 'protected' ? 'Saved on this device' : saveState === 'unprotected' ? 'Draft protection failed' : saveState === 'saving' ? 'Syncing…' : saveState === 'error' ? 'Saved on device · Sync failed' : exportedFlash ? 'Exported' : 'Saved to cloud'}</span>
+                  <span key={shownSaveState} className={`notes-save-state is-${shownSaveState}`}>{shownSaveState === 'saving' ? <span className="notes-save-ring" aria-hidden="true" /> : null}{shownSaveState === 'unsaved' ? 'Unsaved' : shownSaveState === 'protecting' ? 'Protecting changes…' : shownSaveState === 'protected' ? 'Saved on this device' : shownSaveState === 'unprotected' ? 'Draft protection failed' : shownSaveState === 'saving' ? 'Syncing' : shownSaveState === 'error' ? 'Saved on device · Sync failed' : exportedFlash ? 'Exported' : 'Saved to cloud'}</span>
                   <button type="button" className={`notes-favorite-button${selectedPage.favorite ? ' is-active' : ''}`} aria-label={selectedPage.favorite ? 'Remove from favorites' : 'Add to favorites'} onClick={() => void toggleFavorite(selectedPage)}><Star size={15} fill={selectedPage.favorite ? 'currentColor' : 'none'} /></button>
                   <button type="button" ref={menuTriggerRef} className="notes-icon-button" aria-label="Note actions" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><Ellipsis size={17} /></button>
                   {menuOpen ? (

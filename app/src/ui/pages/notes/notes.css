@@ -331,10 +331,28 @@
 .notes-breadcrumb strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .notes-breadcrumb strong { color: var(--ink-body); font-weight: 600; }
 .notes-editor-actions { position: relative; display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
-.notes-save-state { margin-right: 4px; color: var(--ink-muted); font-size: var(--text-xs); }
+.notes-save-state { display: inline-flex; align-items: center; gap: 5px; margin-right: 4px; color: var(--ink-muted); font-size: var(--text-xs); transition: opacity var(--duration-fast) var(--ease-out); }
 .notes-save-state.is-saving,
 .notes-save-state.is-unsaved { color: var(--today-warning); }
 .notes-save-state.is-error { color: var(--overdue-error); }
+/* Each state renders a fresh element, so the new wording fades in instead of
+   snapping under the reader's eye. Browsers without @starting-style show it at
+   once, which is the same information without the fade. */
+@starting-style {
+  .notes-save-state { opacity: 0; }
+}
+.notes-save-ring {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border: 1.5px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: notes-save-spin 900ms linear infinite;
+}
+@keyframes notes-save-spin {
+  to { transform: rotate(360deg); }
+}
 .notes-favorite-button.is-active { color: var(--overdue-error); }
 
 .notes-action-menu {
@@ -486,10 +504,12 @@
   border-color: var(--hairline-strong); border-radius: 8px;
   color: var(--ink-body); background: var(--surface-card); box-shadow: var(--shadow-overlay);
 }
-.bn-ak-popover .bn-ak-input { color: var(--ink); background: var(--surface-canvas); border-color: var(--hairline); font-family: var(--font-ui); }
+.bn-ak-popover .bn-ak-input { color: var(--ink); background: var(--surface-soft); border-color: var(--control-border); font-family: var(--font-ui); }
 
+/* BlockNote gives the toolbar overflow: scroll, which reserves a scrollbar gutter under the buttons with classic scrollbars. */
 .bn-ak-toolbar.bn-toolbar {
   display: flex; gap: 2px; padding: 4px; max-width: calc(100vw - 24px);
+  overflow: visible;
   border: 1px solid var(--hairline-strong); border-radius: 8px;
   color: var(--ink-body); background: var(--surface-card); box-shadow: var(--shadow-overlay);
 }
@@ -503,6 +523,10 @@
 .bn-ak-toolbar.bn-toolbar .bn-ak-button:disabled { opacity: .4; }
 .bn-ak-menu:not(.bn-suggestion-menu) .bn-ak-menu-item:hover,
 .bn-ak-menu:not(.bn-suggestion-menu) .bn-ak-menu-item[data-active-item] { color: var(--ink); background: var(--surface-hover); }
+/* BlockNote marks the active choice and keyboard focus in its own blue; Manor marks them in the plum. */
+.bn-ak-select-item[data-active-item] { color: var(--on-primary); background: var(--primary); }
+.bn-ak-popover:focus-visible, .bn-ak-popover[data-focus-visible], .bn-ak-input:focus-visible, .bn-ak-input[data-focus-visible],
+.bn-ak-hovercard:focus-visible, .bn-ak-hovercard[data-focus-visible] { outline-color: var(--focus-border); }
 
 /* The slash and mention menus are Ariakit listboxes portaled to body. */
 .bn-ak-menu.bn-suggestion-menu {

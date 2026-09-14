@@ -173,20 +173,22 @@ Every step is a navigation, so nothing in the account changes.
 
 `app.security.csp` in `tauri.conf.json` starts from `default-src 'self'` and
 widens only where the app needs it. Tauri adds the hash of the theme script in
-`app/index.html` and a nonce for styles when it builds, so `script-src` stays at
-`'self'`. Each remaining directive earns its place:
+`app/index.html` when it builds, so `script-src` stays at `'self'`. Each
+remaining directive earns its place:
 
 - `style-src 'self' 'unsafe-inline'`: the note editor, the charts, and the theme
-  layer set inline styles and inject stylesheets while the app runs. Tauri also
-  appends a nonce for the styles it injects, so the header the webview sees is
-  `'self' 'unsafe-inline' 'nonce-…'`; the strict reading of CSP level 3 lets a
-  nonce cancel `'unsafe-inline'`, and the app relies on WebKit keeping both.
+  layer set inline styles and inject stylesheets while the app runs. Tauri would
+  normally append a nonce for the styles it finds at build time, and under CSP
+  level 3, which WebKit applies, a nonce cancels `'unsafe-inline'`: the editor's
+  runtime stylesheets and every style written as a string were refused, which
+  drew the formatting toolbar unstyled for a frame whenever it remounted.
+  `dangerousDisableAssetCspModification` therefore lists `style-src`, so the
+  directive reaches the webview exactly as written.
 - `img-src 'self' https: data: blob:`: note images and profile pictures load
   from Supabase storage and from Google over HTTPS, and local previews are
   `blob:` or `data:` URLs.
 - `media-src 'self' https: data: blob:`: audio and video attachments load the same
-  way, and the checkbox tap recording is small enough that Vite inlines it as a
-  `data:` URL.
+  way.
 - `font-src 'self' data:`: the bundled font files, plus the math fonts that
   arrive as data URLs.
 - `connect-src 'self' ipc: http://ipc.localhost https://*.supabase.co
