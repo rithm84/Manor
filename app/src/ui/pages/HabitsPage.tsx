@@ -11,7 +11,7 @@ import {
   ListChecks,
   Plus
 } from 'lucide-react'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { addDays, monthKey, statusOn } from '../../shared/habits'
@@ -23,6 +23,8 @@ import { dateInTimezone } from '../../shared/timezone'
 import { HabitEditorModal } from './habits/AddHabitModal'
 import { HabitDetailDialog } from './habits/HabitDetailDialog'
 import { HabitRow } from './habits/HabitRow'
+import { overlayPendingEntries, pendingEntryKey } from './habits/pendingEntries'
+import type { PendingEntry } from './habits/pendingEntries'
 import {
   activeOnDate,
   dateLabel,
@@ -65,6 +67,11 @@ export function HabitsPage(): ReactNode {
   const [reorderArmedId, setReorderArmedId] = useState<string | null>(null)
   const [reorderDragId, setReorderDragId] = useState<string | null>(null)
   const [reorderOverId, setReorderOverId] = useState<string | null>(null)
+  /** Check-offs the user has made that no server round trip has confirmed yet.
+      The service serializes the commands; these keep the page from letting an
+      earlier command's result outrank a later click. */
+  const pendingEntries = useRef<Map<string, PendingEntry>>(new Map())
+  const clickSequence = useRef(0)
 
   useEffect(() => {
     let cancelled = false
@@ -74,7 +81,7 @@ export function HabitsPage(): ReactNode {
         if (cancelled) {
           return
         }
-        setState(loaded)
+        setState(overlayPendingEntries(loaded, pendingEntries.current))
         if (state === null) {
           setSelectedDate(loaded.today)
           setHistoryMonth(monthKey(loaded.today))
@@ -100,7 +107,7 @@ export function HabitsPage(): ReactNode {
   ): Promise<HabitsState | null> => {
     try {
       const next = await mutation()
-      setState(next)
+      setState(overlayPendingEntries(next, pendingEntries.current))
       setPersistError(null)
       return next
     } catch (error) {
@@ -391,15 +398,28 @@ export function HabitsPage(): ReactNode {
                       }
                       // The check-off shows at once; streaks and the pool settle on the committed state.
                       const before = state
-                      const stamp = new Date().toISOString()
-                      setState((current) => current === null ? current : { ...current, entries: [
-                        ...current.entries.filter((entry) => !(entry.habitId === habitId && entry.date === selectedDate)),
-                        ...(value === 0 ? [] : [{ habitId, date: selectedDate, value, createdAt: stamp, updatedAt: stamp }])
-                      ] })
+                      const key = pendingEntryKey(habitId, selectedDate)
+                      clickSequence.current += 1
+                      const sequence = clickSequence.current
+                      pendingEntries.current.set(key, { sequence, habitId, date: selectedDate, value, stamp: new Date().toISOString() })
+                      setState((current) => current === null
+                        ? current
+                        : overlayPendingEntries(current, pendingEntries.current))
                       const saved = await persist('Could not save habit entry', () =>
                         habitsApi.setEntry({ habitId, date: selectedDate, value })
                       )
-                      if (saved === null) setState(before)
+                      // A later click on the same box owns the outcome from here.
+                      const latest = pendingEntries.current.get(key)?.sequence === sequence
+                      if (!latest) return
+                      pendingEntries.current.delete(key)
+                      if (saved === null) {
+                        // Only this box goes back; the streaks and pool that other results brought in stay.
+                        const prior = before?.entries.find((entry) => entry.habitId === habitId && entry.date === selectedDate)
+                        setState((current) => current === null ? current : { ...current, entries: [
+                          ...current.entries.filter((entry) => !(entry.habitId === habitId && entry.date === selectedDate)),
+                          ...(prior === undefined ? [] : [prior])
+                        ] })
+                      }
                     }}
                     onOpen={openHabit}
                     onResume={(habitId) => void setLifecycle(habitId, 'active')}

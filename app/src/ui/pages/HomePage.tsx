@@ -326,6 +326,8 @@ export function HomePage(): ReactNode {
     // Persist right away; the timer only decides when the faded card leaves
     // the board, so an unmount mid-fade cannot lose the completion.
     setCompletingIds((current) => new Set(current).add(task.id))
+    // The tick belongs to the tick mark, not to the round trip behind it.
+    playCompletionTick()
     const timer = window.setTimeout(() => {
       completeTimers.current.delete(task.id)
       removeCompleting(task.id)
@@ -333,7 +335,6 @@ export function HomePage(): ReactNode {
     completeTimers.current.set(task.id, timer)
     try {
       const persisted = await updateTask({ ...task, status: 'Done' })
-      playCompletionTick()
       recordUndo({ kind: 'complete', task: { ...persisted, status: task.status } })
     } catch {
       // updateTask already surfaced the error; keep the card in place.

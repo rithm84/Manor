@@ -20,12 +20,12 @@ class AppBoundary extends Component<{ children: ReactNode }, { error: string | n
 }
 
 initializeTheme()
-preloadCompletionSound()
 const element = document.getElementById('root')
 if (!element) throw new Error('Manor root element is missing')
 const root = createRoot(element)
 let shell: DesktopShell | null = null
 try {
+  preloadCompletionSound()
   shell = await createDesktopShell()
   logBootMilestone('shell', shell.launchedAt, {})
   const client = createManorClient()
