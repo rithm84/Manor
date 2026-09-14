@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { JobRole, JobStageTransition } from '../../../shared/jobs'
-import { currentUpdateLabel, roleFields, jobFlowData, postedLabel, toBoardCard } from './jobsModel'
+import { currentUpdateLabel, pipelineColumnDroppableId, pipelineDropColumn, roleFields, jobFlowData, postedLabel, toBoardCard } from './jobsModel'
 
 const ROLE: JobRole = {
   id: 'job-1',
@@ -75,6 +75,13 @@ describe('jobs presentation model', () => {
     const fields = roleFields(role)
     expect(fields.term).toBe('Summer 2027')
     expect(fields.appliedDate).toBe('2026-08-17')
+  })
+
+  it('accepts a drop on another column and ignores the source column', () => {
+    expect(pipelineDropColumn(pipelineColumnDroppableId('interview'), 'oa')).toBe('interview')
+    expect(pipelineDropColumn(pipelineColumnDroppableId('oa'), 'oa')).toBeNull()
+    expect(pipelineDropColumn('pipeline-card:job-1', 'oa')).toBeNull()
+    expect(pipelineDropColumn(undefined, 'oa')).toBeNull()
   })
 
   it('counts a role once per edge however many times it was dragged back and forth', () => {

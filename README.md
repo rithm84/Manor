@@ -123,7 +123,7 @@ docs/              PRD, architecture, design charter, research
 
 ## Status
 
-Manor runs as a macOS app installed from its [releases](https://github.com/rithm84/Manor/releases), on the migrated Electron-era data, and updates itself from there. Remaining release items, such as the off-site file backup drill, are tracked in [architecture status](docs/ARCHITECTURE.md#status). Manor is built for one account; collaboration and sharing are out of scope.
+Manor runs as a macOS app installed from its [releases](https://github.com/rithm84/Manor/releases) and updates itself from there. Remaining release items, such as the off-site file backup drill, are tracked in [architecture status](docs/ARCHITECTURE.md#status). Manor is built for one account; collaboration and sharing are out of scope.
 
 ## Credits
 

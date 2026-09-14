@@ -3,8 +3,6 @@ import type { JobRole, JobRoleFields, JobStage, JobStageTransition } from '../..
 
 export type JobColumn = 'to_apply' | 'applied' | 'oa' | 'interview' | 'decided'
 
-export interface DragPayload { kind: 'pipeline'; id: string }
-
 export interface BoardCard {
   role: JobRole
   column: JobColumn
@@ -49,6 +47,31 @@ export const jobColumns: readonly ColumnMeta[] = [
   { column: 'interview', label: 'Interviews', pillColorway: 'plum' },
   { column: 'decided', label: 'Decided', pillColorway: 'neutral' }
 ]
+
+const PIPELINE_COLUMN_PREFIX = 'pipeline-column:'
+
+export function pipelineColumnDroppableId(column: JobColumn): string {
+  return `${PIPELINE_COLUMN_PREFIX}${column}`
+}
+
+/** Column under a pointer drop, or null when the target is the source column. */
+export function pipelineDropColumn(
+  overId: string | number | undefined,
+  sourceColumn: JobColumn
+): JobColumn | null {
+  if (typeof overId !== 'string' || !overId.startsWith(PIPELINE_COLUMN_PREFIX)) {
+    return null
+  }
+  const column = overId.slice(PIPELINE_COLUMN_PREFIX.length)
+  const match = jobColumns.find((meta) => meta.column === column)
+  if (match === undefined || match.column === sourceColumn) {
+    return null
+  }
+  return match.column
+}
+
+/** Visible cards in a pipeline column before that column scrolls. */
+export const PIPELINE_VISIBLE_CARDS = 5
 
 export const jobStageOptions: readonly StageOption[] = [
   { value: 'to_apply', label: 'To apply', tone: 'neutral' },
