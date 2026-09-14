@@ -5,12 +5,18 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [react(), VitePWA({
     registerType: 'prompt', injectRegister: false,
-    manifest: { name: 'Manor', short_name: 'Manor', start_url: '/home', display: 'standalone',
+    manifest: { name: 'Manor', short_name: 'Manor', description: 'Your tasks, habits, notes, and daily perspective.', id: '/', start_url: '/home', display: 'standalone',
       background_color: '#161418', theme_color: '#805096',
-      icons: [{ src: '/brand/manor-mark.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }] },
+      // Raster icons for the Dock and app switcher; the maskable one keeps the mark inside the safe zone of rounded tiles.
+      icons: [
+        { src: '/brand/manor-icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: '/brand/manor-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        { src: '/brand/manor-icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        { src: '/brand/manor-mark.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }
+      ] },
     workbox: {
       // Precache the shell and page chunks; syntax grammars, KaTeX fonts, and legacy font formats are cached on first use instead.
-      globPatterns: ['**/*.{js,css,html,woff2,svg}'],
+      globPatterns: ['**/*.{js,css,html,woff2,svg,png}'],
       globIgnores: ['**/lang/**', '**/katex/**'],
       maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
       runtimeCaching: [{ urlPattern: ({ url }) => url.pathname.startsWith('/assets/'), handler: 'CacheFirst',
