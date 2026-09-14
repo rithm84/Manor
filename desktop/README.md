@@ -82,11 +82,14 @@ archive `Manor.app.tar.gz` beside it, and the archive's signature
 `Manor Staging.app`. Every bundle needs the signing key in its environment,
 which the [Updates](#updates) section covers.
 
-No bundle carries an Apple developer signature or notarization, so a bundle
-built on this machine opens normally, while a copy downloaded from elsewhere is
-quarantined and needs Open from the Finder's context menu the first time. The
-signature next to the archive is a different thing: the updater checks it, and
-Gatekeeper never sees it.
+No bundle carries an Apple developer signature or notarization. A bundle built
+on this machine opens normally, and so does one the updater installs, because
+the updater extracts the archive itself. A copy that a browser downloaded
+carries the quarantine flag, and macOS reports an unsigned quarantined app as
+damaged rather than offering to open it; the [Installing by hand](#installing-by-hand)
+section shows the install that avoids the flag. The signature next to the
+archive is a different thing: the updater checks it, and Gatekeeper never sees
+it.
 
 To install a build, drag the bundle to `/Applications`. Keep the copy you use
 outside `target/`, which the next build replaces, and which Launch Services
@@ -146,7 +149,9 @@ widens only where the app needs it. Tauri adds the hash of the theme script in
 - `img-src 'self' https: data: blob:`: note images and profile pictures load
   from Supabase storage and from Google over HTTPS, and local previews are
   `blob:` or `data:` URLs.
-- `media-src 'self' https: blob:`: audio and video attachments load the same way.
+- `media-src 'self' https: data: blob:`: audio and video attachments load the same
+  way, and the checkbox tap recording is small enough that Vite inlines it as a
+  `data:` URL.
 - `font-src 'self' data:`: the bundled font files, plus the math fonts that
   arrive as data URLs.
 - `connect-src 'self' ipc: http://ipc.localhost https://*.supabase.co
@@ -258,8 +263,16 @@ feed points at is missing.
 
 ### Installing by hand
 
-The archive the updater downloads is also the download for a new machine. Take
-the `.app.tar.gz` from the release, expand it, and drag the app to
-`/Applications`. macOS quarantines anything downloaded from the internet, so
-open it from the Finder's context menu the first time. From then on the app
+The archive the updater downloads is also the download for a new machine. A
+browser download carries the quarantine flag, which macOS turns into a
+"damaged" dialog for an unsigned app, so fetch and expand the archive from a
+terminal instead, which sets no flag:
+
+```sh
+curl -sSL -o /tmp/Manor.app.tar.gz https://github.com/rithm84/Manor/releases/latest/download/Manor.app.tar.gz
+tar -xzf /tmp/Manor.app.tar.gz -C /Applications
+```
+
+If you already expanded a browser download, clear the flag with
+`xattr -dr com.apple.quarantine /Applications/Manor.app`. From then on the app
 updates itself.
