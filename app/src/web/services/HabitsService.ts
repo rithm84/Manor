@@ -1,9 +1,8 @@
 import { z } from 'zod'
 import { parseHabitDefinition, parseHabitEntry, parseHabitLifecycleEvent, parseHabitFreezeIntent, parseHabitDraft, parseHabitLogMutation, parseHabitOrder, parseHabitFreezeMutation } from '../../shared/habits'
 import type { HabitsApi, HabitsState, HabitDraft, HabitLogMutation, HabitStatusMutation, HabitFreezeMutation } from '../../shared/habits'
-import { ManorRequestError } from '../ManorGateway'
 import type { ManorGateway, JsonObject } from '../ManorGateway'
-import { rowRevision } from './rows'
+import { derivedRead, rowRevision } from './rows'
 
 const stateSchema = z.object({
   poolDays: z.array(z.object({ date: z.iso.date(), balance: z.number().int().nonnegative() })),
@@ -20,9 +19,8 @@ export class HabitsService implements HabitsApi {
   private queue: Promise<unknown> = Promise.resolve()
   constructor(gateway: ManorGateway) { this.gateway = gateway }
   async load(): Promise<HabitsState> {
-    const [result, habits, entries] = await Promise.all([this.gateway.client.rpc('manor_habits_state'), this.gateway.rows('habits'), this.gateway.rows('habit_entries')])
-    if (result.error !== null) throw new ManorRequestError('Read habit history', result.error.code, result.error.message)
-    const state = stateSchema.parse(result.data)
+    const [history, habits, entries] = await Promise.all([derivedRead(this.gateway, 'manor_habits_state', 'Read habit history'), this.gateway.rows('habits'), this.gateway.rows('habit_entries')])
+    const state = stateSchema.parse(history)
     const parsed: HabitsState = { ...state, habits: state.habits.map((row) => { const definition = parseHabitDefinition(row); const source = habits.find((habit) => habit.id === definition.id); if (source === undefined) throw new Error('Habit changed while loading. Reload the page.'); return { ...definition, revision: rowRevision(source) } }), entries: state.entries.map(parseHabitEntry), lifecycle: state.lifecycle.map(parseHabitLifecycleEvent), intents: state.intents.map(parseHabitFreezeIntent) }
     this.habits = habits; this.entries = entries
     return parsed

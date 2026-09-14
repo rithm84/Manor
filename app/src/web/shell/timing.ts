@@ -1,7 +1,7 @@
 import { info } from '@tauri-apps/plugin-log'
 
 /** The moments a launch passes on its way to a usable window, in the order they happen. */
-export type BootMilestone = 'shell' | 'session' | 'account'
+export type BootMilestone = 'shell' | 'session' | 'account' | 'mirror'
 
 function record(message: string, fields: Record<string, string>): void {
   void info(message, { keyValues: fields }).catch((cause: unknown) => console.error('Manor could not write to the shell log', { cause }))

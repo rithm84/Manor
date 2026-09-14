@@ -1,6 +1,6 @@
 # Manor PRD
 
-_Last updated: 2026-09-13_
+_Last updated: 2026-09-14_
 
 This page defines what Manor does: its behavior, business rules, and scope. The technical design, storage, execution, deployment, and recovery mechanisms are in the [architecture](ARCHITECTURE.md), and the visual direction is in the [design charter](DESIGN.md).
 
@@ -36,7 +36,7 @@ Manor is a macOS desktop app: a React frontend inside a Tauri shell, installed f
 
 UI actions and agent actions obey the same business rules. Results reflect persisted outcomes, without duplicate changes on retry or silent overwriting of concurrent edits. Relevant views update promptly, and unsaved work and failures stay visible.
 
-Notes preserve drafts and pending attachments through connection loss and reloads, and the UI distinguishes local protection from cloud saving. Other modules require connectivity to save. **Explicit sign-out cancels automatically while unsynced Notes work remains**, keeping the session and drafts intact with a clear explanation; there is no download, discard, or forced-sign-out alternative in that flow. Ordinary session expiry preserves drafts for the same account to recover after signing in again.
+Notes preserve drafts and pending attachments through connection loss and reloads, and the UI distinguishes local protection from cloud saving. Every other module reads from a copy of the account kept on the Mac, so its pages open at once and stay readable without a connection; saving still needs one. **Explicit sign-out cancels automatically while unsynced Notes work remains**, keeping the session and drafts intact with a clear explanation; there is no download, discard, or forced-sign-out alternative in that flow. Ordinary session expiry preserves drafts for the same account to recover after signing in again.
 
 ### Accounts and dates
 
@@ -218,6 +218,7 @@ The following table is the concise record of decisions that govern the current t
 | 2026-09-13 | Course calendar feed connection: the Canvas feed link is saved in Settings and read live by an agent tool; no ingestion and no automatic tasks (integration boundary). |
 | 2026-09-13 | Day-and-night theme preference: light from 6 AM to 6 PM local time, dark otherwise (design system). |
 | 2026-09-13 | Permanent deletion from Trash as a user-only action that purges at once; multi-select note list with batch Trash, restore, and permanent delete; block-level merge of concurrent note edits, with compare-versions reserved for same-block conflicts (notes, recovery and retention). |
+| 2026-09-14 | Every module except Notes reads from a copy of the account kept on the Mac and updated from the backend's change feed; saves stay server-authoritative and still need a connection (platform). |
 
 ## Remaining product detail
 

@@ -10,6 +10,8 @@ import type { ManorAccount } from './accountContext'
 import { cachedAccount, completeSignIn, loadAccount } from './auth'
 import { BootSplash } from './BootSplash'
 import { ManorGateway } from './ManorGateway'
+import { MirrorStore } from './mirror/MirrorStore'
+import { MirrorSync } from './mirror/MirrorSync'
 import { NoteDraftStore } from './notes/NoteDraftStore'
 import { AUTH_CALLBACK_ROUTE } from './shell/deepLinks'
 import type { DesktopShell } from './shell/DesktopShell'
@@ -40,7 +42,22 @@ function SignedInManor({ session, client, queries, shell, routeRequest, onRouteA
   useEffect(() => {
     let active = true
     let drafts: NoteDraftStore | null = null
+    let sync: MirrorSync | null = null
     const gateway = new ManorGateway(client, queries, session.user.id)
+    const store = new MirrorStore()
+    // The mirror opens before the first page read so a relaunch answers from disk instead of the network.
+    const startMirror = (timezone: string): void => {
+      if (sync !== null || !active) return
+      const started = new MirrorSync(gateway, store, client, timezone)
+      const opening = started.start()
+      sync = started
+      gateway.attachMirror(started)
+      void opening
+        .then((status) => logBootMilestone('mirror', shell.launchedAt, {
+          ready: String(status.ready), rows: String(Object.values(status.rowCounts).reduce((total, count) => total + count, 0))
+        }))
+        .catch((cause: unknown) => console.error('Manor could not start the local mirror', { accountId: session.user.id, cause }))
+    }
     const initialize = async (): Promise<void> => {
       // The shell, the current page's chunk, and the account load are independent; start them together.
       void loadApp()
@@ -49,7 +66,7 @@ function SignedInManor({ session, client, queries, shell, routeRequest, onRouteA
       const email = session.user.email
       if (!email) throw new Error('Your Google account did not provide an email address')
       const name = typeof session.user.user_metadata.full_name === 'string' ? session.user.user_metadata.full_name : email.split('@')[0]
-      const services = createServices(gateway, drafts, shell)
+      const services = createServices(gateway, drafts, shell, store)
       const open = (account: ManorAccount, cached: boolean): void => {
         prefetchRoute(services, account, location.pathname)
         setReady({ account, gateway, services })
@@ -57,28 +74,17 @@ function SignedInManor({ session, client, queries, shell, routeRequest, onRouteA
       }
       // A device that opened this account before renders at once; the profile round trip reconciles name and time zone afterwards.
       const cached = cachedAccount(session.user.id, email)
-      if (cached !== null && active) open(cached, true)
+      if (cached !== null && active) { startMirror(cached.timezone); open(cached, true) }
       const account = await loadAccount(gateway, email, name)
       if (!active) { drafts.close(); return }
+      startMirror(account.timezone)
+      sync?.setAccountTimezone(account.timezone)
       if (cached === null) open(account, false)
       else if (account.name !== cached.name || account.timezone !== cached.timezone) setReady((current) => current === null ? current : { ...current, account })
     }
     void initialize().catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : 'Account setup failed') })
-    return () => { active = false; drafts?.close() }
+    return () => { active = false; drafts?.close(); sync?.stop(); gateway.attachMirror(null) }
   }, [client, queries, session.user.id, attempt, shell])
-
-  useEffect(() => {
-    if (!ready) return
-    const channel = client.channel(`manor:${session.user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'action_events', filter: `user_id=eq.${session.user.id}` }, payload => {
-        if ('command_id' in payload.new && typeof payload.new.command_id === 'string' && ready.gateway.issuedCommand(payload.new.command_id)) return
-        const operation = 'operation' in payload.new && typeof payload.new.operation === 'string' ? payload.new.operation : 'remote_change'
-        void ready.gateway.invalidateOperation(operation).then(() => window.dispatchEvent(new CustomEvent('manor:committed', { detail: { operation } })))
-      }).subscribe(status => {
-        if (status === 'CHANNEL_ERROR') console.error('Manor realtime subscription failed', { accountId: session.user.id })
-      })
-    return () => { void client.removeChannel(channel) }
-  }, [client, ready, session.user.id])
 
   if (error) return <main className="web-status"><h1>Manor could not open your account</h1><p role="alert">{error}</p><button className="ui-button" onClick={() => { setError(null); setAttempt(attempt + 1) }}>Try again</button></main>
   if (!ready) return <BootSplash />

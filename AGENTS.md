@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-09-13_
+_Last updated: 2026-09-14_
 
 Operational guide for coding agents working on Manor.
 

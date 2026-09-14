@@ -2,6 +2,7 @@ import { z } from 'zod'
 import type { AccountApi, AccountInfo, AgentConnectionRequest, AgentConnectionReturn, AvatarUpload } from '../../shared/account'
 import { agentConnectionRequestSchema, agentConnectionReturnSchema, parseAvatarUpload } from '../../shared/account'
 import type { ManorGateway } from '../ManorGateway'
+import type { MirrorStore } from '../mirror/MirrorStore'
 import type { NoteDraftStore } from '../notes/NoteDraftStore'
 import { signInWithGoogle } from '../auth'
 import type { DesktopShell } from '../shell/DesktopShell'
@@ -23,7 +24,8 @@ export class AccountService implements AccountApi {
   private readonly gateway: ManorGateway
   private readonly drafts: NoteDraftStore
   private readonly shell: DesktopShell
-  constructor(gateway: ManorGateway, drafts: NoteDraftStore, shell: DesktopShell) { this.gateway = gateway; this.drafts = drafts; this.shell = shell }
+  private readonly mirror: MirrorStore
+  constructor(gateway: ManorGateway, drafts: NoteDraftStore, shell: DesktopShell, mirror: MirrorStore) { this.gateway = gateway; this.drafts = drafts; this.shell = shell; this.mirror = mirror }
   async connections(): Promise<readonly AgentConnection[]> {
     const { data, error } = await this.gateway.client.rpc('manor_list_mcp_clients')
     if (error) throw error
@@ -69,6 +71,12 @@ export class AccountService implements AccountApi {
       const { error } = await this.gateway.client.auth.signOut({ scope: 'local' })
       if (error) throw error
       localStorage.removeItem(`manor.account:${this.gateway.accountId}`)
+      // The mirror is account data on this device, so it leaves with the rest of it. The sync stops first,
+      // so no read and no pull is still in flight against the file being deleted. The session is already
+      // gone by now, so a mirror that refuses to go is reported rather than turned into a failed sign-out;
+      // opening it again under any account rebuilds it from scratch.
+      this.gateway.stopMirror()
+      await this.mirror.wipe(this.gateway.accountId).catch((cause: unknown) => console.error('Manor could not delete the local mirror on sign-out', { accountId: this.gateway.accountId, cause }))
       return 'signedOut' as const
     })
   }

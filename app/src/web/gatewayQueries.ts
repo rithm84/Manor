@@ -8,6 +8,10 @@ export const tableOrder: Record<ManorTable, readonly string[]> = {
  job_roles:['id'],job_stage_transitions:['id'],job_listings:['id'],leetcode_problems:['id'],leetcode_attempts:['id'],leetcode_notes:['id'],
  kb_entries:['id'],resumes:['id'],weekly_reviews:['id'],action_events:['id'],calendar_accounts:['id'],calendars:['account_id','id'],calendar_events:['account_id','calendar_id','id']
 }
+/** Every kb_entries column except `embedding`: 1536 floats per row that only server-side search reads. */
+const kbEntryColumns='id,user_id,source,source_ref,url,title,author,summary,content_md,raw,screenshot_path,status,error,captured_at,normalized_at,deleted_at,revision'
+/** What a read selects. Whole rows, so the mirror and the server answer with the same shape. */
+export function readColumns(table:ManorTable):string{return table==='kb_entries'?kbEntryColumns:'*'}
 const groups: readonly {operations:readonly string[];tables:readonly ManorTable[]}[] = [
  {operations:['save_profile'],tables:['profiles']},
  {operations:['create_context','update_context','remove_context'],tables:['contexts','tasks']},
