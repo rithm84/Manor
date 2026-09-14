@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [react(), VitePWA({
     registerType: 'prompt', injectRegister: false,
-    manifest: { name: 'Manor', short_name: 'Manor', description: 'Your tasks, habits, notes, and daily perspective.', id: '/', start_url: '/home', display: 'standalone',
+    manifest: { name: 'Manor', short_name: 'Manor', description: 'Your tasks, habits, notes, and daily perspective.', id: '/', start_url: '/home', display: 'standalone', display_override: ['window-controls-overlay'],
       background_color: '#161418', theme_color: '#805096',
       // Raster icons for the Dock and app switcher; the maskable one keeps the mark inside the safe zone of rounded tiles.
       icons: [

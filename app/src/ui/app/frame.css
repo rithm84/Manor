@@ -273,6 +273,14 @@
   flex: 1;
 }
 
+/* Installed app with the window-controls overlay: the sidebar and top bar extend into the title bar,
+   the strips become drag handles, and the brand row clears the window controls. */
+@media (display-mode: window-controls-overlay) {
+  .sidebar-topspace { height: calc(env(titlebar-area-height, 28px) + 8px); -webkit-app-region: drag; }
+  .topbar { min-height: max(var(--topbar-height), env(titlebar-area-height, 28px)); -webkit-app-region: drag; }
+  .topbar-btn, .topbar a, .topbar input { -webkit-app-region: no-drag; }
+}
+
 .topbar-btn {
   display: inline-flex;
   align-items: center;

@@ -31,6 +31,10 @@ let boundaryTimer: number | null = null
 
 function applyTheme(preference: ThemePreference): void {
   document.documentElement.dataset.theme = darkFor(preference, new Date(), matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+  // The installed window's title bar takes the canvas color of the active theme.
+  const canvas = getComputedStyle(document.documentElement).getPropertyValue('--surface-canvas').trim()
+  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+  if (meta !== null && canvas !== '') meta.content = canvas
   if (boundaryTimer !== null) { window.clearTimeout(boundaryTimer); boundaryTimer = null }
   if (preference === 'temporal') boundaryTimer = window.setTimeout(() => applyTheme(readThemePreference()), millisecondsToNextBoundary(new Date()))
 }
