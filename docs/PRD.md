@@ -214,6 +214,7 @@ The following table is the concise record of decisions that govern the current t
 | 2026-09-11 | Google Calendar sync runs every minute with a hard limit of twelve calendars across all connected Google accounts; over-limit connections are rejected and later over-limit calendars are skipped without interrupting sync (integration boundary). |
 | 2026-09-12 | Journal removed entirely: no encrypted writing surface, package, schema, or tooling (non-goals). |
 | 2026-09-13 | WebMCP removed; remote MCP is the only agent transport, with no live-browser context, selection, or presentation tools (platform, agent tools). |
+| 2026-09-13 | Day-and-night theme preference: light from 6 AM to 6 PM local time, dark otherwise (design system). |
 | 2026-09-13 | Permanent deletion from Trash as a user-only action that purges at once; multi-select note list with batch Trash, restore, and permanent delete; block-level merge of concurrent note edits, with compare-versions reserved for same-block conflicts (notes, recovery and retention). |
 
 ## Remaining product detail

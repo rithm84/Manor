@@ -7,9 +7,25 @@
     <meta name="description" content="Your tasks, habits, notes, and daily perspective. Together in Manor." />
     <link rel="icon" type="image/svg+xml" href="/brand/manor-mark.svg" />
     <title>Manor</title>
+    <script>
+      // Paint the splash in the saved theme before any bundle loads; the app's theme module takes over on boot.
+      try {
+        var theme = localStorage.getItem('manor.theme')
+        var hour = new Date().getHours()
+        var dark = theme === 'dark' || (theme === 'temporal' ? (hour < 6 || hour >= 18) : theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      } catch (error) {}
+    </script>
+    <style>
+      .boot-splash { display: grid; min-height: 100dvh; margin: 0; place-content: center; background: var(--surface-canvas, #fbfaf9); }
+      [data-theme='dark'] .boot-splash { background: var(--surface-canvas, #1b191d); }
+      .boot-mark { display: block; width: 82px; height: 48px; opacity: 0; animation: boot-breathe 2.4s ease-in-out infinite; }
+      @keyframes boot-breathe { 0% { opacity: 0.35; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0.35; transform: scale(0.98); } }
+      @media (prefers-reduced-motion: reduce) { .boot-mark { animation: none; opacity: 1; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><main class="boot-splash" role="status" aria-label="Opening Manor"><img class="boot-mark" src="/brand/manor-mark.svg" alt="" width="82" height="48"></main></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -56,6 +56,7 @@ The following diagram contrasts the warm Home load before and after the boot cha
 3. **Parallel boot.** `ManorApplication` starts the `App` chunk, the current route's chunk, and the route's first reads together with the account load instead of after it; `routes.ts` and `prefetch.ts` own the maps. Opening Notes also fetches the editor chunk alongside the page.
 4. **Direct calendar and X reads.** `CalendarService` reads `calendar_accounts`, `calendars`, and `calendar_events` from the owner-scoped tables and projects days client-side with `calendarDays` (moved from the Edge Function to `app/src/shared`); `manor_x_status` is a `security definer` RPC that returns connection state without tokens. The `integrations` function keeps only OAuth, visibility, disconnect, and manual sync. The Today panel makes one read per refresh instead of two chained function calls, and the day's events are shared through the query cache so the prefetch and the panel do not fetch twice.
 5. **Policy InitPlans and indexes.** Migration `20260913220000_policy_initplans` rewrites the 35 policies as `user_id = (select auth.uid())`, which the planner evaluates once per statement, and adds the two missing `user_id` indexes. On 138 habit entries the filtered read went from 0.45 ms to 0.27 ms; the gap grows with row count.
+6. **Cached account and an early splash.** A device that has opened the account before renders the app from the cached account at once and reconciles the name and time zone when the profile returns, so the profile round trip leaves the critical path. `index.html` carries the splash markup, the mark, and the saved theme, so the first paint no longer waits for the JavaScript bundle.
 
 ## Results
 
@@ -223,3 +224,19 @@ Round 3 adds a connected calendar to the showroom account, so its Home loads inc
 - `select *` on `note_pages` loads every note's content for the list. At the current note counts it is a few kilobytes; it becomes the dominant read past a few hundred notes and should move to a list projection with content loaded on open.
 - The `pg_timezone_names` scan in `save_profile` and review validation costs about 66 ms per call but runs only on profile and review saves.
 - The Notes editor chunk (406 KB gzipped) is BlockNote plus its extensions and is loaded only on Notes.
+
+### Cached account and early splash
+
+Warm loads on staging with the same synthetic account, three runs each, before and after the cached-account boot and the `index.html` splash (`docs/perf/boot-before.json` and `boot-after.json`). First paint now comes from the shell itself, and the profile round trip no longer sits between the session check and the first render.
+
+| Page | FCP before | FCP after | LCP before | LCP after | Last response before | Last response after | Settled before | Settled after |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| home | 64 | 36 | 488 | 372 | 477 | 372 | 977 | 872 |
+| habits | 64 | 28 | 584 | 464 | 577 | 460 | 1079 | 960 |
+| notes | 36 | 12 | 488 | 368 | 473 | 366 | 974 | 869 |
+| jobs | 40 | 24 | 484 | 348 | 471 | 345 | 972 | 845 |
+| leetcode | 36 | 16 | 572 | 464 | 566 | 449 | 1067 | 951 |
+| mood | 36 | 16 | 436 | 356 | 434 | 354 | 935 | 854 |
+| bookmarks | 36 | 16 | 472 | 356 | 578 | 451 | 1079 | 952 |
+
+Cold loads moved within network variance in both directions and are not shown; a first visit still pays the profile read because there is nothing to cache yet.

@@ -12,7 +12,7 @@ Manor's high-level layout stays, especially Home's task kanban beside a single-c
 
 Home's calendar matches the width of one kanban column. All five columns grow and shrink together until their shared readable minimum; below that, the board scrolls horizontally. Narrow layouts stack the board and calendar.
 
-Light and dark modes are both required, and each mode's surfaces, contrast, controls, charts, editor selection, media presentation, and overlays are designed deliberately. Plum and neutral gray are the palette. Muted teal is the working secondary accent for supporting highlights and chart differentiation; its exact treatment is still under review on populated screens, and the theme tokens still need contrast and interaction checks.
+Light and dark modes are both required, and each mode's surfaces, contrast, controls, charts, editor selection, media presentation, and overlays are designed deliberately. The theme preference is system, light, dark, or day and night, which is light from 6 AM to 6 PM local time and dark otherwise, switching at each boundary. Plum and neutral gray are the palette. Muted teal is the working secondary accent for supporting highlights and chart differentiation; its exact treatment is still under review on populated screens, and the theme tokens still need contrast and interaction checks.
 
 ## Manor mark
 
