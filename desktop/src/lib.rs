@@ -3,13 +3,14 @@
 //! The shell owns window creation, deep-link receipt, single-instance
 //! forwarding, external-link opening, window-state persistence, file logging,
 //! signed update delivery, relaunch, and the one command that reports which URL
-//! scheme the build registered. Everything a person sees or edits belongs to
+//! scheme the build registered and when the process started. Everything a
+//! person sees or edits belongs to
 //! the React frontend that the window loads, so no product rule lives here.
 
-mod scheme;
+mod info;
 
 use std::fmt::Arguments;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use log::{error, info, kv, warn, LevelFilter, Record};
 use tauri::plugin::TauriPlugin;
@@ -37,7 +38,12 @@ const REVEAL_DEADLINE: Duration = Duration::from_secs(4);
 /// starting a rival process, and the deep-link plugin then receives that link.
 /// The rest is a flat set of capabilities the frontend calls into.
 pub fn run() {
+    let launched_at = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("the system clock is set before 1970")
+        .as_millis() as u64;
     tauri::Builder::default()
+        .manage(info::LaunchTime(launched_at))
         .plugin(logging())
         .plugin(tauri_plugin_single_instance::init(
             |_app, _arguments, _cwd| {
@@ -63,7 +69,7 @@ pub fn run() {
         // Supplies the restart that the frontend calls once an update is
         // installed: on macOS the new bundle only takes effect on relaunch.
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![scheme::desktop_scheme])
+        .invoke_handler(tauri::generate_handler![info::desktop_info])
         .setup(|app| {
             let name = app.package_info().name.clone();
             let version = app.package_info().version.to_string();

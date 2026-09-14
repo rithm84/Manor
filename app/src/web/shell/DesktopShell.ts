@@ -10,6 +10,9 @@ type RouteHandler = (route: string) => void
 
 const schemeSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'A desktop URL scheme starts with a letter and holds lowercase letters, digits, and hyphens')
 
+/** What the shell reports about itself: the scheme this build owns and when the process started. */
+const infoSchema = z.object({ scheme: schemeSchema, launchedAtMs: z.number().int().positive() })
+
 /** The link a click would leave Manor for: another origin over http(s), or one marked for a new window. */
 function departingLink(target: EventTarget | null): string | null {
   const anchor = target instanceof Element ? target.closest('a') : null
@@ -45,10 +48,13 @@ export class DesktopShell {
   readonly scheme: string
   /** Where Supabase Auth returns after Google sign-in. */
   readonly authRedirectUrl: string
+  /** When the process started, as milliseconds since the Unix epoch; boot milestones are measured from it. */
+  readonly launchedAt: number
   private readonly inbox: RouteInbox
 
-  constructor(scheme: string, inbox: RouteInbox) {
+  constructor(scheme: string, launchedAt: number, inbox: RouteInbox) {
     this.scheme = scheme
+    this.launchedAt = launchedAt
     this.inbox = inbox
     this.authRedirectUrl = `${scheme}://${AUTH_CALLBACK_ROUTE.slice(1)}`
   }
@@ -87,7 +93,7 @@ export class DesktopShell {
  * listener already saw it.
  */
 export async function createDesktopShell(): Promise<DesktopShell> {
-  const scheme = schemeSchema.parse(await invoke<unknown>('desktop_scheme'))
+  const { scheme, launchedAtMs } = infoSchema.parse(await invoke<unknown>('desktop_info'))
   const inbox = new RouteInbox()
   const seenWhileBooting = new Set<string>()
   let booting = true
@@ -108,5 +114,5 @@ export async function createDesktopShell(): Promise<DesktopShell> {
     event.preventDefault()
     void openUrl(departing).catch((cause: unknown) => console.error('Manor could not open a link in the browser', { cause }))
   })
-  return new DesktopShell(scheme, inbox)
+  return new DesktopShell(scheme, launchedAtMs, inbox)
 }

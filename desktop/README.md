@@ -134,6 +134,22 @@ and keeping one file. Debug builds write the same lines to standard output. A
 line that carries structured fields ends with them as `key=value` pairs, with a
 value quoted when it holds a space, a quote, or an equals sign.
 
+The frontend writes timing lines to the same log: `boot` with
+`milestone=shell|session|account`, `since_launch_ms` (from the process start),
+and `since_navigation_ms` (from the document load), and `route settled` with
+the path, the milliseconds from the navigation to a painted frame after its
+queries finished (or to the first painted frame when no query ran within
+400 ms), and the highest number of concurrent queries.
+
+## Benchmark
+
+`npm --prefix desktop run benchmark` measures the installed, signed-in app on
+this Mac: it quits and relaunches the app five times, reads the boot milestones
+and the first settled route from the log, then opens each route through a deep
+link and waits for its `route settled` line. `--identity staging`, `--runs N`,
+and `--routes a,b,c` change the target, the sample count, and the route list.
+Every step is a navigation, so nothing in the account changes.
+
 ## Content security policy
 
 `app.security.csp` in `tauri.conf.json` starts from `default-src 'self'` and
