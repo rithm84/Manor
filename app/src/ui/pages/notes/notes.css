@@ -472,6 +472,8 @@
 .note-block-editor [data-content-type='quote'] { color: var(--ink-body); border-left-color: var(--primary); }
 .note-block-editor [data-content-type='table'] { font-size: var(--text-sm); }
 .note-block-editor .bn-block-outer:hover .bn-side-menu { opacity: 1; }
+/* Empty-block placeholders read upright, as in Notion; BlockNote's default is italic. */
+.note-block-editor .bn-block-content:has(.ProseMirror-trailingBreak:only-child)::after { font-style: normal; }
 
 .bn-ak-menu,
 .bn-ak-popover,

@@ -3,7 +3,7 @@ import { Filter, Plus, RotateCcw, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { Button, Input, Pill, Select, useDismissLayer } from '../../components/ui'
+import { Button, Input, Pill, Select, isInsideFloatingPopup, useDismissLayer } from '../../components/ui'
 import type { JobFeedPage, JobListing } from '../../../shared/jobFeed'
 import type { JobsState } from '../../../shared/jobs'
 import { DueDatePicker } from '../home/DueDatePicker'
@@ -258,6 +258,7 @@ export function JobsBrowse({ today, onAdded }: JobsBrowseProps): ReactNode {
   useEffect(() => {
     if (!filterOpen) return
     const onPointerDown = (event: PointerEvent): void => {
+      if (isInsideFloatingPopup(event.target)) return
       const root = filterRoot.current
       if (root !== null && !root.contains(event.target as Node)) setFilterOpen(false)
     }
