@@ -13,7 +13,7 @@
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6">
   <img alt="React 19" src="https://img.shields.io/badge/React-19-149eca">
   <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Postgres%20%2B%20Edge%20Functions-3ecf8e">
-  <img alt="Vercel" src="https://img.shields.io/badge/Deployed%20on-Vercel-000000">
+  <img alt="Tauri" src="https://img.shields.io/badge/macOS-Tauri%202-24c8d8">
 </p>
 
 <p align="center">
@@ -77,24 +77,26 @@ Reads return record IDs and revisions; writes require them, so an agent cannot a
 
 ## Running it
 
-**Requirements:** Node 24, a Supabase project, a Google OAuth web client, and (for full functionality) Google Calendar, X, and OpenAI credentials configured as function secrets.
+**Requirements:** macOS with the Xcode command line tools and a Rust toolchain, Node 24, a Supabase project, a Google OAuth web client, and (for full functionality) Google Calendar, X, and OpenAI credentials configured as function secrets.
 
 ```sh
 npm --prefix app ci
-npm --prefix app run dev        # unauthenticated UI work on http://127.0.0.1:5173
+npm --prefix desktop install
+npm --prefix desktop run dev      # the app window against the Vite dev server, for unauthenticated UI work
 npm --prefix app run typecheck
 npm --prefix app test
-npm --prefix app run build      # writes app/dist/
+npm --prefix desktop run build    # writes desktop/target/release/bundle/macos/Manor.app
+npm --prefix desktop run release  # signs and publishes a release that installed apps pick up
 ```
 
-The browser needs two values, supplied through the environment or the deployment platform:
+The frontend needs two values per environment in `app/.env.production` or `app/.env.staging`:
 
 ```
 VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-Backend changes ship with the Supabase CLI: `npx supabase db push` for migrations and `npx supabase functions deploy --no-verify-jwt` for the ten Edge Functions. Signed-in and end-to-end testing happens on the hosted staging site; localhost is not an authorized origin. Connection settings and verification steps are in the [web app guide](app/README.md); backup credentials and the isolated restore drill are in the [recovery guide](tools/recovery/README.md).
+Backend changes ship with the Supabase CLI: `npx supabase db push` for migrations and `npx supabase functions deploy --no-verify-jwt` for the Edge Functions. Signed-in and end-to-end testing happens on a staging build of the app; the dev origin is not an authorized backend origin. The frontend package is described in the [frontend guide](app/README.md), the shell and releases in the [desktop guide](desktop/README.md), and backup credentials and the isolated restore drill in the [recovery guide](tools/recovery/README.md).
 
 ## Repository layout
 
@@ -120,7 +122,7 @@ docs/              PRD, architecture, design charter, research
 
 ## Status
 
-Production runs at [mymanor.vercel.app](https://mymanor.vercel.app) on the migrated Electron-era data. Remaining release items, such as the off-site file backup drill, are tracked in [architecture status](docs/ARCHITECTURE.md#status). Manor is built for one account; collaboration and sharing are out of scope.
+Manor runs as a macOS app installed from its [releases](https://github.com/rithm84/Manor/releases), on the migrated Electron-era data, and updates itself from there. Remaining release items, such as the off-site file backup drill, are tracked in [architecture status](docs/ARCHITECTURE.md#status). Manor is built for one account; collaboration and sharing are out of scope.
 
 ## Credits
 

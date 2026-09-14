@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Manor",
+  "version": "../app/package.json",
+  "identifier": "app.manor.desktop",
+  "build": {
+    "beforeDevCommand": "npm --prefix ../app run dev",
+    "devUrl": "http://127.0.0.1:5173",
+    "beforeBuildCommand": "npm --prefix ../app run build",
+    "frontendDist": "../app/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Manor",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 640,
+        "visible": false,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: blob:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https://*.supabase.co wss://*.supabase.co; frame-src https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "createUpdaterArtifacts": true,
+    "icon": ["icons/icon.icns", "icons/manor-icon-1024.png"],
+    "category": "Productivity",
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["manor"]
+      }
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM1QTg2QzlDQjU1M0Q0N0QKUldSOTFGTzFuR3lveFpBZjFqamdRNFZtUmhSNDAvaWFyZ1E3QmpQQ25nYlJnYVFDemNWVVhRZmYK",
+      "endpoints": ["https://github.com/rithm84/Manor/releases/latest/download/latest.json"]
+    }
+  }
+}

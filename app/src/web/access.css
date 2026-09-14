@@ -11,6 +11,8 @@
 .access-hint { font-size: 12px; color: var(--ink-muted); }
 .access-switch { border: 0; background: transparent; color: var(--ink-muted); font: inherit; font-size: 13px; padding: 0; margin-top: 24px; cursor: pointer; }
 .access-error { color: var(--overdue-error); font-size: 13px; line-height: 1.5; }
+.access-permission { display: flex; align-items: center; gap: 10px; font-size: 14px; margin: 4px 0 18px; }
+.access-actions { display: flex; gap: 10px; margin-top: 24px; }
 .web-status { min-height: 100dvh; display: grid; place-content: center; gap: 16px; padding: 32px; }
 @media (max-width: 600px) { .access-page { padding: 24px; } }
 .web-connection-status, .web-tool-error { position: fixed; z-index: 1000; left: 50%; bottom: 16px; transform: translateX(-50%); max-width: calc(100vw - 32px); margin: 0; padding: 10px 16px; border: 1px solid var(--hairline-strong); border-radius: 10px; background: var(--surface-card); color: var(--ink); font-size: 13px; box-shadow: 0 4px 20px rgb(0 0 0 / 12%); }

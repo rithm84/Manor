@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { SupabaseClient, Session } from '@supabase/supabase-js'
 import type { QueryClient } from '@tanstack/react-query'
@@ -7,12 +7,14 @@ import type { ManorServices } from '../ui/services/ManorServices'
 import { AccessPanel } from './AccessPanel'
 import { AccountProvider } from './accountContext'
 import type { ManorAccount } from './accountContext'
-import { cachedAccount, loadAccount } from './auth'
+import { cachedAccount, completeSignIn, loadAccount } from './auth'
 import { BootSplash } from './BootSplash'
 import { ManorGateway } from './ManorGateway'
 import { NoteDraftStore } from './notes/NoteDraftStore'
+import { AUTH_CALLBACK_ROUTE } from './shell/deepLinks'
+import type { DesktopShell } from './shell/DesktopShell'
+import type { RouteRequest } from './shell/DeepLinkNavigation'
 import { createServices } from './services/createServices'
-import { OAuthConsent } from './OAuthConsent'
 import { prefetchRoute } from './prefetch'
 import { preloadRoute } from '../ui/routes'
 
@@ -20,7 +22,7 @@ interface ReadyAccount { account: ManorAccount; services: ManorServices; gateway
 const loadApp = (): Promise<typeof import('../ui/App')> => import('../ui/App')
 const App = lazy(() => loadApp().then(module => ({ default: module.App })))
 
-function SignedInManor({ session, client, queries }: { session: Session; client: SupabaseClient; queries: QueryClient }): ReactNode {
+function SignedInManor({ session, client, queries, shell, routeRequest, onRouteApplied }: { session: Session; client: SupabaseClient; queries: QueryClient; shell: DesktopShell; routeRequest: RouteRequest | null; onRouteApplied: () => void }): ReactNode {
   const [ready, setReady] = useState<ReadyAccount | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -46,7 +48,7 @@ function SignedInManor({ session, client, queries }: { session: Session; client:
       const email = session.user.email
       if (!email) throw new Error('Your Google account did not provide an email address')
       const name = typeof session.user.user_metadata.full_name === 'string' ? session.user.user_metadata.full_name : email.split('@')[0]
-      const services = createServices(gateway, drafts)
+      const services = createServices(gateway, drafts, shell)
       const open = (account: ManorAccount): void => { prefetchRoute(services, account, location.pathname); setReady({ account, gateway, services }) }
       // A device that opened this account before renders at once; the profile round trip reconciles name and time zone afterwards.
       const cached = cachedAccount(session.user.id, email)
@@ -58,7 +60,7 @@ function SignedInManor({ session, client, queries }: { session: Session; client:
     }
     void initialize().catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : 'Account setup failed') })
     return () => { active = false; drafts?.close() }
-  }, [client, queries, session.user.id, attempt])
+  }, [client, queries, session.user.id, attempt, shell])
 
   useEffect(() => {
     if (!ready) return
@@ -75,24 +77,33 @@ function SignedInManor({ session, client, queries }: { session: Session; client:
 
   if (error) return <main className="web-status"><h1>Manor could not open your account</h1><p role="alert">{error}</p><button className="ui-button" onClick={() => { setError(null); setAttempt(attempt + 1) }}>Try again</button></main>
   if (!ready) return <BootSplash />
-  if (location.pathname === '/oauth/consent') return <OAuthConsent client={client} />
-  return <AccountProvider account={ready.account}>{!connected && <p className="web-connection-status" role="status">Offline. Notes edits are protected on this device until they sync.</p>}<Suspense fallback={<BootSplash />}><App services={ready.services} /></Suspense></AccountProvider>
+  return <AccountProvider account={ready.account}>{!connected && <p className="web-connection-status" role="status">Offline. Notes edits are protected on this device until they sync.</p>}<Suspense fallback={<BootSplash />}><App services={ready.services} shell={shell} routeRequest={routeRequest} onRouteApplied={onRouteApplied} /></Suspense></AccountProvider>
 }
 
-export function ManorApplication({ client, queries }: { client: SupabaseClient; queries: QueryClient }): ReactNode {
+export function ManorApplication({ client, queries, shell }: { client: SupabaseClient; queries: QueryClient; shell: DesktopShell }): ReactNode {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
+  // A refused sign-in arrives on the deep link that ends the attempt.
+  const [signInError, setSignInError] = useState<string | null>(null)
+  // Deep links have one subscriber: sign-in callbacks complete the session here, and every other route waits
+  // as a request until the signed-in router exists to apply it.
+  const [routeRequest, setRouteRequest] = useState<RouteRequest | null>(null)
+  const clearRouteRequest = useCallback((): void => setRouteRequest(null), [])
+  useEffect(() => {
+    let active = true
+    const stop = shell.onRoute((route) => {
+      if (!route.startsWith(AUTH_CALLBACK_ROUTE)) { setRouteRequest({ route }); return }
+      setSignInError(null)
+      void completeSignIn(client, route).catch((cause: unknown) => {
+        if (active) setSignInError(cause instanceof Error ? cause.message : 'Sign-in could not be completed')
+      })
+    })
+    return () => { active = false; stop() }
+  }, [client, shell])
   useEffect(() => {
     let active = true
     const { data: listener } = client.auth.onAuthStateChange((_event, current) => {
-      if (active) {
-        if (current && location.pathname === '/auth/callback') {
-          const returnTo = sessionStorage.getItem('manor.auth.return')
-          sessionStorage.removeItem('manor.auth.return')
-          history.replaceState(null, '', returnTo?.startsWith('/oauth/consent?authorization_id=') ? returnTo : '/home')
-        }
-        setSession(current)
-      }
+      if (active) setSession(current)
     })
     void client.auth.getSession().then(({ data, error: failure }) => {
       if (!active) return
@@ -105,7 +116,7 @@ export function ManorApplication({ client, queries }: { client: SupabaseClient; 
   return <QueryClientProvider client={queries}>
     {error ? <main className="web-status" role="alert">{error}</main>
       : session === undefined ? <BootSplash />
-      : session === null ? <AccessPanel client={client} />
-      : <SignedInManor key={session.user.id} session={session} client={client} queries={queries} />}
+      : session === null ? <AccessPanel client={client} shell={shell} signInError={signInError} />
+      : <SignedInManor key={session.user.id} session={session} client={client} queries={queries} shell={shell} routeRequest={routeRequest} onRouteApplied={clearRouteRequest} />}
   </QueryClientProvider>
 }

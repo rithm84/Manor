@@ -273,13 +273,12 @@
   flex: 1;
 }
 
-/* Installed app with the window-controls overlay: the sidebar and top bar extend into the title bar,
-   the strips become drag handles, and the brand row clears the window controls. */
-@media (display-mode: window-controls-overlay) {
-  .sidebar-topspace { height: calc(env(titlebar-area-height, 28px) + 8px); -webkit-app-region: drag; }
-  .topbar { min-height: max(var(--topbar-height), env(titlebar-area-height, 28px)); -webkit-app-region: drag; }
-  .topbar-btn, .topbar a, .topbar input { -webkit-app-region: no-drag; }
-}
+/* The sidebar and top bar extend into the overlay title bar, where the drag regions are declared on the
+   elements themselves. macOS draws the window controls at their default place, 8px to 60px across and
+   7px to 21px down, so a 44px strip clears them and the collapsed top bar starts to their right. */
+.sidebar .sidebar-topspace { height: 44px; }
+.topbar { min-height: max(var(--topbar-height), 44px); }
+.topbar.is-unpinned { padding-left: 80px; }
 
 .topbar-btn {
   display: inline-flex;

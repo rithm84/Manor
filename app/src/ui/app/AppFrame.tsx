@@ -89,7 +89,8 @@ export function AppFrame(): ReactNode {
       )}
 
       <div className="content">
-        <header className={`topbar${docked ? '' : ' is-unpinned'}`}>
+        {/* "deep" drags the window from anywhere in the bar; Tauri still lets the controls inside take their clicks. */}
+        <header className={`topbar${docked ? '' : ' is-unpinned'}`} data-tauri-drag-region="deep">
           <Tooltip label={docked ? 'Collapse sidebar' : 'Dock sidebar'} side="bottom">
             <button
               type="button"

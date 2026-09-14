@@ -144,7 +144,8 @@ export function Sidebar({ mode }: SidebarProps): ReactNode {
 
   return (
     <>
-      <div className={`sidebar-topspace${mode === 'docked' ? '' : ''}`} />
+      {/* The docked column reaches into the desktop title bar; the summoned overlay does not. */}
+      <div className="sidebar-topspace" data-tauri-drag-region={mode === 'docked' ? true : undefined} />
       <div className="sidebar-head">
         <ManorLogo className="sidebar-wordmark" />
       </div>

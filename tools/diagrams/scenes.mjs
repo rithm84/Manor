@@ -7,7 +7,7 @@ const I = {
   cdn: { library: 'system-design', item: 20 }, lock: { library: 'system-design', item: 14 }, objectStorage: { library: 'system-design', item: 7 },
   cloud: { library: 'system-design', item: 19 }, archive: { library: 'system-design', item: 21 }, webApp: { library: 'system-design', item: 23 },
   user: { library: 'architecture-diagram-components', item: 'User' }, client: { library: 'network-topology-icons', item: 'Client' },
-  firewall: { library: 'network-topology-icons', item: 'Firewall' },
+  firewall: { library: 'network-topology-icons', item: 'Firewall' }, computer: { library: 'network-topology-icons', item: 'Computer w/ keyboard and mouse (3D)' },
   postgres: { library: 'drwnio', item: 12 }, github: { library: 'drwnio', item: 13 }, code: { library: 'drwnio', item: 11 }, json: { library: 'drwnio', item: 3 },
   chip: { library: 'drwnio', item: 8 }, bucket: { library: 'drwnio', item: 0 },
   lightning: { library: 'system-icons', item: 'lightning' }, star: { library: 'system-icons', item: 'star' }, warn: { library: 'system-icons', item: 'warn' },
@@ -23,16 +23,17 @@ const E = (from, to, extra = {}) => ({ from, to, ...extra })
 export const scenes = {
   runtime: {
     title: 'Runtime and deployment',
-    subtitle: 'One Vercel-hosted web app, one Supabase project per environment, and agents that reach the same commands over remote MCP.',
+    subtitle: 'One React app inside the Tauri desktop shell, one Supabase project per environment, signed updates from GitHub Releases, and agents that reach the same commands over remote MCP.',
     zones: [
-      { id: 'z-client', label: 'Browser', x: 0, y: 90, w: 440, h: 210, stroke: S.app, fill: '#f3f0ff' },
+      { id: 'z-client', label: 'Desktop app', x: 0, y: 90, w: 440, h: 400, stroke: S.app, fill: '#f3f0ff' },
       { id: 'z-agent', label: 'Agent hosts', x: 0, y: 640, w: 440, h: 220, stroke: S.neutral },
       { id: 'z-supabase', label: 'Supabase project (staging or production)', x: 540, y: 90, w: 560, h: 770, stroke: S.supabase, fill: '#e7f5ff' },
       { id: 'z-external', label: 'External services', x: 1200, y: 90, w: 230, h: 940, stroke: S.external, fill: '#fff5f5' }
     ],
     nodes: [
-      N('vercel', 'Vercel', 30, 130, { note: 'immutable assets, service worker shell', icon: I.cdn, fill: fill.neutral, stroke: S.neutral }),
-      N('web', 'Manor web app', 240, 130, { note: 'React, TanStack Query, IndexedDB drafts', icon: I.browser, fill: fill.app, stroke: S.app }),
+      N('desktop', 'Tauri shell', 30, 130, { note: 'window, deep links, updater', icon: I.computer, fill: fill.neutral, stroke: S.neutral }),
+      N('web', 'Manor app', 240, 130, { note: 'React, TanStack Query, IndexedDB drafts', icon: I.browser, fill: fill.app, stroke: S.app }),
+      N('releases', 'GitHub Releases', 30, 320, { note: 'signed builds, latest.json', icon: I.github, fill: fill.external, stroke: S.external }),
       N('chatgpt', 'ChatGPT or Codex', 30, 680, { note: 'remote MCP client', icon: I.client, fill: fill.neutral, stroke: S.neutral }),
       N('scheduled', 'Scheduled review task', 240, 680, { note: 'ChatGPT Work, Sunday 22:00', icon: I.lightning, fill: fill.neutral, stroke: S.neutral }),
       N('auth', 'Auth', 570, 130, { note: 'Google sign-in, hooks, OAuth server', icon: I.lock, fill: fill.supabase, stroke: S.supabase }),
@@ -47,7 +48,8 @@ export const scenes = {
       N('canvas', 'Canvas feed', 1230, 850, { note: 'saved link, read on demand', icon: I.cloud, fill: fill.external, stroke: S.external })
     ],
     edges: [
-      E('vercel', 'web', { color: S.neutral }),
+      E('desktop', 'web', { color: S.neutral }),
+      E('releases', 'desktop', { label: 'updates', color: S.external }),
       E('web', 'auth', { label: 'sign in', color: S.supabase }),
       E('web', 'db', { label: 'REST, RPC, Realtime', color: S.supabase, both: true }),
       E('web', 'files', { label: 'signed uploads', color: S.storage, via: [[330, 540], [450, 540]] }),
@@ -87,16 +89,16 @@ export const scenes = {
     subtitle: 'People sign in with Google behind a signup gate; agents get a scoped OAuth token. Both end at the same row-level policies.',
     zones: [
       { id: 'z-person', label: 'Person', x: 0, y: 90, w: 940, h: 210, stroke: S.app, fill: '#f3f0ff' },
-      { id: 'z-agent', label: 'Agent client', x: 0, y: 340, w: 940, h: 210, stroke: S.neutral }
+      { id: 'z-agent', label: 'Agent client', x: 0, y: 340, w: 940, h: 240, stroke: S.neutral }
     ],
     nodes: [
-      N('google', 'Google sign-in', 30, 130, { note: 'verified email identity', icon: I.cloud, fill: fill.external, stroke: S.external }),
+      N('google', 'Google sign-in', 30, 130, { note: 'verified email identity, in the system browser', icon: I.cloud, fill: fill.external, stroke: S.external }),
       N('gate', 'Signup gate', 260, 130, { note: 'shared password, single-use grant bound to the email', icon: I.firewall, fill: fill.jobs, stroke: S.jobs }),
       N('hook', 'before-user-created hook', 490, 130, { note: 'rejects creation without a grant', icon: I.lock, fill: fill.supabase, stroke: S.supabase }),
-      N('session', 'Browser session', 720, 130, { note: 'custom access token claims', icon: I.browser, fill: fill.app, stroke: S.app }),
+      N('session', 'App session', 720, 130, { note: 'returned by deep link, custom access token claims', icon: I.browser, fill: fill.app, stroke: S.app }),
       N('client', 'ChatGPT or Codex', 30, 380, { icon: I.client, fill: fill.neutral, stroke: S.neutral }),
       N('discovery', 'OAuth 2.1 discovery', 260, 380, { note: 'protected-resource metadata, PKCE', icon: I.json, fill: fill.supabase, stroke: S.supabase }),
-      N('consent', 'Manor consent screen', 490, 380, { note: 'read or read-write scope, revocable', icon: I.webApp, fill: fill.supabase, stroke: S.supabase }),
+      N('consent', 'Consent in the app', 490, 380, { note: 'from the browser; read or read-write, revocable', icon: I.webApp, fill: fill.supabase, stroke: S.supabase }),
       N('token', 'Scoped token', 720, 380, { note: 'client_id claim, refresh, revocation', icon: I.password, fill: fill.app, stroke: S.app }),
       N('rls', 'Row-level security', 1040, 255, { note: 'user_id = (select auth.uid()) and MCP scope policies', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
       N('ops', '113 operations', 1290, 255, { note: '47 reads, 66 writes, one catalog', icon: I.code, fill: fill.storage, stroke: S.storage })

@@ -1,26 +1,35 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ManorLogo } from '../ui/components/brand/ManorLogo'
 import { requestSignup, signInWithGoogle } from './auth'
+import type { DesktopShell } from './shell/DesktopShell'
 import './access.css'
 
-export function AccessPanel({ client }: { client: SupabaseClient }): ReactNode {
+export function AccessPanel({ client, shell, signInError }: { client: SupabaseClient; shell: DesktopShell; signInError: string | null }): ReactNode {
   const [creating, setCreating] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(() => new URLSearchParams(location.search).get('error_description'))
+  const [inBrowser, setInBrowser] = useState(false)
+  const [error, setError] = useState<string | null>(signInError)
+
+  // A callback that came back refused ends the attempt it belongs to, so the panel can be used again.
+  useEffect(() => {
+    setError(signInError)
+    if (signInError !== null) setInBrowser(false)
+  }, [signInError])
 
   const submit = (event: FormEvent): void => {
     event.preventDefault()
     setBusy(true)
     setError(null)
-    const request = creating ? requestSignup(client, email, password) : signInWithGoogle(client)
-    void request.catch((cause: unknown) => {
+    setInBrowser(false)
+    const request = creating ? requestSignup(client, shell, email, password) : signInWithGoogle(client, shell)
+    // Once the browser has the authorization page the panel waits for the callback, and a closed tab can be retried here.
+    void request.then(() => setInBrowser(true)).catch((cause: unknown) => {
       setError(cause instanceof Error ? cause.message : 'Sign-in failed. Please try again.')
-      setBusy(false)
-    })
+    }).finally(() => setBusy(false))
   }
 
   return <main className="access-page">
@@ -41,6 +50,7 @@ export function AccessPanel({ client }: { client: SupabaseClient }): ReactNode {
           {busy ? 'Connecting…' : 'Continue with Google'}
         </button>
         {error && <p role="alert" className="access-error">{error}</p>}
+        {inBrowser && error === null && <p role="status" className="access-hint">Finish signing in with Google in your browser. Manor opens again when you are done.</p>}
       </form>
       <button type="button" className="access-switch" disabled={busy} onClick={() => { setCreating(!creating); setPassword(''); setError(null) }}>
         {creating ? 'Already have an account? Sign in' : 'New here? Create an account'}

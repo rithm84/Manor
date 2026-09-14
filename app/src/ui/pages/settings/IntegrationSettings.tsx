@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import type { CalendarAccount } from '../../../shared/calendar'
 import type { XConnectionStatus } from '../../../shared/xConnection'
@@ -22,7 +23,9 @@ export function IntegrationSettings(): ReactNode {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const completing = useRef(false)
+  // A connection can also return to a page that is already open, so the router's query string drives this.
+  const { pathname, search } = useLocation()
+  const navigate = useNavigate()
   const { data: calendars = [], error: calendarError, refetch: refreshCalendars } = useQuery({
     queryKey: ['manor', account.id, 'integration-calendars'],
     queryFn: () => calendarApi.calendars(),
@@ -47,25 +50,24 @@ export function IntegrationSettings(): ReactNode {
     finally { setBusy(false) }
   }
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
+    void load().catch((cause: unknown) => { setLoading(false); setError(cause instanceof Error ? cause.message : String(cause)) })
+  }, [load])
+  useEffect(() => {
+    const params = new URLSearchParams(search)
     const code = params.get('connection_code')
     const state = params.get('connection_state')
     const provider = params.get('connection_provider')
     const failure = params.get('connection_error')
-    if ((code !== null && state !== null) || failure !== null) {
-      if (completing.current) return
-      completing.current = true
-      window.history.replaceState(null, '', window.location.pathname)
-      if (failure !== null) { setError(failure); void load().catch((cause: unknown) => { setLoading(false); setError(`${failure}. ${cause instanceof Error ? cause.message : String(cause)}`) }); return }
-      setBusy(true)
-      const api = provider === 'x' ? xApi : calendarApi
-      void api.completeConnection(code!, state!).then(() => { setNotice('Account connected. Your content will appear as it syncs.'); return load() })
-        .catch((cause: unknown) => { setLoading(false); setError(cause instanceof Error ? cause.message : String(cause)) })
-        .finally(() => setBusy(false))
-      return
-    }
-    void load().catch((cause: unknown) => { setLoading(false); setError(cause instanceof Error ? cause.message : String(cause)) })
-  }, [calendarApi, load, xApi])
+    if ((code === null || state === null) && failure === null) return
+    // The callback is single use: clearing it through the router keeps a remount from resubmitting it.
+    navigate({ pathname, search: '' }, { replace: true })
+    if (failure !== null) { setError(failure); return }
+    setBusy(true)
+    const api = provider === 'x' ? xApi : calendarApi
+    void api.completeConnection(code!, state!).then(() => { setNotice('Account connected. Your content will appear as it syncs.'); return load() })
+      .catch((cause: unknown) => { setLoading(false); setError(cause instanceof Error ? cause.message : String(cause)) })
+      .finally(() => setBusy(false))
+  }, [calendarApi, load, navigate, pathname, search, xApi])
   const feedSummary = (status: CourseFeedStatus): string => {
     const checked = status.lastCheckedAt === null ? '' : ` Checked ${new Date(status.lastCheckedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.`
     const count = status.lastItemCount === null ? '' : ` The last check found ${status.lastItemCount} ${status.lastItemCount === 1 ? 'item' : 'items'}.`

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Manor Staging",
+  "identifier": "app.manor.desktop.staging",
+  "build": {
+    "beforeBuildCommand": "npm --prefix ../app run build -- --mode staging"
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["manor-staging"]
+      }
+    },
+    "updater": {
+      "endpoints": ["https://github.com/rithm84/Manor/releases/download/staging/latest.json"]
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { useManorService } from '../services/ManorServices'
 import { Camera } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { readThemePreference, setThemePreference } from '../../web/theme'
 import { AVATAR_CONTENT_TYPES } from '../../shared/account'
@@ -34,7 +35,10 @@ const SECTIONS: readonly { id: SettingsSection; label: string }[] = [
 /** Sectioned settings: nav of sections on the left, one section at a time. */
 export function SettingsPage(): ReactNode {
   const accountApi = useManorService('account')
-  const [section, setSection] = useState<SettingsSection>(() => window.location.search.includes('connection_') ? 'connections' : 'account')
+  const { search } = useLocation()
+  const [section, setSection] = useState<SettingsSection>(() => search.includes('connection_') ? 'connections' : 'account')
+  // A connection callback can arrive while another section is open.
+  useEffect(() => { if (search.includes('connection_')) setSection('connections') }, [search])
 
   // Account
   const { account, setAccount } = useCurrentAccount()

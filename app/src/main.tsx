@@ -4,9 +4,10 @@ import { createRoot } from 'react-dom/client'
 import './ui/index'
 import { ManorApplication } from './web/ManorApplication'
 import { createManorClient, createManorQueryClient } from './web/client'
+import { createDesktopShell, type DesktopShell } from './web/shell/DesktopShell'
 import { initializeTheme } from './web/theme'
 import { preloadCompletionSound } from './ui/sound/sounds'
-import { AppUpdateNotice } from './web/AppUpdateNotice'
+import { UpdateNotice } from './web/UpdateNotice'
 
 class AppBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
   state = { error: null as string | null }
@@ -22,11 +23,21 @@ preloadCompletionSound()
 const element = document.getElementById('root')
 if (!element) throw new Error('Manor root element is missing')
 const root = createRoot(element)
+let shell: DesktopShell | null = null
 try {
+  shell = await createDesktopShell()
   const client = createManorClient()
   const queries = createManorQueryClient()
-  root.render(<AppBoundary><AppUpdateNotice /><ManorApplication client={client} queries={queries} /></AppBoundary>)
+  root.render(<AppBoundary>
+    <UpdateNotice />
+    <ManorApplication client={client} queries={queries} shell={shell} />
+  </AppBoundary>)
 } catch (error) {
   console.error('Manor startup failed', { error })
   root.render(<main className="web-status"><h1>Manor needs configuration</h1><p role="alert">{error instanceof Error ? error.message : 'Startup failed'}</p></main>)
+} finally {
+  // The window opens hidden so its first frame carries the saved theme, applied above. A hidden WebKit view
+  // paints nothing and fires no animation frames, so the reveal follows the render call instead of a frame, and it
+  // also shows a configuration error; when the shell itself failed to build, Rust reveals the window.
+  if (shell !== null) void shell.revealWindow().catch((cause: unknown) => console.error('Manor could not show its window', { cause }))
 }

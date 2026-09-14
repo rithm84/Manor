@@ -2,25 +2,38 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import type { ManorAccount } from './accountContext'
 import { ManorConnectionError, type ManorGateway, type JsonObject } from './ManorGateway'
+import { signInOutcome } from './shell/deepLinks'
+import type { DesktopShell } from './shell/DesktopShell'
 
-export async function signInWithGoogle(client: SupabaseClient): Promise<void> {
-  if (location.pathname === '/oauth/consent') sessionStorage.setItem('manor.auth.return', location.pathname + location.search)
-  const { error } = await client.auth.signInWithOAuth({
-    provider: 'google', options: { redirectTo: `${location.origin}/auth/callback` }
+export async function signInWithGoogle(client: SupabaseClient, shell: DesktopShell): Promise<void> {
+  const started = await client.auth.signInWithOAuth({
+    provider: 'google', options: { redirectTo: shell.authRedirectUrl, skipBrowserRedirect: true }
   })
-  if (error) throw error
+  if (started.error) throw started.error
+  await shell.openAuthorization(started.data.url)
 }
 
-export async function requestSignup(client: SupabaseClient, email: string, password: string): Promise<void> {
+export async function requestSignup(client: SupabaseClient, shell: DesktopShell, email: string, password: string): Promise<void> {
   const parsedEmail = z.email().parse(email.trim())
   const { data, error } = await client.functions.invoke('signup-gate', { body: { email: parsedEmail, password } })
   if (error) throw new Error(`Account invitation could not be verified: ${error.message}`)
   z.object({ granted: z.literal(true), expiresIn: z.number().positive() }).parse(data)
   const result = await client.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${location.origin}/auth/callback`, queryParams: { login_hint: parsedEmail } }
+    options: { redirectTo: shell.authRedirectUrl, skipBrowserRedirect: true, queryParams: { login_hint: parsedEmail } }
   })
   if (result.error) throw result.error
+  await shell.openAuthorization(result.data.url)
+}
+
+/** Finishes a sign-in that came back through a deep link, which supabase-js never sees in the address bar. */
+export async function completeSignIn(client: SupabaseClient, route: string): Promise<void> {
+  const outcome = signInOutcome(route)
+  if (outcome.kind === 'error') throw new Error(outcome.message)
+  const { error } = outcome.kind === 'code'
+    ? await client.auth.exchangeCodeForSession(outcome.code)
+    : await client.auth.setSession({ access_token: outcome.accessToken, refresh_token: outcome.refreshToken })
+  if (error) throw error
 }
 
 const profileSchema = z.object({
