@@ -10,7 +10,7 @@ import { AddRoleModal } from './jobs/AddRoleModal'
 import { JobDetailModal } from './jobs/JobDetailModal'
 import { JobsBrowse } from './jobs/JobsBrowse'
 import { PipelineBoard } from './jobs/PipelineBoard'
-import type { DragPayload, JobColumn } from './jobs/jobsModel'
+import type { JobColumn } from './jobs/jobsModel'
 import { toBoardCard } from './jobs/jobsModel'
 import { useJobsView } from './jobs/jobsViewState'
 import type { JobsView } from './jobs/jobsViewState'
@@ -25,7 +25,6 @@ const VIEW_TABS: readonly { value: JobsView; label: string }[] = [
   { value: 'browse', label: 'Listings' }
 ]
 const ARRIVE_FLASH_MS = 500
-const CLICK_SUPPRESS_MS = 150
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'An unknown Jobs persistence error occurred'
@@ -46,14 +45,12 @@ export function JobsPage(): ReactNode {
   const [persistError, setPersistError] = useState<string | null>(null)
   const [arrivedIds, setArrivedIds] = useState<ReadonlySet<string>>(new Set())
   const [addOpen, setAddOpen] = useState(false)
-  const [dragging, setDragging] = useState<DragPayload | null>(null)
   const [detailRoleId, setDetailRoleId] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [stageRequest, setStageRequest] = useState<JobStage | JobColumn | null>(null)
   const [removeCandidateId, setRemoveCandidateId] = useState<string | null>(null)
   const [view, setView] = useJobsView()
   const timers = useRef<Set<number>>(new Set())
-  const suppressClick = useRef(false)
 
 
   useEffect(() => {
@@ -105,14 +102,6 @@ export function JobsPage(): ReactNode {
     timers.current.add(timer)
   }
 
-  const endDrag = (): void => {
-    setDragging(null)
-    suppressClick.current = true
-    later(() => {
-      suppressClick.current = false
-    }, CLICK_SUPPRESS_MS)
-  }
-
   const flashArrival = (roleId: string): void => {
     setArrivedIds((current) => new Set(current).add(roleId))
     later(() => {
@@ -148,17 +137,11 @@ export function JobsPage(): ReactNode {
     setDetailOpen(true)
   }
 
-  const dropOnColumn = (column: JobColumn): void => {
-    if (dragging === null) return
-    const role = state.roles.find((candidate) => candidate.id === dragging.id)
-    if (role !== undefined) {
-      requestStage(role.id, column)
-    }
-    setDragging(null)
+  const dropOnColumn = (roleId: string, column: JobColumn): void => {
+    requestStage(roleId, column)
   }
 
   const openDetail = (roleId: string): void => {
-    if (suppressClick.current) return
     setStageRequest(null)
     setDetailRoleId(roleId)
     setDetailOpen(true)
@@ -239,9 +222,6 @@ export function JobsPage(): ReactNode {
               cards={cards}
               today={state.today}
               arrivedIds={arrivedIds}
-              dragging={dragging}
-              onDragStartCard={(roleId) => setDragging({ kind: 'pipeline', id: roleId })}
-              onDragEnd={endDrag}
               onDropOnColumn={dropOnColumn}
               onOpenCard={openDetail}
               onMoveCard={requestStage}

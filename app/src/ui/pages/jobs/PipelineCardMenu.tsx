@@ -14,7 +14,12 @@ interface PipelineCardMenuProps {
 
 export function PipelineCardMenu({ card, onMove, onRemove }: PipelineCardMenuProps): ReactNode {
   return (
-    <div className="pipeline-card-menu" onClick={(event) => event.stopPropagation()}>
+    <div
+      className="pipeline-card-menu"
+      onClick={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
       <Menu.Root modal={false}>
         <Menu.Trigger
           className="pipeline-card-menu-btn"

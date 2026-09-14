@@ -340,7 +340,7 @@
   "limitations": [
     "Clean fresh install not executed; source reviewed for dependency order but requires isolated replay",
     "Recovery operational backup/restore not run against off-site destination",
-    "Production X credentials migrated from the Electron era are rejected by X; the account must be reconnected",
+    "Production X credentials from the previous desktop app are rejected by X; the account must be reconnected",
     "Production embedding worker receives OpenAI 429 organization-limit responses; 65 jobs queued"
   ],
   "migration_history_audit": "/private/tmp/manor-staging-migration-history-before.json",

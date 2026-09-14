@@ -1,6 +1,13 @@
 /* --- Pipeline board ---------------------------------------------------------- */
 
 .pipeline {
+  /* Company + role + one chip row + padding + border. */
+  --pipeline-card-height: calc(
+    var(--space-2) * 2 + (var(--text-body) * 1.5) + (var(--text-sm) * 1.5) + 5px + 20px + 2px
+  );
+  --pipeline-cards-cap: calc(
+    var(--pipeline-card-height) * 5 + var(--space-2) * 4
+  );
   display: flex;
   flex: none;
   align-items: flex-start;
@@ -11,12 +18,20 @@
   padding-bottom: var(--space-1);
 }
 
+.pipeline.is-capped {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: calc(
+    var(--space-2) * 2 + var(--space-1) + var(--space-2) + 22px + var(--pipeline-cards-cap) + var(--space-1)
+  );
+  align-items: stretch;
+}
+
 .pipeline-col {
   display: flex;
   flex: 1 0 240px;
   flex-direction: column;
   min-width: 240px;
-  /* Columns grow with their cards; the page scrolls, not the column. */
   min-height: 220px;
   border-radius: var(--radius-card);
   padding: var(--space-2);
@@ -66,6 +81,18 @@
   padding-right: 2px;
 }
 
+.pipeline.is-capped .pipeline-col {
+  min-height: 0;
+}
+
+.pipeline.is-capped .pipeline-cards {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(var(--pipeline-cards-cap), 100%);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
 .pipeline-card {
   position: relative;
   padding: var(--space-2) var(--space-3);
@@ -98,6 +125,12 @@
   opacity: 0.35;
   transform: scale(0.98);
   box-shadow: none;
+}
+
+.pipeline-drag-card {
+  width: 240px;
+  cursor: grabbing;
+  box-shadow: var(--shadow-overlay);
 }
 
 .pipeline-card.is-arrived {

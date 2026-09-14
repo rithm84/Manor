@@ -101,9 +101,16 @@
 
 /* --- Layout ---------------------------------------------------------------- */
 
+.page:has(.home.is-weekly) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .home.is-weekly {
   display: flex;
-  height: 100%;
+  flex: 1;
+  height: auto;
   min-height: 0;
   flex-direction: column;
 }

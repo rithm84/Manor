@@ -6,7 +6,7 @@ Manor is a macOS desktop app: a React frontend built with Vite inside a Tauri sh
 
 ## Status
 
-The production Supabase project carries all 50 migrations applied over the preserved Electron-era data, the eleven Edge Functions, the four `manor-*` schedules, Google-only Auth with both hooks and the OAuth server, and the migrated resume and capture files. The legacy functions and schedules are removed, and the app installs and updates from Manor's GitHub Releases. The app has a Vite entry point, Supabase view adapters, transactional commands, account-scoped query refresh, and the redesigned light and dark interface. The Notes editor includes native columns and tabs, durable browser drafts, attachment queues, conflicts, versions, and suggestions.
+The production Supabase project carries all 50 migrations applied over the preserved account data, the eleven Edge Functions, the four `manor-*` schedules, Google-only Auth with both hooks and the OAuth server, and the migrated resume and capture files. The legacy functions and schedules are removed, and the app installs and updates from Manor's GitHub Releases. The app has a Vite entry point, Supabase view adapters, transactional commands, account-scoped query refresh, and the redesigned light and dark interface. The Notes editor includes native columns and tabs, durable browser drafts, attachment queues, conflicts, versions, and suggestions.
 
 Verified in staging:
 
@@ -334,7 +334,7 @@ Operational backups can contain subsequently deleted data until their retention 
 
 ## Migration and verification
 
-The Electron-era data was migrated in place with a read-only cutover window. The steps were:
+Account data was migrated in place with a read-only cutover window. The steps were:
 
 1. Inventory local and cloud module data, ownership, file locations, preferences, and legacy history, snapshotting sources without exposing private contents.
 2. Reconcile duplicates and divergent versions in staging, preserving both sides of any unresolved conflict rather than letting last-write-wins discard work, and preserving source and date provenance, with the historical `alfred` origin mapped to `codex` only through an explicit, reviewed transformation.
