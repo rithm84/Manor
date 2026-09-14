@@ -1,8 +1,8 @@
-# Manor Performance
+# Manor performance
 
 _Last updated: 2026-09-13_
 
-This document records the performance criteria, the measurement method, the baseline, and the effect of each optimization. [ARCHITECTURE.md](ARCHITECTURE.md) owns the design rules the optimizations implement; this file owns the numbers.
+This page records the performance criteria, the measurement method, the baseline, and the effect of each optimization. The design rules the optimizations implement are in the [architecture](ARCHITECTURE.md); this page holds the numbers.
 
 ## Criteria
 
@@ -22,11 +22,11 @@ Every run measures the signed-in app on the hosted staging site with the same po
 | Idle | Requests issued while sitting on Home for 65 seconds. |
 | Throttled warm | Warm `settled` under 4x CPU slowdown, 1.6 Mbps down, 150 ms added latency. |
 
-Cold numbers depend on the network at the moment of the run; the harness records TTFB so runs can be compared for comparability (baseline and round 1 ran at ~25 ms TTFB). Warm and throttled numbers are far more stable because assets come from the service worker and only API latency varies.
+Cold numbers depend on the network at the moment of the run, so the harness records TTFB to show whether two runs are comparable (the baseline and round 1 ran at about 25 ms TTFB). Warm and throttled numbers are far more stable because assets come from the service worker and only API latency varies.
 
 ## Method
 
-`tools/perf/bench.mjs` drives Chrome through Playwright's CDP session against a signed-in session file, `tools/perf/waterfall.mjs` prints the per-request timeline for one page (optionally throttled), and `tools/perf/report.mjs` renders comparison tables from the recorded runs in `docs/perf/*.json`.
+`tools/perf/bench.mjs` drives Chrome through Playwright's CDP session with a signed-in session file, `tools/perf/waterfall.mjs` prints the per-request timeline for one page (optionally throttled), and `tools/perf/report.mjs` renders comparison tables from the recorded runs in `docs/perf/*.json`. To reproduce a run:
 
 ```sh
 npm --prefix tools/perf ci
@@ -35,7 +35,7 @@ node tools/perf/waterfall.mjs <session.json> https://mymanor-staging.vercel.app 
 node tools/perf/report.mjs baseline round1 round3
 ```
 
-The session file holds a Supabase session for a synthetic staging account created the way the SQL tests create theirs (an `auth.users` row plus an admin-generated magic link verified with `token_hash`). It is never committed and the account is removed after a measurement campaign. Backend statistics come from `pg_stat_statements`, `pg_policies`, and `explain (analyze)` through the Management API.
+The session file holds a Supabase session for a synthetic staging account created the way the SQL tests create theirs: an `auth.users` row plus an admin-generated magic link verified with `token_hash`. The file is never committed, and the account is removed after a measurement campaign. Backend statistics come from `pg_stat_statements`, `pg_policies`, and `explain (analyze)` through the Management API.
 
 ## Baseline findings (2026-09-13)
 
@@ -46,6 +46,10 @@ The session file holds a Supabase session for a synthetic staging account create
 - No memory growth: heap after three navigation laps stayed at 5.2 MB. No long tasks on any page.
 
 ## Optimizations
+
+The following diagram contrasts the warm Home load before and after the boot changes; the tables later on this page hold the measurements.
+
+![What a page load waits for: before, a single chain from index.js through the profile, the App chunk, the page chunk and 25 icon chunks, mount, four table reads, and two integrations-function calls; after, index.js starts the profile, the App chunk, and the grouped route chunk together, the route reads and today's events begin as soon as the profile returns, and the page mounts with data already in flight.](diagrams/boot.svg)
 
 1. **Immutable assets and a smaller precache.** `vercel.json` serves `/assets/*` with `public, max-age=31536000, immutable`. The Workbox precache covers the shell and page chunks only (61 entries, 3.9 MB); syntax grammars (`assets/lang/`) and KaTeX fonts (`assets/katex/`) are routed to their own folders, excluded from the precache, and cached on first use by a `CacheFirst` runtime rule.
 2. **Fewer chunks.** `lucide-react` icons ship as one `icons` chunk and the shared controls as one `ui` chunk instead of one request per icon. Cold Home dropped from 44 requests and 149 KB of JS to 29 requests and 72 KB.

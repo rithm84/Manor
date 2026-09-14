@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Manor diagram export</title>
 <style>body {margin:0;background:white} #preview svg {display:block;max-width:1500px;height:auto}</style>
-<div id="preview"></div><script type="module">
+<div id="preview"></div><script>window.EXCALIDRAW_ASSET_PATH = '/node_modules/@excalidraw/excalidraw/dist/prod/'</script><script type="module">
 import { exportToSvg, restoreElements } from '@excalidraw/excalidraw'
 window.renderScene = async (scene) => {
   const elements = restoreElements(scene.elements, null, { repairBindings: true })

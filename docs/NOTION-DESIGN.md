@@ -1,6 +1,6 @@
 # Notion Design Notes
 
-_Last updated: 2026-08-20_
+_Last updated: 2026-09-13_
 
 A study of Notion's interface design and product philosophy — normalized notes from a talk (timestamps reference the source video). Reference material on how a mature block/database product handles micro-interaction craft, primitive design, and iteration.
 
@@ -10,7 +10,7 @@ A study of Notion's interface design and product philosophy — normalized notes
 
 ### Pointer forgiveness
 - **Safe triangles for submenus** — on diagonal pointer movement toward an open submenu, compute the triangle between the pointer position and the submenu's bounding box, and suppress the close while the pointer stays inside it [00:11:13]. Prevents premature collapse when navigating diagonally [00:15:22].
-- **Expanded hitboxes** — small controls (e.g. checkboxes) register clicks slightly outside their visual bounds; forgiving targets over pixel-perfect ones [00:12:43].
+- **Expanded hitboxes** — small controls (for example, checkboxes) register clicks slightly outside their visual bounds; forgiving targets over pixel-perfect ones [00:12:43].
 
 ### Typography & optical alignment
 - **Tabular numerals in lists** — `font-variant: tabular-nums` on numbered lists so digit widths match ("1" as wide as the digits of "10") and baselines/adjacent text stay vertically aligned across single- and double-digit items [00:12:26].
@@ -30,11 +30,11 @@ A study of Notion's interface design and product philosophy — normalized notes
 - **Overcoming blank-canvas syndrome:**
   - *Scaffolded empty states* — a new empty database shows **five** empty placeholder rows, not one; the visual structure demonstrates what a populated table looks like [00:16:21].
   - *AI-assisted setup* — let the user describe what they want and generate initial database properties/column schemas from the description [00:03:52].
-- **Progressive disclosure via user segmentation** [00:18:24] — Notion's tiers, to prevent interface bloat:
+- **Progressive disclosure through user segmentation** [00:18:24] — Notion's tiers, to prevent interface bloat:
   - **Residents** (~60–70%): out-of-the-box documents and layouts.
   - **Gardeners**: customize properties, metadata, time zones.
   - **Builders/Architects**: formulas, relational rollups, custom layouts.
-- **Avoid the "average cockpit" trap** — designing for the average user fails everyone (US Air Force cockpit study) [00:19:30]; instead, layer advanced customization (e.g. custom page-layout builders) behind progressive disclosure [00:19:51].
+- **Avoid the "average cockpit" trap** — designing for the average user fails everyone (US Air Force cockpit study) [00:19:30]; instead, layer advanced customization (for example, custom page-layout builders) behind progressive disclosure [00:19:51].
 
 ## 3. Discarded Concepts (iteration lessons)
 

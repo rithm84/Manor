@@ -14,7 +14,7 @@ The UI redesign uses Mixpanel aesthetics and Notion editing UX, with
 deliberately designed light and dark modes. See docs/DESIGN.md and the
 evidence in docs/REDESIGN-REPORT.md; retained Paper styles are superseded.
 
-**Implementation status:** `app/` is a runnable Vite web app with real Supabase adapters, transactional commands, shared agent tools, and durable Notes editing. The production backend and `mymanor.vercel.app` are deployed with the preserved user data; release acceptance items remain in ARCHITECTURE §1. See ARCHITECTURE §1 for precise verification limits and §10 for acceptance checks. Preserve existing user data and unrelated uncommitted work.
+**Implementation status:** `app/` is a runnable Vite web app with real Supabase adapters, transactional commands, shared agent tools, and durable Notes editing. The production backend and `mymanor.vercel.app` are deployed with the preserved user data; ARCHITECTURE's "Status" section lists what is verified and what remains, and its "Migration and verification" section lists the acceptance checks. Preserve existing user data and unrelated uncommitted work.
 
 Supabase configuration lives in repo-root `.env.local` (never commit or print
 it). Migrations live in `supabase/migrations/`; the existing deployment uses
@@ -45,7 +45,7 @@ Run from the repository root:
 - `npm --prefix app test` — domain and UI checks.
 - `npm --prefix app run dev` — local web app on port 5173.
 - `npm --prefix app run build` — build the Vite web application.
-- `npm --prefix tools/diagrams run render` — export documentation SVGs.
+- `npm --prefix tools/diagrams run compose && npm --prefix tools/diagrams run render` — rebuild the documentation diagrams from `tools/diagrams/scenes.mjs` and export their SVGs.
 - `npm --prefix tools/perf run bench -- <session.json> <origin> <label>` — signed-in performance benchmark; see docs/PERFORMANCE.md.
 
 Local dev servers cover unauthenticated UI work, typecheck, and tests only; localhost is not an authorized staging origin, so signed-in and end-to-end testing happens on the hosted staging site. Never substitute showroom fixtures for signed-in data. Setup is in app/README.md. Recovery tooling and its provisioning requirements are in tools/recovery/README.md.
@@ -64,12 +64,16 @@ charter) and `docs/NOTION-DESIGN.md` (micro-interaction craft reference).
 
 ## Decisions Discipline
 
-- PRD.md owns product decisions (§12 is its concise log); ARCHITECTURE.md
-  owns technical decisions. Link between them rather than duplicating rules.
-  If they conflict, flag the conflict instead of silently picking a side.
-- Settled decisions are not re-litigated unless user reopens them. Consult
-  PRD §§4–8 for authority, privacy, retention, dates, and module rules.
-  PRD §13 lists open product choices; ARCHITECTURE §11 lists technical details.
+- PRD.md owns product decisions (its "Decision log" is the concise record);
+  ARCHITECTURE.md owns technical decisions. Link between them rather than
+  duplicating rules. If they conflict, flag the conflict instead of silently
+  picking a side.
+- Settled decisions are not re-litigated unless the user reopens them. The
+  PRD's "Platform and data policies", "Codex, agent tools, and background
+  work", "Streak system", "Modules", and "Surfaces" sections hold the
+  authority, privacy, retention, date, and module rules. The PRD's "Remaining
+  product detail" lists open product choices; ARCHITECTURE's "Remaining
+  technical work" lists technical ones.
 - When user changes a decision, update its owning document in the same
   change unless the user explicitly asks to defer documentation. Record
   significant product decisions in the PRD log; keep technical design current
@@ -140,6 +144,39 @@ Notion, Cron Calendar, Obvious).
   flows: create/edit paths, property controls, empty states, onboarding.
 - Also binding: no emoji as icons; no fake OS chrome; tabular numerals for
   stats.
+
+## Documentation Rules
+
+- Docs other than this file are written for people, following the
+  [Google developer documentation style guide](https://developers.google.com/style):
+  sentence-case headings without numbers, second person for the reader,
+  active voice, present tense, serial commas, code font for identifiers, no
+  "e.g.", "i.e.", "via", or "please". Cross-reference sections by name and
+  anchor, never by number.
+- Instructions aimed at coding agents live only in this file. The other docs
+  describe how Manor behaves and why; they do not tell an agent what to do.
+- Diagrams are generated: edit `tools/diagrams/scenes.mjs`, then run the
+  compose and render commands. Never hand-edit the `.excalidraw` or `.svg`
+  files. Every diagram is introduced by a sentence and carries descriptive alt
+  text, and the surrounding prose covers what the diagram does not show rather
+  than restating it. Scenes use Excalifont, hand-drawn strokes, the Excalidraw
+  palette, and icons from the vendored libraries in `tools/diagrams/libraries/`.
+- A diagram and the prose around it change together. When you edit a section
+  that embeds a diagram, or a fact the diagram shows (a component, a flow, a
+  cadence, a count), update its scene in the same change and re-render; when
+  you change a scene, re-read its section for stale prose.
+- Compose fails when an arrow runs through a node, a label, or another arrow
+  (`tools/diagrams/check.mjs`, also `npm --prefix tools/diagrams run check`
+  for the exported files). Fix findings by rerouting with `via` waypoints or
+  moving nodes, never by weakening the check. When a new class of layering
+  defect shows up in a render, extend the checker so it catches that class.
+- Migration files under `supabase/migrations/` describe deployed history. Never
+  edit an applied migration; add a new one.
+- The repository layout is inventoried only in this file; docs do not carry
+  directory listings.
+- Tests follow the repository strategy: typecheck and the app test suite
+  after code changes, plus focused integration or end-to-end coverage for the
+  change, never a broad mock-based suite.
 
 ## Working Rules
 

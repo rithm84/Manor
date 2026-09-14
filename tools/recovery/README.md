@@ -1,12 +1,14 @@
 # Manor recovery operations
 
-_Last updated: 2026-09-12_
+_Last updated: 2026-09-13_
 
-The recovery policy is [ARCHITECTURE §9](../../docs/ARCHITECTURE.md#9-backups-and-disaster-recovery). These scripts orchestrate **restic 0.19.1** and **rclone 1.75.1**; they do not implement snapshot storage, encryption, retention, or transfer protocols.
+The recovery policy is the architecture's [backups and disaster recovery](../../docs/ARCHITECTURE.md#backups-and-disaster-recovery) section. These scripts orchestrate **restic 0.19.1** and **rclone 1.75.1**; they do not implement snapshot storage, encryption, retention, or transfer protocols.
 
 ## Provisioning
 
-Use an independent managed S3-compatible or Backblaze B2 bucket and a restic repository encryption password. Keep the password in an independently recoverable secret store. The scheduler needs the source database connection, source Supabase S3 credentials, and backup repository credentials. It must not have the recovery target's database or Storage credentials. A restricted recovery operator holds those separately. Never put any of these credentials in the browser app or MCP environment.
+Use an independent managed S3-compatible or Backblaze B2 bucket and a restic repository encryption password. Keep the password in an independently recoverable secret store. The scheduler needs the source database connection, source Supabase S3 credentials, and backup repository credentials. It doesn't get the recovery target's database or Storage credentials; a restricted recovery operator holds those separately.
+
+**Warning:** None of these credentials belong in the browser app or the MCP environment.
 
 An existing backup bucket was not available during implementation: the Vercel project has no connected Blob store, the team's sole Blob store belongs to another app, and the authenticated Marketplace has no S3 product. No store was purchased or repurposed. Supabase generated S3 keys and independent backup credentials must be provisioned before activation. Vercel Blob is not a native restic/rclone repository backend; this workflow does not invent a compatibility service.
 
