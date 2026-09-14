@@ -12,6 +12,7 @@ import type { ResumesApi } from '../../shared/resumes'
 import type { CalendarApi } from '../../shared/calendar'
 import type { ReviewsApi } from '../../shared/reviews'
 import type { XApi } from '../../shared/xConnection'
+import type { CourseFeedApi } from '../../shared/courseFeed'
 
 /** Typed view services backed by the shared transactional command boundary. */
 export interface ManorServices {
@@ -27,6 +28,7 @@ export interface ManorServices {
   resumes: ResumesApi
   gcal: CalendarApi
   x: XApi
+  courseFeed: CourseFeedApi
 }
 
 const ServicesContext = createContext<Partial<ManorServices> | null>(null)

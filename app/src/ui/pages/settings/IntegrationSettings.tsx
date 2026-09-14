@@ -3,17 +3,21 @@ import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { CalendarAccount } from '../../../shared/calendar'
 import type { XConnectionStatus } from '../../../shared/xConnection'
+import type { CourseFeedStatus } from '../../../shared/courseFeed'
 import { useManorAccount } from '../../../web/accountContext'
 import { useManorService } from '../../services/ManorServices'
-import { Button } from '../../components/ui'
+import { Button, Input } from '../../components/ui'
 import { SettingsRow, SettingsToggle } from './controls'
 
 export function IntegrationSettings(): ReactNode {
   const calendarApi = useManorService('gcal')
   const xApi = useManorService('x')
+  const courseApi = useManorService('courseFeed')
   const account = useManorAccount()
   const [accounts, setAccounts] = useState<readonly CalendarAccount[]>([])
   const [xConnection, setXConnection] = useState<XConnectionStatus | null>(null)
+  const [courseFeed, setCourseFeed] = useState<CourseFeedStatus | null>(null)
+  const [feedUrl, setFeedUrl] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -29,11 +33,12 @@ export function IntegrationSettings(): ReactNode {
     retry: false,
   })
   const load = useCallback(async (): Promise<void> => {
-    const [nextAccounts, , nextX] = await Promise.all([calendarApi.accounts(), refreshCalendars({ throwOnError: true }), xApi.status()])
+    const [nextAccounts, , nextX, nextFeed] = await Promise.all([calendarApi.accounts(), refreshCalendars({ throwOnError: true }), xApi.status(), courseApi.status()])
     setAccounts(nextAccounts)
     setXConnection(nextX)
+    setCourseFeed(nextFeed)
     setLoading(false)
-  }, [calendarApi, refreshCalendars, xApi])
+  }, [calendarApi, courseApi, refreshCalendars, xApi])
   const run = async (action: () => Promise<void>): Promise<void> => {
     setBusy(true)
     setError(null)
@@ -61,6 +66,16 @@ export function IntegrationSettings(): ReactNode {
     }
     void load().catch((cause: unknown) => { setLoading(false); setError(cause instanceof Error ? cause.message : String(cause)) })
   }, [calendarApi, load, xApi])
+  const feedSummary = (status: CourseFeedStatus): string => {
+    const checked = status.lastCheckedAt === null ? '' : ` Checked ${new Date(status.lastCheckedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.`
+    const count = status.lastItemCount === null ? '' : ` The last check found ${status.lastItemCount} ${status.lastItemCount === 1 ? 'item' : 'items'}.`
+    return status.lastError !== null ? `Connected to ${status.host}. The last check failed: ${status.lastError}` : `Connected to ${status.host}.${count}${checked}`
+  }
+  const saveFeed = (): void => {
+    const url = feedUrl.trim()
+    if (url === '') return
+    void run(async () => { const result = await courseApi.connect(url); setFeedUrl(''); setNotice(`Course calendar connected to ${result.host}. ${result.count} ${result.count === 1 ? 'item is' : 'items are'} due in the next two weeks.`) })
+  }
   return <section className="set-section">
     <h2 className="set-section-title">Connections</h2>
     {error !== null ? <p className="set-signin-error" role="alert">{error}</p> : null}
@@ -87,6 +102,19 @@ export function IntegrationSettings(): ReactNode {
         {xConnection?.connected ? <SettingsRow label="Sync bookmarks" description="Bookmarks are kept even if you disconnect.">
           <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { const result = await xApi.ingestNow(); setNotice(`${result.added} new bookmarks saved.`) })}>Sync now</Button>
         </SettingsRow> : null}
+      </div>
+      <div className="set-card">
+        <SettingsRow label="Course calendar" description={courseFeed?.connected ? feedSummary(courseFeed) : 'Paste the calendar feed link from Canvas (Calendar, then Calendar feed). Your agent reads what is due from it; nothing is imported.'}>
+          {courseFeed?.connected
+            ? <span className="set-inline-actions">
+              <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { const result = await courseApi.check(); setNotice(`${result.total} ${result.total === 1 ? 'item is' : 'items are'} due between ${result.from} and ${result.to}.`) })}>Check now</Button>
+              <Button variant="ghost" disabled={busy} onClick={() => void run(() => courseApi.disconnect())}>Disconnect</Button>
+            </span>
+            : <form className="set-feed-form" onSubmit={(event) => { event.preventDefault(); saveFeed() }}>
+              <Input value={feedUrl} onChange={setFeedUrl} placeholder="https://bruinlearn.ucla.edu/feeds/calendars/user_….ics" ariaLabel="Course calendar feed link" />
+              <Button variant="ghost" disabled={busy || feedUrl.trim() === ''} onClick={saveFeed}>Save</Button>
+            </form>}
+        </SettingsRow>
       </div>
     </>}
   </section>

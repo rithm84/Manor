@@ -123,7 +123,7 @@ Remote calls operate on committed data and return revisions and receipts through
 
 ### Current tool coverage and host connection
 
-The [shared catalog](../supabase/functions/_shared/toolCatalog.ts) contains 112 executable operations (46 reads and 66 writes). Remote MCP exposes their individual names and restricts read-only grants to reads. Repeated constraints use standard JSON Schema references and shared constraints, and per-operation server validation is authoritative. There is no live-browser transport.
+The [shared catalog](../supabase/functions/_shared/toolCatalog.ts) contains 113 executable operations (47 reads and 66 writes). Remote MCP exposes their individual names and restricts read-only grants to reads. Repeated constraints use standard JSON Schema references and shared constraints, and per-operation server validation is authoritative. There is no live-browser transport.
 
 Workspace, calendar, and habit retrieval, named metrics, command status, a content-free change cursor, current integration-job status and retry, record links, safe preferences, saved task views, precise Notes duplication and media operations, and atomic cross-module lifecycle batches are implemented. Some accepted names share operations: `update_tasks` completes and reschedules tasks, `set_habit_status` manages habit lifecycle, and `update_applications` changes stages and resumes. `query_weekly_reviews` accepts an ID for a single review.
 
@@ -155,6 +155,7 @@ Tools provide deep operations with minimal intermediate calls: bounded domain ba
 | Knowledge and captures | `query_knowledge`, `read_knowledge`, `create_capture`, `update_capture`, `link_records`, `unlink_records` | Source-independent supplied content, stable attachment IDs, provenance, and extraction and index readiness. Linking never silently copies content across lifecycle boundaries. |
 | Analysis and reviews | `get_metrics`, `query_history`, `get_weekly_review_inputs`, `save_weekly_review`, `read_weekly_review`, `list_weekly_reviews` | Named metrics and bounded dimensions and date ranges, with sample and coverage counts and missing-value semantics. Review inputs are revision-marked, and the review write is idempotent and source-attributed for the exact period. |
 | Recovery and operation status | `list_trash`, `trash_records`, `restore_records`, `archive_records`, `unarchive_records`, `get_operation_status`, `get_changes_since`, `get_background_run`, `retry_background_run` | Module-specific lifecycle allowlists; only eligible account jobs can be retried. A compact durable revision cursor supports catch-up independently of transient Realtime and narrative history; cursor expiry requires explicit resynchronization. |
+| Course deadlines | `query_course_deadlines` | Live read of the saved Canvas calendar feed link between two dates, at most 60 days: course, title, deadline, and link, parsed in memory and never stored. Managing the link is a Settings action; agents only read. |
 | Preferences and status | `get_preferences`, `update_preferences`, `get_integration_status` | Safe appearance and view preferences are separate from time-zone changes and credential or account management. No secrets are returned. |
 
 `get_workspace_context` also reports the implemented capability and schema version and the current restrictions, so optional features are never advertised before they work. Descriptions are published through the host's normal discovery mechanism; there is no second natural-language command router, and unsupported operations return specific errors instead of approximations.
@@ -257,6 +258,7 @@ The following table records which work involves a model and which doesn't.
 | X bookmarks | Server-side OAuth tokens, incremental ingestion and deduplication, linked-content extraction; no generation-model pass |
 | GitHub jobs catalog | Structured SimplifyJobs data with source validators and cursors; deterministic filtering and deduplication |
 | Google Calendar | Read-only backend synchronization for Home; server-stored refresh tokens and web OAuth callbacks |
+| Course calendar feed | The saved Canvas feed link (a credential kept in `manor_private`) is fetched and parsed by the `course-feed` function only when Settings or the agent asks; no schedule, no storage, no model |
 | Supplied captures | Codex supplies screenshot or media and processed content; Manor validates and stores it without a second normalization-model call |
 | Embeddings | OpenAI embedding API with the retained server-side key; only changed, eligible content is queued |
 | Weekly reviews | Hosted ChatGPT Work schedule reads inputs and saves generated content through remote MCP; no Manor-hosted generation-model call |

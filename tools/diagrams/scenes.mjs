@@ -28,7 +28,7 @@ export const scenes = {
       { id: 'z-client', label: 'Browser', x: 0, y: 90, w: 440, h: 210, stroke: S.app, fill: '#f3f0ff' },
       { id: 'z-agent', label: 'Agent hosts', x: 0, y: 640, w: 440, h: 220, stroke: S.neutral },
       { id: 'z-supabase', label: 'Supabase project (staging or production)', x: 540, y: 90, w: 560, h: 770, stroke: S.supabase, fill: '#e7f5ff' },
-      { id: 'z-external', label: 'External services', x: 1200, y: 90, w: 230, h: 770, stroke: S.external, fill: '#fff5f5' }
+      { id: 'z-external', label: 'External services', x: 1200, y: 90, w: 230, h: 940, stroke: S.external, fill: '#fff5f5' }
     ],
     nodes: [
       N('vercel', 'Vercel', 30, 130, { note: 'immutable assets, service worker shell', icon: I.cdn, fill: fill.neutral, stroke: S.neutral }),
@@ -39,11 +39,12 @@ export const scenes = {
       N('db', 'Postgres', 570, 300, { note: 'RLS, commands, history, cron', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
       N('files', 'Storage', 570, 470, { note: 'private manor-files bucket', icon: I.objectStorage, fill: fill.storage, stroke: S.storage }),
       N('workers', 'Workers', 900, 300, { note: 'integrations, jobs, embeddings', icon: I.microservice, fill: fill.supabase, stroke: S.supabase }),
-      N('mcp', 'manor-mcp', 900, 680, { note: 'Edge Function, 112 operations', icon: I.code, fill: fill.supabase, stroke: S.supabase }),
+      N('mcp', 'manor-mcp', 900, 680, { note: 'Edge Function, 113 operations', icon: I.code, fill: fill.supabase, stroke: S.supabase }),
       N('google', 'Google', 1230, 130, { note: 'identity, Calendar (read-only)', icon: I.cloud, fill: fill.external, stroke: S.external }),
       N('x', 'X bookmarks', 1230, 300, { icon: I.star, fill: fill.external, stroke: S.external }),
       N('simplify', 'SimplifyJobs', 1230, 470, { note: 'listings.json on GitHub', icon: I.github, fill: fill.external, stroke: S.external }),
-      N('openai', 'OpenAI embeddings', 1230, 660, { note: 'text-embedding-3-small', icon: I.chip, fill: fill.external, stroke: S.external })
+      N('openai', 'OpenAI embeddings', 1230, 660, { note: 'text-embedding-3-small', icon: I.chip, fill: fill.external, stroke: S.external }),
+      N('canvas', 'Canvas feed', 1230, 850, { note: 'saved link, read on demand', icon: I.cloud, fill: fill.external, stroke: S.external })
     ],
     edges: [
       E('vercel', 'web', { color: S.neutral }),
@@ -58,7 +59,8 @@ export const scenes = {
       E('workers', 'google', { color: S.external, via: [[1180, 340], [1180, 240]] }),
       E('workers', 'x', { color: S.external }),
       E('workers', 'simplify', { color: S.external, via: [[1150, 400], [1150, 540]] }),
-      E('workers', 'openai', { color: S.external, via: [[1120, 420], [1120, 730]] })
+      E('workers', 'openai', { color: S.external, via: [[1120, 420], [1120, 730]] }),
+      E('mcp', 'canvas', { label: 'deadlines', color: S.external, via: [[1150, 750], [1150, 920]] })
     ]
   },
   commands: {
@@ -97,7 +99,7 @@ export const scenes = {
       N('consent', 'Manor consent screen', 490, 380, { note: 'read or read-write scope, revocable', icon: I.webApp, fill: fill.supabase, stroke: S.supabase }),
       N('token', 'Scoped token', 720, 380, { note: 'client_id claim, refresh, revocation', icon: I.password, fill: fill.app, stroke: S.app }),
       N('rls', 'Row-level security', 1040, 255, { note: 'user_id = (select auth.uid()) and MCP scope policies', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
-      N('ops', '112 operations', 1290, 255, { note: '46 reads, 66 writes, one catalog', icon: I.code, fill: fill.storage, stroke: S.storage })
+      N('ops', '113 operations', 1290, 255, { note: '47 reads, 66 writes, one catalog', icon: I.code, fill: fill.storage, stroke: S.storage })
     ],
     edges: [
       E('google', 'gate', { color: S.external }), E('gate', 'hook', { color: S.jobs }), E('hook', 'session', { color: S.supabase }),

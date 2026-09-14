@@ -10,7 +10,7 @@ import { LeetCodeService } from './LeetCodeService'
 import { NotesService } from './NotesService'
 import { KnowledgeService } from './KnowledgeService'
 import { ResumesService } from './ResumesService'
-import { CalendarService, XService } from './IntegrationService'
+import { CalendarService, CourseFeedService, XService } from './IntegrationService'
 import { ReviewsService } from './ReviewsService'
 
 export function createServices(gateway: ManorGateway, drafts: NoteDraftStore): ManorServices {
@@ -18,6 +18,6 @@ export function createServices(gateway: ManorGateway, drafts: NoteDraftStore): M
     account: new AccountService(gateway, drafts), home: new HomeService(gateway), habits: new HabitsService(gateway),
     moodFocus: new MoodFocusService(gateway), jobs: new JobsService(gateway), leetcode: new LeetCodeService(gateway),
     notes: new NotesService(gateway, drafts, navigator.locks), kb: new KnowledgeService(gateway), resumes: new ResumesService(gateway),
-    gcal: new CalendarService(gateway), x: new XService(gateway), reviews: new ReviewsService(gateway)
+    gcal: new CalendarService(gateway), x: new XService(gateway), courseFeed: new CourseFeedService(gateway), reviews: new ReviewsService(gateway)
   }
 }
