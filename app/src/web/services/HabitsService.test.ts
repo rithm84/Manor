@@ -13,6 +13,8 @@ class RevisionCheckingGateway {
   readonly client = {
     rpc: async () => ({ data: { poolDays: [], today: TODAY, habits: [], lifecycle: [], entries: [], intents: [], freezes: [], grants: [], pools: [] }, error: null })
   }
+  /** No mirror is attached here, which is how the gateway answers a derived read on the server path. */
+  cachedDerived(_name: string, load: () => Promise<unknown>): Promise<unknown> { return load() }
   async rows(table: string): Promise<JsonObject[]> {
     await new Promise((resolve) => setTimeout(resolve, 20))
     return table === 'habit_entries' && this.entry !== null ? [this.entry] : []

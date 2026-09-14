@@ -4,6 +4,7 @@ import type { XApi, XConnectionStatus } from '../../shared/xConnection'
 import type { CourseFeedApi, CourseFeedCheck, CourseFeedStatus } from '../../shared/courseFeed'
 import { ManorRequestError, type ManorGateway, type JsonObject } from '../ManorGateway'
 import { calendarDays } from '../../shared/calendarDays'
+import { calendarWindow, calendarWindowFilter, withinCalendarWindow, type CalendarWindow } from '../mirror/calendarWindow'
 import { accountToday } from './rows'
 
 const accountSchema = z.object({ id: z.string(), email: z.email(), connectedAt: z.string() })
@@ -70,18 +71,32 @@ export class CalendarService implements CalendarApi {
   private async readEvents(ordered: readonly string[]): Promise<CalendarDayEvent[]> {
     const [{ timezone }, calendars] = await Promise.all([accountToday(this.gateway), this.calendars()])
     const enabled = calendars.filter((calendar) => calendar.enabled)
+    // An account with nothing to show reads nothing, locally or otherwise.
     if (enabled.length === 0) return []
-    const earliest = new Date(`${ordered[0]}T00:00:00Z`); earliest.setUTCDate(earliest.getUTCDate() - 1)
-    const latest = new Date(`${ordered[ordered.length - 1]}T00:00:00Z`); latest.setUTCDate(latest.getUTCDate() + 2)
-    const { data, error } = await this.gateway.client.from('calendar_events').select('*').eq('user_id', this.gateway.accountId)
-      .or(`and(all_day.eq.true,start_date.lte.${ordered[ordered.length - 1]},end_date.gt.${ordered[0]}),and(all_day.eq.false,starts_at.lt.${latest.toISOString()},ends_at.gt.${earliest.toISOString()})`)
-    if (error) throw new ManorRequestError('Read calendar_events', error.code, error.message)
-    const records = z.array(storedEventSchema).parse(data)
+    const window = calendarWindow(ordered)
+    const mirrored = await this.storedEvents()
+    const records = mirrored === null ? await this.readStoredEvents(window) : z.array(storedEventSchema).parse(mirrored.filter((row) => withinCalendarWindow(row, window)))
     if (records.length > 5000) throw new RangeError('This date range contains more than 5,000 events. Choose fewer dates.')
     return records.flatMap((event) => {
       const calendar = enabled.find((item) => item.id === event.calendar_id && item.accountId === event.account_id)
       return calendar === undefined ? [] : calendarDays(event, ordered, timezone, calendar.colorId)
     })
+  }
+
+  /**
+   * The mirrored `calendar_events` table, or null while reads belong on the server. Every window of days
+   * shares this one read under the calendar key a pull already invalidates, so opening a second week costs
+   * a filter rather than another pass over the whole table.
+   */
+  private storedEvents(): Promise<JsonObject[] | null> {
+    return this.gateway.cached(['calendar_days', 'calendar_events'], () => this.gateway.mirroredRows('calendar_events'))
+  }
+
+  private async readStoredEvents(window: CalendarWindow): Promise<z.infer<typeof storedEventSchema>[]> {
+    const { data, error } = await this.gateway.client.from('calendar_events').select('*')
+      .eq('user_id', this.gateway.accountId).or(calendarWindowFilter(window))
+    if (error) throw new ManorRequestError('Read calendar_events', error.code, error.message)
+    return z.array(storedEventSchema).parse(data)
   }
   async setCalendarEnabled(calendarId: string, accountId: string, enabled: boolean): Promise<void> {
     await this.integration.request('calendar_visibility', { calendarId, accountId, enabled }, z.object({ committed: z.literal(true) }))

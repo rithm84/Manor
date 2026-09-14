@@ -12,10 +12,12 @@ const I = {
   chip: { library: 'drwnio', item: 8 }, bucket: { library: 'drwnio', item: 0 },
   lightning: { library: 'system-icons', item: 'lightning' }, star: { library: 'system-icons', item: 'star' }, warn: { library: 'system-icons', item: 'warn' },
   document: { library: 'system-icons', item: 'document' }, gear: { library: 'system-icons', item: 'set up' }, broom: { library: 'system-icons', item: 'clean up' },
+  notice: { library: 'system-icons', item: 'notice' }, filter: { library: 'system-icons', item: 'filter' },
   notes: { library: 'icons', item: 'notes' }, documents: { library: 'icons', item: 'documents' }, paper: { library: 'icons', item: 'paper' },
   clipboard: { library: 'icons', item: 'clipboard' }, password: { library: 'icons', item: 'password' }, shredder: { library: 'icons', item: 'shredder' },
   del: { library: 'icons', item: 'delete' }, upload: { library: 'icons', item: 'upload' }, attachment: { library: 'icons', item: 'attachment' },
-  search: { library: 'icons', item: 'search' }, zip: { library: 'icons', item: 'zip' }
+  search: { library: 'icons', item: 'search' }, zip: { library: 'icons', item: 'zip' }, share: { library: 'icons', item: 'share' },
+  download: { library: 'icons', item: 'download' }
 }
 const N = (id, label, x, y, extra = {}) => ({ id, label, x, y, ...extra })
 const E = (from, to, extra = {}) => ({ from, to, ...extra })
@@ -31,7 +33,7 @@ export const scenes = {
       { id: 'z-external', label: 'External services', x: 1200, y: 90, w: 230, h: 940, stroke: S.external, fill: '#fff5f5' }
     ],
     nodes: [
-      N('desktop', 'Tauri shell', 30, 130, { note: 'window, deep links, updater', icon: I.computer, fill: fill.neutral, stroke: S.neutral }),
+      N('desktop', 'Tauri shell', 30, 130, { note: 'window, deep links, updater, SQLite mirror', icon: I.computer, fill: fill.neutral, stroke: S.neutral }),
       N('web', 'Manor app', 240, 130, { note: 'React, TanStack Query, IndexedDB drafts', icon: I.browser, fill: fill.app, stroke: S.app }),
       N('releases', 'GitHub Releases', 30, 320, { note: 'signed builds, latest.json', icon: I.github, fill: fill.external, stroke: S.external }),
       N('chatgpt', 'ChatGPT or Codex', 30, 680, { note: 'remote MCP client', icon: I.client, fill: fill.neutral, stroke: S.neutral }),
@@ -63,6 +65,37 @@ export const scenes = {
       E('workers', 'simplify', { color: S.external, via: [[1150, 400], [1150, 540]] }),
       E('workers', 'openai', { color: S.external, via: [[1120, 420], [1120, 730]] }),
       E('mcp', 'canvas', { label: 'deadlines', color: S.external, via: [[1150, 750], [1150, 920]] })
+    ]
+  },
+  releases: {
+    title: 'Releases and updates',
+    subtitle: 'One script builds, signs, and publishes; the installed app watches the feed, checks the signature, and restarts into the new bundle.',
+    zones: [
+      { id: 'z-publish', label: 'Publishing', x: 0, y: 90, w: 900, h: 260, stroke: S.storage, fill: '#ebfbee' },
+      { id: 'z-installed', label: 'The installed app', x: 0, y: 410, w: 1260, h: 420, stroke: S.app, fill: '#f3f0ff' }
+    ],
+    nodes: [
+      N('script', 'Release script', 30, 135, { note: 'version from app/package.json', icon: I.code, fill: fill.neutral, stroke: S.neutral }),
+      N('archive', 'Signed archive', 250, 135, { note: 'minisign key kept outside the repository', icon: I.lock, fill: fill.jobs, stroke: S.jobs }),
+      N('feed', 'latest.json', 470, 135, { note: 'darwin-aarch64: version, signature, URL', icon: I.json, fill: fill.supabase, stroke: S.supabase }),
+      N('published', 'GitHub Releases', 690, 135, { note: 'v<version>, marked as the latest release', icon: I.github, fill: fill.external, stroke: S.external }),
+      N('check', 'Update check', 30, 455, { note: 'launch, hourly, focus after an hour', icon: I.gear, fill: fill.neutral, stroke: S.neutral }),
+      N('notice', 'Update notice', 250, 455, { note: 'names the version, offers a restart', icon: I.notice, fill: fill.jobs, stroke: S.jobs }),
+      N('guard', 'Dialog open or an edit unprotected?', 470, 465, { shape: 'diamond', w: 250, h: 150, fill: fill.jobs, stroke: S.jobs }),
+      N('install', 'Download and install', 800, 455, { w: 220, note: 'only with a valid signature for the shipped public key', icon: I.download, fill: fill.storage, stroke: S.storage }),
+      N('relaunch', 'Relaunch', 1070, 455, { note: 'macOS runs the new bundle only after a restart', icon: I.lightning, fill: fill.storage, stroke: S.storage }),
+      N('wait', 'Wait', 470, 700, { w: 250, note: 'the notice stays until it is safe', fill: fill.neutral, stroke: S.neutral })
+    ],
+    edges: [
+      E('script', 'archive', { color: S.storage }), E('archive', 'feed', { color: S.storage }), E('feed', 'published', { color: S.storage }),
+      E('published', 'check', { label: 'the feed', color: S.external, via: [[780, 370], [230, 370]] }),
+      E('check', 'notice', { color: S.jobs }), E('notice', 'guard', { color: S.jobs }),
+      E('guard', 'wait', { label: 'yes', color: S.neutral }), E('guard', 'install', { label: 'no', color: S.storage }),
+      E('install', 'relaunch', { color: S.storage })
+    ],
+    notes: [
+      { text: 'The staging script publishes the same three files to one rolling prerelease, which staging builds watch instead.', x: 0, y: 900, size: 13 },
+      { text: 'An installed app trusts only the key it shipped with, so a build signed with any other key is refused.', x: 0, y: 925, size: 13 }
     ]
   },
   commands: {
@@ -107,6 +140,112 @@ export const scenes = {
       E('google', 'gate', { color: S.external }), E('gate', 'hook', { color: S.jobs }), E('hook', 'session', { color: S.supabase }),
       E('client', 'discovery', { color: S.neutral }), E('discovery', 'consent', { color: S.supabase }), E('consent', 'token', { color: S.supabase }),
       E('session', 'rls', { color: S.app }), E('token', 'rls', { color: S.app }), E('rls', 'ops', { color: S.supabase })
+    ]
+  },
+  'deep-links': {
+    title: 'Leaving for the browser and coming back',
+    subtitle: 'An embedded webview cannot serve an authorization page, so anything that needs a real browser opens in one and returns on the build\'s URL scheme.',
+    zones: [
+      { id: 'z-signin', label: 'Google sign-in', x: 0, y: 90, w: 730, h: 250, stroke: S.app, fill: '#f3f0ff' },
+      { id: 'z-consent', label: 'Agent consent', x: 0, y: 380, w: 730, h: 250, stroke: S.neutral },
+      { id: 'z-connect', label: 'Integration connections', x: 0, y: 670, w: 730, h: 250, stroke: S.external, fill: '#fff5f5' },
+      { id: 'z-back', label: 'Back in the app', x: 790, y: 90, w: 900, h: 830, stroke: S.supabase, fill: '#e7f5ff' }
+    ],
+    nodes: [
+      N('start1', 'Sign in', 30, 135, { note: 'skipBrowserRedirect', icon: I.user, fill: fill.app, stroke: S.app }),
+      N('browser1', 'System browser', 250, 135, { note: 'Supabase Auth, then Google', icon: I.browser, fill: fill.external, stroke: S.external }),
+      N('link1', 'manor://auth/callback', 470, 135, { w: 220, note: 'authorization code', icon: I.share, fill: fill.jobs, stroke: S.jobs }),
+      N('start2', 'Agent asks', 30, 425, { note: 'ChatGPT or Codex', icon: I.client, fill: fill.neutral, stroke: S.neutral }),
+      N('server2', 'OAuth server', 250, 425, { note: 'its site URL is the app scheme', icon: I.lock, fill: fill.supabase, stroke: S.supabase }),
+      N('link2', 'manor:/oauth/consent', 470, 425, { w: 220, note: 'authorization_id', icon: I.share, fill: fill.jobs, stroke: S.jobs }),
+      N('start3', 'Settings', 30, 715, { note: 'connect Google or X', icon: I.gear, fill: fill.app, stroke: S.app }),
+      N('browser3', 'Provider consent', 250, 715, { note: 'Google or X, in the browser', icon: I.cloud, fill: fill.external, stroke: S.external }),
+      N('link3', 'manor://settings', 470, 715, { w: 220, note: 'connection_code from integration-callback', icon: I.share, fill: fill.jobs, stroke: S.jobs }),
+      N('inbox', 'Route inbox', 810, 425, { w: 200, note: 'a link that arrives before the router waits for it', icon: I.bus, fill: fill.app, stroke: S.app }),
+      N('which', 'Which route?', 1060, 440, { shape: 'diamond', w: 210, h: 130, fill: fill.jobs, stroke: S.jobs }),
+      N('session', 'Session opens', 1420, 135, { w: 220, note: 'exchangeCodeForSession', icon: I.password, fill: fill.storage, stroke: S.storage }),
+      N('consent', 'Consent page', 1420, 425, { w: 220, note: 'approve, then the agent\'s callback opens in the browser', icon: I.webApp, fill: fill.supabase, stroke: S.supabase }),
+      N('settings', 'Back in Settings', 1420, 715, { w: 220, note: 'the connection completes', icon: I.gear, fill: fill.app, stroke: S.app })
+    ],
+    edges: [
+      E('start1', 'browser1', { color: S.app }), E('browser1', 'link1', { color: S.external }), E('link1', 'inbox', { color: S.jobs }),
+      E('start2', 'server2', { color: S.neutral }), E('server2', 'link2', { color: S.supabase }), E('link2', 'inbox', { color: S.jobs }),
+      E('start3', 'browser3', { color: S.app }), E('browser3', 'link3', { color: S.external }), E('link3', 'inbox', { color: S.jobs }),
+      E('inbox', 'which', { color: S.app }),
+      E('which', 'session', { label: 'auth/callback', color: S.storage }),
+      E('which', 'consent', { label: 'oauth/consent', color: S.supabase }),
+      E('which', 'settings', { label: 'settings', color: S.app })
+    ],
+    notes: [
+      { text: 'Only the sign-in callback is handled before the router exists; every other link is a route the app navigates to.', x: 0, y: 960, size: 13 },
+      { text: 'Staging is the same picture on the manor-staging scheme, so a link for one build never opens the other.', x: 0, y: 985, size: 13 }
+    ]
+  },
+  mirror: {
+    title: 'Local mirror and sync',
+    subtitle: 'Pages read rows the shell keeps in SQLite; writes stay server-authoritative, and the change feed brings every committed change back.',
+    zones: [
+      { id: 'z-app', label: 'Desktop app', x: 0, y: 90, w: 880, h: 430, stroke: S.app, fill: '#f3f0ff' },
+      { id: 'z-supabase', label: 'Supabase project', x: 960, y: 90, w: 320, h: 430, stroke: S.supabase, fill: '#e7f5ff' }
+    ],
+    nodes: [
+      N('ui', 'Pages', 30, 130, { note: 'React, TanStack Query keys unchanged', icon: I.browser, fill: fill.app, stroke: S.app }),
+      N('gateway', 'Gateway', 340, 130, { note: 'reads, manor_command, revisions', icon: I.bus, fill: fill.app, stroke: S.app }),
+      N('sync', 'Mirror sync', 650, 130, { note: 'bootstrap, pull, derived cache', icon: I.gear, fill: fill.neutral, stroke: S.neutral }),
+      N('sqlite', 'SQLite mirror', 650, 330, { note: 'Tauri shell: rows with revisions, cursor', icon: I.database, fill: fill.jobs, stroke: S.jobs }),
+      N('feed', 'Change feed', 990, 130, { note: 'workspace_changes: cursor, identity, revision', icon: I.json, fill: fill.supabase, stroke: S.supabase }),
+      N('tables', 'Tables', 990, 330, { note: 'owner rows under RLS', icon: I.postgres, fill: fill.supabase, stroke: S.supabase })
+    ],
+    edges: [
+      E('ui', 'gateway', { label: 'reads, commands', color: S.app }),
+      E('gateway', 'sqlite', { label: 'rows when ready', color: S.jobs, via: [[490, 400]] }),
+      E('gateway', 'sync', { label: 'pull after commit', color: S.neutral }),
+      E('gateway', 'tables', { label: 'manor_command', color: S.supabase, via: [[370, 300], [370, 560], [1080, 560]] }),
+      E('sync', 'feed', { label: 'changes since cursor', color: S.supabase }),
+      E('sync', 'tables', { label: 're-read changed rows, bootstrap all', color: S.supabase }),
+      E('sync', 'sqlite', { label: 'upsert, delete, cursor', color: S.jobs })
+    ]
+  },
+  pull: {
+    title: 'One pull of the change feed',
+    subtitle: 'A poke starts it; the feed decides which rows to look at, and Postgres still decides what they hold.',
+    nodes: [
+      N('poke', 'Poke', 0, 130, { w: 210, note: 'realtime, focus, online, a minute, launch, own command', icon: I.lightning, fill: fill.app, stroke: S.app }),
+      N('head', 'Mirror empty or ahead of the head?', 270, 145, { shape: 'diamond', w: 230, h: 140, fill: fill.jobs, stroke: S.jobs }),
+      N('bootstrap', 'Bootstrap', 270, 400, { w: 230, note: 'every table in full, then the head cursor', icon: I.database, fill: fill.storage, stroke: S.storage }),
+      N('page', 'Feed page', 540, 130, { w: 290, note: 'manor_workspace_changes(since, 1000)', icon: I.json, fill: fill.supabase, stroke: S.supabase }),
+      N('group', 'Group by table', 870, 130, { w: 210, note: 'the last change for a key wins', icon: I.filter, fill: fill.neutral, stroke: S.neutral }),
+      N('kind', 'Delete or purge?', 1140, 145, { shape: 'diamond', w: 220, h: 130, fill: fill.jobs, stroke: S.jobs }),
+      N('remove', 'Remove by key', 1440, 180, { w: 200, h: 60, fill: fill.external, stroke: S.external }),
+      N('revision', 'Local revision already current?', 1140, 630, { shape: 'diamond', w: 220, h: 140, fill: fill.jobs, stroke: S.jobs }),
+      N('skip', 'Skip the re-read', 1440, 670, { w: 200, h: 60, fill: fill.neutral, stroke: S.neutral }),
+      N('reread', 'Re-read the row', 830, 620, { w: 240, note: 'by identity, batched per table', icon: I.search, fill: fill.supabase, stroke: S.supabase }),
+      N('returned', 'Row returned?', 550, 630, { shape: 'diamond', w: 210, h: 130, fill: fill.jobs, stroke: S.jobs }),
+      N('upsert', 'Upsert the row', 280, 660, { w: 200, h: 60, fill: fill.storage, stroke: S.storage }),
+      N('gone', 'Delete the row', 550, 850, { w: 210, note: 'gone, or hidden by row-level security', fill: fill.external, stroke: S.external }),
+      N('commit', 'Commit the cursor', 0, 660, { w: 210, note: 'the page\'s last cursor, once it applied', icon: I.clipboard, fill: fill.neutral, stroke: S.neutral }),
+      N('invalidate', 'Invalidate', 0, 890, { w: 230, note: 'touched tables and calendar_days', icon: I.broom, fill: fill.app, stroke: S.app }),
+      N('announce', 'manor:committed', 290, 890, { w: 230, note: 'pages reload on the event they already watch', icon: I.lightning, fill: fill.app, stroke: S.app })
+    ],
+    edges: [
+      E('poke', 'head', { color: S.app }),
+      E('head', 'bootstrap', { label: 'yes', color: S.storage }),
+      E('head', 'page', { label: 'no', color: S.supabase }),
+      E('page', 'group', { color: S.supabase }), E('group', 'kind', { color: S.neutral }),
+      E('kind', 'remove', { label: 'yes', color: S.external }),
+      E('kind', 'revision', { label: 'no', color: S.jobs }),
+      E('revision', 'skip', { label: 'yes', color: S.neutral }),
+      E('revision', 'reread', { label: 'no', color: S.supabase }),
+      E('reread', 'returned', { color: S.supabase }),
+      E('returned', 'upsert', { label: 'yes', color: S.storage }),
+      E('returned', 'gone', { label: 'no', color: S.external }),
+      E('upsert', 'commit', { color: S.storage }),
+      E('commit', 'invalidate', { color: S.neutral }), E('invalidate', 'announce', { color: S.app })
+    ],
+    notes: [
+      { text: 'Each page commits its own last cursor, so an interrupted pull repeats a page instead of skipping one.', x: 0, y: 1090, size: 13 },
+      { text: 'A change to job_roles also re-pulls job_stage_transitions, which carries no feed trigger of its own.', x: 0, y: 1115, size: 13 },
+      { text: 'A connection error keeps the mirror serving reads; any other failure parks them on the server until a pull succeeds.', x: 0, y: 1140, size: 13 }
     ]
   },
   'notes-drafts': {
@@ -201,27 +340,37 @@ export const scenes = {
     ]
   },
   boot: {
-    title: 'What a page load waits for',
-    subtitle: 'Warm load of Home. Boxes are the requests on the critical path; the second lane is the shipped design.',
+    title: 'What a launch waits for',
+    subtitle: 'A cold start of the installed app, with the milestones the shell log records.',
     zones: [
-      { id: 'z-before', label: 'Before: one chain', x: 0, y: 90, w: 1400, h: 150, stroke: S.external, fill: '#fff5f5' },
-      { id: 'z-after', label: 'After: independent work starts together', x: 0, y: 290, w: 1400, h: 300, stroke: S.storage, fill: '#ebfbee' }
+      { id: 'z-path', label: 'On the critical path', x: 0, y: 90, w: 1560, h: 230, stroke: S.storage, fill: '#ebfbee' },
+      { id: 'z-side', label: 'Off the critical path', x: 700, y: 370, w: 920, h: 210, stroke: S.neutral }
     ],
     nodes: [
-      N('b1', 'index.js', 30, 140, { w: 150, h: 60, fill: fill.white }), N('b2', 'profile', 210, 140, { w: 150, h: 60, fill: fill.white }), N('b3', 'App chunk', 390, 140, { w: 150, h: 60, fill: fill.white }),
-      N('b4', 'page chunk + 25 icon chunks', 570, 140, { w: 250, h: 60, fill: fill.white }), N('b5', 'mount', 830, 140, { w: 120, h: 60, fill: fill.white }), N('b6', 'four table reads', 980, 140, { w: 170, h: 60, fill: fill.white }),
-      N('b7', 'integrations function, twice', 1170, 140, { w: 220, h: 60, fill: fill.external, stroke: S.external }),
-      N('a1', 'index.js', 30, 400, { w: 150, h: 60, fill: fill.white }),
-      N('a2', 'profile', 260, 330, { w: 150, h: 60, fill: fill.white }), N('a3', 'App chunk', 260, 400, { w: 150, h: 60, fill: fill.white }), N('a4', 'route chunk, icons and controls grouped', 260, 470, { w: 340, h: 60, fill: fill.white }),
-      N('a5', 'route reads + today\'s events', 480, 330, { w: 230, h: 60, fill: fill.storage, stroke: S.storage }), N('a6', 'mount with data in flight', 790, 400, { w: 220, h: 60, fill: fill.white }),
-      N('a7', 'render', 1090, 400, { w: 140, h: 60, fill: fill.storage, stroke: S.storage })
+      N('process', 'Process start', 20, 160, { w: 170, h: 90, fill: fill.white }),
+      N('shell', 'Shell ready', 210, 160, { w: 170, h: 90, note: 'window hidden', fill: fill.white }),
+      N('theme', 'Theme applied', 400, 160, { w: 170, h: 90, note: 'first render dispatched', fill: fill.white }),
+      N('window', 'Window shown', 590, 160, { w: 170, h: 90, note: 'about 300 ms', fill: fill.storage, stroke: S.storage }),
+      N('session', 'Session', 780, 160, { w: 170, h: 90, note: 'from local storage', fill: fill.white }),
+      N('account', 'Cached account', 970, 160, { w: 170, h: 90, note: 'renders at once', fill: fill.white }),
+      N('mirror', 'Mirror open', 1160, 160, { w: 170, h: 90, note: 'ready from the last launch', fill: fill.white }),
+      N('home', 'Home reads the mirror', 1350, 160, { w: 170, h: 90, note: 'about 20 ms', fill: fill.storage, stroke: S.storage }),
+      N('profile', 'Profile read', 880, 430, { w: 200, h: 90, note: 'reconciles name and time zone', fill: fill.white, stroke: S.neutral }),
+      N('pull', 'First pull', 1130, 430, { w: 200, h: 90, note: 'catches the mirror up', fill: fill.white, stroke: S.neutral }),
+      N('shared', 'Feed-less tables', 1360, 430, { w: 240, h: 90, note: 'refreshed on launch and hourly', fill: fill.white, stroke: S.neutral })
     ],
     edges: [
-      E('b1', 'b2', { color: S.external }), E('b2', 'b3', { color: S.external }), E('b3', 'b4', { color: S.external }), E('b4', 'b5', { color: S.external }), E('b5', 'b6', { color: S.external }), E('b6', 'b7', { color: S.external }),
-      E('a1', 'a2', { color: S.storage }), E('a1', 'a3', { color: S.storage }), E('a1', 'a4', { color: S.storage }), E('a2', 'a5', { color: S.storage }),
-      E('a3', 'a6', { color: S.storage, via: [[640, 430]] }), E('a4', 'a6', { color: S.storage, via: [[640, 500], [640, 430]] }), E('a5', 'a6', { color: S.storage }), E('a6', 'a7', { color: S.storage })
+      E('process', 'shell', { color: S.storage }), E('shell', 'theme', { color: S.storage }), E('theme', 'window', { color: S.storage }),
+      E('window', 'session', { color: S.storage }), E('session', 'account', { color: S.storage }), E('account', 'mirror', { color: S.storage }),
+      E('mirror', 'home', { color: S.storage }),
+      E('account', 'profile', { color: S.neutral, style: 'dashed' }),
+      E('mirror', 'pull', { color: S.neutral, style: 'dashed' }),
+      E('mirror', 'shared', { color: S.neutral, style: 'dashed' })
     ],
-    notes: [{ text: 'Assets come from the service worker after the first visit, so the chain is dominated by round trips, not bytes.', x: 30, y: 620, size: 13 }]
+    notes: [
+      { text: 'Measured on one Mac with the desktop benchmark, which relaunches the installed app and reads these lines back; they describe that machine, not a budget.', x: 0, y: 620, size: 13 },
+      { text: 'Every later route reads the same mirror, so it settles in the same tens of milliseconds as Home.', x: 0, y: 645, size: 13 }
+    ]
   },
   streaks: {
     title: 'How a habit day resolves',

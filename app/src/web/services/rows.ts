@@ -1,6 +1,8 @@
 import { dateInTimezone } from '../../shared/timezone'
 import { z } from 'zod'
-import type { CommandResult, JsonObject, ManorGateway } from '../ManorGateway'
+import { ManorRequestError } from '../ManorGateway'
+import type { CommandResult, JsonObject, JsonValue, ManorGateway } from '../ManorGateway'
+import type { DerivedName } from '../mirror/MirrorStore'
 
 export const revisionSchema = z.number().int().positive()
 
@@ -15,6 +17,18 @@ export function commandRecord(result: CommandResult): JsonObject {
 
 export function rowRevision(row: JsonObject): number {
   return revisionSchema.parse(row.revision)
+}
+
+/**
+ * An account-derived RPC read. It depends only on account data and the current day, so the mirror can
+ * serve it from the value it cached under the cursor and day it was computed for.
+ */
+export function derivedRead(gateway: ManorGateway, name: DerivedName, label: string): Promise<JsonValue> {
+  return gateway.cachedDerived(name, async () => {
+    const { data, error } = await gateway.client.rpc(name)
+    if (error !== null) throw new ManorRequestError(label, error.code, error.message)
+    return z.json().parse(data)
+  })
 }
 
 export async function accountToday(gateway: ManorGateway): Promise<{ today: string; timezone: string }> {

@@ -3,12 +3,14 @@
 //! The shell owns window creation, deep-link receipt, single-instance
 //! forwarding, external-link opening, window-state persistence, file logging,
 //! keeping the app alive behind a closed window,
-//! signed update delivery, relaunch, and the one command that reports which URL
+//! signed update delivery, relaunch, the local mirror the frontend reads its
+//! pages from, and the one command that reports which URL
 //! scheme the build registered and when the process started. Everything a
 //! person sees or edits belongs to
 //! the React frontend that the window loads, so no product rule lives here.
 
 mod info;
+mod mirror;
 
 use std::fmt::Arguments;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -46,6 +48,7 @@ pub fn run() {
         .as_millis() as u64;
     tauri::Builder::default()
         .manage(info::LaunchTime(launched_at))
+        .manage(mirror::MirrorState::default())
         .plugin(logging())
         .plugin(tauri_plugin_single_instance::init(
             |_app, _arguments, _cwd| {
@@ -71,7 +74,21 @@ pub fn run() {
         // Supplies the restart that the frontend calls once an update is
         // installed: on macOS the new bundle only takes effect on relaunch.
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![info::desktop_info])
+        .invoke_handler(tauri::generate_handler![
+            info::desktop_info,
+            mirror::commands::mirror_open,
+            mirror::commands::mirror_status,
+            mirror::commands::mirror_replace_table,
+            mirror::commands::mirror_upsert_rows,
+            mirror::commands::mirror_delete_rows,
+            mirror::commands::mirror_rows,
+            mirror::commands::mirror_revisions,
+            mirror::commands::mirror_commit,
+            mirror::commands::mirror_put_derived,
+            mirror::commands::mirror_get_derived,
+            mirror::commands::mirror_delete_derived,
+            mirror::commands::mirror_wipe,
+        ])
         // Closing the window hides it so the next open is instant; Quit still
         // ends the process through the application menu.
         .on_window_event(|window, event| {

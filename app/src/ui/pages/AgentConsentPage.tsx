@@ -22,8 +22,9 @@ function returnMessage(clientName: string | null): string {
 }
 
 /**
- * Where an agent's authorization lands: the consent function opens `/oauth/consent` here, the decision
- * goes back to Supabase, and the address it answers with opens in the browser the agent is waiting in.
+ * Where an agent's authorization lands: the OAuth server's site URL is this build's scheme, so the browser
+ * opens `/oauth/consent` here; the decision goes back to Supabase, and the address it answers with opens in
+ * the browser the agent is waiting in.
  */
 export function AgentConsentPage(): ReactNode {
   const accountApi = useManorService('account')

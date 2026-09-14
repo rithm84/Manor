@@ -1,6 +1,6 @@
 # Manor desktop shell
 
-_Last updated: 2026-09-13_
+_Last updated: 2026-09-14_
 
 This package is the Tauri 2 shell that makes Manor a macOS app. The Rust
 crate owns only the native shell: window creation, deep-link receipt,
@@ -12,7 +12,7 @@ the update feed.
 
 ## Prerequisites
 
-- A stable Rust toolchain, 1.77.2 or newer, from `brew install rust` or
+- A stable Rust toolchain, 1.85 or newer, from `brew install rust` or
   [rustup](https://rustup.rs).
 - The Xcode command line tools, which supply the linker and the macOS SDK.
 - Node.js, plus the frontend dependencies from `npm --prefix app ci`.
@@ -126,6 +126,19 @@ them against a staging bundle that Launch Services knows about.
 
 The shell never logs a deep link's query or fragment, because they carry the
 authorization code and the session tokens.
+
+## Local mirror
+
+The shell keeps a SQLite copy of the signed-in account at
+`~/Library/Application Support/<identifier>/mirror/<account id>.sqlite`, with
+one row per mirrored table row (its JSON and revision), the change-feed cursor
+the copy is current to, and the cached derived reads. The frontend fills and
+updates it; the shell only stores and serves it, and every request names the
+account it belongs to. Signing out deletes the file, opening an account removes
+any other account's leftover files, and a schema change rebuilds the copy on the
+next launch. The architecture's
+[local mirror and sync](../docs/ARCHITECTURE.md#local-mirror-and-sync) section
+describes how it stays current.
 
 ## Closing and quitting
 
