@@ -5,7 +5,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { moodFocusPreviousDate } from '../../shared/moodFocus'
-import type { Focus, Mood, MoodFocusHistoryMutation, MoodFocusState } from '../../shared/moodFocus'
+import type { Focus, Mood, MoodFocusEntry, MoodFocusHistoryMutation, MoodFocusState } from '../../shared/moodFocus'
 import { DailyCapture } from './moodfocus/DailyCapture'
 import { createMoodFocusSeed } from './moodfocus/moodFocusSeed'
 import { dayLabel, fullDateLabel, monthKey } from './moodfocus/moodFocusModel'
@@ -64,18 +64,35 @@ export function MoodFocusPage(): ReactNode {
   const persist = async (
     operation: string,
     mutation: () => Promise<MoodFocusState>
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     setSaving(true)
     try {
       const next = await mutation()
       setState(next)
       setPersistError(null)
+      return true
     } catch (error) {
       console.error('Mood and focus persistence operation failed', { operation, error })
       setPersistError(`${operation}: ${errorMessage(error)}`)
+      return false
     } finally {
       setSaving(false)
     }
+  }
+
+  /** A rating tap shows at once; the committed entry replaces it, or the day returns to its previous entry on failure. */
+  const rate = async (operation: string, change: Partial<Pick<MoodFocusEntry, 'mood' | 'focus'>>, mutation: () => Promise<MoodFocusState>): Promise<void> => {
+    const before = state
+    const stamp = new Date().toISOString()
+    setState((current) => {
+      if (current === null) return current
+      const existing = current.entries.find((item) => item.date === selectedDate)
+      const next: MoodFocusEntry = existing === undefined
+        ? { date: selectedDate, mood: null, focus: null, note: null, noteSource: null, createdAt: stamp, updatedAt: stamp, ...change }
+        : { ...existing, ...change, updatedAt: stamp }
+      return { ...current, entries: [...current.entries.filter((item) => item.date !== selectedDate), next] }
+    })
+    if (!(await persist(operation, mutation))) setState(before)
   }
 
   const saveHistoryRatings = async (mutation: MoodFocusHistoryMutation): Promise<void> => {
@@ -153,8 +170,8 @@ export function MoodFocusPage(): ReactNode {
           onNextDay={() => setSelectedDate(state.today)}
           entry={entry}
           saving={saving}
-          onMoodChange={(mood: Mood) => void persist('Could not save mood', () => moodFocusApi.setMood({ date: selectedDate, mood }))}
-          onFocusChange={(focus: Focus) => void persist('Could not save focus', () => moodFocusApi.setFocus({ date: selectedDate, focus }))}
+          onMoodChange={(mood: Mood) => void rate('Could not save mood', { mood }, () => moodFocusApi.setMood({ date: selectedDate, mood }))}
+          onFocusChange={(focus: Focus) => void rate('Could not save focus', { focus }, () => moodFocusApi.setFocus({ date: selectedDate, focus }))}
         />
       )}
     </div>
