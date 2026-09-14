@@ -16,6 +16,7 @@
         var hour = new Date().getHours()
         var dark = theme === 'dark' || (theme === 'temporal' ? (hour < 6 || hour >= 18) : theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#19181d' : '#ffffff'
       } catch (error) {}
     </script>
     <style>
