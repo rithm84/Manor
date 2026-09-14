@@ -1,5 +1,7 @@
 import { useManorService } from '../../services/ManorServices'
 import { BlockNoteEditor } from '@blocknote/core'
+import { SideMenuExtension } from '@blocknote/core/extensions'
+import { offset } from '@floating-ui/react'
 import {
   filterSuggestionItems,
   insertOrUpdateBlockForSlashMenu
@@ -157,6 +159,29 @@ function applyOpsToEditor(editor: NoteEditor, ops: readonly BlockOp[]): void {
     if (first === undefined) editor.replaceBlocks(editor.document, [editorBlock(op.block)])
     else editor.insertBlocks([editorBlock(op.block)], first.id, 'before')
   }
+}
+
+/** BlockNote's handle offsets for blocks whose first line is taller than the 30px handle, from its SideMenuController. */
+const HANDLE_OFFSETS: Record<string, number> = { file: 4, audio: 15, table: 15 }
+
+/**
+ * Vertical offset that centers the drag handle on the hovered block's first line. BlockNote uses fixed offsets
+ * per heading level derived from its default heading sizes; Manor's headings are smaller and padded, so headings
+ * are measured instead.
+ */
+function handleOffset(editor: NoteEditor, handleHeight: number): number {
+  const block = editor.getExtension(SideMenuExtension)?.store.state?.block
+  if (block === undefined) return 0
+  if (block.type === 'heading') {
+    const content = editor.domElement?.querySelector<HTMLElement>(`[data-id="${CSS.escape(block.id)}"] .bn-block-content`)
+    if (content === null || content === undefined) return 0
+    const style = getComputedStyle(content)
+    return parseFloat(style.paddingTop) + Math.max(0, (parseFloat(style.lineHeight) - handleHeight) / 2)
+  }
+  const type = String(block.type)
+  const spec = (editor.schema.blockSpecs as Record<string, { implementation: { meta?: { fileBlockAccept?: unknown } } } | undefined>)[type]
+  if (spec?.implementation.meta?.fileBlockAccept !== undefined && !block.props.url) return 12
+  return HANDLE_OFFSETS[type] ?? 0
 }
 
 function canonicalDocument(contentJson: string): string {
@@ -503,6 +528,10 @@ function RichNoteEditorComponent({ page, allPages, handle, onChange, onMoveBlock
     return () => window.removeEventListener('hashchange', reveal)
   }, [editor])
 
+  const sideMenuPositioning = useMemo(() => ({
+    useFloatingOptions: { middleware: [offset(({ rects }) => ({ crossAxis: handleOffset(editor, rects.floating.height) }))] }
+  }), [editor])
+
   const mentionItems = useMemo(
     () =>
       allPages
@@ -545,7 +574,7 @@ function RichNoteEditorComponent({ page, allPages, handle, onChange, onMoveBlock
         onChange(content)
       }}
     >
-      <SideMenuController sideMenu={(props) => <SideMenu {...props} dragHandleMenu={() => <NoteBlockMenu editor={editor} noteId={page.id} onError={setMenuError} onMove={setMovingBlocks} />} />} />
+      <SideMenuController floatingUIOptions={sideMenuPositioning} sideMenu={(props) => <SideMenu {...props} dragHandleMenu={() => <NoteBlockMenu editor={editor} noteId={page.id} onError={setMenuError} onMove={setMovingBlocks} />} />} />
       <SuggestionMenuController
         triggerCharacter="/"
         getItems={async (query) => slashItems(editor, query)}

@@ -2,7 +2,7 @@ import { Bookmark, CheckCircle2, Filter, Layers, Plus, RotateCcw, Search, Trash2
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { Pill, Select, useClickIntent, useDismissLayer } from '../../components/ui'
+import { Pill, Select, isInsideFloatingPopup, useClickIntent, useDismissLayer } from '../../components/ui'
 import type { QuickActionPoint } from '../../components/ui'
 import type { ContextDefinition, Task } from '../../data/mock'
 import type {
@@ -215,6 +215,7 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
     if (!filterOpen && !viewsOpen) return
     const onPointerDown = (event: PointerEvent): void => {
       const target = event.target as Node
+      if (isInsideFloatingPopup(target)) return
       if (filterOpen && filterRoot.current !== null && !filterRoot.current.contains(target)) setFilterOpen(false)
       if (viewsOpen && viewsRoot.current !== null && !viewsRoot.current.contains(target)) {
         setViewsOpen(false)

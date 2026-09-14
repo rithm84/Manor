@@ -55,3 +55,11 @@ export function useDismissLayer(active: boolean, onDismiss: () => void): void {
 export function hasOpenDismissLayer(): boolean {
   return stack.length > 0 || (typeof document !== 'undefined' && document.querySelector('[role="dialog"], [role="listbox"], [role="menu"]') !== null)
 }
+
+/**
+ * Whether a pointer target sits inside a portaled popup (Select, DatePicker, TimePicker). A popover that closes on
+ * outside pointerdown must ignore these, or choosing an option unmounts the control before the choice commits.
+ */
+export function isInsideFloatingPopup(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest('.ui-popover-positioner') !== null
+}
