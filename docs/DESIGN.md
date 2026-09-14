@@ -16,7 +16,7 @@ Light and dark modes are both required, and each mode's surfaces, contrast, cont
 
 ## Manor mark
 
-The logo is the **Flowing M**: a continuous, rounded monogram with a restrained plum treatment. The canonical standalone asset is `app/public/brand/manor-mark.svg`, and `app/src/ui/components/brand/ManorLogo.tsx` renders the same SVG geometry inline for the app sidebar and account surface, at its established proportions and theme-aware color. There are no alternate marks, sketched treatments, or character imagery.
+The logo is the **Flowing M**: a continuous, rounded monogram with a restrained plum treatment. The canonical standalone asset is `app/public/brand/manor-mark.svg`, and `app/src/ui/components/brand/ManorLogo.tsx` renders the same SVG geometry inline for the app sidebar and account surface, at its established proportions and theme-aware color. The installable app's icons (`app/public/brand/manor-icon-*.png`) are the same mark in white on the plum tile, with a maskable variant padded for rounded tiles. There are no alternate marks, sketched treatments, or character imagery.
 
 ## Typography and density
 
