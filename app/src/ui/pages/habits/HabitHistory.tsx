@@ -5,9 +5,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -107,46 +104,84 @@ export function habitDonutPresentation(row: HabitMonthRow): HabitDonutPresentati
   }
 }
 
+const RING_SIZE = 120
+const RING_RADIUS = 52
+const RING_STROKE = 11
+const RING_GAP = 3
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
+
+export interface HabitRingArc {
+  key: HabitPerformanceSlice['key']
+  fill: string
+  /** Visible arc length in viewBox units, after the gap between neighbors. */
+  length: number
+  /** Distance from the top of the ring to the start of the arc, in viewBox units. */
+  offset: number
+}
+
+/** Lays slices clockwise from twelve o'clock with a fixed gap between neighbors. */
+export function habitRingArcs(slices: readonly HabitPerformanceSlice[]): readonly HabitRingArc[] {
+  const total = slices.reduce((sum, slice) => sum + slice.value, 0)
+  if (total === 0) return []
+  const gap = slices.length > 1 ? RING_GAP : 0
+  let cursor = 0
+  return slices.map((slice) => {
+    const span = (slice.value / total) * RING_CIRCUMFERENCE
+    const arc = {
+      key: slice.key,
+      fill: slice.fill,
+      length: Math.max(span - gap, 0),
+      offset: cursor + gap / 2
+    }
+    cursor += span
+    return arc
+  })
+}
+
+/**
+ * The month's tracked days as a ring, with the completion rate in the center.
+ * Drawn as stroked circles so single-state months stay a seamless band.
+ */
 export function HabitPerformanceDonut({ row }: { row: HabitMonthRow }): ReactNode {
   const presentation = habitDonutPresentation(row)
+  const center = RING_SIZE / 2
 
   return (
-    <span className="habit-history-rankdonut" aria-hidden="true">
-      {presentation.seamlessFill !== null ? (
-        <svg
-          className="habit-history-seamless-ring"
-          viewBox="0 0 40 40"
-          shapeRendering="geometricPrecision"
-        >
+    <span className="habit-history-donut" aria-hidden="true">
+      <svg
+        className={presentation.seamlessFill !== null
+          ? 'habit-history-ring habit-history-seamless-ring'
+          : 'habit-history-ring'}
+        viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+        shapeRendering="geometricPrecision"
+      >
+        {presentation.seamlessFill !== null ? (
           <circle
-            cx="20"
-            cy="20"
+            cx={center}
+            cy={center}
             fill="none"
-            r="14.75"
+            r={RING_RADIUS}
             stroke={presentation.seamlessFill}
-            strokeWidth="6.5"
+            strokeWidth={RING_STROKE}
           />
-        </svg>
-      ) : (
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={presentation.slices}
-              dataKey="value"
-              innerRadius={11.5}
-              isAnimationActive={false}
-              outerRadius={18}
-              paddingAngle={1.5}
-              stroke="var(--surface-card)"
-              strokeWidth={1}
-            >
-              {presentation.slices.map((slice) => (
-                <Cell key={slice.key} fill={slice.fill} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-      )}
+        ) : (
+          habitRingArcs(presentation.slices).map((arc) => (
+            <circle
+              key={arc.key}
+              cx={center}
+              cy={center}
+              fill="none"
+              r={RING_RADIUS}
+              stroke={arc.fill}
+              strokeWidth={RING_STROKE}
+              strokeDasharray={`${arc.length} ${RING_CIRCUMFERENCE - arc.length}`}
+              strokeDashoffset={-arc.offset}
+              transform={`rotate(-90 ${center} ${center})`}
+            />
+          ))
+        )}
+      </svg>
+      <span className="habit-history-donutrate tnum">{row.completionRate}%</span>
     </span>
   )
 }
@@ -364,52 +399,43 @@ export function HabitHistory({
           </div> : null}
         </div>
 
-        {rankedRows.length === 0 ? <p className="habit-history-empty">No habits tracked this month.</p> : <ol className="habit-history-ranking">
-          {rankedRows.map((row, index) => {
+        {rankedRows.length === 0 ? <p className="habit-history-empty">No habits tracked this month.</p> : <ul className="habit-history-tiles">
+          {rankedRows.map((row) => {
             const lifecycleLabel = statusLabel(row.status)
             const missedDays = markCount(row, 'missed')
             return (
               <li key={row.habit.id}>
                 <button
                   type="button"
-                  className="habit-history-rankrow"
+                  className="habit-history-tile"
                   aria-label={habitPerformanceLabel(row)}
                   data-testid={`habit-history-row-${row.habit.id}`}
                   onClick={() => onOpenHabit(row.habit.id)}
                 >
-                  <span className="habit-history-rank tnum" aria-hidden="true">
-                    {index + 1}
-                  </span>
-                  <span className="habit-history-rankidentity">
-                    <span className="habit-history-ranktitle">
-                      <span>{row.habit.name}</span>
-                      {lifecycleLabel !== null ? (
-                        <span className="habit-history-lifecycle">{lifecycleLabel}</span>
-                      ) : null}
-                    </span>
-                    <span className="habit-history-rankmeta">
-                      <span className="tnum">
-                        {row.completedDays} of {row.trackedDays} days
-                      </span>
-                      {row.partialDays > 0 ? <span>{row.partialDays} partial</span> : null}
-                      {row.frozenDays > 0 ? (
-                        <span className="habit-history-freezecount">
-                          <FreezeCrystal size={12} /> {row.frozenDays}
-                        </span>
-                      ) : null}
-                      {missedDays > 0 ? <span>{missedDays} missed</span> : null}
-                    </span>
-                  </span>
-                  <span className="habit-history-rankrate tnum" aria-hidden="true">
-                    {row.completionRate}%
-                  </span>
                   <HabitPerformanceDonut row={row} />
-                  <ChevronRight className="habit-history-rankchevron" size={14} aria-hidden="true" />
+                  <span className="habit-history-tiletitle">
+                    <span>{row.habit.name}</span>
+                    {lifecycleLabel !== null ? (
+                      <span className="habit-history-lifecycle">{lifecycleLabel}</span>
+                    ) : null}
+                  </span>
+                  <span className="habit-history-tilemeta">
+                    <span className="tnum">
+                      {row.completedDays} of {row.trackedDays} days
+                    </span>
+                    {row.partialDays > 0 ? <span className="tnum">{row.partialDays} partial</span> : null}
+                    {row.frozenDays > 0 ? (
+                      <span className="habit-history-freezecount tnum">
+                        <FreezeCrystal size={12} /> {row.frozenDays}
+                      </span>
+                    ) : null}
+                    {missedDays > 0 ? <span className="tnum">{missedDays} missed</span> : null}
+                  </span>
                 </button>
               </li>
             )
           })}
-        </ol>}
+        </ul>}
       </section>
     </div>
   )

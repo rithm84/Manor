@@ -6,7 +6,8 @@ import {
   HabitPerformanceDonut,
   habitDonutPresentation,
   habitPerformanceLabel,
-  habitPerformanceSlices
+  habitPerformanceSlices,
+  habitRingArcs
 } from './HabitHistory'
 import type { HabitMonthRow } from './habitModel'
 
@@ -69,7 +70,7 @@ describe('habit performance donut data', () => {
     )
   })
 
-  it('renders exact 100% as a closed SVG circle without a Recharts sector seam', () => {
+  it('renders exact 100% as a closed SVG circle with the rate centered', () => {
     const markup = renderToStaticMarkup(createElement(HabitPerformanceDonut, { row: FULL_ROW }))
 
     expect(habitDonutPresentation(FULL_ROW)).toMatchObject({
@@ -77,8 +78,25 @@ describe('habit performance donut data', () => {
     })
     expect(markup).toContain('habit-history-seamless-ring')
     expect(markup).toContain('stroke="var(--completion)"')
-    expect(markup).toContain('stroke-width="6.5"')
-    expect(markup).not.toContain('recharts-sector')
+    expect(markup).not.toContain('stroke-dasharray')
+    expect(markup).toContain('>100%</span>')
+  })
+
+  it('lays mixed months out as gapped arcs that cover the tracked days once', () => {
+    const arcs = habitRingArcs(habitPerformanceSlices(PERFORMANCE_ROW))
+    const circumference = 2 * Math.PI * 52
+
+    expect(arcs.map((arc) => arc.key)).toEqual(['complete', 'partial', 'frozen', 'missed'])
+    expect(arcs[0]?.offset).toBeCloseTo(1.5)
+    expect(arcs[1]?.offset).toBeCloseTo(circumference * 0.4 + 1.5)
+    const covered = arcs.reduce((total, arc) => total + arc.length, 0)
+    expect(covered).toBeCloseTo(circumference - 4 * 3)
+
+    const markup = renderToStaticMarkup(
+      createElement(HabitPerformanceDonut, { row: PERFORMANCE_ROW })
+    )
+    expect(markup.match(/stroke-dasharray/g)).toHaveLength(4)
+    expect(markup).toContain('>40%</span>')
   })
 
   it('does not add a pending slice to an otherwise missed period', () => {
