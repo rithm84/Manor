@@ -27,6 +27,7 @@ Manor replaces a sprawling Notion setup with one place that is cheap to keep cur
 - [Key features](#key-features)
 - [How it works](#how-it-works)
 - [Working with an agent](#working-with-an-agent)
+- [Using the hosted app](#using-the-hosted-app)
 - [Running it](#running-it)
 - [Repository layout](#repository-layout)
 - [Documentation](#documentation)
@@ -75,6 +76,10 @@ Manor exposes 113 operations (47 reads, 66 writes) at `https://<project-ref>.sup
 - "Let's debrief today, then update my daily synthesis."
 
 Reads return record IDs and revisions; writes require them, so an agent cannot accidentally touch records that started matching a filter after it looked. Bulk operations are bounded and report per-item results. What the agent can read is exactly what you can.
+
+## Using the hosted app
+
+If you would rather use the hosted deployment than run your own, install the app from the [releases](https://github.com/rithm84/Manor/releases) and sign in with Google. Creating an account requires an invitation password, and connecting an agent requires the hosted MCP URL. Neither is published here, so [open an issue](https://github.com/rithm84/Manor/issues) to ask for them. Each account's data is private to that account.
 
 ## Running it
 
