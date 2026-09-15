@@ -1,6 +1,6 @@
 {
   "name": "manor",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Manor reusable web UI and domain logic",
   "type": "module",
   "private": true,
