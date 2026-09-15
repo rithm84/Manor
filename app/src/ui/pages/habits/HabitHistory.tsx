@@ -23,6 +23,7 @@ import {
   reorderedHabitIds
 } from './habitModel'
 import type { HabitMonthRow, HabitTrendRange } from './habitModel'
+import { useArmedGrip } from './useArmedGrip'
 import './habitHistory.css'
 
 export interface HabitHistoryProps {
@@ -219,13 +220,20 @@ export function HabitHistory({
   onReorder
 }: HabitHistoryProps): ReactNode {
   const [trendRange, setTrendRange] = useState<HabitTrendRange>(6)
-  const [trendHabitId, setTrendHabitId] = useState<string | null>(null)
+  const [pickedHabitId, setTrendHabitId] = useState<string | null>(null)
   const [tileSort, setTileSort] = useDevicePreference<HabitTileSort>('habits.history.sort', TILE_SORTS, 'order')
   const [showArchived, setShowArchived] = useDeviceFlag('habits.history.archived', false)
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
-  const [armedId, setArmedId] = useState<string | null>(null)
+  const [armedId, setArmedId] = useArmedGrip()
   const summary = monthSummary(state, month)
+  const archivedCount = summary.rows.filter((row) => row.status === 'retired').length
+  const visibleRows = showArchived ? summary.rows : summary.rows.filter((row) => row.status !== 'retired')
+  // A habit hidden by the archived toggle or absent from the shown month
+  // falls back to "All habits" instead of filtering the trend invisibly.
+  const trendHabitId = pickedHabitId !== null && visibleRows.some((row) => row.habit.id === pickedHabitId)
+    ? pickedHabitId
+    : null
   const trend = habitTrend(state, month, trendRange, trendHabitId)
   const nextMonth = historyMonthAfterNavigation(month, 1, state.today)
   const canMoveForward = nextMonth !== month
@@ -239,8 +247,6 @@ export function HabitHistory({
   const selectedHabit = trendHabitId === null
     ? null
     : state.habits.find((habit) => habit.id === trendHabitId) ?? null
-  const archivedCount = summary.rows.filter((row) => row.status === 'retired').length
-  const visibleRows = showArchived ? summary.rows : summary.rows.filter((row) => row.status !== 'retired')
   const habitOptions = [
     { value: 'all', label: 'All habits' },
     ...visibleRows.map((row) => ({ value: row.habit.id, label: row.habit.name }))

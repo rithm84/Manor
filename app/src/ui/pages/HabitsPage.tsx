@@ -35,6 +35,7 @@ import {
   habitViewModel,
   reorderedHabitIds
 } from './habits/habitModel'
+import { useArmedGrip } from './habits/useArmedGrip'
 import './habits/habits.css'
 
 type HabitsView = 'daily' | 'history'
@@ -67,7 +68,7 @@ export function HabitsPage(): ReactNode {
   const [retireTargetId, setRetireTargetId] = useState<string | null>(null)
   const [confirmBusy, setConfirmBusy] = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
-  const [reorderArmedId, setReorderArmedId] = useState<string | null>(null)
+  const [reorderArmedId, setReorderArmedId] = useArmedGrip()
   const [reorderDragId, setReorderDragId] = useState<string | null>(null)
   const [reorderOverId, setReorderOverId] = useState<string | null>(null)
 

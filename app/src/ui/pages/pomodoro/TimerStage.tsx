@@ -13,6 +13,13 @@ const RING_STROKE = 8
 const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS
 
+/** Focused controls that Space already activates, so the timer leaves the key to them. */
+const SPACE_CONTROL = 'button, a[href], summary, [role="button"], [role="switch"], [role="checkbox"], [role="tab"], [role="menuitem"], [role="option"]'
+
+function isSpaceControl(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && target.closest(SPACE_CONTROL) !== null
+}
+
 export interface TimerStageProps {
   active: PomodoroSession | null
   clock: PomodoroClock | null
@@ -66,7 +73,7 @@ export function TimerStage({ active, clock, ended, next, settings, completedToda
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key !== ' ' || event.repeat || event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented) return
-      if (isTypingTarget(event.target) || event.target instanceof HTMLButtonElement || overlayOpen() || busy) return
+      if (isTypingTarget(event.target) || isSpaceControl(event.target) || overlayOpen() || busy) return
       event.preventDefault()
       if (phase === 'running') onPause()
       else if (phase === 'paused') onResume()
