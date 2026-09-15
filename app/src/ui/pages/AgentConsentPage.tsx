@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import type { AgentConnectionRequest } from '../../shared/account'
 import { useShell } from '../../web/shell/ShellContext'
@@ -17,8 +17,8 @@ type ConsentStage =
 /** How the person gets back to the agent once Manor is done with the request. */
 function returnMessage(clientName: string | null): string {
   return clientName === null
-    ? 'Return to the app that asked for access. You can close this window.'
-    : `Return to ${clientName} in your browser. You can close this window.`
+    ? 'Return to the app that asked for access to finish connecting.'
+    : `Return to ${clientName} in your browser to finish connecting.`
 }
 
 /**
@@ -29,6 +29,7 @@ function returnMessage(clientName: string | null): string {
 export function AgentConsentPage(): ReactNode {
   const accountApi = useManorService('account')
   const shell = useShell()
+  const navigate = useNavigate()
   const { search } = useLocation()
   const authorizationId = new URLSearchParams(search).get('authorization_id')
   const [stage, setStage] = useState<ConsentStage>({ kind: 'loading' })
@@ -59,6 +60,7 @@ export function AgentConsentPage(): ReactNode {
     setError(null)
     void decide().then(async (redirectUrl) => {
       await shell.openAuthorization(redirectUrl)
+      setBusy(false)
       setStage({ kind: 'returning', clientName })
     }).catch((cause: unknown) => {
       setBusy(false)
@@ -85,6 +87,10 @@ export function AgentConsentPage(): ReactNode {
       {stage.kind === 'returning' && <p role="status" data-testid="agent-connection-answered">{returnMessage(stage.clientName)}</p>}
       {stage.kind === 'loading' && error === null && <p role="status">Loading connection details…</p>}
       {error !== null && <p role="alert" className="access-error">{error}</p>}
+      {(stage.kind === 'returning' || error !== null) && <div className="access-actions">
+        <button className={stage.kind === 'deciding' ? 'ui-button' : 'ui-button ui-button--primary'} disabled={busy} data-testid="back-to-manor"
+          onClick={() => navigate('/home', { replace: true })}>Back to Manor</button>
+      </div>}
     </section>
   </main>
 }
