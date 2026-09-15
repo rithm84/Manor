@@ -2,14 +2,69 @@
   --pomo-tone: var(--primary);
   --pomo-tone-tint: var(--primary-tint);
   --pomo-bar: color-mix(in srgb, var(--primary) 62%, var(--surface-canvas));
+  /* Chrome above and below the hero: surface padding, the title row, and the gap under it. */
+  --pomo-hero-chrome: 190px;
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
+}
+
+.pomo.has-history {
   padding-bottom: var(--space-10);
 }
 
 [data-theme='dark'] .pomo {
   --pomo-bar: color-mix(in srgb, var(--primary) 58%, var(--surface-canvas));
+}
+
+/* The timer sits in the middle of the first screen; the history waits below the fold behind its toggle. */
+.pomo-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: calc(100dvh - var(--topbar-height) - var(--pomo-hero-chrome));
+}
+
+.pomo-hero > .pomo-error {
+  align-self: stretch;
+}
+
+.pomo-hero > .pomo-stage {
+  margin: auto 0;
+}
+
+.pomo-history-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease, transform var(--duration-press) var(--ease-out);
+}
+
+.pomo-history-toggle > svg {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.pomo-history-toggle[aria-expanded='true'] > svg {
+  transform: rotate(180deg);
+}
+
+.pomo-history-toggle:active {
+  transform: scale(0.97);
+}
+
+.pomo-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  scroll-margin-top: var(--space-4);
 }
 
 .pomo-header {
@@ -648,6 +703,7 @@
   .pomo-iconbutton:hover:not(:disabled),
   .pomo-monthnav button:hover:not(:disabled),
   .pomo-stepper button:hover:not(:disabled),
+  .pomo-history-toggle:hover,
   .pomo-label-text:hover {
     background: var(--surface-soft);
     color: var(--ink);

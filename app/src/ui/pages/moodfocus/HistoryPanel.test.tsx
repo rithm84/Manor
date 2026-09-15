@@ -32,7 +32,7 @@ const STATE: MoodFocusState = {
 }
 
 describe('HistoryPanel', () => {
-  it('shows Codex provenance and preserves legacy manual provenance', () => {
+  it('marks noted days with their provenance and keeps the note text for the day dialog', async () => {
     const markup = renderToStaticMarkup(
       <HistoryPanel
         state={STATE}
@@ -42,13 +42,23 @@ describe('HistoryPanel', () => {
       />
     )
 
-    expect(markup).toContain('Codex debrief')
-    expect(markup).toContain('Protected the morning for one task.')
-    expect(markup).toContain('Manual')
-    expect(markup).toContain('Legacy note.')
+    expect(markup).toContain('Thursday, August 20, 2026. Mood Great. Focus Locked In. Codex debrief.')
+    expect(markup).toContain('Tuesday, August 18, 2026. Mood Bad. Focus Low. Manual note.')
+    expect(markup).not.toContain('Protected the morning for one task.')
     expect(markup).not.toContain('<textarea')
     expect(markup).toContain('history-add-day')
-    expect(markup.match(/Edit entry\./g)).toHaveLength(2)
+    expect(markup).not.toContain('Daily record')
+
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    await act(async () => root.render(<HistoryPanel state={STATE} month="2026-08" onMonthChange={() => undefined} onSaveRatings={async () => undefined} />))
+    await act(async () => document.querySelector<HTMLButtonElement>('[data-testid="history-day-2026-08-20"]')?.click())
+    expect(document.body.textContent).toContain('Protected the morning for one task.')
+    expect(document.body.textContent).toContain('Codex debrief')
+    expect(document.querySelector('[data-testid="history-save-ratings"]')?.textContent).toBe('Save changes')
+    await act(async () => root.unmount())
+    host.remove()
   })
 
   it('summarizes the month in scale words and lays out every day of the month', () => {
@@ -66,8 +76,9 @@ describe('HistoryPanel', () => {
     expect(markup.match(/data-testid="history-day-2026-08-\d\d"/g)).toHaveLength(31)
     expect(markup).toMatch(/<button[^>]*disabled=""[^>]*data-testid="history-day-2026-08-21"/)
     expect(markup).not.toMatch(/<button[^>]*disabled=""[^>]*data-testid="history-day-2026-08-20"/)
-    expect(markup).toContain('Thursday, August 20, 2026. Mood Great. Focus Locked In.')
     expect(markup).toContain('Wednesday, August 19, 2026. No check-in.')
+    expect(markup).toContain('<span class="mf-day-axis">Mood</span><span class="mf-day-level">Great</span>')
+    expect(markup).toContain('<span class="mf-day-axis">Focus</span><span class="mf-day-level">Locked In</span>')
   })
 
   it('opens an empty past day from the month grid as a new record', async () => {
@@ -92,7 +103,7 @@ describe('HistoryPanel', () => {
     const saved: unknown[] = []
     const render = (state: MoodFocusState): void => root.render(<HistoryPanel state={state} month="2026-08" onMonthChange={() => undefined} onSaveRatings={async (mutation) => { saved.push(mutation) }} />)
     await act(async () => render(STATE))
-    await act(async () => document.querySelector<HTMLButtonElement>('[data-testid="history-record-2026-08-18"]')?.click())
+    await act(async () => document.querySelector<HTMLButtonElement>('[data-testid="history-day-2026-08-18"]')?.click())
     await act(async () => document.querySelector<HTMLButtonElement>('[data-testid="history-mood-great"]')?.click())
     const refreshed: MoodFocusState = { ...STATE, entries: STATE.entries.map((entry) => entry.date === '2026-08-18' ? { ...entry, mood: 'Awful', updatedAt: '2026-08-20T22:00:00.000Z' } : entry) }
     await act(async () => render(refreshed))
