@@ -42,11 +42,17 @@ const profileSchema = z.object({
 
 const accountCacheKey = (accountId: string): string => `manor.account:${accountId}`
 
-/** The account as this device last loaded it, so a returning visit renders before the profile round trip. */
+/**
+ * The account as this device last loaded it, so a returning visit renders before the profile round trip.
+ * A cache written for another email or a different shape is stale, not an error: the profile round trip replaces it.
+ */
 export function cachedAccount(accountId: string, email: string): ManorAccount | null {
   const cached = localStorage.getItem(accountCacheKey(accountId))
   if (cached === null) return null
-  return z.object({ id: z.literal(accountId), email: z.literal(email), name: z.string(), timezone: z.string() }).parse(JSON.parse(cached))
+  let value: unknown
+  try { value = JSON.parse(cached) } catch { return null }
+  const parsed = z.object({ id: z.literal(accountId), email: z.literal(email), name: z.string(), timezone: z.string() }).safeParse(value)
+  return parsed.success ? parsed.data : null
 }
 
 export async function loadAccount(gateway: ManorGateway, email: string, googleName: string): Promise<ManorAccount> {
