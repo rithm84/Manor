@@ -214,6 +214,10 @@ export function HistoryPanel({ state, month, onMonthChange, onSaveRatings }: His
             <h3 id="mf-month-title">{summary.label}</h3>
             <p>Select a day to see or change its ratings.</p>
           </div>
+          <div className="mf-history-legend mf-month-legend" aria-hidden="true">
+            <span><span className="mf-day-swatch is-mood" /> Mood</span>
+            <span><span className="mf-day-swatch is-focus" /> Focus</span>
+          </div>
         </div>
         <div className="mf-history-monthbody">
           <div className="mf-month-grid" role="grid" aria-label={`${summary.label} check-ins`}>
@@ -324,7 +328,7 @@ function DaySignal({ kind, value }: { kind: 'mood' | 'focus'; value: Mood | Focu
     <span className={`mf-day-signal is-${kind}${value === null ? ' is-missing' : ''}${value === 'Resting' ? ' is-resting' : ''}`} style={toneStyle(tone)}>
       <span className="mf-day-swatch" />
       <span className="mf-day-axis">{kind === 'mood' ? 'Mood' : 'Focus'}</span>
-      <span className="mf-day-level">{value ?? 'Not logged'}</span>
+      <span className="mf-day-level">{value ?? 'Unrated'}</span>
     </span>
   )
 }
