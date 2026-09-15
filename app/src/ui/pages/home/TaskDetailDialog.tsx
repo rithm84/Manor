@@ -1,5 +1,5 @@
 import { CalendarDays, Check, ChevronDown, Clock3, Copy, Flag, Layers3, Repeat2, Trash2, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 
 import { Button, Modal, Select } from '../../components/ui'
@@ -15,6 +15,7 @@ import { recurrenceLabel } from '../../../shared/recurrence'
 import { ContextSelect } from './ContextSelect'
 import { DueDatePicker } from './DueDatePicker'
 import { RecurrenceEditor } from './RecurrenceEditor'
+import { useEnterAction } from './enterAction'
 import {
   ESTIMATE_SELECT_OPTIONS,
   PRIORITY_OPTIONS,
@@ -67,6 +68,7 @@ export function TaskDetailDialog({
   const [draft, setDraft] = useState<Task | null>(task)
   const [savedTask, setSavedTask] = useState<Task | null>(task)
   const [recurrenceOpen, setRecurrenceOpen] = useState(false)
+  const panel = useRef<HTMLElement>(null)
 
   /* Reset only when a different task opens, never on a background refresh
      replacing the same task's object identity, so in-progress edits survive
@@ -123,9 +125,7 @@ export function TaskDetailDialog({
   }
 
   const onTitleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
-    if (event.key === 'Enter') {
-      event.currentTarget.blur()
-    }
+    if (event.key === 'Enter') closeWithSave()
   }
 
   // Closing commits too; blur does not fire on unmount and an edit must
@@ -138,6 +138,9 @@ export function TaskDetailDialog({
   }
 
 
+  // Enter on the panel or a closed picker saves and closes, the same as the title field.
+  useEnterAction(panel, open, closeWithSave)
+
   return (
     <Modal
       open={open}
@@ -145,7 +148,7 @@ export function TaskDetailDialog({
       width={520}
       ariaLabel={`Task details for ${task.title}`}
     >
-      <section className="task-dialog" data-testid="task-detail-dialog">
+      <section ref={panel} className="task-dialog" data-testid="task-detail-dialog">
         <header className="task-dialog-header">
           <h2>Task</h2>
           <button type="button" className="task-dialog-close" onClick={closeWithSave} aria-label="Close task details">

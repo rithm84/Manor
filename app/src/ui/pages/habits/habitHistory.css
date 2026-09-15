@@ -186,7 +186,7 @@
   flex: 1;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
+  gap: 4px;
   min-width: 0;
   padding: var(--space-5) var(--space-4) var(--space-4);
   color: var(--ink-body);
@@ -195,7 +195,8 @@
 }
 
 .habit-history-tiletitle,
-.habit-history-tilemeta {
+.habit-history-tilecount,
+.habit-history-tilestates {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -204,11 +205,15 @@
   min-width: 0;
 }
 
+/* Name first, then the count as the fact, then the states as the footnote. */
 .habit-history-tiletitle {
   gap: var(--space-2);
   margin-top: var(--space-2);
-  font-size: var(--text-sm);
-  font-weight: 500;
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.3;
 }
 
 .habit-history-tiletitle > span:first-child {
@@ -231,15 +236,21 @@
   font-weight: 400;
 }
 
-.habit-history-tilemeta {
-  gap: 4px var(--space-2);
+.habit-history-tilecount {
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+}
+
+.habit-history-tilestates {
+  gap: 2px var(--space-2);
   color: var(--ink-muted);
   font-size: var(--text-xs);
 }
 
-.habit-history-tilemeta > span + span::before {
+.habit-history-tilestates > span + span::before {
   margin-right: var(--space-2);
-  color: var(--surface-strong);
+  color: var(--ink-muted);
+  opacity: 0.6;
   content: '·';
 }
 

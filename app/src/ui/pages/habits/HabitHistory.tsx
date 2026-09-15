@@ -419,18 +419,22 @@ export function HabitHistory({
                       <span className="habit-history-lifecycle">{lifecycleLabel}</span>
                     ) : null}
                   </span>
-                  <span className="habit-history-tilemeta">
-                    <span className="tnum">
-                      {row.completedDays} of {row.trackedDays} days
-                    </span>
-                    {row.partialDays > 0 ? <span className="tnum">{row.partialDays} partial</span> : null}
-                    {row.frozenDays > 0 ? (
-                      <span className="habit-history-freezecount tnum">
-                        <FreezeCrystal size={12} /> {row.frozenDays}
-                      </span>
-                    ) : null}
-                    {missedDays > 0 ? <span className="tnum">{missedDays} missed</span> : null}
+                  <span className="habit-history-tilecount tnum">
+                    {row.trackedDays === 0
+                      ? 'No tracked days yet'
+                      : `${row.completedDays} of ${row.trackedDays} days`}
                   </span>
+                  {row.partialDays > 0 || row.frozenDays > 0 || missedDays > 0 ? (
+                    <span className="habit-history-tilestates">
+                      {row.partialDays > 0 ? <span className="tnum">{row.partialDays} partial</span> : null}
+                      {row.frozenDays > 0 ? (
+                        <span className="habit-history-freezecount tnum">
+                          <FreezeCrystal size={12} /> {row.frozenDays} frozen
+                        </span>
+                      ) : null}
+                      {missedDays > 0 ? <span className="tnum">{missedDays} missed</span> : null}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             )
