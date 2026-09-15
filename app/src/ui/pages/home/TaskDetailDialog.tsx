@@ -69,6 +69,11 @@ export function TaskDetailDialog({
   const [savedTask, setSavedTask] = useState<Task | null>(task)
   const [recurrenceOpen, setRecurrenceOpen] = useState(false)
   const panel = useRef<HTMLElement>(null)
+  // Enter on the panel or a closed picker saves and closes, the same as the title field. The hook
+  // registers before the empty-task return below so the hook order never changes; the ref carries
+  // the current save routine.
+  const enterAction = useRef<() => void>(() => undefined)
+  useEnterAction(panel, open && task !== null, () => enterAction.current())
 
   /* Reset only when a different task opens, never on a background refresh
      replacing the same task's object identity, so in-progress edits survive
@@ -136,10 +141,7 @@ export function TaskDetailDialog({
     setSaveError(null)
     void saveDraft().then(onClose).catch((error: Error) => setSaveError(error.message)).finally(() => setSaving(false))
   }
-
-
-  // Enter on the panel or a closed picker saves and closes, the same as the title field.
-  useEnterAction(panel, open, closeWithSave)
+  enterAction.current = closeWithSave
 
   return (
     <Modal

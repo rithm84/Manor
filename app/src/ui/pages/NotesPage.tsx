@@ -328,9 +328,11 @@ export function NotesPage(): ReactNode {
       })
     return (): void => {
       active = false
-      if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+      // Leaving Notes mid-debounce (a sidebar click, a page shortcut) flushes the
+      // edit instead of leaving it as a protected draft until the next visit.
+      if (timerRef.current !== null) void runPendingSave()
     }
-  }, [notesApi])
+  }, [notesApi, runPendingSave])
 
   useEffect(() => {
     let active = true

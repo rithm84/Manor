@@ -111,4 +111,42 @@ describe('centered task detail', () => {
       host.remove()
     }
   })
+
+  it('opens from the idle state without a hook-order error, as it does when a task is clicked on Home', async () => {
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    const errors: unknown[] = []
+    const onError = (event: ErrorEvent): void => { errors.push(event.error); event.preventDefault() }
+    window.addEventListener('error', onError)
+    const render = (task: Task | null, open: boolean): Promise<void> => act(async () => root.render(
+      <TaskDetailDialog
+        task={task}
+        open={open}
+        contexts={CONTEXTS}
+        dueAttention={false}
+        onClose={() => undefined}
+        onUpdate={async () => undefined}
+        onAddContext={async (context) => context}
+        onUpdateContext={async (_originalName, context) => ({ context, tasks: [TASK] })}
+        onDeleteContext={async () => undefined}
+        onDuplicate={async () => undefined}
+        onDelete={async () => undefined}
+      />
+    ))
+    try {
+      // Home mounts the dialog with no task, then hands it the clicked task.
+      await render(null, false)
+      expect(document.querySelector('[data-testid="task-detail-dialog"]')).toBeNull()
+      await render(TASK, true)
+      expect(document.querySelector('[data-testid="task-detail-dialog"]')).not.toBeNull()
+      await render(null, false)
+      expect(document.querySelector('[data-testid="task-detail-dialog"]')).toBeNull()
+      expect(errors).toEqual([])
+    } finally {
+      window.removeEventListener('error', onError)
+      await act(async () => root.unmount())
+      host.remove()
+    }
+  })
 })
