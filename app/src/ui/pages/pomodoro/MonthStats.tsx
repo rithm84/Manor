@@ -1,8 +1,8 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 import { formatMinutes } from '../../../shared/pomodoro'
+import { MonthNav } from '../../components/ui'
 import type { PomodoroMonthStats } from '../../../shared/pomodoro'
 import { monthLabel, shortDayLabel } from './pomodoroModel'
 
@@ -12,6 +12,8 @@ export interface MonthStatsProps {
   canMoveBack: boolean
   canMoveForward: boolean
   onMonthChange: (direction: -1 | 1) => void
+  /** Returns to the current month. */
+  onCurrentMonth: () => void
   /** The id of the session that just completed, so the count can pop once. */
   pop: string | null
 }
@@ -36,7 +38,7 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: readonl
   )
 }
 
-export function MonthStats({ stats, today, canMoveBack, canMoveForward, onMonthChange, pop }: MonthStatsProps): ReactNode {
+export function MonthStats({ stats, today, canMoveBack, canMoveForward, onMonthChange, onCurrentMonth, pop }: MonthStatsProps): ReactNode {
   const label = monthLabel(stats.month)
   const points: ChartPoint[] = stats.days.map((day) => ({
     date: day.date, day: Number(day.date.slice(8, 10)), minutes: Math.round(day.focusedSeconds / 60), completed: day.completed, isToday: day.date === today
@@ -57,11 +59,14 @@ export function MonthStats({ stats, today, canMoveBack, canMoveForward, onMonthC
                 : `Best day ${shortDayLabel(stats.bestDay.date)} with ${stats.bestDay.completed} ${stats.bestDay.completed === 1 ? 'session' : 'sessions'}.`}
           </p>
         </div>
-        <div className="pomo-monthnav" role="group" aria-label="Statistics month">
-          <button type="button" aria-label="Previous month" disabled={!canMoveBack} onClick={() => onMonthChange(-1)}><ChevronLeft size={16} /></button>
-          <span aria-live="polite">{label}</span>
-          <button type="button" aria-label="Next month" disabled={!canMoveForward} onClick={() => onMonthChange(1)}><ChevronRight size={16} /></button>
-        </div>
+        <MonthNav
+          label="Statistics month"
+          monthLabel={label}
+          canMoveBack={canMoveBack}
+          canMoveForward={canMoveForward}
+          onShift={onMonthChange}
+          onCurrent={canMoveForward ? onCurrentMonth : null}
+        />
       </div>
 
       <div className="pomo-summary" aria-label={`${label} summary`}>

@@ -1,6 +1,6 @@
 # Manor PRD
 
-_Last updated: 2026-09-14_
+_Last updated: 2026-09-15_
 
 This page defines what Manor does: its behavior, business rules, and scope. The technical design, storage, execution, deployment, and recovery mechanisms are in the [architecture](ARCHITECTURE.md), and the visual direction is in the [design charter](DESIGN.md).
 
@@ -108,7 +108,7 @@ The mechanics derive from Duolingo's, adapted. The following diagram shows how o
 
 ### Habits
 
-Habits is the daily check-off and streak home; check-off lives here, not on Home. History combines 3, 6, and 12-month completion trends across all habits or one selected habit with a month breakdown that gives each habit a completion ring and its day counts. Completion rates use eligible tracked days: periods before creation, paused or retired periods, and future dates don't count as missed days. The page keeps week strips, best and current streaks, and the freeze pool as a first-class object, with add, pause, and retire flows and an Archived section on the daily view that reactivates a retired habit. Freezes are spent from the habit's row on the Yesterday view: a missed row offers a Freeze control that toggles back off, and the pool balance moves with it.
+Habits is the daily check-off and streak home; check-off lives here, not on Home. History combines 3, 6, and 12-month completion trends across all habits or one selected habit with a month breakdown that gives each habit a completion ring and its day counts, in your habit order (draggable there as on the daily list), by completion rate, or by name, with retired habits shown or hidden by a toggle. Completion rates use eligible tracked days: periods before creation, paused or retired periods, and future dates don't count as missed days. The page keeps week strips, best and current streaks, and the freeze pool as a first-class object, with add, pause, and retire flows and an Archived section on the daily view that reactivates a retired habit. Freezes are spent from the habit's row on the Yesterday view: a missed row offers a Freeze control that toggles back off, and the pool balance moves with it.
 
 ### Mood and focus
 
@@ -120,7 +120,7 @@ Each day has one evolving synthesis updated through Codex. The page has no typed
 
 Pomodoro is a focus timer with its own module page and a live countdown beside the sidebar entry. A session is either focus, a short break, or a long break; at most one session runs or is paused at a time, and each session keeps its label, planned length, start, pauses, end, focused time, and local date. Preferences cover focus, short break, and long break lengths, the number of focus sessions per cycle before a long break, and whether breaks and focus start automatically after the previous session ends; changes apply to sessions started from then on.
 
-Starting a focus session takes an optional label. A running session can be paused, resumed, or stopped early, which records the focused time and marks the session as stopped; a break can be skipped. When a session reaches its planned length, Manor completes it, plays the completion chime when sounds are on, and offers the next step in the cycle, or starts it when auto-start is enabled. Month statistics count completed focus sessions, focused time, active days, sessions per active day, the best day, and consecutive days with a completed focus session; the day streak is informational and doesn't join the [streak system](#streak-system) or the freeze pool. The timer is the page; month statistics and the session log open from a toggle below it. The session log lists focus sessions by day, newest first, with inline relabeling and deletion. Codex can query sessions with a range summary and start, pause, resume, end, relabel, and delete sessions, and a completed focus session timed elsewhere can be logged after the fact with its start and duration.
+Starting a focus session takes an optional label. A running session can be paused, resumed, or stopped early, which records the focused time and marks the session as stopped; a break can be skipped. When a session reaches its planned length, Manor completes it, plays the completion chime when sounds are on, and offers the next step in the cycle, or starts it when auto-start is enabled. Month statistics count completed focus sessions, focused time, active days, sessions per active day, the best day, and consecutive days with a completed focus session; the day streak is informational and doesn't join the [streak system](#streak-system) or the freeze pool. The timer is the page's first view; month statistics and the session log form its History view. The session log lists focus sessions by day, newest first, with inline relabeling and deletion. Codex can query sessions with a range summary and start, pause, resume, end, relabel, and delete sessions, and a completed focus session timed elsewhere can be logged after the fact with its start and duration.
 
 ### Tasks
 
@@ -172,6 +172,7 @@ X bookmarks (not likes) are ingested periodically, including linked article cont
 ## Surfaces
 
 - **Home** is the tasks kanban plus the Today timeline. Events, scratch blocks, the now-line, and scheduling live here; habit logging lives on Habits.
+- **Keyboard.** Command with 1 through 9 switches pages in sidebar order, Command and backslash toggles the sidebar, Command and N creates on Home, Habits, Jobs, and Notes, Escape clears a search field, and Space starts, pauses, or resumes the Pomodoro timer. Settings lists every shortcut. Each module page reopens on the view you left, and archiving or pausing a habit offers Undo for a few seconds.
 - **Sidebar.** Docked by default with one toggle and no pin concept. Collapsed mode reveals a floating overlay on left-edge hover and dismisses on leave; toggling docks it, and the choice persists. It navigates to the modules and the dedicated weekly reviews.
 - **Product surfaces.** Gated signup, login, onboarding, Settings, account and integration management, appearance preferences, recovery and Trash, and designed empty states. There is no desktop hotkey or permission onboarding, no embedded-agent settings, and no Activity page.
 - **Object details** are centered dialogs. Side peeks, drawers, sheets, right-edge detail panels, and detail rails are prohibited; primary page layouts, the sidebar, inline popovers, menus, and tooltips are unaffected.
@@ -226,6 +227,7 @@ The following table is the concise record of decisions that govern the current t
 | 2026-09-13 | Permanent deletion from Trash as a user-only action that purges at once; multi-select note list with batch Trash, restore, and permanent delete; block-level merge of concurrent note edits, with compare-versions reserved for same-block conflicts (notes, recovery and retention). |
 | 2026-09-14 | Every module except Notes reads from a copy of the account kept on the Mac and updated from the backend's change feed; saves stay server-authoritative and still need a connection (platform). |
 | 2026-09-14 | Pomodoro module added: one active session at a time, editable timer preferences, month statistics with an informational day streak outside the streak system, and agent tools for sessions; Mood and Focus history redesigned to the Habits history structure (modules). |
+| 2026-09-15 | Quality-of-life pass: page and create keyboard shortcuts with a Settings reference, remembered module views, Pomodoro History as a header tab, habit tile ordering, sorting, and archived toggle, month navigators that step by keyboard and jump back to this month, and Undo for habit archiving and pausing (surfaces, habits, pomodoro). |
 
 ## Remaining product detail
 

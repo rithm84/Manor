@@ -798,7 +798,7 @@ export function NotesPage(): ReactNode {
           </div>
           <div className="notes-search-wrap">
             <Search size={15} aria-hidden="true" />
-            <input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search notes" aria-label="Search notes" />
+            <input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape' && query !== '') { event.preventDefault(); setQuery('') } }} placeholder="Search notes" aria-label="Search notes" />
             {query !== '' ? <button type="button" aria-label="Clear search" onClick={() => setQuery('')}><X size={14} /></button> : <kbd>⌘⇧F</kbd>}
           </div>
           <div className="notes-nav-scroll">

@@ -15,10 +15,13 @@ import {
 import type { CollisionDetection, DragEndEvent, DragMoveEvent, DragStartEvent } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CheckCircle2, Copy, LayoutGrid, List, PanelRightOpen, Plus, RotateCcw, Sunrise, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { Button, EmptyState, QuickActionsMenu } from '../components/ui'
+import { useCreateShortcut } from '../app/shortcuts'
+import { useDevicePreference } from '../preferences/devicePreference'
+
+import { Button, EmptyState, QuickActionsMenu, ViewTabs } from '../components/ui'
 import type { QuickActionItem, QuickActionPoint } from '../components/ui'
 import type {
   ContextDefinition,
@@ -102,7 +105,7 @@ export function HomePage(): ReactNode {
   const [savedViews, setSavedViews] = useState<readonly SavedTaskView[]>([])
   const [loading, setLoading] = useState(true)
   const [persistError, setPersistError] = useState<string | null>(null)
-  const [view, setView] = useState<HomeView>('weekly')
+  const [view, setView] = useDevicePreference<HomeView>('home.view', ['weekly', 'master'], 'weekly')
   const [scheduleDay, setScheduleDay] = useState<ScheduleDay>('today')
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   /* A landed drop suppresses the overlay's return-home animation (the card is
@@ -508,6 +511,9 @@ export function HomePage(): ReactNode {
     setComposerBucket(bucket)
   }
 
+  const createFromKeyboard = useCallback((): void => setComposerBucket('today'), [])
+  useCreateShortcut(loading ? null : createFromKeyboard)
+
   const openQuickActions = (taskId: string, point: QuickActionPoint): void => {
     setQuickTarget({ taskId, point })
   }
@@ -711,14 +717,15 @@ export function HomePage(): ReactNode {
             <span className="home-date">{todayLabel}</span>
           </div>
           <div className="home-header-side">
-            <div className="home-view-toggle" role="group" aria-label="Task view">
-              <button type="button" className={view === 'weekly' ? 'is-active' : ''} onClick={() => setView('weekly')}>
-                <LayoutGrid size={14} /> Weekly
-              </button>
-              <button type="button" className={view === 'master' ? 'is-active' : ''} onClick={() => setView('master')}>
-                <List size={14} /> Master
-              </button>
-            </div>
+            <ViewTabs
+              label="Task view"
+              value={view}
+              onChange={setView}
+              tabs={[
+                { value: 'weekly', label: 'Weekly', icon: <LayoutGrid size={14} /> },
+                { value: 'master', label: 'Master', icon: <List size={14} /> }
+              ]}
+            />
             <Button
               variant="primary"
               icon={<Plus size={16} />}

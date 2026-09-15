@@ -297,10 +297,7 @@
    Actions and section voices are written by hand; data stays printed.
    (Charter: "the printed page you write on".) */
 .ui-button,
-.home-view-toggle button,
-.habits-viewtabs button,
-.jobs-viewtabs button,
-.mf-viewtabs button,
+.ui-viewtabs button,
 .today-day-toggle button,
 .set-segment-btn,
 .set-section-title,
@@ -308,6 +305,125 @@
 .lc-panel-title {
   font-family: var(--font-ui);
   letter-spacing: 0;
+}
+
+/* --- View tabs ------------------------------------------------------------
+   The segmented view switcher in module page headers. */
+.ui-viewtabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-soft);
+}
+
+.ui-viewtabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-chip);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-press) var(--ease-out);
+}
+
+.ui-viewtabs button:active {
+  transform: scale(0.97);
+}
+
+.ui-viewtabs button.is-selected {
+  background: var(--surface-card);
+  box-shadow: var(--shadow-hover);
+  color: var(--ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-viewtabs button:hover {
+    background: var(--surface-soft);
+    color: var(--ink);
+  }
+
+  .ui-viewtabs button.is-selected:hover {
+    background: var(--surface-card);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-viewtabs button {
+    transition: none;
+  }
+}
+
+/* --- Month navigator ------------------------------------------------------
+   The stepper in module history views. */
+.ui-monthnav {
+  display: grid;
+  grid-template-columns: 30px minmax(124px, auto) 30px;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+}
+
+.ui-monthnav > button,
+.ui-monthnav > .ui-tooltip-anchor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  border-radius: calc(var(--radius-control) - 2px);
+  color: var(--ink-body);
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+.ui-monthnav > button:disabled {
+  color: var(--ink-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ui-monthnav-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border-radius: calc(var(--radius-control) - 2px);
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ui-monthnav-label.is-link {
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-monthnav > button:hover:not(:disabled),
+  .ui-monthnav-label.is-link:hover {
+    background: var(--surface-soft);
+    color: var(--ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-monthnav > button,
+  .ui-monthnav-label.is-link {
+    transition: none;
+  }
 }
 
 /* --- Time picker --------------------------------------------------------- */

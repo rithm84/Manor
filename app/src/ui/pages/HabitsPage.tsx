@@ -11,13 +11,15 @@ import {
   ListChecks,
   Plus
 } from 'lucide-react'
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { addDays, monthKey, statusOn } from '../../shared/habits'
 import { playClick, playCompletionTick } from '../sound/sounds'
 import type { HabitDraft, HabitsState } from '../../shared/habits'
-import { Button, EmptyState, FreezeCrystal, Modal } from '../components/ui'
+import { useCreateShortcut } from '../app/shortcuts'
+import { Button, EmptyState, FreezeCrystal, Modal, Toast, ViewTabs } from '../components/ui'
+import { useDevicePreference } from '../preferences/devicePreference'
 import { useAccountTimezone } from '../../web/accountContext'
 import { dateInTimezone } from '../../shared/timezone'
 import { HabitEditorModal } from './habits/AddHabitModal'
@@ -30,7 +32,8 @@ import {
   dateLabel,
   draftForHabit,
   fullDateLabel,
-  habitViewModel
+  habitViewModel,
+  reorderedHabitIds
 } from './habits/habitModel'
 import './habits/habits.css'
 
@@ -51,7 +54,7 @@ export function HabitsPage(): ReactNode {
   const [state, setState] = useState<HabitsState | null>(null)
   const [loading, setLoading] = useState(true)
   const [persistError, setPersistError] = useState<string | null>(null)
-  const [view, setView] = useState<HabitsView>('daily')
+  const [view, setView] = useDevicePreference<HabitsView>('habits.view', ['daily', 'history'], 'daily')
   const timezone = useAccountTimezone()
   const [initialDate] = useState(() => dateInTimezone(new Date(), timezone))
   const [selectedDate, setSelectedDate] = useState(initialDate)
@@ -67,6 +70,16 @@ export function HabitsPage(): ReactNode {
   const [reorderArmedId, setReorderArmedId] = useState<string | null>(null)
   const [reorderDragId, setReorderDragId] = useState<string | null>(null)
   const [reorderOverId, setReorderOverId] = useState<string | null>(null)
+
+  const [toast, setToast] = useState<{ message: string; action: { label: string; onSelect: () => void } | null } | null>(null)
+  const dismissToast = useCallback((): void => setToast(null), [])
+
+  const createFromKeyboard = useCallback((): void => {
+    setEditTargetId(null)
+    setEditorOpen(true)
+  }, [])
+  useCreateShortcut(loading ? null : createFromKeyboard)
+
   /** Check-offs the user has made that no server round trip has confirmed yet.
       The service serializes the commands; these keep the page from letting an
       earlier command's result outrank a later click. */
@@ -185,20 +198,19 @@ export function HabitsPage(): ReactNode {
 
   /** Move the dragged habit next to the target in the full list order, so
       paused and archived habits keep their relative places. */
-  const commitReorder = async (dragId: string, targetId: string): Promise<void> => {
-    if (state === null || dragId === targetId) return
-    const order = state.habits.map((habit) => habit.id)
-    const from = order.indexOf(dragId)
-    const to = order.indexOf(targetId)
-    if (from === -1 || to === -1) return
-    const without = order.filter((id) => id !== dragId)
-    const targetIndex = without.indexOf(targetId)
-    without.splice(from < to ? targetIndex + 1 : targetIndex, 0, dragId)
-    // The row lands where it was dropped; the committed order replaces it, or the old order returns on failure.
+  const commitOrder = async (order: readonly string[]): Promise<void> => {
+    if (state === null) return
+    // The habit lands where it was dropped; the committed order replaces it, or the old order returns on failure.
     const before = state
     const byId = new Map(state.habits.map((habit) => [habit.id, habit]))
-    setState({ ...state, habits: without.flatMap((id) => { const habit = byId.get(id); return habit === undefined ? [] : [habit] }) })
-    if (await persist('Could not reorder habits', () => habitsApi.reorder(without)) === null) setState(before)
+    setState({ ...state, habits: order.flatMap((id) => { const habit = byId.get(id); return habit === undefined ? [] : [habit] }) })
+    if (await persist('Could not reorder habits', () => habitsApi.reorder([...order])) === null) setState(before)
+  }
+
+  const commitReorder = async (dragId: string, targetId: string): Promise<void> => {
+    if (state === null) return
+    const order = reorderedHabitIds(state.habits.map((habit) => habit.id), dragId, targetId)
+    if (order !== null) await commitOrder(order)
   }
 
   const freezeHabit = async (habitId: string): Promise<void> => {
@@ -220,8 +232,16 @@ export function HabitsPage(): ReactNode {
     const result = await persist(`Could not ${status === 'active' ? 'resume' : status} habit`, () =>
       habitsApi.setStatus({ habitId, date: today, status })
     )
-    if (result !== null && status === 'retired') {
+    if (result === null) return
+    const name = result.habits.find((habit) => habit.id === habitId)?.name ?? 'Habit'
+    if (status === 'retired') {
       setPeekOpen(false)
+      // Retiring is reversible while the toast is up: the same-day reactivation leaves no gap.
+      setToast({ message: `${name} moved to the archive`, action: { label: 'Undo', onSelect: () => { setToast(null); void setLifecycle(habitId, 'active') } } })
+    } else if (status === 'paused') {
+      setToast({ message: `${name} paused`, action: { label: 'Undo', onSelect: () => { setToast(null); void setLifecycle(habitId, 'active') } } })
+    } else {
+      setToast(null)
     }
   }
 
@@ -245,26 +265,15 @@ export function HabitsPage(): ReactNode {
       <header className="habits-header">
         <h1 className="page-title">Habits</h1>
         <div className="habits-header-actions">
-          <div className="habits-viewtabs" role="tablist" aria-label="Habits view">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={view === 'daily'}
-              className={view === 'daily' ? 'is-selected' : ''}
-              onClick={() => setView('daily')}
-            >
-              <ListChecks size={14} /> Daily
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={view === 'history'}
-              className={view === 'history' ? 'is-selected' : ''}
-              onClick={() => setView('history')}
-            >
-              <History size={14} /> History
-            </button>
-          </div>
+          <ViewTabs
+            label="Habits view"
+            value={view}
+            onChange={setView}
+            tabs={[
+              { value: 'daily', label: 'Daily', icon: <ListChecks size={14} /> },
+              { value: 'history', label: 'History', icon: <History size={14} /> }
+            ]}
+          />
           <Button
             variant="primary"
             icon={<Plus size={15} />}
@@ -305,6 +314,7 @@ export function HabitsPage(): ReactNode {
             month={historyMonth}
             onMonthChange={setHistoryMonth}
             onOpenHabit={openHabit}
+            onReorder={(order) => { void commitOrder(order) }}
           />
         </Suspense>
       ) : (
@@ -588,6 +598,8 @@ export function HabitsPage(): ReactNode {
         }}
         onSave={saveHabit}
       />
+
+      {toast !== null ? <Toast message={toast.message} action={toast.action} duration={6000} onDismiss={dismissToast} /> : null}
 
       <Modal
         open={habitToRetire !== null}

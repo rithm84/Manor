@@ -4,6 +4,7 @@ import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
 import { POMODORO_LABEL_LIMIT, formatClock, plannedSeconds } from '../../../shared/pomodoro'
 import type { PomodoroClock, PomodoroKind, PomodoroSession, PomodoroSettings } from '../../../shared/pomodoro'
+import { isTypingTarget, overlayOpen } from '../../app/shortcuts'
 import { Button } from '../../components/ui'
 import { cyclePosition, kindLabel, kindTone } from './pomodoroModel'
 
@@ -61,6 +62,21 @@ export function TimerStage({ active, clock, ended, next, settings, completedToda
     onDismissEnded()
     onStart(next, null)
   }
+  // Space starts, pauses, or resumes from anywhere on the page that is not a field or a control.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== ' ' || event.repeat || event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented) return
+      if (isTypingTarget(event.target) || event.target instanceof HTMLButtonElement || overlayOpen() || busy) return
+      event.preventDefault()
+      if (phase === 'running') onPause()
+      else if (phase === 'paused') onResume()
+      else if (phase === 'idle') startFocus()
+      else startNext()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return (): void => window.removeEventListener('keydown', onKeyDown)
+  })
+
   const commitLabel = (): void => {
     if (editingLabel === null) return
     const trimmed = editingLabel.trim()

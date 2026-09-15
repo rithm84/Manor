@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react'
 import { useDroppable } from '@dnd-kit/core'
 import type { ReactNode } from 'react'
 
-import { Pill } from '../../components/ui'
+import { Pill, Tooltip } from '../../components/ui'
 import type { QuickActionPoint } from '../../components/ui'
 import type { ContextDefinition, Task, TaskBucket, TaskBucketMeta } from '../../data/mock'
 import { TaskCard } from './TaskCard'
@@ -57,14 +57,16 @@ export function KanbanColumn({
       <header className="kanban-col-head">
         <Pill variant="group" colorway={meta.colorway} label={meta.label} count={tasks.length} />
         {creatable ? (
-          <button
-            type="button"
-            className="kanban-col-add"
-            onClick={(event) => onOpenComposer(event.currentTarget)}
-            aria-label={`New task in ${meta.label}`}
-          >
-            <Plus size={14} />
-          </button>
+          <Tooltip label={`New task in ${meta.label}`} side="bottom">
+            <button
+              type="button"
+              className="kanban-col-add"
+              onClick={(event) => onOpenComposer(event.currentTarget)}
+              aria-label={`New task in ${meta.label}`}
+            >
+              <Plus size={14} />
+            </button>
+          </Tooltip>
         ) : null}
       </header>
 

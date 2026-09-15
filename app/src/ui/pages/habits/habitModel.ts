@@ -296,3 +296,15 @@ export function habitTrend(
 export function daysSinceCreated(habit: HabitDefinition, today: string): number {
   return Math.max(1, daysBetween(habit.createdOn, today) + 1)
 }
+
+/** The full habit order after moving one habit next to another so paused and archived habits keep their relative places. */
+export function reorderedHabitIds(all: readonly string[], dragId: string, targetId: string): readonly string[] | null {
+  if (dragId === targetId) return null
+  const from = all.indexOf(dragId)
+  const to = all.indexOf(targetId)
+  if (from === -1 || to === -1) return null
+  const without = all.filter((id) => id !== dragId)
+  const targetIndex = without.indexOf(targetId)
+  without.splice(from < to ? targetIndex + 1 : targetIndex, 0, dragId)
+  return without
+}

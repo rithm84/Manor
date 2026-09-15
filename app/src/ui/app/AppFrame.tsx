@@ -7,6 +7,7 @@ import { Tooltip } from '../components/ui'
 import { PomodoroRuntimeProvider } from '../pomodoro/PomodoroRuntime'
 import { PageErrorBoundary } from './PageErrorBoundary'
 import { Sidebar } from './Sidebar'
+import { useGlobalShortcuts } from './shortcuts'
 import { useSidebarDocked } from './sidebarState'
 
 const FLOAT_DISMISS_MS = 240
@@ -67,6 +68,9 @@ export function AppFrame(): ReactNode {
     setFloatOpen(true)
   }, [cancelDismiss])
 
+  const goTo = useCallback((route: string): void => { navigate(route) }, [navigate])
+  useGlobalShortcuts({ navigate: goTo, toggleSidebar })
+
   return (
     <PomodoroRuntimeProvider>
     <div className="frame">
@@ -93,7 +97,7 @@ export function AppFrame(): ReactNode {
       <div className="content">
         {/* "deep" drags the window from anywhere in the bar; Tauri still lets the controls inside take their clicks. */}
         <header className={`topbar${docked ? '' : ' is-unpinned'}`} data-tauri-drag-region="deep">
-          <Tooltip label={docked ? 'Collapse sidebar' : 'Dock sidebar'} side="bottom">
+          <Tooltip label={docked ? 'Collapse sidebar (⌘\\)' : 'Dock sidebar (⌘\\)'} side="bottom">
             <button
               type="button"
               className="topbar-btn"

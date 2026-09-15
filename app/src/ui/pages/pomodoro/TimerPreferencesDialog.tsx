@@ -1,10 +1,11 @@
 import { Minus, Plus } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { LONG_BREAK_EVERY_LIMIT, POMODORO_MINUTES_LIMIT } from '../../../shared/pomodoro'
 import type { PomodoroSettings } from '../../../shared/pomodoro'
-import { Button, DetailDialog } from '../../components/ui'
+import { Button, DetailDialog, Modal } from '../../components/ui'
+import { useEnterAction } from '../home/enterAction'
 
 export interface TimerPreferencesDialogProps {
   open: boolean
@@ -49,7 +50,9 @@ function Row({ label, description, children }: { label: string; description: str
 
 export function TimerPreferencesDialog({ open, settings, busy, onClose, onSave }: TimerPreferencesDialogProps): ReactNode {
   const [draft, setDraft] = useState<PomodoroSettings>(settings)
-  useEffect(() => { if (open) setDraft(settings) }, [open, settings])
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const panel = useRef<HTMLDivElement>(null)
+  useEffect(() => { if (open) { setDraft(settings); setConfirmDiscard(false) } }, [open, settings])
 
   const patch = (Object.keys(draft) as (keyof PomodoroSettings)[]).reduce<Partial<PomodoroSettings>>((changes, key) => {
     if (draft[key] !== settings[key]) return { ...changes, [key]: draft[key] }
@@ -59,13 +62,23 @@ export function TimerPreferencesDialog({ open, settings, busy, onClose, onSave }
   const setNumber = (key: NumberKey) => (value: number): void => setDraft((current) => ({ ...current, [key]: value }))
 
   const save = async (): Promise<void> => {
+    if (busy) return
     if (!dirty) { onClose(); return }
     if (await onSave(patch)) onClose()
   }
 
+  // Escape, the scrim, and Cancel ask before dropping unsaved changes; Enter saves them.
+  const requestClose = (): void => {
+    if (busy) return
+    if (dirty) setConfirmDiscard(true)
+    else onClose()
+  }
+  useEnterAction(panel, open && !confirmDiscard, () => { void save() })
+
   return (
-    <DetailDialog open={open} onClose={onClose} title="Timer preferences" width={480} ariaLabel="Timer preferences">
-      <div className="pomo-prefs">
+    <>
+    <DetailDialog open={open} onClose={requestClose} title="Timer preferences" width={480} ariaLabel="Timer preferences">
+      <div className="pomo-prefs" ref={panel}>
         <Row label="Focus" description="How long each focus session runs.">
           <Stepper value={draft.focusMinutes} min={1} max={POMODORO_MINUTES_LIMIT} step={5} unit="min" ariaLabel="Focus length" onChange={setNumber('focusMinutes')} />
         </Row>
@@ -86,10 +99,21 @@ export function TimerPreferencesDialog({ open, settings, busy, onClose, onSave }
         </Row>
         <p className="pomo-pref-note">Changes apply to sessions you start from now on.</p>
         <footer className="pomo-pref-footer">
-          <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button variant="ghost" onClick={requestClose} disabled={busy}>Cancel</Button>
           <Button variant="primary" onClick={() => void save()} disabled={busy || !dirty} testId="pomodoro-save-preferences">Save</Button>
         </footer>
       </div>
     </DetailDialog>
+    <Modal open={confirmDiscard} onClose={() => setConfirmDiscard(false)} width={380} ariaLabel="Discard these changes">
+      <div className="ui-confirm">
+        <h2>Discard these changes?</h2>
+        <p>They have not been saved.</p>
+        <div className="ui-confirm-actions">
+          <Button variant="ghost" onClick={() => setConfirmDiscard(false)}>Cancel</Button>
+          <Button variant="primary" onClick={() => { setConfirmDiscard(false); onClose() }}>Discard</Button>
+        </div>
+      </div>
+    </Modal>
+    </>
   )
 }
