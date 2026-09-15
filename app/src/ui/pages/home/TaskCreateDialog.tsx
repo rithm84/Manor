@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronDown, Clock3, Flag, Layers3, Repeat2, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 
 import { Button, Modal, Select } from '../../components/ui'
@@ -81,6 +81,7 @@ export function TaskCreateDialog({
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [recurrenceOpen, setRecurrenceOpen] = useState(false)
+  const form = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     if (bucket === null) return
@@ -92,6 +93,30 @@ export function TaskCreateDialog({
   }, [bucket, today])
 
   const dirty = bucket !== null && !sameDraft(draft, emptyDraft(activeBucket, today))
+
+  // Closing a property picker hands focus back to the dialog panel, where a plain Enter
+  // otherwise does nothing. The shortcut promises Enter creates the task wherever focus rests,
+  // so Enter on the panel or the form submits; controls, open pickers, and text fields keep theirs.
+  useEffect(() => {
+    if (bucket === null) return
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Enter' || event.defaultPrevented || event.isComposing) return
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+      const current = form.current
+      const panel = current?.closest<HTMLElement>('[aria-modal="true"]') ?? null
+      if (current === null || panel === null || !(event.target instanceof HTMLElement)) return
+      const target = event.target
+      if (target !== panel && target !== current) {
+        if (!panel.contains(target)) return
+        if (target.closest('input, textarea, select, button, a[href], [role="option"], [role="radio"], [role="listbox"], [role="menu"], [contenteditable="true"]') !== null) return
+      }
+      if (panel.querySelector('[aria-expanded="true"]') !== null) return
+      event.preventDefault()
+      current.requestSubmit()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [bucket])
 
   // Escape, scrim, and Cancel all prompt before discarding typed work.
   const requestClose = (): void => {
@@ -125,7 +150,7 @@ export function TaskCreateDialog({
       width={520}
       ariaLabel={`New task for ${bucketName(activeBucket)}`}
     >
-      <form className="task-dialog" onSubmit={(event) => void submit(event)} data-testid="task-create-dialog">
+      <form ref={form} className="task-dialog" onSubmit={(event) => void submit(event)} data-testid="task-create-dialog">
         <header className="task-dialog-header">
           <h2>New task</h2>
           <button type="button" className="task-dialog-close" aria-label="Close new task" onClick={requestClose}>

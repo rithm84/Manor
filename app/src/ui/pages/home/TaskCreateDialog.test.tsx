@@ -63,6 +63,52 @@ describe('task creation dialog', () => {
     }
   })
 
+  it('creates the task on Enter after a picker hands focus back to the dialog panel', async () => {
+    const created: DraftTask[] = []
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    try {
+      await act(async () => root.render(
+        <TaskCreateDialog {...props} bucket="today" onCreate={async (_bucket, draft) => { created.push(draft) }} />
+      ))
+      const title = document.body.querySelector<HTMLInputElement>('[aria-label="Task title"]')
+      const trigger = document.body.querySelector<HTMLButtonElement>('[data-testid="context-select-trigger"]')
+      const panel = document.body.querySelector<HTMLElement>('[aria-modal="true"]')
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      if (title === null || trigger === null || panel === null || setValue === undefined) throw new Error('Composer controls unavailable')
+      await act(async () => {
+        setValue.call(title, 'Apply to the Intuit internship')
+        title.dispatchEvent(new Event('input', { bubbles: true }))
+        trigger.click()
+      })
+      const option = document.body.querySelector<HTMLButtonElement>('.context-option:has(.is-success)')
+      if (option === null) throw new Error('Personal context option unavailable')
+      await act(async () => option.click())
+
+      // Enter while a picker is still open stays with the picker.
+      await act(async () => trigger.click())
+      expect(panel.querySelector('[aria-expanded="true"]')).not.toBeNull()
+      await act(async () => { panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })) })
+      expect(created).toHaveLength(0)
+      await act(async () => { document.body.querySelector<HTMLButtonElement>('.context-option:has(.is-success)')?.click() })
+
+      // Focus back on the panel itself: Enter creates.
+      await act(async () => { panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })) })
+      expect(created).toHaveLength(1)
+      expect(created[0]).toMatchObject({ title: 'Apply to the Intuit internship', context: 'Personal' })
+
+      // Enter on a button inside the form is that button's own activation, not a submit.
+      const recurrence = document.body.querySelector<HTMLButtonElement>('[data-testid="task-create-recurrence-trigger"]')
+      if (recurrence === null) throw new Error('Recurrence trigger unavailable')
+      await act(async () => { recurrence.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })) })
+      expect(created).toHaveLength(1)
+    } finally {
+      await act(async () => root.unmount())
+      host.remove()
+    }
+  })
+
   it('exposes a compact modal composer with required unset Context', async () => {
     const markup = await renderPortalMarkup(<TaskCreateDialog {...props} bucket="today" />)
 
