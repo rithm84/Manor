@@ -50,7 +50,15 @@ The sidebar docks or collapses to a hover overlay; it is docked above and collap
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/readme/habits.png" alt="Habits in light mode: per-habit streaks, misses, and the freeze pool"></td>
+    <td width="50%"><img src="docs/readme/habits.png" alt="Habits in light mode: today's check-offs, week strips, streaks, and the freeze pool"></td>
+    <td width="50%"><img src="docs/readme/habits-history.png" alt="Habits history in dark mode: the six-month completion trend above a grid of completion rings, one per habit"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/readme/moodfocus.png" alt="Mood and focus history in light mode: the six-month trend, a month calendar that names each day's mood and focus, and per-level distributions"></td>
+    <td width="50%"><img src="docs/readme/pomodoro-history.png" alt="Pomodoro history in dark mode: month statistics, focused minutes per day, and the session log"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/readme/pomodoro.png" alt="Pomodoro in light mode: a running focus session centered on the page with history behind a toggle"></td>
     <td width="50%"><img src="docs/readme/notes.png" alt="Notes in dark mode: headings, code, and lists in the block editor"></td>
   </tr>
   <tr>
