@@ -329,6 +329,7 @@ export function JobsBrowse({ today, onAdded }: JobsBrowseProps): ReactNode {
             placeholder="Search listings"
             aria-label="Search listings"
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => { if (event.key === 'Escape' && query !== '') { event.preventDefault(); setQuery('') } }}
           />
           {query !== '' ? (
             <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>

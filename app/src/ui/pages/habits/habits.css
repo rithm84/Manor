@@ -17,9 +17,7 @@
 }
 
 .habits-header-actions,
-.habits-viewtabs,
 .habits-daynav,
-.habit-history-monthnav,
 .habit-month-nav {
   display: inline-flex;
   align-items: center;
@@ -27,40 +25,6 @@
 
 .habits-header-actions {
   gap: var(--space-3);
-}
-
-.habits-viewtabs {
-  gap: 2px;
-  padding: 2px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: var(--surface-soft);
-}
-
-.habits-viewtabs button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: var(--radius-chip);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--ink-muted);
-  transition:
-    background-color var(--duration-fast) ease,
-    color var(--duration-fast) ease,
-    transform var(--duration-press) var(--ease-out);
-}
-
-.habits-viewtabs button:active {
-  transform: scale(0.97);
-}
-
-.habits-viewtabs button.is-selected {
-  background: var(--surface-card);
-  color: var(--ink);
-  box-shadow: var(--shadow-hover);
 }
 
 .habits-loading,
@@ -109,13 +73,11 @@
 }
 
 .habits-daynav,
-.habit-history-monthnav,
 .habit-month-nav {
   gap: 2px;
 }
 
-.habits-daynav button,
-.habit-history-navbutton {
+.habits-daynav button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -129,13 +91,11 @@
     transform var(--duration-press) var(--ease-out);
 }
 
-.habits-daynav button:active:not(:disabled),
-.habit-history-navbutton:active:not(:disabled) {
+.habits-daynav button:active:not(:disabled) {
   transform: scale(0.94);
 }
 
 .habits-daynav button:disabled,
-.habit-history-navbutton:disabled,
 .habit-row-iconbtn:disabled {
   opacity: 0.32;
   cursor: default;
@@ -244,8 +204,7 @@
 
   .habit-row-iconbtn:hover,
   .habit-week-progress:hover,
-  .habits-daynav button:hover:not(:disabled),
-  .habit-history-navbutton:hover:not(:disabled) {
+  .habits-daynav button:hover:not(:disabled) {
     background: var(--surface-soft);
     color: var(--ink-body);
   }
@@ -703,9 +662,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .habits-viewtabs button,
   .habits-daynav button,
-  .habit-history-navbutton,
   .habit-row-iconbtn,
   .habit-quantized-control,
   .habit-add-kind,

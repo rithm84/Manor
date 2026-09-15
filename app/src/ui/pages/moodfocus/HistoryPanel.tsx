@@ -1,10 +1,10 @@
-import { ChevronLeft, ChevronRight, Mic, PencilLine, Plus } from 'lucide-react'
+import { Mic, PencilLine, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { moodFocusPreviousDate } from '../../../shared/moodFocus'
 import type { Focus, Mood, MoodFocusEntry, MoodFocusHistoryMutation, MoodFocusState } from '../../../shared/moodFocus'
-import { Button, DatePicker, DetailDialog, Modal } from '../../components/ui'
+import { Button, DatePicker, DetailDialog, Modal, MonthNav } from '../../components/ui'
 import {
   daysInMonth,
   earliestEntryMonth,
@@ -89,15 +89,14 @@ export function HistoryPanel({ state, month, onMonthChange, onSaveRatings }: His
         </div>
         <div className="mf-history-actions">
           <Button variant="subtle" icon={<Plus size={15} />} onClick={() => openDate(moodFocusPreviousDate(state.today), true)} testId="history-add-day">Add day</Button>
-          <div className="mf-month-nav" role="group" aria-label="History month">
-            <button type="button" aria-label="Previous month" disabled={!canMoveBack} onClick={() => onMonthChange(monthShift(month, -1))}>
-              <ChevronLeft size={16} />
-            </button>
-            <span aria-live="polite">{summary.label}</span>
-            <button type="button" aria-label="Next month" disabled={!canMoveForward} onClick={() => onMonthChange(monthShift(month, 1))}>
-              <ChevronRight size={16} />
-            </button>
-          </div>
+          <MonthNav
+            label="History month"
+            monthLabel={summary.label}
+            canMoveBack={canMoveBack}
+            canMoveForward={canMoveForward}
+            onShift={(direction) => onMonthChange(monthShift(month, direction))}
+            onCurrent={month === state.today.slice(0, 7) ? null : () => onMonthChange(state.today.slice(0, 7))}
+          />
         </div>
       </section>
 

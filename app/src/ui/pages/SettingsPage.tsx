@@ -11,7 +11,7 @@ import { AgentConnections } from './settings/AgentConnections'
 import { AvatarCropDialog } from './settings/AvatarCropDialog'
 
 import { useSidebarDocked } from '../app/sidebarState'
-import { Button } from '../components/ui'
+import { Button, Kbd } from '../components/ui'
 import { setSoundsEnabled, soundsEnabled } from '../sound/sounds'
 import { accountErrorMessage, useAvatar, useCurrentAccount } from './welcome/accountSession'
 import { SettingsRow, SettingsToggle } from './settings/controls'
@@ -22,13 +22,56 @@ type SettingsSection =
   | 'account'
   | 'appearance'
   | 'connections'
+  | 'shortcuts'
   | 'about'
 
 const SECTIONS: readonly { id: SettingsSection; label: string }[] = [
   { id: 'account', label: 'Account' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'connections', label: 'Connections' },
+  { id: 'shortcuts', label: 'Keyboard shortcuts' },
   { id: 'about', label: 'About' }
+]
+
+const SHORTCUT_GROUPS: readonly { title: string; rows: readonly { keys: readonly string[]; label: string }[] }[] = [
+  {
+    title: 'Everywhere',
+    rows: [
+      { keys: ['⌘', '1'], label: 'Home, then ⌘2 through ⌘9 for the other pages in sidebar order' },
+      { keys: ['⌘', '\\'], label: 'Collapse or dock the sidebar' },
+      { keys: ['⌘', 'N'], label: 'New task, habit, role, or note on the page that creates them' },
+      { keys: ['Esc'], label: 'Clear a search field, or close the topmost menu or dialog' }
+    ]
+  },
+  {
+    title: 'Home',
+    rows: [
+      { keys: ['⌘', 'Z'], label: 'Undo the last completion or deletion' },
+      { keys: ['Enter'], label: 'Create or save the task in an open task dialog' },
+      { keys: ['⇧', 'F10'], label: 'Open the task actions menu' }
+    ]
+  },
+  {
+    title: 'History views',
+    rows: [
+      { keys: ['←', '→'], label: 'Previous or next month while the month stepper has focus; click the month name to return to this month' },
+      { keys: ['←', '→'], label: 'Move a habit tile while its grip has focus, when tiles are in your order' }
+    ]
+  },
+  {
+    title: 'Pomodoro',
+    rows: [
+      { keys: ['Space'], label: 'Start, pause, or resume the timer' },
+      { keys: ['Enter'], label: 'Start a focus session from the label field' }
+    ]
+  },
+  {
+    title: 'Notes',
+    rows: [
+      { keys: ['⌘', 'S'], label: 'Save the open note now' },
+      { keys: ['⌘', '⇧', 'F'], label: 'Search notes' }
+    ]
+  }
 ]
 
 
@@ -265,6 +308,23 @@ export function SettingsPage(): ReactNode {
                   </div>
                 </SettingsRow>
               </div>
+            </section>
+          ) : null}
+
+          {section === 'shortcuts' ? (
+            <section className="set-section">
+              <h2 className="set-section-title">Keyboard shortcuts</h2>
+              {SHORTCUT_GROUPS.map((group) => (
+                <div className="set-card" key={group.title}>
+                  <h3 className="set-card-title">{group.title}</h3>
+                  {group.rows.map((row) => (
+                    <div className="set-shortcut" key={`${group.title}-${row.keys.join('-')}-${row.label}`}>
+                      <Kbd keys={row.keys} />
+                      <span>{row.label}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </section>
           ) : null}
 

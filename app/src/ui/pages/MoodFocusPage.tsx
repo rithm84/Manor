@@ -5,6 +5,8 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { moodFocusPreviousDate } from '../../shared/moodFocus'
+import { ViewTabs } from '../components/ui'
+import { useDevicePreference } from '../preferences/devicePreference'
 import type { Focus, Mood, MoodFocusEntry, MoodFocusHistoryMutation, MoodFocusState } from '../../shared/moodFocus'
 import { DailyCapture } from './moodfocus/DailyCapture'
 import { createMoodFocusSeed } from './moodfocus/moodFocusSeed'
@@ -30,7 +32,7 @@ export function MoodFocusPage(): ReactNode {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [persistError, setPersistError] = useState<string | null>(null)
-  const [view, setView] = useState<MoodFocusView>('daily')
+  const [view, setView] = useDevicePreference<MoodFocusView>('moodfocus.view', ['daily', 'history'], 'daily')
   const [selectedDate, setSelectedDate] = useState(MOOD_FOCUS_SEED.today)
   const [historyMonth, setHistoryMonth] = useState(monthKey(MOOD_FOCUS_SEED.today))
 
@@ -139,14 +141,15 @@ export function MoodFocusPage(): ReactNode {
     <div className="mf">
       <header className="mf-header">
         <h1 className="page-title">Mood &amp; Focus</h1>
-        <div className="mf-viewtabs" role="tablist" aria-label="Mood and focus view">
-          <button type="button" role="tab" aria-selected={view === 'daily'} className={view === 'daily' ? 'is-selected' : ''} onClick={() => setView('daily')}>
-            <SlidersHorizontal size={14} /> Daily
-          </button>
-          <button type="button" role="tab" aria-selected={view === 'history'} className={view === 'history' ? 'is-selected' : ''} onClick={() => setView('history')}>
-            <History size={14} /> History
-          </button>
-        </div>
+        <ViewTabs
+          label="Mood and focus view"
+          value={view}
+          onChange={setView}
+          tabs={[
+            { value: 'daily', label: 'Daily', icon: <SlidersHorizontal size={14} /> },
+            { value: 'history', label: 'History', icon: <History size={14} /> }
+          ]}
+        />
       </header>
 
       {persistError !== null ? <div className="mf-error" role="alert">{persistError}</div> : null}

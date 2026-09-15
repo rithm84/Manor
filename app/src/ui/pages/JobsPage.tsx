@@ -1,11 +1,12 @@
 import { useCommitVersion } from '../services/useCommitVersion'
 import { useManorService } from '../services/ManorServices'
 import { Briefcase, Plus } from 'lucide-react'
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import type { JobRoleFields, JobsState, JobStage } from '../../shared/jobs'
-import { Button, EmptyState, Modal } from '../components/ui'
+import { useCreateShortcut } from '../app/shortcuts'
+import { Button, EmptyState, Modal, ViewTabs } from '../components/ui'
 import { AddRoleModal } from './jobs/AddRoleModal'
 import { JobDetailModal } from './jobs/JobDetailModal'
 import { JobsBrowse } from './jobs/JobsBrowse'
@@ -45,6 +46,8 @@ export function JobsPage(): ReactNode {
   const [persistError, setPersistError] = useState<string | null>(null)
   const [arrivedIds, setArrivedIds] = useState<ReadonlySet<string>>(new Set())
   const [addOpen, setAddOpen] = useState(false)
+  const openAdd = useCallback((): void => setAddOpen(true), [])
+  useCreateShortcut(loading ? null : openAdd)
   const [detailRoleId, setDetailRoleId] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [stageRequest, setStageRequest] = useState<JobStage | JobColumn | null>(null)
@@ -167,20 +170,7 @@ export function JobsPage(): ReactNode {
           </span>
         </div>
         <div className="jobs-header-actions">
-          <div className="jobs-viewtabs" role="tablist" aria-label="Jobs view">
-            {VIEW_TABS.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                role="tab"
-                aria-selected={view === tab.value}
-                className={view === tab.value ? 'is-selected' : ''}
-                onClick={() => setView(tab.value)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <ViewTabs label="Jobs view" tabs={VIEW_TABS} value={view} onChange={setView} />
           <Button variant="primary" icon={<Plus size={16} />} onClick={() => setAddOpen(true)}>
             Add role
           </Button>

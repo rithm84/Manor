@@ -23,24 +23,6 @@
   font-size: var(--text-sm);
 }
 
-.habit-history-monthnav {
-  display: grid;
-  grid-template-columns: 30px minmax(124px, auto) 30px;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: var(--surface-card);
-}
-
-.habit-history-monthlabel {
-  color: var(--ink-body);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  text-align: center;
-}
-
 .habit-history-summary {
   display: grid;
   grid-template-columns: 1.35fr repeat(3, 1fr);
@@ -344,5 +326,104 @@
 
   .habit-history-tiles {
     grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  }
+}
+
+/* Tile controls: the legend, the archived toggle, and the sort share the section's right side. */
+.habit-history-sectionside {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3) var(--space-5);
+}
+
+.habit-history-tilecontrols {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.habit-history-archivedtoggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+}
+
+.habit-history-archivedtoggle > span {
+  color: var(--ink-faint, var(--ink-muted));
+  font-size: var(--text-xs);
+}
+
+.habit-history-archivedtoggle[aria-pressed='true'] {
+  border-color: var(--primary);
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.habit-history-archivedtoggle[aria-pressed='true'] > span {
+  color: inherit;
+}
+
+/* Reordering: a grip in the tile corner appears on hover, like the daily list's. */
+.habit-history-tiles > li {
+  position: relative;
+}
+
+.habit-history-grip {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-chip);
+  color: var(--ink-muted);
+  opacity: 0;
+  cursor: grab;
+  transition: opacity var(--duration-fast) ease, background-color var(--duration-fast) ease;
+}
+
+.habit-history-tiles > li:hover .habit-history-grip,
+.habit-history-grip:focus-visible {
+  opacity: 1;
+}
+
+.habit-history-grip:active {
+  cursor: grabbing;
+}
+
+.habit-history-tiles > li.is-dragged {
+  opacity: 0.4;
+}
+
+.habit-history-tiles > li.is-dropover .habit-history-tile {
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.habit-history-tiles.is-dragging .habit-history-tile {
+  transition: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .habit-history-archivedtoggle:hover {
+    background: var(--surface-soft);
+    color: var(--ink);
+  }
+
+  .habit-history-grip:hover {
+    background: var(--surface-soft);
+    color: var(--ink);
   }
 }

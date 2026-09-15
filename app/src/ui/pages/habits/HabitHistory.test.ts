@@ -7,8 +7,10 @@ import {
   habitDonutPresentation,
   habitPerformanceLabel,
   habitPerformanceSlices,
-  habitRingArcs
+  habitRingArcs,
+  sortHabitRows
 } from './HabitHistory'
+import { reorderedHabitIds } from './habitModel'
 import type { HabitMonthRow } from './habitModel'
 
 const PERFORMANCE_ROW: HabitMonthRow = {
@@ -106,5 +108,27 @@ describe('habit performance donut data', () => {
 
     expect(habitDonutPresentation(ZERO_MIXED_ROW).seamlessFill).toBe('var(--overdue-error)')
     expect(markup).toContain('habit-history-seamless-ring')
+  })
+})
+
+describe('habit tile ordering', () => {
+  const rows: HabitMonthRow[] = [
+    { ...PERFORMANCE_ROW, habit: { ...PERFORMANCE_ROW.habit, id: 'b', name: 'Water' }, completionRate: 40 },
+    { ...PERFORMANCE_ROW, habit: { ...PERFORMANCE_ROW.habit, id: 'a', name: 'Read' }, completionRate: 90 },
+    { ...PERFORMANCE_ROW, habit: { ...PERFORMANCE_ROW.habit, id: 'c', name: 'Stretch' }, completionRate: 90 }
+  ]
+
+  it('keeps the saved habit order, ranks by rate with a name tiebreak, or sorts by name', () => {
+    expect(sortHabitRows(rows, 'order').map((row) => row.habit.id)).toEqual(['b', 'a', 'c'])
+    expect(sortHabitRows(rows, 'rate').map((row) => row.habit.id)).toEqual(['a', 'c', 'b'])
+    expect(sortHabitRows(rows, 'name').map((row) => row.habit.id)).toEqual(['a', 'c', 'b'])
+  })
+
+  it('moves a habit next to its drop target within the full order', () => {
+    const all = ['a', 'b', 'c', 'd']
+    expect(reorderedHabitIds(all, 'a', 'c')).toEqual(['b', 'c', 'a', 'd'])
+    expect(reorderedHabitIds(all, 'd', 'b')).toEqual(['a', 'd', 'b', 'c'])
+    expect(reorderedHabitIds(all, 'b', 'b')).toBeNull()
+    expect(reorderedHabitIds(all, 'b', 'zzz')).toBeNull()
   })
 })

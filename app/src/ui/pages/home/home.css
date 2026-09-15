@@ -41,38 +41,6 @@
   padding-bottom: 2px;
 }
 
-.home-view-toggle {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: var(--surface-soft);
-}
-
-.home-view-toggle button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-chip);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--ink-muted);
-  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
-}
-
-.home-view-toggle button.is-active {
-  background: var(--surface-card);
-  color: var(--ink);
-  box-shadow: var(--shadow-hover);
-}
-
-.home-view-toggle button:active {
-  transform: scale(0.97);
-}
-
 .home-error {
   display: flex;
   align-items: center;

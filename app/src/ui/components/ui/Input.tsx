@@ -8,9 +8,11 @@ export interface InputProps {
   icon?: ReactNode
   ariaLabel: string
   autoFocus?: boolean
+  /** Search fields clear on Escape while they hold text. */
+  clearOnEscape?: boolean
 }
 
-export function Input({ value, onChange, placeholder, icon, ariaLabel, autoFocus }: InputProps): ReactNode {
+export function Input({ value, onChange, placeholder, icon, ariaLabel, autoFocus, clearOnEscape }: InputProps): ReactNode {
   return (
     <span className="ui-input-wrap">
       {icon !== undefined ? <span className="ui-input-icon">{icon}</span> : null}
@@ -22,6 +24,7 @@ export function Input({ value, onChange, placeholder, icon, ariaLabel, autoFocus
         placeholder={placeholder}
         aria-label={ariaLabel}
         autoFocus={autoFocus === true}
+        onKeyDown={clearOnEscape === true ? (event) => { if (event.key === 'Escape' && value !== '') { event.preventDefault(); onChange('') } } : undefined}
       />
     </span>
   )

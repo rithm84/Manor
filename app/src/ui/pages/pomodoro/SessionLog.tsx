@@ -4,7 +4,7 @@ import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
 import { POMODORO_LABEL_LIMIT, formatMinutes, shiftDate } from '../../../shared/pomodoro'
 import type { PomodoroSession } from '../../../shared/pomodoro'
-import { Button, EmptyState } from '../../components/ui'
+import { Button, EmptyState, Tooltip } from '../../components/ui'
 import { dayHeading, startTimeLabel } from './pomodoroModel'
 import type { SessionDay } from './pomodoroModel'
 
@@ -62,8 +62,8 @@ function SessionRow({ session, timezone, busy, onRelabel, onRemove }: { session:
         {completed ? formatMinutes(focused) : <>{formatMinutes(focused)}<span className="pomo-row-of"> of {formatMinutes(session.plannedSeconds)}</span></>}
       </span>
       <span className="pomo-row-actions">
-        <button type="button" className="pomo-iconbutton" aria-label="Edit label" disabled={busy} onClick={() => setDraft(session.label ?? '')}><Pencil size={14} /></button>
-        <button type="button" className="pomo-iconbutton is-danger" aria-label="Delete session" disabled={busy} onClick={onRemove}><Trash2 size={14} /></button>
+        <Tooltip label="Edit label" side="top"><button type="button" className="pomo-iconbutton" aria-label="Edit label" disabled={busy} onClick={() => setDraft(session.label ?? '')}><Pencil size={14} /></button></Tooltip>
+        <Tooltip label="Delete session" side="top"><button type="button" className="pomo-iconbutton is-danger" aria-label="Delete session" disabled={busy} onClick={onRemove}><Trash2 size={14} /></button></Tooltip>
       </span>
     </li>
   )

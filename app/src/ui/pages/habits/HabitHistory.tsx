@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { GripVertical } from 'lucide-react'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
@@ -12,13 +12,15 @@ import {
 } from 'recharts'
 
 import type { HabitsState } from '../../../shared/habits'
-import { FreezeCrystal, Select } from '../../components/ui'
+import { FreezeCrystal, MonthNav, Select } from '../../components/ui'
+import { useDeviceFlag, useDevicePreference } from '../../preferences/devicePreference'
 import {
   earliestHistoryMonth,
   habitTrend,
   historyMonthAfterNavigation,
   monthShift,
-  monthSummary
+  monthSummary,
+  reorderedHabitIds
 } from './habitModel'
 import type { HabitMonthRow, HabitTrendRange } from './habitModel'
 import './habitHistory.css'
@@ -28,12 +30,35 @@ export interface HabitHistoryProps {
   month: string
   onMonthChange: (month: string) => void
   onOpenHabit: (habitId: string) => void
+  /** Saves a new habit order (every habit ID once); tiles drag into place only when sorted by your order. */
+  onReorder?: (order: readonly string[]) => void
 }
 
-/** Retirement is evident from the finite history window; only pauses need a label. */
+export type HabitTileSort = 'order' | 'rate' | 'name'
+
+const TILE_SORTS: readonly HabitTileSort[] = ['order', 'rate', 'name']
+
+const TILE_SORT_OPTIONS = [
+  { value: 'order', label: 'Your order' },
+  { value: 'rate', label: 'Completion' },
+  { value: 'name', label: 'Name' }
+] as const
+
 function statusLabel(status: 'active' | 'paused' | 'retired' | null): string | null {
-  return status === 'paused' ? 'Paused' : null
+  return status === 'paused' ? 'Paused' : status === 'retired' ? 'Archived' : null
 }
+
+/** Rows in the chosen order. Your order is the saved habit order, which the daily list shares. */
+export function sortHabitRows(rows: readonly HabitMonthRow[], sort: HabitTileSort): HabitMonthRow[] {
+  const sorted = [...rows]
+  if (sort === 'rate') {
+    sorted.sort((left, right) => right.completionRate - left.completionRate || left.habit.name.localeCompare(right.habit.name))
+  } else if (sort === 'name') {
+    sorted.sort((left, right) => left.habit.name.localeCompare(right.habit.name))
+  }
+  return sorted
+}
+
 
 export interface HabitPerformanceSlice {
   key: 'complete' | 'partial' | 'frozen' | 'missed' | 'untracked'
@@ -190,15 +215,22 @@ export function HabitHistory({
   state,
   month,
   onMonthChange,
-  onOpenHabit
+  onOpenHabit,
+  onReorder
 }: HabitHistoryProps): ReactNode {
   const [trendRange, setTrendRange] = useState<HabitTrendRange>(6)
   const [trendHabitId, setTrendHabitId] = useState<string | null>(null)
+  const [tileSort, setTileSort] = useDevicePreference<HabitTileSort>('habits.history.sort', TILE_SORTS, 'order')
+  const [showArchived, setShowArchived] = useDeviceFlag('habits.history.archived', false)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
+  const [armedId, setArmedId] = useState<string | null>(null)
   const summary = monthSummary(state, month)
   const trend = habitTrend(state, month, trendRange, trendHabitId)
   const nextMonth = historyMonthAfterNavigation(month, 1, state.today)
   const canMoveForward = nextMonth !== month
   const canMoveBack = month > earliestHistoryMonth(state)
+  const currentMonth = state.today.slice(0, 7)
   const trendCompleted = trend.reduce((total, item) => total + item.completedDays, 0)
   const trendTracked = trend.reduce((total, item) => total + item.trackedDays, 0)
   const averageCompletion = trendTracked === 0
@@ -207,42 +239,37 @@ export function HabitHistory({
   const selectedHabit = trendHabitId === null
     ? null
     : state.habits.find((habit) => habit.id === trendHabitId) ?? null
+  const archivedCount = summary.rows.filter((row) => row.status === 'retired').length
+  const visibleRows = showArchived ? summary.rows : summary.rows.filter((row) => row.status !== 'retired')
   const habitOptions = [
     { value: 'all', label: 'All habits' },
-    ...state.habits.map((habit) => ({ value: habit.id, label: habit.name }))
+    ...visibleRows.map((row) => ({ value: row.habit.id, label: row.habit.name }))
   ]
-  const rankedRows = [...summary.rows].sort(
-    (left, right) =>
-      right.completionRate - left.completionRate || left.habit.name.localeCompare(right.habit.name)
-  )
+  const rankedRows = sortHabitRows(visibleRows, tileSort)
+  const canDrag = tileSort === 'order' && onReorder !== undefined && rankedRows.length > 1
+  const endDrag = (): void => {
+    setArmedId(null)
+    setDragId(null)
+    setOverId(null)
+  }
+  const drop = (targetId: string): void => {
+    if (dragId === null || onReorder === undefined) return
+    const order = reorderedHabitIds(state.habits.map((habit) => habit.id), dragId, targetId)
+    if (order !== null) onReorder(order)
+  }
 
   return (
     <div className="habit-history">
       <section className="habit-history-topline">
         <h2>Progress over time</h2>
-        <div className="habit-history-monthnav" role="group" aria-label="History month">
-          <button
-            type="button"
-            className="habit-history-navbutton"
-            aria-label="Previous month"
-            disabled={!canMoveBack}
-            onClick={() => onMonthChange(monthShift(month, -1))}
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className="habit-history-monthlabel" aria-live="polite">
-            {summary.label}
-          </span>
-          <button
-            type="button"
-            className="habit-history-navbutton"
-            aria-label="Next month"
-            disabled={!canMoveForward}
-            onClick={() => onMonthChange(nextMonth)}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        <MonthNav
+          label="History month"
+          monthLabel={summary.label}
+          canMoveBack={canMoveBack}
+          canMoveForward={canMoveForward}
+          onShift={(direction) => onMonthChange(direction === 1 ? nextMonth : monthShift(month, -1))}
+          onCurrent={month === currentMonth ? null : () => onMonthChange(currentMonth)}
+        />
       </section>
 
       <section className="habit-history-summary" aria-label={`${summary.label} summary`}>
@@ -259,7 +286,7 @@ export function HabitHistory({
           <span className="habit-history-summarylabel">Freezes used</span>
         </div>
         <div>
-          <span className="habit-history-summaryvalue tnum">{summary.rows.length}</span>
+          <span className="habit-history-summaryvalue tnum">{visibleRows.length}</span>
           <span className="habit-history-summarylabel">Habits in view</span>
         </div>
       </section>
@@ -379,6 +406,7 @@ export function HabitHistory({
             <h3 id="habit-history-breakdown-title">Habit performance</h3>
             <p>Completed days among days tracked in {summary.label}.</p>
           </div>
+          <div className="habit-history-sectionside">
           {rankedRows.length > 0 ? <div className="habit-history-donutlegend" aria-label="Performance chart legend">
             <span>
               <span className="habit-history-legenddot is-complete" aria-hidden="true" />
@@ -397,14 +425,88 @@ export function HabitHistory({
               Missed
             </span>
           </div> : null}
+          <div className="habit-history-tilecontrols">
+            {archivedCount > 0 || showArchived ? (
+              <button
+                type="button"
+                className="habit-history-archivedtoggle"
+                aria-pressed={showArchived}
+                onClick={() => setShowArchived(!showArchived)}
+              >
+                Archived{archivedCount > 0 ? <span className="tnum">{archivedCount}</span> : null}
+              </button>
+            ) : null}
+            <Select
+              value={tileSort}
+              options={TILE_SORT_OPTIONS}
+              onChange={(value) => setTileSort(value as HabitTileSort)}
+              placeholder="Sort"
+              ariaLabel="Sort habits"
+            />
+          </div>
+          </div>
         </div>
 
-        {rankedRows.length === 0 ? <p className="habit-history-empty">No habits tracked this month.</p> : <ul className="habit-history-tiles">
+        {rankedRows.length === 0 ? <p className="habit-history-empty">{summary.rows.length > 0 ? 'Every habit this month is archived.' : 'No habits tracked this month.'}</p> : <ul className={`habit-history-tiles${dragId !== null ? ' is-dragging' : ''}`}>
           {rankedRows.map((row) => {
             const lifecycleLabel = statusLabel(row.status)
             const missedDays = markCount(row, 'missed')
+            const id = row.habit.id
             return (
-              <li key={row.habit.id}>
+              <li
+                key={id}
+                data-habit-id={id}
+                className={`${dragId === id ? 'is-dragged' : ''}${overId === id && dragId !== null && dragId !== id ? ' is-dropover' : ''}`}
+                draggable={canDrag && armedId === id}
+                onDragStart={(event) => {
+                  if (armedId !== id) {
+                    event.preventDefault()
+                    return
+                  }
+                  event.dataTransfer.effectAllowed = 'move'
+                  setDragId(id)
+                }}
+                onDragEnd={endDrag}
+                onDragOver={(event) => {
+                  if (dragId === null) return
+                  event.preventDefault()
+                  event.dataTransfer.dropEffect = 'move'
+                  if (overId !== id) setOverId(id)
+                }}
+                onDragLeave={() => { if (overId === id) setOverId(null) }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  drop(id)
+                  endDrag()
+                }}
+              >
+                {canDrag ? (
+                  <button
+                    type="button"
+                    className="habit-history-grip"
+                    aria-label={`Reorder ${row.habit.name}`}
+                    onPointerDown={() => setArmedId(id)}
+                    onPointerUp={() => setArmedId(null)}
+                    onKeyDown={(event) => {
+                      const step = event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : 0
+                      if (step === 0) return
+                      event.preventDefault()
+                      const index = rankedRows.findIndex((candidate) => candidate.habit.id === id)
+                      const neighbour = rankedRows[index + step]
+                      const list = event.currentTarget.closest('ul')
+                      if (neighbour !== undefined) {
+                        const order = reorderedHabitIds(state.habits.map((habit) => habit.id), id, neighbour.habit.id)
+                        if (order !== null) onReorder?.(order)
+                        // The grip keeps focus on its habit after the tiles re-render in the new order.
+                        window.requestAnimationFrame(() => {
+                          list?.querySelector<HTMLButtonElement>(`li[data-habit-id="${id}"] .habit-history-grip`)?.focus()
+                        })
+                      }
+                    }}
+                  >
+                    <GripVertical size={14} />
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="habit-history-tile"

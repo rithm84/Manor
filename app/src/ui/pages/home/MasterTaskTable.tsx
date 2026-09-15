@@ -290,7 +290,13 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
       <div className="master-toolbar">
         <div className="master-search" role="search">
           <Search size={14} aria-hidden="true" />
-          <input value={query} placeholder="Search tasks" aria-label="Search tasks" onChange={(event) => setQuery(event.target.value)} />
+          <input
+            value={query}
+            placeholder="Search tasks"
+            aria-label="Search tasks"
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => { if (event.key === 'Escape' && query !== '') { event.preventDefault(); setQuery('') } }}
+          />
           {query !== '' ? <button type="button" aria-label="Clear search" onClick={() => setQuery('')}><X size={13} /></button> : null}
         </div>
 

@@ -2,9 +2,6 @@
 .mf-header, .mf-section-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .mf-header { margin: var(--space-2) 0 var(--space-8); }
 .mf-header .page-title { margin: 0; }
-.mf-viewtabs { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--surface-soft); }
-.mf-viewtabs button { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 var(--space-3); border-radius: var(--radius-chip); color: var(--ink-muted); font-size: var(--text-sm); font-weight: 500; }
-.mf-viewtabs button.is-selected { background: var(--surface-card); box-shadow: var(--shadow-hover); color: var(--ink); }
 .mf-loading, .mf-error { padding: var(--space-4); border: 1px solid var(--hairline); border-radius: var(--radius-control); color: var(--ink-muted); }
 .mf-error { margin-bottom: var(--space-4); border-color: var(--overdue-error); background: var(--overdue-error-tint); color: var(--overdue-error); }
 .mf-capture { max-width: 960px; margin: 0 auto; }
@@ -12,8 +9,8 @@
 .mf-capture-daytitle { flex: 1; order: -1; }
 .mf-capture-daytitle h2 { font-size: var(--display-md); font-weight: 500; }
 .mf-capture-daytitle span { color: var(--ink-muted); font-size: var(--text-sm); }
-.mf-capture-nav, .mf-month-nav button { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--surface-card); color: var(--ink-body); }
-.mf-capture-nav:disabled, .mf-month-nav button:disabled { color: var(--ink-muted); background: var(--surface-soft); cursor: default; }
+.mf-capture-nav { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--surface-card); color: var(--ink-body); }
+.mf-capture-nav:disabled { color: var(--ink-muted); background: var(--surface-soft); cursor: default; }
 .mf-capture-body { padding: var(--space-8) 0 var(--space-2); }
 .mf-picker { border: 0; padding: 0 0 var(--space-8); min-width: 0; }
 .mf-prompt { color: var(--ink); font-family: var(--font-display); font-size: var(--text-emphasis); font-weight: 500; margin-bottom: var(--space-3); }
@@ -35,10 +32,6 @@
 .mf-history-topline p, .mf-history-sectionhead p { margin-top: 3px; color: var(--ink-muted); font-size: var(--text-sm); }
 .mf-history-sectionhead h3 { color: var(--ink); font-size: var(--text-md); font-weight: 500; }
 .mf-history-actions { display: flex; align-items: center; gap: var(--space-3); }
-.mf-month-nav { display: grid; grid-template-columns: 30px minmax(124px, auto) 30px; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--surface-card); }
-.mf-month-nav button { width: 30px; height: 28px; border: 0; border-radius: calc(var(--radius-control) - 2px); background: transparent; }
-.mf-month-nav button:disabled { background: transparent; color: var(--surface-strong); }
-.mf-month-nav > span { text-align: center; color: var(--ink-body); font-size: var(--text-sm); font-weight: 500; }
 .mf-history-summary { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr 1fr; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
 .mf-history-summary > div { display: flex; flex-direction: column; gap: 3px; padding: var(--space-4) var(--space-5); border-right: 1px solid var(--hairline); }
 .mf-history-summary > div:first-child { padding-left: 0; }
@@ -121,7 +114,7 @@
 .mf-history-discard p { margin: var(--space-2) 0 var(--space-5); color: var(--ink-body); }
 .mf-history-discard footer { display: flex; justify-content: flex-end; gap: var(--space-2); }
 @media (hover: hover) and (pointer: fine) {
-  .mf-viewtabs button:hover, .mf-capture-nav:hover:not(:disabled), .mf-month-nav button:hover:not(:disabled){ background: var(--surface-soft); color: var(--ink); }
+  .mf-capture-nav:hover:not(:disabled) { background: var(--surface-soft); color: var(--ink); }
   .mf-option:hover { background: var(--option-tint); border-color: var(--option-tone); }
   .mf-month-day:not(:disabled):hover { border-color: var(--mood-tone, var(--hairline-strong)); }
   .mf-month-day.is-empty:not(:disabled):hover { background: var(--surface-soft); }

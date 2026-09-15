@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { KbEntry } from '../../shared/kb'
 import type { XConnectionStatus } from '../../shared/xConnection'
-import { Button, Input, Modal } from '../components/ui'
+import { Button, Input, Modal, Tooltip } from '../components/ui'
 import { CaptureRow } from './bookmarks/CaptureRow'
 import { matchesCaptureQuery } from './bookmarks/captures'
 import { useCaptures } from './bookmarks/useCaptures'
@@ -76,7 +76,7 @@ export function BookmarksPage(): ReactNode {
       {captures.state.kind === 'ready' ? <span className="bm-meta tnum">{entries.length} saved</span> : null}
     </div></header>
     <div className="bm-toolbar">
-      <div className="bm-search"><Input value={query} onChange={setQuery} placeholder="Search saved posts and captures" icon={<Search size={15} />} ariaLabel="Search bookmarks" /></div>
+      <div className="bm-search"><Input value={query} onChange={setQuery} placeholder="Search saved posts and captures" icon={<Search size={15} />} ariaLabel="Search bookmarks" clearOnEscape /></div>
       {trimmed !== '' && captures.state.kind === 'ready' ? <span className="bm-count">{visible.length} {visible.length === 1 ? 'match' : 'matches'}</span> : null}
     </div>
     {captures.state.kind === 'loading' ? <div className="bm-cap-quiet" role="status">Loading bookmarks…</div> : null}
@@ -87,7 +87,7 @@ export function BookmarksPage(): ReactNode {
         {screens.length > 0 ? <div className="bm-list">{screens.map(row)}</div> : <div className="bm-cap-quiet">{trimmed === '' ? 'Nothing captured yet.' : 'No captures match your search.'}</div>}
       </section>
       <section className="bm-section"><div className="bm-section-head"><h2 className="microlabel bm-section-label">From X</h2>
-        {xStatus?.connected ? <button type="button" className={`bm-sync${syncBusy ? ' is-busy' : ''}`} onClick={() => { void syncNow() }} disabled={syncBusy} aria-label="Sync X bookmarks"><RefreshCw size={13} /></button> : null}
+        {xStatus?.connected ? <Tooltip label="Sync X bookmarks" side="bottom"><button type="button" className={`bm-sync${syncBusy ? ' is-busy' : ''}`} onClick={() => { void syncNow() }} disabled={syncBusy} aria-label="Sync X bookmarks"><RefreshCw size={13} /></button></Tooltip> : null}
         {syncNote !== null ? <span role={syncNote.failed ? 'alert' : 'status'} className={`bm-sync-note${syncNote.failed ? ' is-failed' : ''}`}>{syncNote.text}</span> : null}
       </div>
         {xStatusError !== null ? <div className="bm-cap-fault" role="alert"><span>X connection status could not load. {xStatusError}</span><Button variant="ghost" onClick={() => setStatusAttempt((attempt) => attempt + 1)}>Try again</Button></div> : null}
