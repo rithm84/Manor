@@ -51,6 +51,40 @@ describe('HistoryPanel', () => {
     expect(markup.match(/Edit entry\./g)).toHaveLength(2)
   })
 
+  it('summarizes the month in scale words and lays out every day of the month', () => {
+    const markup = renderToStaticMarkup(
+      <HistoryPanel
+        state={STATE}
+        month="2026-08"
+        onMonthChange={() => undefined}
+        onSaveRatings={async () => undefined}
+      />
+    )
+
+    expect(markup).toContain('Good</span><span class="mf-history-summarylabel">Average mood<span class="tnum">3.5</span>')
+    expect(markup).toContain('High</span><span class="mf-history-summarylabel">Average focus<span class="tnum">3.5</span>')
+    expect(markup.match(/data-testid="history-day-2026-08-\d\d"/g)).toHaveLength(31)
+    expect(markup).toMatch(/<button[^>]*disabled=""[^>]*data-testid="history-day-2026-08-21"/)
+    expect(markup).not.toMatch(/<button[^>]*disabled=""[^>]*data-testid="history-day-2026-08-20"/)
+    expect(markup).toContain('Thursday, August 20, 2026. Mood Great. Focus Locked In.')
+    expect(markup).toContain('Wednesday, August 19, 2026. No check-in.')
+  })
+
+  it('opens an empty past day from the month grid as a new record', async () => {
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    const saved: unknown[] = []
+    await act(async () => root.render(<HistoryPanel state={STATE} month="2026-08" onMonthChange={() => undefined} onSaveRatings={async (mutation) => { saved.push(mutation) }} />))
+    await act(async () => document.querySelector<HTMLButtonElement>('[data-testid="history-day-2026-08-19"]')?.click())
+    expect(document.querySelector('[data-testid="history-save-ratings"]')?.textContent).toBe('Add record')
+    await act(async () => document.querySelector<HTMLButtonElement>('[data-testid="history-focus-resting"]')?.click())
+    await act(async () => document.querySelector<HTMLButtonElement>('[data-testid="history-save-ratings"]')?.click())
+    expect(saved).toEqual([{ date: '2026-08-19', mood: null, focus: 'Resting', expectedUpdatedAt: null }])
+    await act(async () => root.unmount())
+    host.remove()
+  })
+
   it('keeps the open draft and original baseline when refreshed data changes', async () => {
     const host = document.createElement('div')
     document.body.append(host)

@@ -13,6 +13,7 @@ export const routeLoaders: Readonly<Record<string, () => Promise<PageModule>>> =
   '/home': singleFlight(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage }))),
   '/habits': singleFlight(() => import('./pages/HabitsPage').then((module) => ({ default: module.HabitsPage }))),
   '/mood-focus': singleFlight(() => import('./pages/MoodFocusPage').then((module) => ({ default: module.MoodFocusPage }))),
+  '/pomodoro': singleFlight(() => import('./pages/PomodoroPage').then((module) => ({ default: module.PomodoroPage }))),
   '/leetcode': singleFlight(() => import('./pages/LeetCodePage').then((module) => ({ default: module.LeetCodePage }))),
   '/jobs': singleFlight(() => import('./pages/JobsPage').then((module) => ({ default: module.JobsPage }))),
   '/notes': singleFlight(() => {

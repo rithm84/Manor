@@ -4,7 +4,7 @@ import type { ManorTable } from './ManorGateway'
 export const tableOrder: Record<ManorTable, readonly string[]> = {
  profiles:['user_id'],tasks:['id'],contexts:['name'],scratch_blocks:['id'],saved_task_views:['id'],
  habits:['id'],habit_lifecycle:['habit_id','date'],habit_entries:['habit_id','date'],habit_freeze_intents:['habit_id','date'],habit_freeze_usage:['habit_id','date'],habit_freeze_grants:['date'],habit_month_pools:['month'],
- mood_focus_entries:['date'],note_folders:['id'],note_pages:['id'],note_attachments:['id'],note_versions:['note_id','revision'],note_suggestions:['id'],
+ mood_focus_entries:['date'],pomodoro_sessions:['id'],note_folders:['id'],note_pages:['id'],note_attachments:['id'],note_versions:['note_id','revision'],note_suggestions:['id'],
  job_roles:['id'],job_stage_transitions:['id'],job_listings:['id'],leetcode_problems:['id'],leetcode_attempts:['id'],leetcode_notes:['id'],
  kb_entries:['id'],resumes:['id'],weekly_reviews:['id'],action_events:['id'],calendar_accounts:['id'],calendars:['account_id','id'],calendar_events:['account_id','calendar_id','id']
 }
@@ -28,6 +28,8 @@ const groups: readonly {operations:readonly string[];tables:readonly ManorTable[
  {operations:['create_application','update_application','change_application_stage','trash_application','restore_application','add_job_listing'],tables:['job_roles','job_stage_transitions']},
  {operations:['create_habit','update_habit','set_habit_status','log_habit','clear_habit_entry','apply_habit_freeze','clear_habit_freeze','reorder_habits'],tables:['habits','habit_lifecycle','habit_entries','habit_freeze_intents','habit_freeze_usage','habit_freeze_grants','habit_month_pools']},
  {operations:['commit_debrief','correct_mood_focus_history'],tables:['mood_focus_entries']},
+ {operations:['start_pomodoro_session','pause_pomodoro_session','resume_pomodoro_session','end_pomodoro_session','update_pomodoro_session','delete_pomodoro_session','log_pomodoro_session'],tables:['pomodoro_sessions']},
+ {operations:['save_pomodoro_settings'],tables:['profiles']},
  {operations:['create_attempt','update_attempt','delete_attempt'],tables:['leetcode_attempts','leetcode_problems']},
  {operations:['save_mistake','delete_mistake'],tables:['leetcode_notes']},
  {operations:['save_capture','remove_capture','queue_embedding'],tables:['kb_entries']},

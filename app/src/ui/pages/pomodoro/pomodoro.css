@@ -1,0 +1,699 @@
+.pomo {
+  --pomo-tone: var(--primary);
+  --pomo-tone-tint: var(--primary-tint);
+  --pomo-bar: color-mix(in srgb, var(--primary) 62%, var(--surface-canvas));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-bottom: var(--space-10);
+}
+
+[data-theme='dark'] .pomo {
+  --pomo-bar: color-mix(in srgb, var(--primary) 58%, var(--surface-canvas));
+}
+
+.pomo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: var(--space-2) 0 0;
+}
+
+.pomo-header .page-title {
+  margin: 0;
+}
+
+.pomo-loading,
+.pomo-error {
+  padding: var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
+}
+
+.pomo-error {
+  border-color: var(--overdue-error);
+  background: var(--overdue-error-tint);
+  color: var(--overdue-error);
+}
+
+.pomo-iconbutton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-chip);
+  color: var(--ink-muted);
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+.pomo-iconbutton.is-header {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-body);
+}
+
+.pomo-iconbutton:active {
+  transform: scale(0.96);
+}
+
+/* Stage */
+
+.pomo-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-6) 0 var(--space-4);
+}
+
+.pomo-stage.is-break {
+  --pomo-tone: var(--secondary);
+  --pomo-tone-tint: var(--secondary-tint);
+}
+
+.pomo-ring-wrap {
+  position: relative;
+  width: 256px;
+  height: 256px;
+}
+
+.pomo-ring {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pomo-ring-track {
+  stroke: var(--surface-soft);
+}
+
+.pomo-ring-arc {
+  stroke: var(--pomo-tone);
+  transition: stroke-dashoffset 1s linear, stroke var(--duration-base) ease;
+}
+
+.pomo-stage.is-paused .pomo-ring-arc {
+  stroke: color-mix(in srgb, var(--pomo-tone) 55%, var(--surface-canvas));
+  transition: stroke-dashoffset var(--duration-base) var(--ease-out), stroke var(--duration-base) ease;
+}
+
+.pomo-stage.is-idle .pomo-ring-arc {
+  transition: stroke-dashoffset var(--duration-panel) var(--ease-out), stroke var(--duration-base) ease;
+}
+
+/* Once per finished session: a second ring swells out of the first and fades. Opacity and transform only. */
+.pomo-bloom {
+  position: absolute;
+  inset: 0;
+  border: 8px solid var(--pomo-tone);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  animation: pomo-bloom 640ms var(--ease-out) 1;
+}
+
+@keyframes pomo-bloom {
+  0% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.16); }
+}
+
+.pomo-ring-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.pomo-ring-kind {
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.pomo-stage.is-ended .pomo-ring-kind {
+  color: var(--pomo-tone);
+}
+
+.pomo-ring-time {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.pomo-stage.is-paused .pomo-ring-time {
+  color: var(--ink-muted);
+}
+
+.pomo-stage.is-ended .pomo-ring-time {
+  color: var(--pomo-tone);
+}
+
+.pomo-ring-cycle {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.pomo-cycle-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--surface-strong);
+  transition: background-color var(--duration-base) ease;
+}
+
+.pomo-cycle-dot.is-done {
+  background: var(--pomo-tone);
+}
+
+.pomo-label-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+}
+
+.pomo-label-input,
+.pomo-label-text {
+  width: min(420px, 100%);
+  min-height: 36px;
+  padding: 6px var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--ink);
+  font: 500 var(--text-md) var(--font-ui);
+  text-align: center;
+}
+
+.pomo-label-input {
+  border-color: var(--hairline);
+  background: var(--surface-card);
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+
+.pomo-label-input::placeholder {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.pomo-label-input:focus-visible {
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.pomo-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background-color var(--duration-fast) ease;
+}
+
+.pomo-label-text.is-empty {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.pomo-controls {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.pomo-controls .ui-button--primary {
+  min-width: 148px;
+}
+
+/* Month */
+
+.pomo-month,
+.pomo-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pomo-topline,
+.pomo-sectionhead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.pomo-topline h2 {
+  font-size: 20px;
+}
+
+.pomo-sectionhead h3 {
+  color: var(--ink);
+  font-size: var(--text-md);
+}
+
+.pomo-topline p,
+.pomo-sectionhead p {
+  margin-top: 3px;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.pomo-monthnav {
+  display: grid;
+  grid-template-columns: 30px minmax(124px, auto) 30px;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+}
+
+.pomo-monthnav > span {
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: center;
+}
+
+.pomo-monthnav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  border-radius: calc(var(--radius-control) - 2px);
+  color: var(--ink-body);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.pomo-monthnav button:disabled {
+  color: var(--ink-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.pomo-summary {
+  display: grid;
+  grid-template-columns: 1.35fr repeat(4, 1fr);
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.pomo-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--space-4) var(--space-5);
+  border-right: 1px solid var(--hairline);
+}
+
+.pomo-summary > div:first-child {
+  padding-left: 0;
+}
+
+.pomo-summary > div:last-child {
+  border-right: none;
+}
+
+.pomo-summary-value {
+  display: inline-block;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--display-md);
+  font-weight: 600;
+  transform-origin: left center;
+}
+
+.pomo-summary-primary .pomo-summary-value {
+  color: var(--primary);
+}
+
+/* The count grows for a beat when a session lands, then settles. */
+.pomo-summary-value.is-popping {
+  animation: pomo-pop 420ms var(--ease-out) 1;
+}
+
+@keyframes pomo-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+.pomo-summary-of {
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.pomo-summary-label {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.pomo-chart {
+  width: 100%;
+  height: 196px;
+  padding-top: var(--space-2);
+}
+
+.pomo-chart .recharts-surface:focus-visible {
+  outline: 2px solid var(--focus-border);
+  outline-offset: 2px;
+}
+
+.pomo-chart-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--ink-body);
+  font-size: var(--text-xs);
+}
+
+.pomo-chart-tip strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Log */
+
+.pomo-day + .pomo-day {
+  margin-top: var(--space-4);
+}
+
+.pomo-day-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 var(--space-2) var(--space-2);
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.pomo-day-heading > span:last-child {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.pomo-rows {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--hairline);
+  list-style: none;
+}
+
+.pomo-row {
+  display: grid;
+  grid-template-columns: 68px 8px minmax(0, 1fr) auto 60px;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-body);
+  font-size: var(--text-sm);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.pomo-row-time {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.pomo-row-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.pomo-row.is-abandoned .pomo-row-mark {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--control-border);
+}
+
+.pomo-row-label {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pomo-row-label.is-empty,
+.pomo-row.is-abandoned .pomo-row-label {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.pomo-row-input {
+  min-width: 0;
+  height: 30px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--focus-border);
+  border-radius: var(--radius-chip);
+  background: var(--surface-card);
+  color: var(--ink);
+  font: 500 var(--text-sm) var(--font-ui);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.pomo-row-duration {
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: right;
+}
+
+.pomo-row.is-abandoned .pomo-row-duration {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.pomo-row-of {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.pomo-row-actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.pomo-row:focus-within .pomo-row-actions {
+  opacity: 1;
+}
+
+.pomo-iconbutton.is-danger:hover {
+  color: var(--overdue-error);
+}
+
+.pomo-log-more {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-2);
+}
+
+/* Preferences */
+
+.pomo-prefs {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--space-5) var(--space-5);
+}
+
+.pomo-pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-4) 0;
+}
+
+.pomo-pref-row + .pomo-pref-row {
+  border-top: 1px solid var(--hairline);
+}
+
+.pomo-pref-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pomo-pref-label {
+  color: var(--ink);
+  font-size: var(--text-body);
+  font-weight: 500;
+}
+
+.pomo-pref-desc {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.pomo-pref-control {
+  flex: 0 0 auto;
+}
+
+.pomo-stepper {
+  display: inline-grid;
+  grid-template-columns: 28px minmax(96px, auto) 28px;
+  align-items: center;
+  padding: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+}
+
+.pomo-stepper > span {
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: center;
+}
+
+.pomo-stepper-unit {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.pomo-stepper button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  border-radius: calc(var(--radius-control) - 2px);
+  color: var(--ink-body);
+  transition: background-color var(--duration-fast) ease;
+}
+
+.pomo-stepper button:disabled {
+  color: var(--ink-muted);
+  cursor: default;
+  opacity: 0.5;
+}
+
+.pomo-stepper button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.pomo-toggle {
+  position: relative;
+  width: 36px;
+  height: 21px;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  transition: background-color var(--duration-base) ease;
+}
+
+.pomo-toggle.is-on {
+  background: var(--primary);
+}
+
+.pomo-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: var(--shadow-hover);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.pomo-toggle.is-on .pomo-toggle-knob {
+  transform: translateX(15px);
+}
+
+.pomo-pref-note {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.pomo-pref-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pomo-iconbutton:hover:not(:disabled),
+  .pomo-monthnav button:hover:not(:disabled),
+  .pomo-stepper button:hover:not(:disabled),
+  .pomo-label-text:hover {
+    background: var(--surface-soft);
+    color: var(--ink);
+  }
+
+  .pomo-row:hover {
+    background: var(--surface-soft);
+  }
+
+  .pomo-row:hover .pomo-row-actions {
+    opacity: 1;
+  }
+}
+
+@media (pointer: coarse) {
+  .pomo-row-actions {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1080px) {
+  .pomo-summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pomo-summary > div:nth-child(3n) {
+    border-right: none;
+  }
+
+  .pomo-summary > div:nth-child(n + 4) {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .pomo-summary > div:nth-child(4) {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .pomo-topline,
+  .pomo-sectionhead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pomo-row {
+    grid-template-columns: 56px 8px minmax(0, 1fr) auto 60px;
+  }
+}

@@ -11,7 +11,7 @@ import type { JsonObject, JsonValue, ManorTable, RowFilter } from '../ManorGatew
  */
 export const MIRROR_TABLES = [
   'profiles', 'contexts', 'tasks', 'scratch_blocks', 'saved_task_views',
-  'habits', 'habit_entries', 'mood_focus_entries',
+  'habits', 'habit_entries', 'mood_focus_entries', 'pomodoro_sessions',
   'note_folders', 'note_pages', 'note_suggestions',
   'leetcode_attempts', 'leetcode_notes', 'leetcode_problems',
   'job_roles', 'job_stage_transitions', 'job_listings',
@@ -26,7 +26,7 @@ export type MirrorTable = (typeof MIRROR_TABLES)[number]
  */
 const KEY_COLUMNS: Record<MirrorTable, readonly string[]> = {
   profiles: ['user_id'], contexts: ['id'], tasks: ['id'], scratch_blocks: ['id'], saved_task_views: ['id'],
-  habits: ['id'], habit_entries: ['habit_id', 'date'], mood_focus_entries: ['date'],
+  habits: ['id'], habit_entries: ['habit_id', 'date'], mood_focus_entries: ['date'], pomodoro_sessions: ['id'],
   note_folders: ['id'], note_pages: ['id'], note_suggestions: ['id'],
   leetcode_attempts: ['id'], leetcode_notes: ['id'], leetcode_problems: ['id'],
   job_roles: ['id'], job_stage_transitions: ['id'], job_listings: ['id'],

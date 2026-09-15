@@ -18,6 +18,7 @@ const HomePage = lazy(routeLoaders['/home'])
 const JobsPage = lazy(routeLoaders['/jobs'])
 const LeetCodePage = lazy(routeLoaders['/leetcode'])
 const MoodFocusPage = lazy(routeLoaders['/mood-focus'])
+const PomodoroPage = lazy(routeLoaders['/pomodoro'])
 const NotesPage = lazy(routeLoaders['/notes'])
 import { SecondaryModuleSurface } from './pages/SecondaryModuleSurface'
 const WeeklyReviewsPage = lazy(routeLoaders['/weekly-reviews'])
@@ -47,6 +48,14 @@ export function App({ services, shell, routeRequest, onRouteApplied }: { service
             element={
               <SecondaryModuleSurface width="wide">
                 <MoodFocusPage />
+              </SecondaryModuleSurface>
+            }
+          />
+          <Route
+            path="/pomodoro"
+            element={
+              <SecondaryModuleSurface width="wide">
+                <PomodoroPage />
               </SecondaryModuleSurface>
             }
           />

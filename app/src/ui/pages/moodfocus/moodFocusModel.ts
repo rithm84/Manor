@@ -131,8 +131,14 @@ export function monthSummary(
   }
 }
 
-export function sixMonthTrend(state: MoodFocusState, endMonth: string): readonly MoodFocusTrendPoint[] {
-  return Array.from({ length: 6 }, (_, index) => monthShift(endMonth, index - 5)).map((month) => {
+export type MoodFocusTrendRange = 3 | 6 | 12
+
+export function monthTrend(
+  state: MoodFocusState,
+  endMonth: string,
+  range: MoodFocusTrendRange
+): readonly MoodFocusTrendPoint[] {
+  return Array.from({ length: range }, (_, index) => monthShift(endMonth, index - (range - 1))).map((month) => {
     const summary = monthSummary(state.entries, month)
     return {
       month,
@@ -141,6 +147,91 @@ export function sixMonthTrend(state: MoodFocusState, endMonth: string): readonly
       focus: summary.focusAverage,
       loggedDays: summary.loggedDays
     }
+  })
+}
+
+export function sixMonthTrend(state: MoodFocusState, endMonth: string): readonly MoodFocusTrendPoint[] {
+  return monthTrend(state, endMonth, 6)
+}
+
+const MOOD_ORDER: readonly Mood[] = ['Awful', 'Bad', 'Neutral', 'Good', 'Great']
+const FOCUS_ORDER: readonly Focus[] = ['Locked Out', 'Low', 'Medium', 'High', 'Locked In']
+
+/** The scale word closest to an average, so a 4.3 mood month reads as "Good". */
+export function moodAverageLabel(value: number | null): string | null {
+  if (value === null) {
+    return null
+  }
+  return MOOD_ORDER[Math.max(1, Math.min(5, Math.round(value))) - 1] ?? null
+}
+
+export function focusAverageLabel(value: number | null): string | null {
+  if (value === null) {
+    return null
+  }
+  return FOCUS_ORDER[Math.max(1, Math.min(5, Math.round(value))) - 1] ?? null
+}
+
+export interface MoodFocusDayCell {
+  date: string
+  day: number
+  entry: MoodFocusEntry | null
+  future: boolean
+  today: boolean
+}
+
+export interface MoodFocusMonthGrid {
+  /** Empty cells before the first day so the grid starts on Monday. */
+  leadBlanks: number
+  cells: readonly MoodFocusDayCell[]
+}
+
+export function daysInMonth(month: string): number {
+  const next = monthShift(month, 1)
+  return Math.round(
+    (new Date(`${next}-01T12:00:00.000Z`).getTime() - new Date(`${month}-01T12:00:00.000Z`).getTime()) / 86400000
+  )
+}
+
+export function monthGrid(entries: readonly MoodFocusEntry[], month: string, today: string): MoodFocusMonthGrid {
+  const weekday = new Date(`${month}-01T12:00:00.000Z`).getUTCDay()
+  const byDate = new Map(entriesForMonth(entries, month).map((entry) => [entry.date, entry]))
+  return {
+    leadBlanks: weekday === 0 ? 6 : weekday - 1,
+    cells: Array.from({ length: daysInMonth(month) }, (_, index) => {
+      const date = `${month}-${String(index + 1).padStart(2, '0')}`
+      return {
+        date,
+        day: index + 1,
+        entry: byDate.get(date) ?? null,
+        future: date > today,
+        today: date === today
+      }
+    })
+  }
+}
+
+export interface MoodFocusDistributionRow<Level extends string> {
+  level: Level
+  count: number
+  /** Share of rated days on this level, from 0 to 1. */
+  share: number
+}
+
+export function moodDistribution(entries: readonly MoodFocusEntry[]): readonly MoodFocusDistributionRow<Mood>[] {
+  const rated = entries.filter((entry) => entry.mood !== null)
+  return [...MOOD_ORDER].reverse().map((level) => {
+    const count = rated.filter((entry) => entry.mood === level).length
+    return { level, count, share: rated.length === 0 ? 0 : count / rated.length }
+  })
+}
+
+export function focusDistribution(entries: readonly MoodFocusEntry[]): readonly MoodFocusDistributionRow<Focus>[] {
+  const rated = entries.filter((entry) => entry.focus !== null)
+  const levels: readonly Focus[] = [...[...FOCUS_ORDER].reverse(), 'Resting']
+  return levels.map((level) => {
+    const count = rated.filter((entry) => entry.focus === level).length
+    return { level, count, share: rated.length === 0 ? 0 : count / rated.length }
   })
 }
 

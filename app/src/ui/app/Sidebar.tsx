@@ -8,7 +8,8 @@ import {
   Flame,
   House,
   Settings,
-  Smile
+  Smile,
+  Timer
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
@@ -16,6 +17,8 @@ import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
 import { ManorLogo } from '../components/brand/ManorLogo'
 import { useDismissLayer } from '../components/ui'
+import { formatClock } from '../../shared/pomodoro'
+import { usePomodoroRuntime } from '../pomodoro/PomodoroRuntime'
 import { useManorAccount } from '../../web/accountContext'
 import { useAvatar, useCurrentAccount } from '../pages/welcome/accountSession'
 
@@ -29,6 +32,7 @@ const NAV_ITEMS: readonly NavEntry[] = [
   { to: '/home', label: 'Home', icon: <House size={16} /> },
   { to: '/habits', label: 'Habits', icon: <Flame size={16} /> },
   { to: '/mood-focus', label: 'Mood & Focus', icon: <Smile size={16} /> },
+  { to: '/pomodoro', label: 'Pomodoro', icon: <Timer size={16} /> },
   { to: '/leetcode', label: 'LeetCode', icon: <Code2 size={16} /> },
   { to: '/jobs', label: 'Jobs', icon: <Briefcase size={16} /> },
   { to: '/notes', label: 'Notes', icon: <FileText size={16} /> },
@@ -49,7 +53,7 @@ export interface SidebarProps {
   mode: 'docked' | 'floating'
 }
 
-function NavItemLink({ entry }: { entry: NavEntry }): ReactNode {
+function NavItemLink({ entry, trailing }: { entry: NavEntry; trailing?: ReactNode }): ReactNode {
   return (
     <NavLink
       to={entry.to}
@@ -58,7 +62,20 @@ function NavItemLink({ entry }: { entry: NavEntry }): ReactNode {
     >
       {entry.icon}
       {entry.label}
+      {trailing}
     </NavLink>
+  )
+}
+
+/** The running timer beside the Pomodoro item, so the countdown is in view from any page. */
+function PomodoroBadge(): ReactNode {
+  const { active, clock } = usePomodoroRuntime()
+  if (active === null || clock === null) return null
+  const paused = active.status === 'paused'
+  return (
+    <span className={`sidebar-badge tnum${paused ? ' is-paused' : ''}`} aria-label={`${formatClock(clock.remainingSeconds)} ${paused ? 'paused' : 'remaining'}`} data-testid="pomodoro-badge">
+      {formatClock(clock.remainingSeconds)}
+    </span>
   )
 }
 
@@ -151,7 +168,7 @@ export function Sidebar({ mode }: SidebarProps): ReactNode {
       </div>
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((entry) => (
-          <NavItemLink key={entry.to} entry={entry} />
+          <NavItemLink key={entry.to} entry={entry} trailing={entry.to === '/pomodoro' ? <PomodoroBadge /> : undefined} />
         ))}
       </nav>
       <div className="sidebar-foot" ref={footRef}>
