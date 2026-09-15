@@ -159,63 +159,66 @@
   outline-offset: 2px;
 }
 
-.habit-history-ranking {
+.habit-history-empty { color: var(--ink-muted); font-size: var(--text-sm); }
+
+/* Habits are a bounded set, so the month reads as a grid of rings separated
+   by hairlines rather than a ranked table. Each cell draws its own left and
+   bottom hairline; the grid clips the first column's left line away. */
+.habit-history-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   margin: 0;
   padding: 0;
   border-top: 1px solid var(--hairline);
   list-style: none;
+  overflow: hidden;
 }
 
-.habit-history-empty { color: var(--ink-muted); font-size: var(--text-sm); }
-
-.habit-history-rankrow {
-  display: grid;
-  grid-template-columns: 24px minmax(180px, 1fr) 44px 40px 18px;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  min-height: 62px;
-  padding: var(--space-2);
+.habit-history-tiles > li {
+  display: flex;
+  min-width: 0;
   border-bottom: 1px solid var(--hairline);
+  box-shadow: -1px 0 0 0 var(--hairline);
+}
+
+.habit-history-tile {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-5) var(--space-4) var(--space-4);
   color: var(--ink-body);
-  text-align: left;
+  text-align: center;
   transition: background-color var(--duration-fast) ease;
 }
 
-.habit-history-rank {
-  color: var(--ink-muted);
-  font-size: var(--text-xs);
-  text-align: center;
-}
-
-.habit-history-rankidentity,
-.habit-history-ranktitle,
-.habit-history-rankmeta {
+.habit-history-tiletitle,
+.habit-history-tilemeta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 100%;
   min-width: 0;
 }
 
-.habit-history-rankidentity {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.habit-history-ranktitle,
-.habit-history-rankmeta {
-  display: flex;
-  align-items: center;
-}
-
-.habit-history-ranktitle {
+.habit-history-tiletitle {
   gap: var(--space-2);
+  margin-top: var(--space-2);
   font-size: var(--text-sm);
   font-weight: 500;
 }
 
-.habit-history-ranktitle > span:first-child {
+.habit-history-tiletitle > span:first-child {
+  display: -webkit-box;
+  max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 
 .habit-history-lifecycle {
@@ -228,13 +231,13 @@
   font-weight: 400;
 }
 
-.habit-history-rankmeta {
-  gap: var(--space-2);
+.habit-history-tilemeta {
+  gap: 4px var(--space-2);
   color: var(--ink-muted);
   font-size: var(--text-xs);
 }
 
-.habit-history-rankmeta > span + span::before {
+.habit-history-tilemeta > span + span::before {
   margin-right: var(--space-2);
   color: var(--surface-strong);
   content: '·';
@@ -285,34 +288,33 @@
   background: var(--overdue-error);
 }
 
-.habit-history-rankdonut {
+.habit-history-donut {
   position: relative;
-  display: block;
-  width: 40px;
-  height: 40px;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
 }
 
-.habit-history-seamless-ring {
+.habit-history-ring {
+  grid-area: 1 / 1;
   display: block;
   width: 100%;
   height: 100%;
 }
 
-/* The rate prints beside the donut: a centered label can never fit "100%"
-   inside a row-scale ring at the 12px type floor. */
-.habit-history-rankrate {
-  color: var(--ink-body);
-  font-size: var(--text-xs);
+.habit-history-donutrate {
+  grid-area: 1 / 1;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 22px;
   font-weight: 600;
-  text-align: right;
-}
-
-.habit-history-rankchevron {
-  color: var(--ink-muted);
+  letter-spacing: -0.01em;
+  line-height: 1;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .habit-history-rankrow:hover {
+  .habit-history-tile:hover {
     background: var(--surface-soft);
   }
 }
@@ -329,7 +331,7 @@
     flex-wrap: wrap;
   }
 
-  .habit-history-rankrow {
-    grid-template-columns: 20px minmax(160px, 1fr) 40px 40px 16px;
+  .habit-history-tiles {
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   }
 }

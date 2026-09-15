@@ -37,7 +37,7 @@ Manor replaces a sprawling Notion setup with one place that is cheap to keep cur
 ## Key features
 
 - **Home.** A due-bucket task board (Overdue, Today, Tomorrow, This Week) beside a single-column timeline of your Google Calendar events and disposable time blocks. Recurring tasks track each occurrence independently.
-- **Habits.** Daily check-offs with per-habit streaks, a shared monthly freeze pool spent by hand, Earn-Back recovery, and month grids with 3, 6, and 12-month completion trends.
+- **Habits.** Daily check-offs with per-habit streaks, a shared monthly freeze pool spent by hand, Earn-Back recovery, 3, 6, and 12-month completion trends, and a monthly ring per habit.
 - **Mood and focus.** One-tap ratings for today or yesterday, history corrections for any past day, and a single evolving synthesis per day written from your debriefs. History shows monthly averages in scale words, a 3, 6, or 12-month trend, a month calendar that names each day's mood and focus and opens that day for editing, and per-level distributions.
 - **Pomodoro.** A focus timer with short and long breaks, a live countdown in the sidebar, editable session lengths and cycle, optional auto-start, a completion chime, and month statistics with a session log kept behind a toggle below the timer.
 - **LeetCode.** The NeetCode 150 curriculum with attempt history, saved solution source, daily intensity, a separate streak, and a mistakes log.

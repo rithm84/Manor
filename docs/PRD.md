@@ -108,7 +108,7 @@ The mechanics derive from Duolingo's, adapted. The following diagram shows how o
 
 ### Habits
 
-Habits is the daily check-off and streak home; check-off lives here, not on Home. History combines per-habit month grids with 3, 6, and 12-month completion trends across all habits or one selected habit. Completion rates use eligible tracked days: periods before creation, paused or retired periods, and future dates don't count as missed days. The page keeps week strips, best and current streaks, and the freeze pool as a first-class object, with add, pause, and retire flows and an Archived section on the daily view that reactivates a retired habit. Freezes are spent from the habit's row on the Yesterday view: a missed row offers a Freeze control that toggles back off, and the pool balance moves with it.
+Habits is the daily check-off and streak home; check-off lives here, not on Home. History combines 3, 6, and 12-month completion trends across all habits or one selected habit with a month breakdown that gives each habit a completion ring and its day counts. Completion rates use eligible tracked days: periods before creation, paused or retired periods, and future dates don't count as missed days. The page keeps week strips, best and current streaks, and the freeze pool as a first-class object, with add, pause, and retire flows and an Archived section on the daily view that reactivates a retired habit. Freezes are spent from the habit's row on the Yesterday view: a missed row offers a Freeze control that toggles back off, and the pool balance moves with it.
 
 ### Mood and focus
 
