@@ -98,11 +98,25 @@ describe('task creation dialog', () => {
       expect(created).toHaveLength(1)
       expect(created[0]).toMatchObject({ title: 'Apply to the Intuit internship', context: 'Personal' })
 
+      // Focus back on the closed picker trigger, where the picker would otherwise reopen: Enter creates.
+      expect(trigger.getAttribute('aria-expanded')).not.toBe('true')
+      const onTrigger = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+      await act(async () => { trigger.dispatchEvent(onTrigger) })
+      expect(onTrigger.defaultPrevented).toBe(true)
+      expect(created).toHaveLength(2)
+      expect(document.body.querySelector('.context-option')).toBeNull()
+
+      // Enter on the priority select trigger behaves the same way.
+      const priority = document.body.querySelector<HTMLButtonElement>('[aria-label="Priority"]')
+      if (priority === null) throw new Error('Priority trigger unavailable')
+      await act(async () => { priority.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })) })
+      expect(created).toHaveLength(3)
+
       // Enter on a button inside the form is that button's own activation, not a submit.
       const recurrence = document.body.querySelector<HTMLButtonElement>('[data-testid="task-create-recurrence-trigger"]')
       if (recurrence === null) throw new Error('Recurrence trigger unavailable')
       await act(async () => { recurrence.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })) })
-      expect(created).toHaveLength(1)
+      expect(created).toHaveLength(3)
     } finally {
       await act(async () => root.unmount())
       host.remove()

@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { describe, expect, it } from 'vitest'
 
 import type { ContextDefinition, Task } from '../../../shared/home'
@@ -53,5 +55,60 @@ describe('centered task detail', () => {
     expect(markup).not.toContain('Mark complete')
     expect(markup).not.toContain('ui-sidepeek')
     expect(markup).not.toContain('Time blocks')
+  })
+
+  it('saves and closes on Enter from the panel or a closed picker trigger, and leaves Delete alone', async () => {
+    const updates: Task[] = []
+    let closed = 0
+    let deleted = 0
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    try {
+      await act(async () => root.render(
+        <TaskDetailDialog
+          task={TASK}
+          open
+          contexts={CONTEXTS}
+          dueAttention={false}
+          onClose={() => { closed += 1 }}
+          onUpdate={async (task) => { updates.push(task) }}
+          onAddContext={async (context) => context}
+          onUpdateContext={async (_originalName, context) => ({ context, tasks: [TASK] })}
+          onDeleteContext={async () => undefined}
+          onDuplicate={async () => undefined}
+          onDelete={async () => { deleted += 1 }}
+        />
+      ))
+      const priority = document.body.querySelector<HTMLButtonElement>('[aria-label="Priority: High"]')
+      const panel = document.body.querySelector<HTMLElement>('[aria-modal="true"]')
+      const remove = document.body.querySelector<HTMLButtonElement>('.peek-delete')
+      if (priority === null || panel === null || remove === null) throw new Error('Detail controls unavailable')
+
+      // Pick Low, then Enter on the trigger that has focus again.
+      await act(async () => priority.click())
+      const low = Array.from(document.body.querySelectorAll<HTMLElement>('.ui-select-option')).find((option) => option.textContent?.includes('Low'))
+      if (low === undefined) throw new Error('Low option unavailable')
+      await act(async () => low.click())
+      const onTrigger = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+      await act(async () => { priority.dispatchEvent(onTrigger) })
+      expect(onTrigger.defaultPrevented).toBe(true)
+      expect(updates.map((task) => task.priority)).toEqual(['Low'])
+      expect(closed).toBe(1)
+
+      // Enter on Delete is the button's own activation.
+      const onDelete = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+      await act(async () => { remove.dispatchEvent(onDelete) })
+      expect(onDelete.defaultPrevented).toBe(false)
+      expect(closed).toBe(1)
+      expect(deleted).toBe(0)
+
+      // Enter on the panel itself saves and closes.
+      await act(async () => { panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })) })
+      expect(closed).toBe(2)
+    } finally {
+      await act(async () => root.unmount())
+      host.remove()
+    }
   })
 })

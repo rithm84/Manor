@@ -13,6 +13,7 @@ import type {
 import { ContextSelect } from './ContextSelect'
 import { DueDatePicker } from './DueDatePicker'
 import { RecurrenceEditor } from './RecurrenceEditor'
+import { useEnterAction } from './enterAction'
 import { recurrenceLabel } from '../../../shared/recurrence'
 import {
   ESTIMATE_SELECT_OPTIONS,
@@ -94,29 +95,8 @@ export function TaskCreateDialog({
 
   const dirty = bucket !== null && !sameDraft(draft, emptyDraft(activeBucket, today))
 
-  // Closing a property picker hands focus back to the dialog panel, where a plain Enter
-  // otherwise does nothing. The shortcut promises Enter creates the task wherever focus rests,
-  // so Enter on the panel or the form submits; controls, open pickers, and text fields keep theirs.
-  useEffect(() => {
-    if (bucket === null) return
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Enter' || event.defaultPrevented || event.isComposing) return
-      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
-      const current = form.current
-      const panel = current?.closest<HTMLElement>('[aria-modal="true"]') ?? null
-      if (current === null || panel === null || !(event.target instanceof HTMLElement)) return
-      const target = event.target
-      if (target !== panel && target !== current) {
-        if (!panel.contains(target)) return
-        if (target.closest('input, textarea, select, button, a[href], [role="option"], [role="radio"], [role="listbox"], [role="menu"], [contenteditable="true"]') !== null) return
-      }
-      if (panel.querySelector('[aria-expanded="true"]') !== null) return
-      event.preventDefault()
-      current.requestSubmit()
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [bucket])
+  // The shortcut promises Enter creates the task wherever focus rests after a picker closes.
+  useEnterAction(form, bucket !== null, () => form.current?.requestSubmit())
 
   // Escape, scrim, and Cancel all prompt before discarding typed work.
   const requestClose = (): void => {
