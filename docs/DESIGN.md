@@ -64,9 +64,9 @@ Motion explains state and preserves orientation: brief, interruptible transition
 
 Streak and freeze indicators may animate briefly when their state changes or an achievement is earned. They do not loop continuously at rest. Both the static resting state and the reduced-motion state must communicate the same meaning.
 
-Module history views share one structure, set by Habits: a topline with the month navigator, a hairline summary strip whose primary values carry the module's semantic color, a Recharts trend with a 3, 6, and 12-month range, and a compact ranked or dated list. Mood and Focus adds a month calendar in which the mood tint fills the day and a focus dot marks it, with per-level distributions beside it; averages read as scale words first and numbers second.
+Module history views share one structure, set by Habits: a topline with the month navigator, a hairline summary strip whose primary values carry the module's semantic color, a Recharts trend with a 3, 6, and 12-month range, and a compact ranked or dated list. Mood and Focus replaces the list with a full-width month calendar: each day names its mood and focus in words beside toned swatches, the mood tint fills the cell, a small mark shows a saved synthesis, and the day opens its editor; per-level distributions sit below the calendar, and averages read as scale words first and numbers second.
 
-The Pomodoro timer is a single ring: plum for focus and teal for breaks, the remaining time in Outfit tabular numerals at its center, and small dots for the position in the cycle. The arc moves once a second without easing so it reads as a clock rather than a progress animation. Completion blooms once from the ring and settles; the ring never pulses at rest, and the sidebar countdown is plain text.
+The Pomodoro timer is a single ring: plum for focus and teal for breaks, the remaining time in Outfit tabular numerals at its center, and small dots for the position in the cycle. The arc moves once a second without easing so it reads as a clock rather than a progress animation. Completion blooms once from the ring and settles; the ring never pulses at rest, and the sidebar countdown is plain text. The timer is centered in the first screen of the page, and the month statistics and session log stay below it behind a Show history toggle that remembers its state.
 
 ## Sound and copy
 

@@ -1,12 +1,11 @@
-import { ChevronLeft, ChevronRight, Mic, PencilLine, Plus, TrendingUp } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Mic, PencilLine, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { moodFocusPreviousDate } from '../../../shared/moodFocus'
 import type { Focus, Mood, MoodFocusEntry, MoodFocusHistoryMutation, MoodFocusState } from '../../../shared/moodFocus'
-import { Button, DatePicker, DetailDialog, EmptyState, Modal } from '../../components/ui'
+import { Button, DatePicker, DetailDialog, Modal } from '../../components/ui'
 import {
-  dayLabel,
   daysInMonth,
   earliestEntryMonth,
   entriesForMonth,
@@ -48,8 +47,9 @@ function toneStyle(tone: ScaleTone | null): ToneStyle | undefined {
 
 const WEEKDAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const
 
-function weekdayLabel(date: string): string {
-  return new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short' }).format(new Date(`${date}T12:00:00.000Z`))
+function noteSourceLabel(entry: MoodFocusEntry): string | null {
+  if (entry.note === null) return null
+  return entry.noteSource === 'codex' ? 'Codex debrief' : 'Manual note'
 }
 
 interface EditorTarget {
@@ -212,7 +212,7 @@ export function HistoryPanel({ state, month, onMonthChange, onSaveRatings }: His
         <div className="mf-history-sectionhead">
           <div>
             <h3 id="mf-month-title">{summary.label}</h3>
-            <p>Each day is colored by mood and marked by focus.</p>
+            <p>Select a day to see or change its ratings.</p>
           </div>
         </div>
         <div className="mf-history-monthbody">
@@ -227,26 +227,34 @@ export function HistoryPanel({ state, month, onMonthChange, onSaveRatings }: His
               {grid.cells.map((cell) => {
                 const mood = cell.entry?.mood ?? null
                 const focus = cell.entry?.focus ?? null
+                const source = cell.entry === null ? null : noteSourceLabel(cell.entry)
                 const description = cell.entry === null
                   ? 'No check-in.'
-                  : `Mood ${mood ?? 'not logged'}. Focus ${focus ?? 'not logged'}.`
+                  : `Mood ${mood ?? 'not logged'}. Focus ${focus ?? 'not logged'}.${source === null ? '' : ` ${source}.`}`
                 return (
                   <button
                     key={cell.date}
                     type="button"
                     role="gridcell"
-                    className={`mf-month-day${mood !== null ? ' has-mood' : ''}${focus === 'Resting' ? ' is-resting' : ''}${cell.today ? ' is-today' : ''}${cell.entry === null ? ' is-empty' : ''}`}
-                    style={{
-                      ...(mood === null ? {} : { '--mood-tone': moodTone(mood).strong, '--mood-tint': moodTone(mood).tint }),
-                      ...(focus === null ? {} : { '--focus-tone': focusTone(focus).strong })
-                    } as CSSProperties}
+                    className={`mf-month-day${mood !== null ? ' has-mood' : ''}${cell.today ? ' is-today' : ''}${cell.entry === null ? ' is-empty' : ''}`}
+                    style={mood === null ? undefined : { '--mood-tint': moodTone(mood).tint } as CSSProperties}
                     disabled={cell.future}
                     aria-label={`${fullDateLabel(cell.date)}. ${description}`}
                     data-testid={`history-day-${cell.date}`}
                     onClick={() => (cell.entry === null ? openDate(cell.date, false) : openEntry(cell.entry))}
                   >
-                    <span className="mf-month-daynum tnum">{cell.day}</span>
-                    {focus !== null ? <span className="mf-month-focusdot" aria-hidden="true" /> : null}
+                    <span className="mf-month-dayhead">
+                      <span className="mf-month-daynum tnum">{cell.day}</span>
+                      {cell.entry?.note != null ? (
+                        cell.entry.noteSource === 'codex' ? <Mic size={12} aria-hidden="true" /> : <PencilLine size={12} aria-hidden="true" />
+                      ) : null}
+                    </span>
+                    {cell.entry !== null ? (
+                      <span className="mf-month-signals" aria-hidden="true">
+                        <DaySignal kind="mood" value={mood} />
+                        <DaySignal kind="focus" value={focus} />
+                      </span>
+                    ) : null}
                   </button>
                 )
               })}
@@ -265,24 +273,6 @@ export function HistoryPanel({ state, month, onMonthChange, onSaveRatings }: His
             />
           </div>
         </div>
-      </section>
-
-      <section className="mf-records" aria-labelledby="mf-records-title">
-        <div className="mf-history-sectionhead">
-          <div>
-            <h3 id="mf-records-title">Daily record</h3>
-            <p>Newest first.</p>
-          </div>
-        </div>
-        {monthEntries.length === 0 ? (
-          <EmptyState icon={<TrendingUp size={20} />} title="No check-ins" message={`No entries in ${summary.label}.`} />
-        ) : (
-          <div className="mf-record-stack">
-            {[...monthEntries].reverse().map((entry) => (
-              <RecordRow key={entry.date} entry={entry} today={state.today} onOpen={openEntry} />
-            ))}
-          </div>
-        )}
       </section>
 
       <HistoryEditor
@@ -327,46 +317,15 @@ function Distribution({ title, rows, kind }: {
   )
 }
 
-function Signal({ kind, value }: { kind: 'mood' | 'focus'; value: Mood | Focus | null }): ReactNode {
+/** One line inside a day cell: a swatch in the level's tone, the axis, and the level word. */
+function DaySignal({ kind, value }: { kind: 'mood' | 'focus'; value: Mood | Focus | null }): ReactNode {
   const tone = value === null ? null : kind === 'mood' ? moodTone(value as Mood) : focusTone(value as Focus)
   return (
-    <span className={`mf-record-signal is-${kind}${value === null ? ' is-missing' : ''}${value === 'Resting' ? ' is-resting' : ''}`} style={toneStyle(tone)}>
-      <span aria-hidden="true" />
-      {value ?? 'Not logged'}
+    <span className={`mf-day-signal is-${kind}${value === null ? ' is-missing' : ''}${value === 'Resting' ? ' is-resting' : ''}`} style={toneStyle(tone)}>
+      <span className="mf-day-swatch" />
+      <span className="mf-day-axis">{kind === 'mood' ? 'Mood' : 'Focus'}</span>
+      <span className="mf-day-level">{value ?? 'Not logged'}</span>
     </span>
-  )
-}
-
-function RecordRow({ entry, today, onOpen }: {
-  entry: MoodFocusEntry
-  today: string
-  onOpen: (entry: MoodFocusEntry) => void
-}): ReactNode {
-  return (
-    <button
-      type="button"
-      className={`mf-record-row${entry.date === today ? ' is-today' : ''}`}
-      onClick={() => onOpen(entry)}
-      aria-label={`${dayLabel(entry.date, today)}. Mood ${entry.mood ?? 'not logged'}. Focus ${entry.focus ?? 'not logged'}. Edit entry.`}
-      data-testid={`history-record-${entry.date}`}
-    >
-      <span className="mf-record-date" aria-hidden="true">
-        <span className="tnum">{Number(entry.date.slice(8))}</span>
-        <span>{weekdayLabel(entry.date)}</span>
-      </span>
-      <Signal kind="mood" value={entry.mood} />
-      <Signal kind="focus" value={entry.focus} />
-      {entry.note === null ? (
-        <span className="mf-record-note is-empty" />
-      ) : (
-        <span className="mf-record-note">
-          {entry.noteSource === 'codex' ? <Mic size={12} aria-hidden="true" /> : <PencilLine size={12} aria-hidden="true" />}
-          <span>{entry.note}</span>
-          <span className="mf-record-source">{entry.noteSource === 'codex' ? 'Codex debrief' : 'Manual'}</span>
-        </span>
-      )}
-      <ChevronRight className="mf-record-chevron" size={14} aria-hidden="true" />
-    </button>
   )
 }
 
