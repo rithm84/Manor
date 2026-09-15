@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
 import type { MoodFocusState } from '../../../shared/moodFocus'
-import { earliestEntryMonth, monthSummary, sixMonthTrend } from './moodFocusModel'
+import {
+  earliestEntryMonth,
+  focusAverageLabel,
+  focusDistribution,
+  monthGrid,
+  monthSummary,
+  monthTrend,
+  moodAverageLabel,
+  moodDistribution,
+  sixMonthTrend
+} from './moodFocusModel'
 
 const state: MoodFocusState = {
   today: '2026-08-20',
@@ -52,5 +62,38 @@ describe('mood and focus history model', () => {
   it('bounds backward navigation at the earliest entry month', () => {
     expect(earliestEntryMonth(state)).toBe('2026-07')
     expect(earliestEntryMonth({ today: state.today, entries: [] })).toBe('2026-08')
+  })
+
+  it('sizes the trend to the selected range', () => {
+    expect(monthTrend(state, '2026-08', 3).map((point) => point.month)).toEqual(['2026-06', '2026-07', '2026-08'])
+    expect(monthTrend(state, '2026-08', 12)).toHaveLength(12)
+  })
+
+  it('names the scale step nearest an average', () => {
+    expect(moodAverageLabel(4.5)).toBe('Great')
+    expect(moodAverageLabel(3.4)).toBe('Neutral')
+    expect(moodAverageLabel(null)).toBeNull()
+    expect(focusAverageLabel(1.2)).toBe('Locked Out')
+    expect(focusAverageLabel(5)).toBe('Locked In')
+  })
+
+  it('lays the month out from Monday and marks today and future days', () => {
+    const grid = monthGrid(state.entries, '2026-08', state.today)
+    expect(grid.leadBlanks).toBe(5)
+    expect(grid.cells).toHaveLength(31)
+    expect(grid.cells[0]).toMatchObject({ date: '2026-08-01', day: 1, future: false, today: false })
+    expect(grid.cells[0]?.entry?.focus).toBe('Resting')
+    expect(grid.cells[19]).toMatchObject({ date: '2026-08-20', today: true, future: false, entry: null })
+    expect(grid.cells[20]).toMatchObject({ date: '2026-08-21', future: true })
+  })
+
+  it('counts rated days per level, with rest days at the end of focus', () => {
+    const august = state.entries.filter((entry) => entry.date.startsWith('2026-08'))
+    const mood = moodDistribution(august)
+    expect(mood.map((row) => row.level)).toEqual(['Great', 'Good', 'Neutral', 'Bad', 'Awful'])
+    expect(mood.find((row) => row.level === 'Great')).toMatchObject({ count: 1, share: 0.5 })
+    const focus = focusDistribution(august)
+    expect(focus.at(-1)).toMatchObject({ level: 'Resting', count: 1, share: 0.5 })
+    expect(moodDistribution([]).every((row) => row.count === 0 && row.share === 0)).toBe(true)
   })
 })

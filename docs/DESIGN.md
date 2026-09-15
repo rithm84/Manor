@@ -1,6 +1,6 @@
 # Manor design charter
 
-_Last updated: 2026-09-13_
+_Last updated: 2026-09-14_
 
 This page defines Manor's visual and interaction direction. Product behavior is in the [PRD](PRD.md), and the [redesign report](REDESIGN-REPORT.md) holds the Mobbin evidence, component analysis, and proposals still awaiting selection. Shared theme tokens and components implement the selected baseline; complete workflow verification is still required.
 
@@ -64,9 +64,13 @@ Motion explains state and preserves orientation: brief, interruptible transition
 
 Streak and freeze indicators may animate briefly when their state changes or an achievement is earned. They do not loop continuously at rest. Both the static resting state and the reduced-motion state must communicate the same meaning.
 
+Module history views share one structure, set by Habits: a topline with the month navigator, a hairline summary strip whose primary values carry the module's semantic color, a Recharts trend with a 3, 6, and 12-month range, and a compact ranked or dated list. Mood and Focus adds a month calendar in which the mood tint fills the day and a focus dot marks it, with per-level distributions beside it; averages read as scale words first and numbers second.
+
+The Pomodoro timer is a single ring: plum for focus and teal for breaks, the remaining time in Outfit tabular numerals at its center, and small dots for the position in the cycle. The arc moves once a second without easing so it reads as a clock rather than a progress animation. Completion blooms once from the ring and settles; the ring never pulses at rest, and the sidebar countdown is plain text.
+
 ## Sound and copy
 
-The optional, quiet completion sounds and their appearance setting stay. Sound is reserved for task and habit completion and rare achievements, never navigation, hover, typing, or errors. Retiring the paper metaphor added no new audio behavior.
+The optional, quiet completion sounds and their appearance setting stay. Sound is reserved for task and habit completion, the end of a Pomodoro session, and rare achievements, never navigation, hover, typing, or errors.
 
 Product copy is concise and human, with no implementation or brainstorming captions, no em dashes, and no excessive exclamation marks. Mechanics are explained in Settings or contextual help where they inform a decision, and status labels never substitute for a legible visual hierarchy.
 

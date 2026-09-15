@@ -172,6 +172,20 @@ export function playClick(): void {
   )
 }
 
+/** A soft two-note chime when a timer runs out. A finished focus session rises;
+    a finished break settles lower, so the two read apart without looking. */
+export function playSessionChime(kind: 'focus' | 'break'): void {
+  const notes: readonly [number, number] = kind === 'focus' ? [659.25, 987.77] : [587.33, 440]
+  playTexture(
+    [],
+    [
+      { startOffset: 0, duration: 0.55, peakGain: 0.11, startFrequency: notes[0], endFrequency: notes[0], type: 'sine' },
+      { startOffset: 0.16, duration: 0.7, peakGain: 0.1, startFrequency: notes[1], endFrequency: notes[1], type: 'sine' },
+      { startOffset: 0.16, duration: 0.45, peakGain: 0.02, startFrequency: notes[1] * 2, endFrequency: notes[1] * 2, type: 'sine' }
+    ]
+  )
+}
+
 /** Replay the original tap. The recording is decoded at startup, so the sound
     starts on the click itself rather than after a media element warms up. */
 export function playCompletionTick(): void {

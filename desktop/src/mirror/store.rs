@@ -33,7 +33,7 @@ use serde_json::Value;
 /// existing file, so the next launch rebuilds the copy from the server. Without
 /// the bump, a file built under the previous set stays `ready` while missing the
 /// tables that were added, and their reads would come back empty forever.
-pub const MIRROR_SCHEMA_VERSION: u32 = 2;
+pub const MIRROR_SCHEMA_VERSION: u32 = 3;
 
 /// Keys of the `meta` table.
 const META_SCHEMA_VERSION: &str = "schema_version";

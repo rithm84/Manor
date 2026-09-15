@@ -8,6 +8,7 @@ export function prefetchRoute(services: ManorServices, account: ManorAccount, pa
     '/home': () => Promise.all([services.home.load(), services.gcal.eventsFor([dateInTimezone(new Date(), account.timezone)])]),
     '/habits': () => services.habits.load(),
     '/mood-focus': () => services.moodFocus.load(),
+    '/pomodoro': () => services.pomodoro.load(),
     '/leetcode': () => services.leetcode.load(),
     '/jobs': () => services.jobs.load(),
     '/notes': () => services.notes.load(),

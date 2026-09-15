@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 import { Tooltip } from '../components/ui'
+import { PomodoroRuntimeProvider } from '../pomodoro/PomodoroRuntime'
 import { PageErrorBoundary } from './PageErrorBoundary'
 import { Sidebar } from './Sidebar'
 import { useSidebarDocked } from './sidebarState'
@@ -17,7 +18,7 @@ export function AppFrame(): ReactNode {
   useEffect(() => {
     const open = (event: Event): void => {
       if (!(event instanceof CustomEvent) || typeof event.detail !== 'string') throw new TypeError('Manor navigation requires a route')
-      if (!/^\/(home|habits|mood-focus|leetcode|jobs|notes|bookmarks|weekly-reviews|settings)(\?|$)/.test(event.detail)) throw new TypeError('Unsupported Manor route')
+      if (!/^\/(home|habits|mood-focus|pomodoro|leetcode|jobs|notes|bookmarks|weekly-reviews|settings)(\?|$)/.test(event.detail)) throw new TypeError('Unsupported Manor route')
       navigate(event.detail)
     }
     window.addEventListener('manor:navigate', open)
@@ -67,6 +68,7 @@ export function AppFrame(): ReactNode {
   }, [cancelDismiss])
 
   return (
+    <PomodoroRuntimeProvider>
     <div className="frame">
       {docked ? (
         <aside className="sidebar">
@@ -116,5 +118,6 @@ export function AppFrame(): ReactNode {
       </div>
 
     </div>
+    </PomodoroRuntimeProvider>
   )
 }

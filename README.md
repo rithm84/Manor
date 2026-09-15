@@ -5,7 +5,7 @@
 <h1 align="center">Manor</h1>
 
 <p align="center">
-  A personal productivity app for tasks, habits, mood, LeetCode practice, job applications, and notes.<br>
+  A personal productivity app for tasks, habits, mood, focus timers, LeetCode practice, job applications, and notes.<br>
   Use it directly, or let an AI agent work in it over MCP.
 </p>
 
@@ -38,7 +38,8 @@ Manor replaces a sprawling Notion setup with one place that is cheap to keep cur
 
 - **Home.** A due-bucket task board (Overdue, Today, Tomorrow, This Week) beside a single-column timeline of your Google Calendar events and disposable time blocks. Recurring tasks track each occurrence independently.
 - **Habits.** Daily check-offs with per-habit streaks, a shared monthly freeze pool spent by hand, Earn-Back recovery, and month grids with 3, 6, and 12-month completion trends.
-- **Mood and focus.** One-tap ratings for today or yesterday, history corrections for any past day, and a single evolving synthesis per day written from your debriefs.
+- **Mood and focus.** One-tap ratings for today or yesterday, history corrections for any past day, and a single evolving synthesis per day written from your debriefs. History shows monthly averages in scale words, a 3, 6, or 12-month trend, a month calendar colored by mood and marked by focus, and per-level distributions.
+- **Pomodoro.** A focus timer with short and long breaks, a live countdown in the sidebar, editable session lengths and cycle, optional auto-start, a completion chime, and month statistics with a session log.
 - **LeetCode.** The NeetCode 150 curriculum with attempt history, saved solution source, daily intensity, a separate streak, and a mistakes log.
 - **Jobs.** A browsable internship catalog ingested from SimplifyJobs, an application board from To apply through Offer, stage history with dates, and named resume versions.
 - **Notes.** A Notion-style block editor with columns, tabs, media, equations, and a live table of contents. Drafts are protected on the device before they sync, conflicts surface instead of overwriting, and seven days of versions can be restored.
@@ -69,7 +70,7 @@ The sidebar docks or collapses to a hover overlay; it is docked above and collap
 
 ## Working with an agent
 
-Manor exposes 113 operations (47 reads, 66 writes) at `https://<project-ref>.supabase.co/functions/v1/manor-mcp`. Connect it as an MCP server in ChatGPT, Codex, or any OAuth-capable client, approve the client on Manor's consent screen, and ask for work in plain language:
+Manor exposes 121 operations (48 reads, 73 writes) at `https://<project-ref>.supabase.co/functions/v1/manor-mcp`. Connect it as an MCP server in ChatGPT, Codex, or any OAuth-capable client, approve the client on Manor's consent screen, and ask for work in plain language:
 
 - "Add this posting to my applications and attach the resume I used for NVIDIA."
 - "Read my inbox and create tasks for anything with a deadline this week."

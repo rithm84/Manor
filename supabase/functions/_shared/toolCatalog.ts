@@ -2,6 +2,7 @@ import { notesTools } from './notesToolCatalog.ts'
 import { workspaceTools } from './workspaceToolCatalog.ts'
 import { relatedTools } from './relatedToolCatalog.ts'
 import { lifecycleTools } from './lifecycleToolCatalog.ts'
+import { pomodoroTools } from './pomodoroToolCatalog.ts'
 import { MAX_FILE_UPLOAD_BYTES } from './fileUploadPolicy.ts'
 import { id, uuid, revision, text, date, timestamp, nullableText, blocks, block, paging, period, edit, object, query, command, batch, type ToolSchema, type ManorTool } from './toolDefinitions.ts'
 export type { JsonValue, JsonObject, ToolSchema, ToolExecution, ManorTool } from './toolDefinitions.ts'
@@ -23,6 +24,7 @@ export const manorTools: readonly ManorTool[] = [
   ...workspaceTools,
   ...relatedTools,
   ...lifecycleTools,
+  ...pomodoroTools,
   query('list_files', 'List account-owned immutable file metadata, bounded and paginated. Only ready files are returned.', { ...paging, id: uuid, purpose: { type: 'string', enum: ['note', 'capture', 'resume', 'avatar'] }, parent_id: id }, []),
   query('list_resumes', 'List saved resumes and their immutable file references.', { ...paging, id: uuid }, []),
   { name: 'prepare_file_upload', description: 'Allocate an immutable account-owned file up to 1 GB. For resumable uploads use resumable_endpoint with the returned chunk size and upload_token as the x-signature header. Upload exact bytes, then finalize; SHA-256 and byte length are verified.', inputSchema: object({ command_id: uuid, id: uuid, purpose: { type: 'string', enum: ['note', 'capture', 'resume', 'avatar'] }, parent_id: nullableText, name: { type: 'string', minLength: 1, maxLength: 255 }, label: { type: ['string', 'null'], minLength: 1, maxLength: 120 }, mime_type: { type: 'string', minLength: 1, maxLength: 150 }, size: { type: 'integer', minimum: 1, maximum: MAX_FILE_UPLOAD_BYTES }, sha256: { type: 'string', pattern: '^[a-f0-9]{64}$' } }, ['command_id', 'id', 'purpose', 'name', 'mime_type', 'size', 'sha256']), execution: { kind: 'edge', function: 'file-access', fixedInput: { action: 'prepare' } }, readOnly: false },

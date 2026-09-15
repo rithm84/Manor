@@ -6,6 +6,7 @@ import type { HabitsApi } from '../../shared/habits'
 import type { JobsApi } from '../../shared/jobs'
 import type { LeetCodeApi } from '../../shared/leetcode'
 import type { MoodFocusApi } from '../../shared/moodFocus'
+import type { PomodoroApi } from '../../shared/pomodoro'
 import type { NotesApi } from '../../shared/notes'
 import type { KbApi } from '../../shared/kb'
 import type { ResumesApi } from '../../shared/resumes'
@@ -23,6 +24,7 @@ export interface ManorServices {
   jobs: JobsApi
   leetcode: LeetCodeApi
   moodFocus: MoodFocusApi
+  pomodoro: PomodoroApi
   notes: NotesApi
   kb: KbApi
   resumes: ResumesApi
@@ -42,4 +44,9 @@ export function useManorService<Key extends keyof ManorServices>(key: Key): Mano
   const service = services?.[key]
   if (service === undefined) throw new Error(`Manor UI requires an implemented ${key} service`)
   return service
+}
+
+/** A service the surface can do without, for shell chrome that decorates a module but does not depend on it. */
+export function useOptionalManorService<Key extends keyof ManorServices>(key: Key): ManorServices[Key] | undefined {
+  return useContext(ServicesContext)?.[key]
 }
