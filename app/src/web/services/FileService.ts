@@ -47,7 +47,9 @@ export class FileService {
       // Completed but unacknowledged uploads are verified without sending their bytes again.
       await this.finalize(upload.id, upload.bytes.size)
     }
-    await this.gateway.invalidate()
+    // Finalization wrote the file's metadata row (a resume, an attachment) through the verifier, not a
+    // command, so the mirror has not pulled it yet.
+    await this.gateway.afterServerWrite()
     return { id: allocated.id, path: allocated.storage_path, size: allocated.size, mimeType: allocated.mime_type }
   }
 
