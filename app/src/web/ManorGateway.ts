@@ -196,4 +196,14 @@ export class ManorGateway {
   invalidate(): Promise<void> {
     return this.queries.invalidateQueries({ queryKey: ['manor', this.accountId] })
   }
+
+  /**
+   * The refresh that follows a write which committed outside `command`, such as the verifier finalizing an
+   * upload. The mirror pulls first for the same reason it does after a command: a page that refetches from
+   * the mirror must find the row there.
+   */
+  async afterServerWrite(): Promise<void> {
+    if (this.mirror !== null && this.mirror.isServing()) await this.mirror.afterCommand()
+    await this.invalidate()
+  }
 }

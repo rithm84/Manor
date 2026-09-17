@@ -4,18 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, ReactNode } from 'react'
 
 import type { ResumeVersion } from '../../../shared/resumes'
-import { Button, Input, Select } from '../../components/ui'
+import { Button, Select } from '../../components/ui'
 import type { SelectOption } from '../../components/ui'
 
 /** Sentinel Select value for "no resume attached" (real ids are UUIDs). */
 const NO_RESUME = ''
 
 type ResumeAccess = 'checking' | 'signed-out' | 'ready'
-
-interface PendingUpload {
-  fileName: string
-  base64: string
-}
 
 function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -53,9 +48,7 @@ export function ResumeField({ value, onChange }: ResumeFieldProps): ReactNode {
   const [access, setAccess] = useState<ResumeAccess>('checking')
   const [versions, setVersions] = useState<readonly ResumeVersion[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [pending, setPending] = useState<PendingUpload | null>(null)
-  const [label, setLabel] = useState('')
-  const [uploading, setUploading] = useState(false)
+  const [uploading, setUploading] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
@@ -94,39 +87,30 @@ export function ResumeField({ value, onChange }: ResumeFieldProps): ReactNode {
   const selected = value === null ? undefined : versions.find((version) => version.id === value)
   const options: readonly SelectOption[] = [
     { value: NO_RESUME, label: 'None' },
-    ...versions.map((version) => ({ value: version.id, label: version.label })),
+    ...versions.map((version) => ({ value: version.id, label: version.fileName })),
     ...(value !== null && selected === undefined && access === 'ready'
       ? [{ value, label: 'Removed version' }]
       : [])
   ]
 
+  /** The PDF's own name is the version's name; picking a file is the whole upload. */
   const onFilePicked = (event: ChangeEvent<HTMLInputElement>): void => {
     const file = event.target.files === null ? undefined : event.target.files[0]
     event.target.value = ''
-    if (file === undefined) return
+    if (file === undefined || uploading !== null) return
     setUploadError(null)
+    setUploading(file.name)
     readFileBase64(file)
-      .then((base64) => setPending({ fileName: file.name, base64 }))
-      .catch((error: unknown) => setUploadError(toMessage(error)))
-  }
-
-  const confirmUpload = (): void => {
-    if (pending === null || label.trim() === '' || uploading) return
-    setUploading(true)
-    setUploadError(null)
-    resumesApi
-      .upload({ label: label.trim(), fileName: pending.fileName, base64: pending.base64 })
+      .then((base64) => resumesApi.upload({ label: file.name, fileName: file.name, base64 }))
       .then((version) => {
-        setVersions((current) => [...current, version])
+        setVersions((current) => [...current.filter((item) => item.id !== version.id), version])
         onChange(version.id)
-        setPending(null)
-        setLabel('')
       })
       .catch((error: unknown) => {
-        setUploadError(`Could not upload ${pending.fileName}: ${toMessage(error)}`)
+        setUploadError(`Could not upload ${file.name}: ${toMessage(error)}`)
       })
       .finally(() => {
-        setUploading(false)
+        setUploading(null)
       })
   }
 
@@ -139,53 +123,16 @@ export function ResumeField({ value, onChange }: ResumeFieldProps): ReactNode {
         placeholder="None"
         ariaLabel="Resume"
       />
-      {selected !== undefined ? (
-        <span className="resumefield-meta">
-          {selected.label} · {selected.fileName}
-        </span>
-      ) : null}
-      {pending === null ? (
-        <div className="resumefield-actions">
-          <Button
-            variant="ghost"
-            icon={<Upload size={14} />}
-            onClick={() => fileRef.current?.click()}
-          >
-            Upload new version
-          </Button>
-        </div>
-      ) : (
-        <div className="resumefield-pending">
-          <span className="resumefield-file">{pending.fileName}</span>
-          <Input
-            value={label}
-            onChange={setLabel}
-            placeholder="Version label"
-            ariaLabel="Version label"
-            autoFocus
-          />
-          <div className="resumefield-pending-actions">
-            <Button
-              variant="ghost"
-              disabled={uploading}
-              onClick={() => {
-                setPending(null)
-                setLabel('')
-                setUploadError(null)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="subtle"
-              disabled={label.trim() === '' || uploading}
-              onClick={confirmUpload}
-            >
-              {uploading ? 'Uploading…' : 'Upload'}
-            </Button>
-          </div>
-        </div>
-      )}
+      <div className="resumefield-actions">
+        <Button
+          variant="ghost"
+          icon={<Upload size={14} />}
+          disabled={uploading !== null}
+          onClick={() => fileRef.current?.click()}
+        >
+          {uploading === null ? 'Upload new version' : `Uploading ${uploading}…`}
+        </Button>
+      </div>
       {loadError !== null ? (
         <span className="resumefield-error" role="alert">{loadError}</span>
       ) : null}
