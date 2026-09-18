@@ -111,7 +111,8 @@ export function JobDetailModal({ role, open, stageRequest, onClose, onSave }: Jo
       company: fields.company.trim(),
       role: fields.role.trim(),
       location: fields.location.trim(),
-      postingLink: fields.postingLink.trim()
+      postingLink: fields.postingLink.trim(),
+      term: fields.term?.trim() === '' ? null : fields.term?.trim() ?? null
     }, expectedRevision).catch((error: unknown) => {
       setSubmitError(
         `Could not save the changes: ${error instanceof Error ? error.message : String(error)}`
@@ -154,9 +155,13 @@ export function JobDetailModal({ role, open, stageRequest, onClose, onSave }: Jo
                 <span>Role</span>
                 <Input value={fields.role} onChange={(nextRole) => setFields((current) => current === null ? null : ({ ...current, role: nextRole }))} placeholder="Role" ariaLabel="Role" />
               </label>
-              <label className="jobdetail-field">
+              <label className="jobdetail-field jobdetail-field--wide">
                 <span>Location</span>
                 <Input value={fields.location} onChange={(location) => setFields((current) => current === null ? null : ({ ...current, location }))} placeholder="Not set" ariaLabel="Location" />
+              </label>
+              <label className="jobdetail-field">
+                <span>Hiring cycle</span>
+                <Input value={fields.term ?? ''} onChange={(term) => setFields((current) => current === null ? null : ({ ...current, term: term === '' ? null : term }))} placeholder="Not set" ariaLabel="Hiring cycle" />
               </label>
               {stageRequest === null ? stageField : null}
               <label className="jobdetail-field jobdetail-field--wide">

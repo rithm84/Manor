@@ -52,7 +52,8 @@ export function AddRoleModal({ open, onClose, onAdd }: AddRoleModalProps): React
       company: fields.company.trim(),
       role: fields.role.trim(),
       location: fields.location.trim(),
-      postingLink: fields.postingLink.trim()
+      postingLink: fields.postingLink.trim(),
+      term: fields.term?.trim() === '' ? null : fields.term?.trim() ?? null
     }).catch((error: unknown) => {
       setSubmitError(
         `Could not add the role: ${error instanceof Error ? error.message : String(error)}`
@@ -102,6 +103,15 @@ export function AddRoleModal({ open, onClose, onAdd }: AddRoleModalProps): React
             />
           </label>
           <label className="addrole-field">
+            <span className="addrole-label">Hiring cycle</span>
+            <Input
+              value={fields.term ?? ''}
+              onChange={(term) => setFields((current) => ({ ...current, term: term === '' ? null : term }))}
+              placeholder="Summer 2027"
+              ariaLabel="Hiring cycle"
+            />
+          </label>
+          <label className="addrole-field addrole-field--wide">
             <span className="addrole-label">Posting link</span>
             <Input
               value={fields.postingLink}
