@@ -300,7 +300,7 @@ export function JobsBrowse({ today, onAdded }: JobsBrowseProps): ReactNode {
       .catch((error: unknown) => {
         console.error('Adding a feed listing failed', { listingId, error })
         setPendingId(null)
-        setAddError(errorMessage(error))
+        setAddError(`Could not add this listing. ${errorMessage(error)}`)
       })
   }
 

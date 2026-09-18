@@ -1,6 +1,6 @@
 # Manor PRD
 
-_Last updated: 2026-09-17_
+_Last updated: 2026-09-18_
 
 This page defines what Manor does: its behavior, business rules, and scope. The technical design, storage, execution, deployment, and recovery mechanisms are in the [architecture](ARCHITECTURE.md), and the visual direction is in the [design charter](DESIGN.md).
 
@@ -147,7 +147,7 @@ Board, Flow, and Browse are separate views. The board begins at To apply, then A
 
 Ingestion polls the structured `listings.json` source and deduplicates entries. The standing filters are: visible, open, non-hardware, at least one US location, and Fall 2026 or later when a cycle is specified, with unspecified cycles eligible. Revising the cycle cutoff is an open catalog-policy detail. Ingestion pages through all eligible listings and groups equivalent company, role, location, and cycle listings with an openings count.
 
-Roles share one editable schema: company, role, location, posting link, hiring cycle, posting date, stage, applied date, OA due date, three interview dates, decision date, and applied resume version. Unset values stay blank, there is no generic role Notes field, and manual creation supports non-feed roles. Details use centered dialogs with directly editable dates.
+Roles share one editable schema: company, role, location, posting link, hiring cycle, posting date, stage, applied date, OA due date, three interview dates, decision date, and applied resume version. Unset values stay blank, there is no generic role Notes field, and manual creation supports non-feed roles. A role added from the catalog keeps the listing's full location list and hiring cycle. Details use centered dialogs with directly editable dates.
 
 Cross-column board drops and stage-menu moves open the role dialog as an unsaved draft with the destination stage and its date control first. Grouped Interviews and Decided drops require choosing the round or outcome; Manor never assumes rejection. Dates stay unset until entered, **Cancel** leaves the stored role and stage history unchanged, and **Save** applies the stage and date edits together. Stage transitions persist, and board cards show the current meaningful update. Flow begins at Applied and derives the role's path from history; a backwards stage correction removes the undone hops from the displayed path so repeated dragging can't inflate progress. Chart values are exposed to assistive technology. Resume PDFs are private cloud files, each version named by its file; roles reference the version used, and purging one role never deletes a shared file.
 

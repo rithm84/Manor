@@ -1,12 +1,12 @@
 # Manor architecture
 
-_Last updated: 2026-09-14_
+_Last updated: 2026-09-18_
 
 Manor is a macOS desktop app: a React frontend built with Vite inside a Tauri shell, with Supabase behind it. This page describes how the pieces fit together, the rules each part follows, and what remains to verify. Product behavior lives in the [PRD](PRD.md) and the visual direction in the [design charter](DESIGN.md).
 
 ## Status
 
-The production Supabase project carries all 55 migrations applied over the preserved account data, the eleven Edge Functions, the four `manor-*` schedules, Google-only Auth with both hooks and the OAuth server, and the migrated resume and capture files. The legacy functions and schedules are removed, and the app installs and updates from Manor's GitHub Releases. The app has a Vite entry point, Supabase view adapters, transactional commands, account-scoped query refresh, and the redesigned light and dark interface. The Notes editor includes native columns and tabs, durable browser drafts, attachment queues, conflicts, versions, and suggestions.
+The production Supabase project carries all 56 migrations applied over the preserved account data, the eleven Edge Functions, the four `manor-*` schedules, Google-only Auth with both hooks and the OAuth server, and the migrated resume and capture files. The legacy functions and schedules are removed, and the app installs and updates from Manor's GitHub Releases. The app has a Vite entry point, Supabase view adapters, transactional commands, account-scoped query refresh, and the redesigned light and dark interface. The Notes editor includes native columns and tabs, durable browser drafts, attachment queues, conflicts, versions, and suggestions.
 
 Verified in staging:
 

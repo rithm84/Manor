@@ -86,7 +86,8 @@ export interface JobsApi {
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const MAX_NAME_LENGTH = 160
-const MAX_LOCATION_LENGTH = 160
+/** Catalog listings name every office a posting hires for, so this is wider than a typed value needs. */
+const MAX_LOCATION_LENGTH = 1000
 
 function recordValue(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {

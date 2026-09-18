@@ -257,7 +257,8 @@ export function emptyJobRoleFields(stage: JobStage): JobRoleFields {
     interview2Date: null,
     interview3Date: null,
     decisionDate: null,
-    resumeId: null
+    resumeId: null,
+    term: null
   }
 }
 

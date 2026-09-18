@@ -28,12 +28,38 @@ const receiptSchema = z.object({
 })
 export type CommandResult = z.infer<typeof receiptSchema>
 
+/** Column names as the reader knows them, for the errors Postgres phrases in schema terms. */
+const COLUMN_NAMES: Readonly<Record<string, string>> = {
+  location: 'location', link: 'posting link', company: 'company', role: 'role name', term: 'hiring cycle',
+  title: 'title', label: 'label', name: 'name', text: 'text', url: 'link', file_name: 'file name'
+}
+
+/**
+ * Postgres reports a failed constraint by name ("violates check constraint job_roles_location_check").
+ * Manor names its check constraints `<table>_<column>_check`, so the sentence names the value instead.
+ * Anything else passes through as the server wrote it.
+ */
+export function describeRequestFailure(code: string, detail: string): string {
+  if (code === '23514') {
+    const constraint = /violates check constraint "([a-z_]+)"/.exec(detail)?.[1]
+    const column = constraint === undefined ? undefined : Object.keys(COLUMN_NAMES).find((name) => constraint.endsWith(`_${name}_check`))
+    if (column !== undefined) return `The ${COLUMN_NAMES[column]} is too long or not in the expected form.`
+    return 'One of the values is outside what Manor accepts.'
+  }
+  if (code === '23505') return 'A record with the same identity already exists.'
+  if (code === '22001') return 'One of the values is too long.'
+  return detail
+}
+
 export class ManorRequestError extends Error {
   readonly code: string
+  /** The command or read that failed, for logs; the message itself is written for the reader. */
+  readonly operation: string
   constructor(operation: string, code: string, detail: string) {
-    super(`${operation}: ${detail}`)
+    super(describeRequestFailure(code, detail))
     this.name = 'ManorRequestError'
     this.code = code
+    this.operation = operation
   }
 }
 
