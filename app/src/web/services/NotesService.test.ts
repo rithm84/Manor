@@ -99,7 +99,10 @@ class RevisionCheckingGateway {
     if (input.expected_revision !== this.revision) throw new ManorRequestError(operation, 'PT409', 'Record changed. Reload and resolve the edit.')
     this.versions.set(this.revision, { ...this.stored, revision: this.revision })
     this.revision += 1
-    this.stored = row(this.revision, input.title as string, input.content_json as JsonObject[])
+    // A save carries title and content; a property change (favorite, folder) carries only what it changes.
+    this.stored = typeof input.title === 'string'
+      ? row(this.revision, input.title, input.content_json as JsonObject[])
+      : { ...this.stored, ...input, revision: this.revision }
     return { command_id: 'c', operation, replayed: false, record: this.stored }
   }
 }
@@ -199,6 +202,25 @@ describe('NotesService.updatePage', () => {
     await expect(notes.updatePage({ id: NOTE, title: 'Edited', contentJson: CONTENT })).rejects.toThrow('changed elsewhere')
     expect(gateway.sent).toEqual([1])
     expect(drafts.drafts.get(NOTE)?.baseRevision).toBe(1)
+  })
+})
+
+describe('NotesService.setFavorite', () => {
+  it('lands the protected draft first instead of refusing while an edit is unsynced', async () => {
+    const gateway = new RevisionCheckingGateway()
+    const drafts = new MemoryDraftStore()
+    const notes = service(gateway, drafts)
+    await notes.load()
+    await notes.acquireWriter(NOTE)
+    await notes.protectDraft({ id: NOTE, title: 'Typed just now', contentJson: CONTENT })
+
+    const state = await notes.setFavorite({ id: NOTE, favorite: true })
+
+    expect(gateway.sent).toEqual([1, 2]) // the draft at revision 1, then the favorite on top of it
+    expect(gateway.stored.title).toBe('Typed just now')
+    expect(gateway.stored.favorite).toBe(true)
+    expect(state.pages[0]?.favorite).toBe(true)
+    expect(drafts.drafts.size).toBe(0)
   })
 })
 

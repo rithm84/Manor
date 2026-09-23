@@ -24,6 +24,8 @@ export interface NotesListProps {
   onToggleCollapsed: () => void
   /** Whether this scope creates notes (Trash and Archived do not). */
   canCreate: boolean
+  /** A note is being created; the create controls wait for it rather than starting another. */
+  creating?: boolean
   onCreate: () => void
   /** The note open in the editor. */
   openId: string | null
@@ -45,7 +47,7 @@ const toggleModifier = (event: { metaKey: boolean; ctrlKey: boolean }): boolean 
  * The note list: plain click opens, Shift selects a range, Cmd or Ctrl toggles rows, Cmd or Ctrl+A selects the scope,
  * Escape clears, Delete moves the selection to Trash (or deletes permanently inside Trash), and right-click shows actions.
  */
-export function NotesList({ rows, title, loading, collapsed, onToggleCollapsed, canCreate, onCreate, openId, selection, onSelectionChange, onOpen, onTrash, onRestore, onPurge, onToggleFavorite, onDuplicate }: NotesListProps): ReactNode {
+export function NotesList({ rows, title, loading, collapsed, onToggleCollapsed, canCreate, creating = false, onCreate, openId, selection, onSelectionChange, onOpen, onTrash, onRestore, onPurge, onToggleFavorite, onDuplicate }: NotesListProps): ReactNode {
   const [menu, setMenu] = useState<{ point: QuickActionPoint; page: NotePage } | null>(null)
   const order = rows.map((row) => row.page.id)
   const selected = new Set(selection.ids)
@@ -108,7 +110,7 @@ export function NotesList({ rows, title, loading, collapsed, onToggleCollapsed, 
       <div className="notes-list-head">
         <div className="notes-list-heading"><strong>{title}</strong><span>{rows.length}</span></div>
         <div className="notes-pane-actions">
-          {!collapsed && canCreate ? <button type="button" className="notes-icon-button" aria-label="New note" onClick={onCreate}><FilePlus2 size={16} /></button> : null}
+          {!collapsed && canCreate ? <button type="button" className="notes-icon-button" aria-label="New note" aria-busy={creating} disabled={creating} onClick={onCreate}><FilePlus2 size={16} /></button> : null}
           <NotesPaneToggle collapsed={collapsed} panelId="notes-list" label="note list" onToggle={onToggleCollapsed} />
         </div>
       </div>
@@ -126,7 +128,7 @@ export function NotesList({ rows, title, loading, collapsed, onToggleCollapsed, 
         {!loading && rows.length === 0 ? (
           <div className="notes-list-empty">
             <EmptyState icon={<FileText size={20} strokeWidth={1.5} />} title={canCreate ? 'Nothing here yet' : 'Nothing here'} message={canCreate ? 'Start a note and it appears in this list.' : 'Notes you move here appear in this list.'}
-              action={canCreate ? <button type="button" className="notes-list-empty-action" onClick={onCreate}><FilePlus2 size={14} />New note</button> : undefined} />
+              action={canCreate ? <button type="button" className="notes-list-empty-action" disabled={creating} onClick={onCreate}><FilePlus2 size={14} />New note</button> : undefined} />
           </div>
         ) : null}
         {rows.map(({ page, depth }, index) => (

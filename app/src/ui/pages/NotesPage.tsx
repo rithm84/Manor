@@ -26,16 +26,19 @@ import type { ChangeEvent, ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { parseNoteContentJson } from '../../shared/notes'
+import { committedDetail, notesNeedReload } from '../../shared/workspaceChanges'
+import type { WorkspaceRowChange } from '../../shared/workspaceChanges'
 import type { NoteFolder, NotePage, NotesState } from '../../shared/notes'
 import { hasOpenDismissLayer, useDismissLayer } from '../components/ui/dismissLayer'
 import { Toast } from '../components/ui/Toast'
 import { PageShell } from './PageShell'
 import { importedNoteTitle, pagesForScope, scopeTitle, treeRows } from './notes/notesModel'
 import type { NotesScope } from './notes/notesModel'
-import { createNoteSaveQueue } from './notes/notesAutosave'
+import { createNoteSaveQueue, noteContentUpdate } from './notes/notesAutosave'
 import { FolderDialog, MoveDialog, PurgeDialog } from './notes/NotesDialogs'
 import { NotesList } from './notes/NotesList'
 import { EMPTY_SELECTION, pruneSelection, selectOne } from './notes/notesSelection'
+import { recallNotesView, rememberNotesView } from './notes/notesSession'
 import type { NoteSelection } from './notes/notesSelection'
 import type { RichNoteEditorHandle } from './notes/RichNoteEditor'
 import { loadRichNoteEditor } from './notes/loadRichNoteEditor'
@@ -79,6 +82,10 @@ const EMPTY_CONTENT = JSON.stringify([{ type: 'paragraph', content: [], children
 /** How long the syncing label stays up once it appears, so a save that lands in
     a few frames reads as a save rather than a flicker. */
 const SYNCING_HOLD_MS = 450
+
+/** Remote changes are folded together for this long before one reload runs for all of them. By then the
+    receipt of a save this device sent has landed too, so its own echo is recognised and skipped. */
+const RELOAD_SETTLE_MS = 250
 
 function newestCreatedPage(previousIds: ReadonlySet<string>, state: NotesState): NotePage {
   const created = state.pages.find((page) => !previousIds.has(page.id))
@@ -134,6 +141,10 @@ export function NotesPage(): ReactNode {
   const [scope, setScope] = useState<NotesScope>('all')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selectedIdRef = useRef<string | null>(null)
+  selectedIdRef.current = selectedId
+  const [creating, setCreating] = useState(false)
+  const creatingRef = useRef(false)
   const [draft, setDraft] = useState<NoteDraft | null>(null)
   const [writerReady, setWriterReady] = useState(false)
   const [writerError, setWriterError] = useState<string | null>(null)
@@ -203,6 +214,9 @@ export function NotesPage(): ReactNode {
       timerRef.current = null
     }
     if (pendingRef.current === null) return true
+    // The save may outlive the reader's stay on this note; its status only speaks for the note still open.
+    const savingId = pendingRef.current.id
+    const stillOpen = (): boolean => selectedIdRef.current === savingId
     setSaveState('saving')
     let protectedLocally = false
     try {
@@ -231,12 +245,18 @@ export function NotesPage(): ReactNode {
         ...current,
         pages: current.pages.map((page) => savedById.get(page.id) ?? page)
       }))
-      setSaveState(pendingRef.current === null ? 'saved' : 'unsaved')
-      setError(null)
+      if (stillOpen() || pendingRef.current !== null) setSaveState(pendingRef.current === null ? 'saved' : 'unsaved')
+      if (stillOpen()) setError(null)
       return true
     } catch (saveError) {
-      setSaveState(protectedLocally ? 'error' : 'unprotected')
-      setError(saveError instanceof Error ? saveError.message : String(saveError))
+      if (stillOpen()) {
+        setSaveState(protectedLocally ? 'error' : 'unprotected')
+        setError(saveError instanceof Error ? saveError.message : String(saveError))
+      } else {
+        // The reader has moved on; the draft is protected on this device and the banner offers the way back.
+        console.warn('A note left behind did not sync', { noteId: savingId, cause: saveError })
+        setDeferredNoteIds((current) => current.includes(savingId) ? current : [...current, savingId])
+      }
       return false
     }
   }, [notesApi, saveQueue])
@@ -266,18 +286,33 @@ export function NotesPage(): ReactNode {
     timerRef.current = window.setTimeout(() => void savePending(), 650)
   }, [notesApi, savePending])
 
+  /**
+   * Leaving a note waits only for the device to hold the edit, never for the cloud. The sync continues in
+   * the background, one note at a time, and the note is offered back if it fails to land.
+   */
   const prepareNavigation = useCallback(async (): Promise<boolean> => {
-    if (pendingRef.current === null) return true
-    if (saveState !== 'error' && await savePending()) return true
+    const pending = pendingRef.current
+    if (pending === null) return true
     try {
       await protectionRef.current
-      const pending = pendingRef.current
-      if (pending === null) return true
       const protectedDraft = (await notesApi.pendingDrafts()).find((item) => item.id === pending.id)
       if (protectedDraft?.title !== pending.title || protectedDraft.contentJson !== pending.contentJson) {
         throw new Error('Your latest edit is not saved on this device. Retry saving before leaving this note.')
       }
-      setDeferredNoteIds((current) => current.includes(pending.id) ? current : [...current, pending.id])
+      if (saveState === 'error') setDeferredNoteIds((current) => current.includes(pending.id) ? current : [...current, pending.id])
+      else {
+        // The service orders this after any save of the note already in flight, so nothing is sent out of turn.
+        void notesApi.updatePage(noteContentUpdate(pending)).then((saved) => {
+          setData((current) => ({ ...current, pages: current.pages.map((page) => page.id === saved.id ? saved : page) }))
+          setDeferredNoteIds((current) => current.filter((id) => id !== saved.id))
+          // The reader may still be here if what followed (a new note, a move) did not happen.
+          if (selectedIdRef.current === saved.id && pendingRef.current === null) setSaveState('saved')
+        }, (failure: unknown) => {
+          console.warn('A note left behind did not sync', { noteId: pending.id, cause: failure })
+          setDeferredNoteIds((current) => current.includes(pending.id) ? current : [...current, pending.id])
+        })
+      }
+      if (timerRef.current !== null) { window.clearTimeout(timerRef.current); timerRef.current = null }
       pendingRef.current = null
       setError(null)
       return true
@@ -285,7 +320,7 @@ export function NotesPage(): ReactNode {
       setError(failure instanceof Error ? failure.message : String(failure))
       return false
     }
-  }, [notesApi, savePending, saveState])
+  }, [notesApi, saveState])
 
   const openPage = useCallback(async (pageId: string): Promise<void> => {
     if (!(await prepareNavigation())) return
@@ -313,10 +348,17 @@ export function NotesPage(): ReactNode {
         const requested = requestedNoteIdRef.current === null
           ? null
           : state.pages.find((page) => page.id === requestedNoteIdRef.current) ?? null
-        const initial = requested
-          ?? state.pages.find((page) => page.status === 'active')
-          ?? null
+        // A link names the note; otherwise the reader returns to where they left Notes this session, and
+        // only a fresh session opens the first note.
+        const remembered = requested === null ? recallNotesView() : null
+        const rememberedPage = remembered?.noteId == null ? null : state.pages.find((page) => page.id === remembered.noteId) ?? null
+        // An empty editor left on purpose stays empty; a remembered note that is gone gives way to the first one.
+        const initial = requested ?? rememberedPage ?? (remembered !== null && remembered.noteId === null ? null : state.pages.find((page) => page.status === 'active') ?? null)
         if (requested !== null) setScope(scopeForPage(requested))
+        else if (remembered !== null) {
+          const folderId = activeFolderForScope(remembered.scope)
+          setScope(folderId !== null && !state.folders.some((folder) => folder.id === folderId) ? 'all' : remembered.scope)
+        }
         setSelectedId(initial?.id ?? null)
         setSearchParams(initial === null ? {} : { note: initial.id }, { replace: true })
         setLoading(false)
@@ -337,9 +379,12 @@ export function NotesPage(): ReactNode {
   useEffect(() => {
     let active = true
     let sequence = 0
-    const refresh = (event: Event): void => {
-      const operation = (event as CustomEvent<{ operation?: string }>).detail?.operation
-      if (operation !== undefined && operation !== 'remote_change' && !operation.includes('note')) return
+    let settle: number | null = null
+    let reloadNeeded = false
+    const reload = (): void => {
+      settle = null
+      if (!reloadNeeded) return
+      reloadNeeded = false
       const request = ++sequence
       void protectionRef.current.then(() => notesApi.load()).then((state) => {
         if (!active || request !== sequence) return
@@ -357,8 +402,27 @@ export function NotesPage(): ReactNode {
         if (active) setError(failure instanceof Error ? failure.message : String(failure))
       })
     }
+    let gathered: WorkspaceRowChange[] | undefined = []
+    const refresh = (event: Event): void => {
+      const detail = committedDetail(event)
+      // Commands this page sent already applied their own result; only what the mirror pulled can be news.
+      if (detail === null || detail.operation !== 'remote_change') return
+      if (gathered !== undefined) gathered = detail.changes === undefined ? undefined : [...gathered, ...detail.changes]
+      if (settle !== null) window.clearTimeout(settle)
+      settle = window.setTimeout(() => {
+        // Decided after the settle, when this device's own save has recorded the revision its echo carries.
+        const changes = gathered
+        gathered = []
+        if (notesNeedReload(changes, (id) => notesApi.knownRevision(id))) reloadNeeded = true
+        reload()
+      }, RELOAD_SETTLE_MS)
+    }
     window.addEventListener('manor:committed', refresh)
-    return () => { active = false; window.removeEventListener('manor:committed', refresh) }
+    return () => {
+      active = false
+      if (settle !== null) window.clearTimeout(settle)
+      window.removeEventListener('manor:committed', refresh)
+    }
   }, [notesApi])
 
   useEffect(() => {
@@ -383,6 +447,10 @@ export function NotesPage(): ReactNode {
   }, [searchParams, loading, selectedId, data.pages, openPage])
 
   useEffect(() => {
+    if (!loading) rememberNotesView({ scope, noteId: selectedId })
+  }, [loading, scope, selectedId])
+
+  useEffect(() => {
     if (selectedId === null) { setWriterReady(false); return }
     let active = true
     let release: (() => void) | null = null
@@ -399,6 +467,8 @@ export function NotesPage(): ReactNode {
         setDraft(recovered)
         setSaveState('protected')
       }
+      // Ops a save merged while this note was closed describe a document the new editor already starts from.
+      notesApi.takeMergedBlockOps(selectedId)
       setWriterReady(true)
       if (recovered !== undefined && navigator.onLine) void savePending()
     }).catch((failure: unknown) => { if (active) setWriterError(failure instanceof Error ? failure.message : String(failure)) })
@@ -494,8 +564,12 @@ export function NotesPage(): ReactNode {
   }, [menuOpen])
 
   const createPage = useCallback(async (parentPageId: string | null): Promise<void> => {
-    if (!(await prepareNavigation())) return
+    // One click, one note: a second press while the first is still creating is the same request.
+    if (creatingRef.current) return
+    creatingRef.current = true
+    setCreating(true)
     try {
+      if (!(await prepareNavigation())) return
       const previousIds = new Set(data.pages.map((page) => page.id))
       const parent = parentPageId === null
         ? null
@@ -514,6 +588,9 @@ export function NotesPage(): ReactNode {
       setScope(created.folderId === null ? 'all' : `folder:${created.folderId}`)
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : String(createError))
+    } finally {
+      creatingRef.current = false
+      setCreating(false)
     }
   }, [data.pages, prepareNavigation, scope, selectNoteRoute])
 
@@ -578,11 +655,12 @@ export function NotesPage(): ReactNode {
     setMenuOpen(false)
   }
 
+  /** Changes to the open note go out behind its draft, which the service lands first; nothing here waits on the cloud. */
   const mutateSelected = async (action: () => Promise<NotesState>): Promise<void> => {
-    if (!(await savePending())) return
-    await replaceState(action())
-    selectNoteRoute(null)
+    if (!(await prepareNavigation())) return
     setMenuOpen(false)
+    selectNoteRoute(null)
+    await replaceState(action())
   }
 
   /** The ids plus every page nested under them, which the server moves with them. */
@@ -607,7 +685,7 @@ export function NotesPage(): ReactNode {
 
   /** Lifecycle moves are batch operations with a toast; a move to Trash is reversible from the toast while it shows. */
   const trashPages = async (pageIds: readonly string[]): Promise<void> => {
-    if (!(await savePending())) return
+    if (selectedId !== null && pageIds.includes(selectedId) && !(await prepareNavigation())) return
     const now = new Date().toISOString()
     const state = await moveOptimistically(pageIds, (page) => ({ ...page, status: 'trash', deletedAt: now }), () => notesApi.trashPages(pageIds))
     setMenuOpen(false)
@@ -618,7 +696,6 @@ export function NotesPage(): ReactNode {
 
   /** Restore follows the open note back to its live scope. */
   const restorePages = async (pageIds: readonly string[]): Promise<void> => {
-    if (!(await savePending())) return
     const state = await moveOptimistically(pageIds, (page) => ({ ...page, status: 'active', deletedAt: null, archivedAt: null }), () => notesApi.restorePages(pageIds))
     setMenuOpen(false)
     if (state === null) return
@@ -628,7 +705,6 @@ export function NotesPage(): ReactNode {
   }
 
   const purgePages = async (pageIds: readonly string[]): Promise<void> => {
-    if (!(await savePending())) return
     setPurgeRequest(null)
     const state = await moveOptimistically(pageIds, () => null, () => notesApi.purgePages(pageIds))
     setMenuOpen(false)
@@ -638,7 +714,7 @@ export function NotesPage(): ReactNode {
   }
 
   const duplicateSelected = async (pageId: string): Promise<void> => {
-    if (!(await savePending())) return
+    if (pageId === selectedId && !(await prepareNavigation())) return
     setMenuOpen(false)
     const previousIds = new Set(data.pages.map((page) => page.id))
     const state = await replaceState(notesApi.duplicatePage(pageId))
@@ -653,7 +729,6 @@ export function NotesPage(): ReactNode {
   const exportMarkdown = async (): Promise<void> => {
     if (selectedPage === null) return
     const contentJson = draft?.id === selectedPage.id ? draft.contentJson : selectedPage.contentJson
-    if (!(await savePending())) return
     setMenuOpen(false)
     try {
       const module = await loadRichNoteEditor()
@@ -694,7 +769,7 @@ export function NotesPage(): ReactNode {
     const files = [...(event.target.files ?? [])]
     event.target.value = ''
     if (files.length === 0) return
-    if (!(await savePending())) return
+    if (!(await prepareNavigation())) return
     const previousIds = new Set(data.pages.map((page) => page.id))
     const folderId = activeFolderForScope(scope)
     const failures: string[] = []
@@ -762,9 +837,8 @@ export function NotesPage(): ReactNode {
     return (): void => window.removeEventListener('keydown', onKeyDown)
   }, [selectedId])
 
-  /** Favorites flush the pending draft first so the list row never shows stale data. */
+  /** The star flips at once; the service lands the note's draft before the favorite change goes out. */
   const toggleFavorite = async (page: NotePage): Promise<void> => {
-    if (!(await savePending())) return
     await moveOptimistically([page.id], (candidate) => candidate.id === page.id ? { ...candidate, favorite: !page.favorite } : candidate, () => notesApi.setFavorite({ id: page.id, favorite: !page.favorite }))
   }
 
@@ -775,9 +849,10 @@ export function NotesPage(): ReactNode {
 
   const moveEditorBlocks = useCallback(async (blockIds: readonly string[], targetNoteId: string): Promise<void> => {
     if (selectedId === null) throw new Error('Open a note before moving blocks')
-    if (!(await savePending())) throw new Error('Sync your changes before moving blocks')
+    // The moved blocks leave this editor for good; what the device holds goes out first, then the move.
+    if (!(await prepareNavigation())) throw new Error('Protect your changes before moving blocks')
     setData(await notesApi.moveBlocks({ sourceNoteId: selectedId, targetNoteId, blockIds }))
-  }, [notesApi, savePending, selectedId])
+  }, [notesApi, prepareNavigation, selectedId])
 
   const activeCount = data.pages.filter((page) => page.status === 'active').length
   const favoriteCount = data.pages.filter((page) => page.status === 'active' && page.favorite).length
@@ -794,7 +869,7 @@ export function NotesPage(): ReactNode {
           <div className="notes-nav-head">
             <strong>Notes</strong>
             <div className="notes-pane-actions">
-              {!navigationCollapsed ? <button type="button" className="notes-icon-button" aria-label="New note" onClick={() => void createPage(null)}><FilePlus2 size={16} /></button> : null}
+              {!navigationCollapsed ? <button type="button" className="notes-icon-button" aria-label="New note" aria-busy={creating} disabled={creating} onClick={() => void createPage(null)}><FilePlus2 size={16} /></button> : null}
               <NotesPaneToggle collapsed={navigationCollapsed} panelId="notes-navigation" label="Notes navigation" onToggle={() => setNavigationCollapsed(!navigationCollapsed)} />
             </div>
           </div>
@@ -834,7 +909,7 @@ export function NotesPage(): ReactNode {
         </nav>
 
         <NotesList rows={rows} title={scopeTitle(scope, data.folders)} loading={loading} collapsed={listCollapsed} onToggleCollapsed={() => setListCollapsed(!listCollapsed)}
-          canCreate={scope !== 'trash' && scope !== 'archived'} onCreate={() => void createPage(null)} openId={selectedId} selection={selection} onSelectionChange={setSelection}
+          canCreate={scope !== 'trash' && scope !== 'archived'} creating={creating} onCreate={() => void createPage(null)} openId={selectedId} selection={selection} onSelectionChange={setSelection}
           onOpen={(pageId) => void openPage(pageId)} onTrash={(ids) => void trashPages(ids)} onRestore={(ids) => void restorePages(ids)} onPurge={setPurgeRequest}
           onToggleFavorite={(page) => void toggleFavorite(page)} onDuplicate={(pageId) => void duplicateSelected(pageId)} />
 

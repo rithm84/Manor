@@ -1,6 +1,6 @@
 # Manor PRD
 
-_Last updated: 2026-09-18_
+_Last updated: 2026-09-23_
 
 This page defines what Manor does: its behavior, business rules, and scope. The technical design, storage, execution, deployment, and recovery mechanisms are in the [architecture](ARCHITECTURE.md), and the visual direction is in the [design charter](DESIGN.md).
 
@@ -153,7 +153,7 @@ Cross-column board drops and stage-menu moves open the role dialog as an unsaved
 
 ### Notes
 
-Notes is a cloud-backed document workspace with protected device-local drafts and queued saves. Pages keep folders, their hierarchy, favorites, recents, archive, Trash, full-text search, duplication, movement, Markdown import and export, and durable app-owned attachments. The Notion parity target concerns document editing; it doesn't extend Manor into Notion databases, shared workspaces, or general project management. Notes navigation and the note list collapse independently into slim rails, preserving the open editor and remembering each panel's visibility on the device.
+Notes is a cloud-backed document workspace with protected device-local drafts and queued saves. Pages keep folders, their hierarchy, favorites, recents, archive, Trash, full-text search, duplication, movement, Markdown import and export, and durable app-owned attachments. The Notion parity target concerns document editing; it doesn't extend Manor into Notion databases, shared workspaces, or general project management. Notes navigation and the note list collapse independently into slim rails, preserving the open editor and remembering each panel's visibility on the device. Coming back to Notes during a session reopens the list and note you left, not the most recently edited one; a relaunch starts on the first note. Moving between notes, starring, moving, trashing, and creating never wait for the cloud: the edit is protected on the Mac, the save continues in the background, and a note that fails to sync is offered back.
 
 The target is full Notion parity for note-taking fundamentals and rich content, including the editing UX: paragraphs, headings, lists (including document-local checkboxes), toggles, quotes, dividers, callouts, highlighted code, inline formatting and links, text and background colors, simple tables, images, audio, video, files, internal page mentions, equations, a live table of contents, web bookmarks, sandboxed embeds, and responsive column layouts. Document checkboxes don't create or synchronize Manor tasks. Image handling includes distinct captions and alt text, resizing, and cropping, and attachment insertion, replacement, and failure recovery are complete workflows.
 

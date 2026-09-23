@@ -1,6 +1,6 @@
 # Manor architecture
 
-_Last updated: 2026-09-18_
+_Last updated: 2026-09-23_
 
 Manor is a macOS desktop app: a React frontend built with Vite inside a Tauri shell, with Supabase behind it. This page describes how the pieces fit together, the rules each part follows, and what remains to verify. Product behavior lives in the [PRD](PRD.md) and the visual direction in the [design charter](DESIGN.md).
 
@@ -245,7 +245,9 @@ Releases never interrupt editing: the update notice refuses to restart while a d
 
 Only one writer replays a given document queue at a time, and the saves for one note run strictly in order so each replay reads the base revision committed by the save before it. Idempotency survives relaunches. The revision a device knows for a note only moves forward: a refetch that started before a save returns older rows, and those never replace the newer copy the device already holds. When a save reports a moved revision, the client re-bases at the block level. It fetches the version the draft started from (the server keeps every superseded version) and merges the draft with the server document by stable block id: edits to different blocks combine, a reordering by one side is kept, and the foreign blocks are applied to the open editor as block operations so the cursor and undo history in other blocks survive. The merged draft is then sent again. A block changed differently on both sides, a block one side edited and the other removed, both sides reordering, or both sides retitling is a real conflict, and **Compare versions** opens with both copies. Agent operations use stable block IDs and expected versions, and a refetch never overwrites unsaved keystrokes.
 
-After a cloud-save failure, Notes navigation verifies that the exact current draft is committed in IndexedDB before another note or scope opens. The failed draft and attachment bytes stay protected, with a notice linking back to the note for retry. Actions that need cloud consistency keep their save guard, and failed local protection blocks leaving the note.
+Leaving a note waits only for the device: navigation verifies that the exact current draft is committed in IndexedDB before another note or scope opens, then hands the draft to the service, which sends it behind any save already in flight while the next note opens. Favorites, moves, Trash, restore, duplication, and block moves apply optimistically the same way; the service lands the note's protected draft before any other change to that note goes out, so a slow connection delays the receipt, never the interaction. A save that fails after the reader has moved on leaves the draft and attachment bytes protected, with a notice linking back to the note for retry, and failed local protection blocks leaving the note. Creating a note is one request at a time: the create controls disable until the note exists, so repeated clicks during a slow save cannot create duplicates.
+
+The `manor:committed` event a mirror pull dispatches names the rows it re-read or removed with their revisions. Notes folds the pulls of a short window together and reloads once only when a pull carried a folder change, a removal, or a page revision the device does not already hold; the echo of this device's own save, whose revision the service adopted from the command receipt, causes no reload. The whole-corpus snapshot in IndexedDB is rewritten only when a reload changed a page or folder. Within a session, Notes reopens on the list and note the reader last had open; a relaunch or sign-out forgets that place.
 
 ### Suggestions and document versions
 

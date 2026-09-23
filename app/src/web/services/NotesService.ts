@@ -8,7 +8,7 @@ import {
   type NoteSuggestionReview, type NoteVersion
 } from '../../shared/notes'
 import { ManorGateway, ManorConnectionError, ManorRequestError, type JsonObject, type JsonValue } from '../ManorGateway'
-import { NoteDraftStore } from '../notes/NoteDraftStore'
+import { NoteDraftStore, type NotesSnapshot } from '../notes/NoteDraftStore'
 import { mergeDocuments, type BlockOp } from '../../shared/noteMerge'
 
 function note(row: JsonObject): NotePage {
@@ -21,6 +21,19 @@ function note(row: JsonObject): NotePage {
 /** Whether this device opened the note after the moment the row it just read records. */
 function openedLater(kept: NotePage, read: NotePage): boolean {
   return Date.parse(kept.lastOpenedAt) > Date.parse(read.lastOpenedAt)
+}
+
+/** Whether a fresh read says nothing the stored snapshot does not: same folders, same pages at the same revisions and openings. */
+function sameSnapshot(previous: NotesSnapshot, state: NotesState, revisions: ReadonlyMap<string, number>): boolean {
+  if (previous.state.folders.length !== state.folders.length || previous.state.pages.length !== state.pages.length) return false
+  if (!previous.state.folders.every((folder, index) => { const next = state.folders[index]; return next !== undefined && folder.id === next.id && folder.name === next.name && folder.parentFolderId === next.parentFolderId && folder.updatedAt === next.updatedAt })) return false
+  if (!previous.state.pages.every((page, index) => {
+    const next = state.pages[index]
+    return next !== undefined && page.id === next.id && page.updatedAt === next.updatedAt && page.lastOpenedAt === next.lastOpenedAt
+      && page.status === next.status && page.favorite === next.favorite && page.folderId === next.folderId && page.parentPageId === next.parentPageId
+  })) return false
+  for (const [id, revision] of revisions) if (previous.revisions[id] !== revision) return false
+  return true
 }
 
 /** Fill absent imported IDs once, preserving every existing ID and unrelated JSON property. */
@@ -209,7 +222,11 @@ export class NotesService implements NotesApi {
             return revision < known || (revision === known && openedLater(kept, current)) ? kept : current
           })
         }
-        await this.drafts.saveSnapshot({ accountId: this.gateway.accountId, state, revisions: Object.fromEntries(this.revisions) })
+        // The snapshot is the whole corpus in one record; writing it back for a read that changed nothing is the
+        // cost that made every save feel slow, so only a moved row, folder, or revision earns the write.
+        if (previous === null || !sameSnapshot(previous, state, this.revisions)) {
+          await this.drafts.saveSnapshot({ accountId: this.gateway.accountId, state, revisions: Object.fromEntries(this.revisions) })
+        }
       } catch (error) {
         if (!(error instanceof ManorConnectionError)) throw error
         state = await this.cachedState()
@@ -222,10 +239,25 @@ export class NotesService implements NotesApi {
     }) }
   }
 
-  private async command(operation: string, id: string, input: JsonObject): Promise<NotePage> {
-    await this.saves.get(id) // a save already in flight lands first, so its draft does not block this change
+  /**
+   * Lands whatever this device still holds for a note before another change to it goes out: the save in
+   * flight, then the protected draft it may have left behind. A draft in conflict stays put and the change waits.
+   */
+  private async flushDraft(id: string): Promise<void> {
+    await this.saves.get(id)
     const pending = await this.drafts.read(this.gateway.accountId, id)
-    if (pending !== null) throw new Error('Finish syncing your local changes before changing this note')
+    if (pending === null) return
+    const release = this.writerLocks.owns(id) ? null : await this.acquireWriter(id)
+    try { await this.updatePage({ id, title: pending.title, contentJson: pending.contentJson }) }
+    finally { release?.() }
+  }
+
+  knownRevision(noteId: string): number | null {
+    return this.revisions.get(noteId) ?? null
+  }
+
+  private async command(operation: string, id: string, input: JsonObject): Promise<NotePage> {
+    await this.flushDraft(id)
     const revision = this.revisions.get(id)
     if (revision === undefined) throw new Error('Load the note before changing it')
     const result = await this.gateway.command(operation, { ...input, id, expected_revision: revision }, crypto.randomUUID())
@@ -431,10 +463,8 @@ export class NotesService implements NotesApi {
   }
 
   async moveBlocks(request: { sourceNoteId: string; targetNoteId: string; blockIds: readonly string[] }): Promise<NotesState> {
-    const pending = await this.pendingDrafts()
-    if (pending.some((draft) => draft.id === request.sourceNoteId || draft.id === request.targetNoteId)) {
-      throw new Error('Sync the source and destination notes before moving blocks')
-    }
+    await this.flushDraft(request.sourceNoteId)
+    await this.flushDraft(request.targetNoteId)
     const sourceRevision = this.revisions.get(request.sourceNoteId)
     const targetRevision = this.revisions.get(request.targetNoteId)
     if (sourceRevision === undefined || targetRevision === undefined) throw new Error('Load both notes before moving blocks')

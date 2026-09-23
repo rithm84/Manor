@@ -1,6 +1,7 @@
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
 
 import { dateInTimezone } from '../../shared/timezone'
+import type { WorkspaceRowChange } from '../../shared/workspaceChanges'
 import { isManorTable, ManorConnectionError, type JsonObject, type JsonValue, type ManorGateway, type ManorTable } from '../ManorGateway'
 import { IDENTITY_BATCH_LIMITS, readIdentityRows } from './identityReads'
 import type { DerivedName, MirrorRow, MirrorStatus, MirrorStore } from './MirrorStore'
@@ -248,6 +249,7 @@ export class MirrorSync {
     // Tables with a feed trigger that the mirror does not hold. Their rows still reach pages through the
     // query cache and the committed event, so a change to one of them invalidates and announces as before.
     const ignored = new Set<ManorTable>()
+    const rows: WorkspaceRowChange[] = []
     let applied = false
     for (let page = 0; ; page += 1) {
       if (page === MAX_FEED_BATCHES) {
@@ -264,6 +266,8 @@ export class MirrorSync {
       for (const [table, tableChanges] of batch.tables) {
         await this.applyTable(table, tableChanges)
         touched.add(table)
+        if (tableChanges.fullRefresh) rows.push({ table, id: null, revision: null, action: 'reread' })
+        for (const change of tableChanges.byKey.values()) rows.push({ table, id: change.identity.get('id') ?? null, revision: change.revision, action: change.action })
       }
       this.guardRunning()
       await this.store.commit(this.gateway.accountId, batch.lastCursor, true)
@@ -279,7 +283,9 @@ export class MirrorSync {
     }
     const invalidated: ManorTable[] = [...touched, ...ignored]
     if (invalidated.length > 0) await this.gateway.invalidateTables(invalidated)
-    this.announce()
+    // Object types the mirror does not hold are named by table only; a page that reads them reloads.
+    for (const table of ignored) rows.push({ table, id: null, revision: null, action: 'reread' })
+    this.announce(rows)
   }
 
   private async applyTable(table: MirrorTable, changes: TableChanges): Promise<void> {
@@ -333,8 +339,9 @@ export class MirrorSync {
     })
   }
 
-  private announce(): void {
-    window.dispatchEvent(new CustomEvent('manor:committed', { detail: { operation: 'remote_change' } }))
+  /** Tells pages a pull landed; `changes` names the rows when the pull could, so a page can skip a reload it does not need. */
+  private announce(changes?: readonly WorkspaceRowChange[]): void {
+    window.dispatchEvent(new CustomEvent('manor:committed', { detail: { operation: 'remote_change', changes } }))
   }
 
   private async report(): Promise<MirrorStatus> {
