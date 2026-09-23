@@ -4,6 +4,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolRequest } f
 import { createRemoteJWKSet, jwtVerify, errors as jwtErrors } from 'npm:jose@6.2.12'
 import { z } from 'npm:zod@4.5.0'
 import { manorTools, type JsonObject, type JsonValue } from '../_shared/toolCatalog.ts'
+import { markdownToNoteBlocks } from '../_shared/markdownImport.ts'
 import { executeManorTool, findManorTool, type ManorToolClient } from '../_shared/toolExecution.ts'
 import { OriginNotAllowedError, originHeaders, requestOrigin } from '../_shared/origins.ts'
 
@@ -30,6 +31,9 @@ class UserRpcClient implements ManorToolClient {
   }
   async invoke(name: string, parameters: JsonObject): Promise<JsonValue> {
     return this.request('functions/v1', name, parameters)
+  }
+  convertMarkdown(markdown: string, assets: Readonly<Record<string, JsonValue>>) {
+    return markdownToNoteBlocks(markdown, assets)
   }
   private async request(route: string, name: string, parameters: JsonObject): Promise<JsonValue> {
     for (let attempt = 1; attempt <= 3; attempt += 1) {

@@ -42,7 +42,7 @@ export const scenes = {
       N('db', 'Postgres', 570, 300, { note: 'RLS, commands, history, cron', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
       N('files', 'Storage', 570, 470, { note: 'private manor-files bucket', icon: I.objectStorage, fill: fill.storage, stroke: S.storage }),
       N('workers', 'Workers', 900, 300, { note: 'integrations, jobs, embeddings', icon: I.microservice, fill: fill.supabase, stroke: S.supabase }),
-      N('mcp', 'manor-mcp', 900, 680, { note: 'Edge Function, 121 operations', icon: I.code, fill: fill.supabase, stroke: S.supabase }),
+      N('mcp', 'manor-mcp', 900, 680, { note: 'Edge Function, 122 operations', icon: I.code, fill: fill.supabase, stroke: S.supabase }),
       N('google', 'Google', 1230, 130, { note: 'identity, Calendar (read-only)', icon: I.cloud, fill: fill.external, stroke: S.external }),
       N('x', 'X bookmarks', 1230, 300, { icon: I.star, fill: fill.external, stroke: S.external }),
       N('simplify', 'SimplifyJobs', 1230, 470, { note: 'listings.json on GitHub', icon: I.github, fill: fill.external, stroke: S.external }),
@@ -134,7 +134,7 @@ export const scenes = {
       N('consent', 'Consent in the app', 490, 380, { note: 'from the browser; read or read-write, revocable', icon: I.webApp, fill: fill.supabase, stroke: S.supabase }),
       N('token', 'Scoped token', 720, 380, { note: 'client_id claim, refresh, revocation', icon: I.password, fill: fill.app, stroke: S.app }),
       N('rls', 'Row-level security', 1040, 255, { note: 'user_id = (select auth.uid()) and MCP scope policies', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
-      N('ops', '121 operations', 1290, 255, { note: '48 reads, 73 writes, one catalog', icon: I.code, fill: fill.storage, stroke: S.storage })
+      N('ops', '122 operations', 1290, 255, { note: '48 reads, 74 writes, one catalog', icon: I.code, fill: fill.storage, stroke: S.storage })
     ],
     edges: [
       E('google', 'gate', { color: S.external }), E('gate', 'hook', { color: S.jobs }), E('hook', 'session', { color: S.supabase }),

@@ -1,6 +1,6 @@
 {
   "lockfileVersion": 1,
-  "generated": "2026-09-09T20:50:17+00:00",
+  "generated": "2026-09-23T23:51:08+00:00",
   "sources": {
     "emilkowalski/skills": {
       "repo": "https://github.com/emilkowalski/skills",
@@ -122,6 +122,19 @@
           "path": ".agents/skills/general/gh-cli",
           "files": {
             "SKILL.md": "sha256:18e53a9f4c154406a072ed4cfbc524d40f9a4734ef25102086c1ef5e24113a76"
+          }
+        }
+      }
+    },
+    "manor (authored in this repository)": {
+      "repo": null,
+      "ref": null,
+      "commit": null,
+      "skills": {
+        "manor-import": {
+          "path": ".agents/skills/general/manor-import",
+          "files": {
+            "SKILL.md": "sha256:1b39c95187869441615ad817cc6c1a149abb05c0a0935240f3ac21a28da34cea"
           }
         }
       }
