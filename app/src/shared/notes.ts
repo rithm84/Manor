@@ -145,6 +145,8 @@ export interface NotesApi {
   purgePages: (pageIds: readonly string[]) => Promise<NotesState>
   /** Editor ops from the latest save that merged foreign block changes into this note, handed over once. */
   takeMergedBlockOps: (pageId: string) => readonly BlockOp[]
+  /** The highest revision this device has seen for a note, or null before it was loaded. */
+  knownRevision: (pageId: string) => number | null
   uploadAttachment: (upload: NoteAttachmentUpload) => Promise<NoteAttachment>
   resolveAttachment: (attachmentId: string) => Promise<string>
 }

@@ -15,6 +15,7 @@ import { Button, Kbd } from '../components/ui'
 import { setSoundsEnabled, soundsEnabled } from '../sound/sounds'
 import { accountErrorMessage, useAvatar, useCurrentAccount } from './welcome/accountSession'
 import { SettingsRow, SettingsToggle } from './settings/controls'
+import { forgetNotesView } from './notes/notesSession'
 import { PageShell } from './PageShell'
 import './settings/settings.css'
 
@@ -145,6 +146,7 @@ export function SettingsPage(): ReactNode {
           setSignOutError('Your notes have unsynced changes. Stay signed in until they finish saving.');
           return
         }
+        forgetNotesView()
         setAccount(null)
       })
       .catch((cause: unknown) => {
