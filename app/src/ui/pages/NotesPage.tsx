@@ -348,12 +348,11 @@ export function NotesPage(): ReactNode {
         const requested = requestedNoteIdRef.current === null
           ? null
           : state.pages.find((page) => page.id === requestedNoteIdRef.current) ?? null
-        // A link names the note; otherwise the reader returns to where they left Notes this session, and
-        // only a fresh session opens the first note.
+        // A link names the note; otherwise the reader returns to where they left Notes this session. A fresh
+        // session, or a remembered note that is gone, starts with the list and no note open.
         const remembered = requested === null ? recallNotesView() : null
         const rememberedPage = remembered?.noteId == null ? null : state.pages.find((page) => page.id === remembered.noteId) ?? null
-        // An empty editor left on purpose stays empty; a remembered note that is gone gives way to the first one.
-        const initial = requested ?? rememberedPage ?? (remembered !== null && remembered.noteId === null ? null : state.pages.find((page) => page.status === 'active') ?? null)
+        const initial = requested ?? rememberedPage
         if (requested !== null) setScope(scopeForPage(requested))
         else if (remembered !== null) {
           const folderId = activeFolderForScope(remembered.scope)

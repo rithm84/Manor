@@ -4,7 +4,7 @@ import { forgetNotesView, recallNotesView, rememberNotesView } from './notesSess
 describe('notes session memory', () => {
   beforeEach(() => forgetNotesView())
 
-  it('starts empty so a fresh session opens the first note', () => {
+  it('starts empty so a fresh session opens Notes with no note selected', () => {
     expect(recallNotesView()).toBeNull()
   })
 
