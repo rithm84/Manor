@@ -108,11 +108,13 @@ export async function createDesktopShell(): Promise<DesktopShell> {
   }
   booting = false
   seenWhileBooting.clear()
+  // Capture phase: a link inside a clickable row stops the click from bubbling so the row stays put, and that
+  // must not keep the link itself from opening.
   document.addEventListener('click', (event) => {
     const departing = departingLink(event.target)
     if (departing === null) return
     event.preventDefault()
     void openUrl(departing).catch((cause: unknown) => console.error('Manor could not open a link in the browser', { cause }))
-  })
+  }, { capture: true })
   return new DesktopShell(scheme, launchedAtMs, inbox)
 }
