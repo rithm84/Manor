@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-09-14_
+_Last updated: 2026-09-23_
 
 Operational guide for coding agents working on Manor.
 
@@ -96,7 +96,8 @@ commit + per-file hashes — update it whenever the inventory changes).
 
 Additional skills preserve their source grouping: `browser-related/` contains
 `agent-browser` and the `chrome-devtools-mcp/` suite; `general/` contains
-`excalidraw-toolkit/` and `gh-cli`. Each skill has a leaf-name discovery symlink
+`excalidraw-toolkit/`, `gh-cli`, and `manor-import`, the Manor-authored recipe an
+agent follows to import Markdown with its assets through the MCP tools. Each skill has a leaf-name discovery symlink
 under `.claude/skills/`, matching the existing convention. Installing skill
 instructions does not install the external CLIs or MCP servers they reference.
 

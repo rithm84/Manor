@@ -1,7 +1,15 @@
 import { FILE_VERIFICATION_CHUNK_BYTES, MAX_FILE_UPLOAD_BYTES } from './fileUploadPolicy.ts'
 import { manorTools, type JsonObject, type JsonValue, type ManorTool } from './toolCatalog.ts'
 
-export interface ManorToolClient { rpc(name: string, parameters: JsonObject): Promise<JsonValue>; invoke(name: string, parameters: JsonObject): Promise<JsonValue> }
+/** A local path the Markdown referenced that no uploaded file was mapped to; `block_id` names the empty media block awaiting it. */
+export interface MarkdownConversionAsset { path: string; kind: 'image' | 'file'; block_id: string | null; label: string }
+export interface MarkdownConversion { blocks: JsonObject[]; assets: MarkdownConversionAsset[]; notes: string[]; frontMatter: string | null }
+export interface ManorToolClient {
+  rpc(name: string, parameters: JsonObject): Promise<JsonValue>
+  invoke(name: string, parameters: JsonObject): Promise<JsonValue>
+  /** Hosts that can convert Markdown provide this; others cannot serve the Markdown import tool. */
+  convertMarkdown?(markdown: string, assets: Readonly<Record<string, JsonValue>>): MarkdownConversion
+}
 export function findManorTool(name: string): ManorTool {
   const tool = manorTools.find((candidate: ManorTool): boolean => candidate.name === name)
   if (!tool) throw new Error(`Unsupported Manor tool: ${name}`)
@@ -68,6 +76,36 @@ export async function executeManorTool(name: string, input: JsonObject, client: 
     })
     return client.rpc('manor_batch', { p_commands: commands })
   }
+  if (execution.kind === 'markdown') return importMarkdownNote(input, client)
   const { command_id, ...fields } = input
   return client.rpc('manor_command', { p_command_id: command_id, p_operation: execution.operation, p_input: fields })
+}
+
+/**
+ * Revision 0 creates the note through `import_note`, which checks every attachment reference; the current
+ * revision of an existing note replaces its title and content through `update_note`. Either way the receipt
+ * carries the local assets still to upload and what the conversion could not keep.
+ */
+async function importMarkdownNote(input: JsonObject, client: ManorToolClient): Promise<JsonValue> {
+  if (client.convertMarkdown === undefined) throw new Error('Markdown import is not available on this host')
+  const { command_id, id, expected_revision, title, folder_id, parent_page_id, markdown, assets } = input
+  if (typeof markdown !== 'string') throw new TypeError('Markdown import requires the markdown text')
+  const mapping = assets === undefined || assets === null ? {} : object(assets)
+  const conversion = client.convertMarkdown(markdown, mapping)
+  const creating = expected_revision === 0
+  const operation = creating ? 'import_note' : 'update_note'
+  const fields: JsonObject = creating
+    ? { id, expected_revision, format: 'block_json', title, folder_id: folder_id ?? null, parent_page_id: parent_page_id ?? null, content_json: conversion.blocks }
+    : { id, expected_revision, title, content_json: conversion.blocks }
+  const receipt = object(await client.rpc('manor_command', { p_command_id: command_id, p_operation: operation, p_input: fields }))
+  return { ...receipt, import: { block_count: countBlocks(conversion.blocks), assets: conversion.assets.map((asset): JsonObject => ({ ...asset })), notes: conversion.notes, front_matter: conversion.frontMatter } }
+}
+
+function countBlocks(blocks: readonly JsonValue[]): number {
+  let count = 0
+  for (const block of blocks) {
+    count += 1
+    if (block !== null && typeof block === 'object' && !Array.isArray(block) && Array.isArray(block.children)) count += countBlocks(block.children)
+  }
+  return count
 }

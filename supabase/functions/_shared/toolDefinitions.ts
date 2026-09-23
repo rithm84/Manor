@@ -24,6 +24,8 @@ export type ToolExecution =
   | { kind: 'batch'; operation: string }
   | { kind: 'lifecycle_batch'; operations: { [module: string]: string } }
   | { kind: 'rpc'; rpc: string; argumentMap: { [key: string]: string } }
+  /** Markdown converted on the host into native blocks, then created or replaced through the note commands. */
+  | { kind: 'markdown' }
 export interface ManorTool {
   name: string
   description: string
