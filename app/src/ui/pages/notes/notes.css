@@ -497,6 +497,8 @@
 }
 .note-block-editor .bn-editor { min-height: 420px; padding-inline: 38px; background: transparent; font-family: var(--font-ui); font-size: 16px; line-height: 1.5; }
 .note-block-editor .bn-editor:focus-visible { outline: none; box-shadow: none; }
+/* Links open on click, so the pointer says so instead of the text caret the editable surface shows elsewhere. */
+.note-block-editor .bn-editor a[data-inline-content-type='link'] { cursor: pointer; }
 .note-block-editor [data-content-type='heading'] { color: var(--ink); font-family: var(--font-heading, var(--font-ui)); letter-spacing: -0.015em; }
 .note-block-editor [data-content-type='codeBlock'],
 .note-block-editor code { font-family: var(--font-mono); }
