@@ -11,6 +11,8 @@ let audioContext: AudioContext | null = null
 let cachedNoise: AudioBuffer | null = null
 let warnedUnavailable = false
 let completionTick: AudioBuffer | null = null
+/** The context clock against the wall clock at the last playback, to notice a context that stopped advancing. */
+let lastClock: { audio: number; wall: number } | null = null
 
 /** The bundler inlines the recording as a base64 data URL, so its bytes come
     straight out of the bundle rather than back over the network. */
@@ -44,10 +46,17 @@ export function preloadCompletionSound(): void {
       console.error('Manor could not decode the checkbox completion sound', { error })
     })
   const resume = (): void => {
-    contextForPlayback()
+    void contextForPlayback()
   }
   window.addEventListener('pointerdown', resume, { capture: true, once: true })
   window.addEventListener('keydown', resume, { capture: true, once: true })
+  /* macOS pauses the context while the Mac sleeps or another app takes the
+     output, and the pause outlives the wake. Coming back to the window is the
+     moment to bring it back, so the next check plays instead of the one after. */
+  window.addEventListener('focus', resume)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') resume()
+  })
 }
 
 export function soundsEnabled(): boolean {
@@ -70,10 +79,46 @@ function audioContextOrNull(): AudioContext | null {
   return audioContext
 }
 
-function contextForPlayback(): AudioContext | null {
-  const context = audioContextOrNull()
-  if (context !== null && context.state === 'suspended') void context.resume()
-  return context
+/** A context that reports `running` but whose clock stopped is dead: WebKit
+    leaves it that way after the output device changes (headphones, AirPods,
+    a display's speakers). Nothing scheduled on it will ever sound. */
+function clockStalled(context: AudioContext): boolean {
+  if (context.state !== 'running' || lastClock === null) return false
+  const wallElapsed = (performance.now() - lastClock.wall) / 1000
+  const audioElapsed = context.currentTime - lastClock.audio
+  return wallElapsed > 1.5 && audioElapsed < 0.05
+}
+
+function replaceContext(): AudioContext | null {
+  const stale = audioContext
+  audioContext = null
+  cachedNoise = null
+  lastClock = null
+  if (stale !== null) void stale.close().catch(() => undefined)
+  // The decoded recording is not tied to a context; a new one resamples it if its rate differs.
+  return audioContextOrNull()
+}
+
+/** The context to schedule on, running. Resolves once it is running again if
+    the system paused it; `null` when WebAudio is unavailable. A state other
+    than `running` includes WebKit's `interrupted`, which the type omits. */
+function contextForPlayback(): Promise<AudioContext | null> {
+  let context = audioContextOrNull()
+  if (context === null) return Promise.resolve(null)
+  if (context.state === 'closed' || clockStalled(context)) {
+    context = replaceContext()
+    if (context === null) return Promise.resolve(null)
+  }
+  const ready: Promise<unknown> = (context.state as string) === 'running'
+    ? Promise.resolve()
+    : Promise.race([context.resume(), new Promise((resolve) => window.setTimeout(resolve, 250))])
+  const settled = context
+  return ready
+    .catch(() => undefined)
+    .then(() => {
+      lastClock = { audio: settled.currentTime, wall: performance.now() }
+      return settled
+    })
 }
 
 function noiseBuffer(context: AudioContext): AudioBuffer {
@@ -144,11 +189,12 @@ function scheduleThump(context: AudioContext, now: number, step: ThumpStep): voi
 
 function playTexture(taps: readonly TapStep[], thumps: readonly ThumpStep[]): void {
   if (!soundsEnabled()) return
-  const context = contextForPlayback()
-  if (context === null) return
-  const now = context.currentTime
-  for (const tap of taps) scheduleTap(context, now, tap)
-  for (const thump of thumps) scheduleThump(context, now, thump)
+  void contextForPlayback().then((context) => {
+    if (context === null) return
+    const now = context.currentTime
+    for (const tap of taps) scheduleTap(context, now, tap)
+    for (const thump of thumps) scheduleThump(context, now, thump)
+  })
 }
 
 /** Dry mechanical click for snappy placements: kanban drops, habit checks.
@@ -190,13 +236,14 @@ export function playSessionChime(kind: 'focus' | 'break'): void {
     starts on the click itself rather than after a media element warms up. */
 export function playCompletionTick(): void {
   if (!soundsEnabled()) return
-  const context = contextForPlayback()
-  if (context === null) return
   // A tick that beats the startup decode plays nothing rather than waiting on
   // the decoder; a decode that failed already reported itself.
   if (completionTick === null) return
-  const source = context.createBufferSource()
-  source.buffer = completionTick
-  source.connect(context.destination)
-  source.start()
+  void contextForPlayback().then((context) => {
+    if (context === null || completionTick === null) return
+    const source = context.createBufferSource()
+    source.buffer = completionTick
+    source.connect(context.destination)
+    source.start()
+  })
 }

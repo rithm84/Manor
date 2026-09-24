@@ -88,7 +88,7 @@ interface PortableOtherInline {
 
 type PortableInline = PortableText | PortableMath | PortableOtherInline
 
-interface PortableBlock {
+export interface PortableBlock {
   id?: string
   type: string
   props?: Record<string, string | number | boolean>
@@ -256,6 +256,49 @@ function portablePlainText(content: PortableBlock['content']): string {
 
 function markdownSlug(value: string): string {
   return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
+}
+
+/**
+ * The block a document fragment points at: `#block=<id>` names a block directly; any other fragment is a heading
+ * slug the way Markdown tables of contents write them, with `-2`, `-3` suffixes for repeated titles.
+ */
+export function blockIdForFragment(blocks: readonly PortableBlock[], fragment: string): string | null {
+  const hash = decodeURIComponent(fragment.replace(/^#/, '')).trim()
+  if (hash === '') return null
+  if (hash.startsWith('block=')) return hash.slice('block='.length) || null
+  // Other tools keep a hyphen per dropped character ("a--b"), Manor's export collapses them; both resolve.
+  const wanted = hash.toLowerCase().replace(/-+/g, '-')
+  const seen = new Map<string, number>()
+  const visit = (items: readonly PortableBlock[]): string | null => {
+    for (const block of items) {
+      if (block.type === 'heading') {
+        const base = markdownSlug(portablePlainText(block.content))
+        const count = seen.get(base) ?? 0
+        seen.set(base, count + 1)
+        const slug = count === 0 ? base : `${base}-${count + 1}`
+        if (slug === wanted && typeof block.id === 'string') return block.id
+      }
+      const inChildren = visit(block.children ?? [])
+      if (inChildren !== null) return inChildren
+    }
+    return null
+  }
+  return visit(blocks)
+}
+
+/** A link that stays inside the note (`#heading-slug` or `#block=<id>`), or `null` for anything else. */
+export function fragmentLink(target: EventTarget | null, within: Element): string | null {
+  const anchor = target instanceof Element ? target.closest('a') : null
+  if (anchor === null || !within.contains(anchor)) return null
+  const href = anchor.getAttribute('href')
+  if (href === null) return null
+  if (href.startsWith('#')) return href
+  try {
+    const url = new URL(href, location.href)
+    return url.origin === location.origin && url.pathname === location.pathname && url.hash !== '' ? url.hash : null
+  } catch {
+    return null
+  }
 }
 
 function headingMarkdown(blocks: readonly PortableBlock[]): string {
@@ -513,19 +556,44 @@ function RichNoteEditorComponent({ page, allPages, handle, onChange, onMoveBlock
   }, [editor, page.contentJson])
 
   useEffect(() => {
-    const reveal = (): void => {
-      if (!window.location.hash.startsWith('#block=')) return
-      const id = decodeURIComponent(window.location.hash.slice('#block='.length))
-      if (editor.getBlock(id) === undefined) return
+    /* A fragment reaches the editor three ways: the page URL (deep links use `#block=`), a click on an in-note link
+       such as an imported table of contents, and the desktop shell relaying a `window.open` the editor's link
+       toolbar issued. Each lands on the block, or does nothing when the heading is gone. */
+    const revealFragment = (fragment: string): boolean => {
+      const id = blockIdForFragment(editor.document as unknown as PortableBlock[], fragment)
+      if (id === null || editor.getBlock(id) === undefined) return false
       window.dispatchEvent(new CustomEvent('manor:reveal-block', { detail: id }))
       window.requestAnimationFrame(() => {
         editor.setTextCursorPosition(id, 'start')
         document.querySelector(`.bn-block[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'center' })
       })
+      return true
     }
-    reveal()
-    window.addEventListener('hashchange', reveal)
-    return () => window.removeEventListener('hashchange', reveal)
+    const revealFromLocation = (): void => {
+      if (window.location.hash.startsWith('#block=')) revealFragment(window.location.hash)
+    }
+    const onRelayedFragment = (event: Event): void => {
+      if (event instanceof CustomEvent && typeof event.detail === 'string') revealFragment(event.detail)
+    }
+    const onClick = (event: MouseEvent): void => {
+      const root = editor.domElement
+      if (root === undefined || event.button !== 0) return
+      const fragment = fragmentLink(event.target, root)
+      if (fragment === null) return
+      // Ahead of the editor's own link handler, which would hand the address to `window.open`.
+      event.preventDefault()
+      event.stopPropagation()
+      revealFragment(fragment)
+    }
+    revealFromLocation()
+    window.addEventListener('hashchange', revealFromLocation)
+    window.addEventListener('manor:reveal-fragment', onRelayedFragment)
+    document.addEventListener('click', onClick, { capture: true })
+    return () => {
+      window.removeEventListener('hashchange', revealFromLocation)
+      window.removeEventListener('manor:reveal-fragment', onRelayedFragment)
+      document.removeEventListener('click', onClick, { capture: true })
+    }
   }, [editor])
 
   const sideMenuPositioning = useMemo(() => ({

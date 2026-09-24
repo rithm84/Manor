@@ -130,7 +130,7 @@ export function NotesList({ rows, title, heading, toolbar, footer, loading, coll
           <button type="button" className="notes-batch-clear" aria-label="Clear selection" onClick={() => onSelectionChange(openId === null ? { ids: [], anchor: null } : selectOne(openId))}><X size={14} /></button>
         </div>
       ) : null}
-      <div className="notes-list-scroll" role="listbox" aria-multiselectable="true" aria-label={title}>
+      <div className="notes-list-scroll" role="listbox" aria-multiselectable="true" aria-label={title} data-persistent="true">
         {loading ? <p className="notes-list-empty">Loading notes…</p> : null}
         {!loading && rows.length === 0 ? (
           <div className="notes-list-empty">
