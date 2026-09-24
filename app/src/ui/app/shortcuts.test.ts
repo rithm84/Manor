@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
 
-import { isCreateShortcut, isSidebarShortcut, isTypingTarget, routeForShortcut } from './shortcuts'
+import { isCreateShortcut, isSidebarShortcut, isTypingTarget, overlayOpen, routeForShortcut } from './shortcuts'
 
 function press(init: KeyboardEventInit): KeyboardEvent {
   return new KeyboardEvent('keydown', init)
@@ -36,5 +36,20 @@ describe('global shortcuts', () => {
     expect(isTypingTarget(document.createElement('button'))).toBe(false)
     expect(isTypingTarget(null)).toBe(false)
     editor.remove()
+  })
+
+  it('treats popups as owning the keyboard but not a persistent page listbox like the note list', () => {
+    expect(overlayOpen()).toBe(false)
+    const noteList = document.createElement('div')
+    noteList.setAttribute('role', 'listbox')
+    noteList.dataset.persistent = 'true'
+    document.body.append(noteList)
+    expect(overlayOpen()).toBe(false)
+    const popup = document.createElement('div')
+    popup.setAttribute('role', 'listbox')
+    document.body.append(popup)
+    expect(overlayOpen()).toBe(true)
+    popup.remove()
+    noteList.remove()
   })
 })

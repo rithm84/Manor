@@ -13,13 +13,70 @@ const schemeSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'A desktop URL scheme
 /** What the shell reports about itself: the scheme this build owns and when the process started. */
 const infoSchema = z.object({ scheme: schemeSchema, launchedAtMs: z.number().int().positive() })
 
-/** The link a click would leave Manor for: another origin over http(s), or one marked for a new window. */
+/** An address outside Manor over http(s); the app's own origin, including fragments within a page, is `null`. */
+export function departingUrl(candidate: string | URL | null | undefined): string | null {
+  if (candidate === null || candidate === undefined || candidate === '') return null
+  let destination: URL
+  try {
+    destination = new URL(candidate, location.href)
+  } catch {
+    return null
+  }
+  if (destination.protocol !== 'https:' && destination.protocol !== 'http:') return null
+  return destination.origin === location.origin ? null : destination.href
+}
+
+/** The link a click would leave Manor for. */
 function departingLink(target: EventTarget | null): string | null {
   const anchor = target instanceof Element ? target.closest('a') : null
   if (anchor === null || anchor.getAttribute('href') === null) return null
-  const destination = new URL(anchor.href)
-  if (destination.protocol !== 'https:' && destination.protocol !== 'http:') return null
-  return anchor.target === '_blank' || destination.origin !== location.origin ? anchor.href : null
+  return departingUrl(anchor.href)
+}
+
+/**
+ * The window's own fragment, when `window.open` is asked for an address inside the running page. The note
+ * editor's link toolbar opens links this way, so a table of contents entry has to travel back to the editor.
+ */
+export function ownFragment(candidate: string | URL | null | undefined): string | null {
+  if (candidate === null || candidate === undefined || candidate === '') return null
+  try {
+    const destination = new URL(candidate, location.href)
+    return destination.origin === location.origin && destination.pathname === location.pathname && destination.hash !== '' ? destination.hash : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Sends departing addresses to the system browser whether they arrive as clicks or as `window.open` calls,
+ * which the embedded webview otherwise drops. A click that the editor also relays through `window.open`
+ * opens once: the second request for the same address inside a moment is ignored.
+ */
+export function installLinkRouting(open: (url: string) => Promise<void>, relayFragment: (fragment: string) => void): void {
+  let recent: { url: string; at: number } | null = null
+  const openOnce = (url: string): void => {
+    const now = performance.now()
+    if (recent !== null && recent.url === url && now - recent.at < 500) return
+    recent = { url, at: now }
+    void open(url).catch((cause: unknown) => console.error('Manor could not open a link in the browser', { cause }))
+  }
+  // Capture phase: a link inside a clickable row stops the click from bubbling so the row stays put, and that
+  // must not keep the link itself from opening.
+  document.addEventListener('click', (event) => {
+    const departing = departingLink(event.target)
+    if (departing === null) return
+    event.preventDefault()
+    openOnce(departing)
+  }, { capture: true })
+  window.open = (url?: string | URL): Window | null => {
+    const departing = departingUrl(url)
+    if (departing !== null) openOnce(departing)
+    else {
+      const fragment = ownFragment(url)
+      if (fragment !== null) relayFragment(fragment)
+    }
+    return null
+  }
 }
 
 /** Routes received by the shell, held for the first subscriber while nobody is listening. */
@@ -108,13 +165,6 @@ export async function createDesktopShell(): Promise<DesktopShell> {
   }
   booting = false
   seenWhileBooting.clear()
-  // Capture phase: a link inside a clickable row stops the click from bubbling so the row stays put, and that
-  // must not keep the link itself from opening.
-  document.addEventListener('click', (event) => {
-    const departing = departingLink(event.target)
-    if (departing === null) return
-    event.preventDefault()
-    void openUrl(departing).catch((cause: unknown) => console.error('Manor could not open a link in the browser', { cause }))
-  }, { capture: true })
+  installLinkRouting(openUrl, (fragment) => window.dispatchEvent(new CustomEvent('manor:reveal-fragment', { detail: fragment })))
   return new DesktopShell(scheme, launchedAtMs, inbox)
 }

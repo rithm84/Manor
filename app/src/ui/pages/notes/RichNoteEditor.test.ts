@@ -2,7 +2,8 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { contentJsonToMarkdown, markdownToContentJson } from './RichNoteEditor'
+import { blockIdForFragment, contentJsonToMarkdown, fragmentLink, markdownToContentJson } from './RichNoteEditor'
+import type { PortableBlock } from './RichNoteEditor'
 
 describe('Notes Markdown interchange', () => {
   it('imports document blocks and preserves code text in native JSON', () => {
@@ -89,5 +90,42 @@ describe('Notes Markdown interchange', () => {
     expect(markdown).toContain('Left column')
     expect(markdown).toContain('***')
     expect(markdown).toContain('Right column')
+  })
+})
+
+describe('in-note fragment links', () => {
+  const heading = (id: string, text: string, children: PortableBlock[] = []): PortableBlock => ({ id, type: 'heading', props: { level: 2 }, content: [{ type: 'text', text, styles: {} }], children })
+  const document: PortableBlock[] = [
+    { id: 'p1', type: 'paragraph', content: [{ type: 'text', text: 'Intro', styles: {} }], children: [] },
+    heading('h1', '1. The interview mental model'),
+    heading('h2', 'Variables, assignment & truthiness', [heading('h2b', 'Nested: details')]),
+    heading('h3', 'Recap'),
+    heading('h4', 'Recap')
+  ]
+
+  it('resolves Markdown table-of-contents slugs to the heading blocks, including nested and repeated titles', () => {
+    expect(blockIdForFragment(document, '#1-the-interview-mental-model')).toBe('h1')
+    expect(blockIdForFragment(document, '#variables-assignment--truthiness')).toBe('h2')
+    expect(blockIdForFragment(document, '#nested-details')).toBe('h2b')
+    expect(blockIdForFragment(document, '#recap')).toBe('h3')
+    expect(blockIdForFragment(document, '#recap-2')).toBe('h4')
+    expect(blockIdForFragment(document, '#block=p1')).toBe('p1')
+    expect(blockIdForFragment(document, '#missing')).toBeNull()
+    expect(blockIdForFragment(document, '#')).toBeNull()
+  })
+
+  it('recognizes links that stay inside the note and ignores the rest', () => {
+    const root = window.document.createElement('div')
+    root.innerHTML = '<p><a id="toc" href="#recap">Recap</a> <a id="web" href="https://example.com/#recap">Web</a> <span id="plain">text</span></p>'
+    window.document.body.append(root)
+    const outside = window.document.createElement('a')
+    outside.href = '#recap'
+    window.document.body.append(outside)
+    expect(fragmentLink(root.querySelector('#toc'), root)).toBe('#recap')
+    expect(fragmentLink(root.querySelector('#web'), root)).toBeNull()
+    expect(fragmentLink(root.querySelector('#plain'), root)).toBeNull()
+    expect(fragmentLink(outside, root)).toBeNull()
+    root.remove()
+    outside.remove()
   })
 })
