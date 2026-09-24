@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { NotePage } from '../../../shared/notes'
-import { importedNoteTitle, pagesForScope, searchableNoteText, treeRows } from './notesModel'
+import { importedNoteTitle, pagesForScope, searchableNoteText, splitLeadingHeading, treeRows } from './notesModel'
 
 function page(id: string, parentPageId: string | null, title: string, content: string): NotePage {
   return {
@@ -54,5 +54,18 @@ describe('notes workspace model', () => {
     expect(importedNoteTitle('CS 180 Notes 8f3a2b1c9d4e5f60718293a4b5c6d7e8.md')).toBe('CS 180 Notes')
     expect(importedNoteTitle('README.markdown')).toBe('README')
     expect(importedNoteTitle('.md')).toBe('Imported note')
+  })
+})
+
+describe('splitLeadingHeading', () => {
+  it('titles the note by an opening heading and drops it from the body', () => {
+    expect(splitLeadingHeading('# LeetCode Python Fundamentals\n\nCompanion: patterns\n')).toEqual({ title: 'LeetCode Python Fundamentals', body: '\nCompanion: patterns\n' })
+    expect(splitLeadingHeading('\n\n# Spaced #\nBody')).toEqual({ title: 'Spaced', body: 'Body' })
+  })
+
+  it('skips front matter and leaves documents that start with anything else alone', () => {
+    expect(splitLeadingHeading('---\ntitle: x\n---\n# Real title\ntext')).toEqual({ title: 'Real title', body: 'text' })
+    expect(splitLeadingHeading('## Second level\ntext')).toEqual({ title: null, body: '## Second level\ntext' })
+    expect(splitLeadingHeading('Just text\n# Later heading')).toEqual({ title: null, body: 'Just text\n# Later heading' })
   })
 })

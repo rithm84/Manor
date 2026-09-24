@@ -9,9 +9,9 @@ Manor converts Markdown into its native note blocks on the server. Your job is w
 
 ## Flow
 
-1. **Read the Markdown** and decide the note title (front matter `title`, the first `#` heading, or the file name). If the document starts with a heading that repeats the title, remove that line so it is not shown twice.
+1. **Read the Markdown.** A document that opens with a `#` heading is titled by that heading, and the heading is removed from the body so it is not shown twice. Pass `title` only as the fallback for documents without one (front matter `title` or the file name).
 
-2. **Create the note.** Call `import_markdown_note` with a fresh `id` (UUID), `expected_revision: 0`, the title, `folder_id` and `parent_page_id` (or `null`), and the Markdown text. The receipt has `record.revision` and `import.assets`, a list of the local paths the Markdown referenced that have no file yet, each with the `block_id` of the empty block waiting for it. If `import.assets` is empty, you are done.
+2. **Create the note.** Call `import_markdown_note` with a fresh `id` (UUID), `expected_revision: 0`, `folder_id` and `parent_page_id` (or `null`), the Markdown text, and `title` when the document has no opening heading. The receipt's `import.title` is the title Manor used. The receipt has `record.revision` and `import.assets`, a list of the local paths the Markdown referenced that have no file yet, each with the `block_id` of the empty block waiting for it. If `import.assets` is empty, you are done.
 
 3. **Locate each asset on disk.** Paths are relative to the Markdown file; Notion exports put them in a folder named after the page, Obsidian vaults may keep them anywhere, so search by file name when the relative path is missing. Never invent a file; if one is not found, report it and leave its block empty.
 
@@ -20,7 +20,7 @@ Manor converts Markdown into its native note blocks on the server. Your job is w
    - Send the bytes to the returned `upload_url`: `curl -sS -X PUT "<upload_url>" -H "Content-Type: <mime_type>" --data-binary @<file>`. Files larger than `resumable_chunk_size` go through the TUS `resumable_endpoint` with `upload_token` as the `x-signature` header.
    - `finalize_file_upload` with the same `id`; it returns the ready file. The attachment URL is `manor-attachment://<id>`.
 
-5. **Import again with the mapping.** Call `import_markdown_note` with the same note `id`, `expected_revision` set to the revision from the latest receipt, the same title and Markdown, and `assets` mapping each path exactly as it appears in `import.assets` to its `manor-attachment://` URL. The note's content is replaced with the images and files in place.
+5. **Import again with the mapping.** Call `import_markdown_note` with the same note `id`, `expected_revision` set to the revision from the latest receipt, the same Markdown (and fallback title), and `assets` mapping each path exactly as it appears in `import.assets` to its `manor-attachment://` URL. The note's content is replaced with the images and files in place.
 
 For many documents, repeat per document. Sub-pages of a Notion export become notes with `parent_page_id` set to the parent note's id. Links between pages in the export are kept as plain text; there is no cross-note link target to rewrite yet.
 

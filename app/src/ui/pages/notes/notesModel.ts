@@ -99,6 +99,19 @@ export function importedNoteTitle(fileName: string): string {
   return base === '' ? 'Imported note' : base
 }
 
+/**
+ * A document that opens with a level-one heading is titled by it, and the heading leaves the body so the
+ * title is not shown twice. Front matter and blank lines before the heading are skipped over.
+ */
+export function splitLeadingHeading(markdown: string): { title: string | null; body: string } {
+  const withoutFrontMatter = markdown.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '')
+  const match = /^\s*#[ \t]+(.+?)[ \t]*#*[ \t]*(?:\r?\n|$)/.exec(withoutFrontMatter)
+  if (match === null) return { title: null, body: markdown }
+  const title = match[1]?.trim() ?? ''
+  if (title === '') return { title: null, body: markdown }
+  return { title, body: withoutFrontMatter.slice(match[0].length) }
+}
+
 export function formatNoteTime(timestamp: string): string {
   return new Intl.DateTimeFormat(undefined, {
     month: 'short',

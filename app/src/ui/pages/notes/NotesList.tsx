@@ -19,6 +19,12 @@ export interface NoteListRow {
 export interface NotesListProps {
   rows: readonly NoteListRow[]
   title: string
+  /** The control that chooses what the list shows, rendered in the header in place of a static title. */
+  heading?: ReactNode
+  /** Search and anything else that sits between the header and the rows. */
+  toolbar?: ReactNode
+  /** Workspace actions that belong to the whole pane, shown at its foot. */
+  footer?: ReactNode
   loading: boolean
   collapsed: boolean
   onToggleCollapsed: () => void
@@ -47,7 +53,7 @@ const toggleModifier = (event: { metaKey: boolean; ctrlKey: boolean }): boolean 
  * The note list: plain click opens, Shift selects a range, Cmd or Ctrl toggles rows, Cmd or Ctrl+A selects the scope,
  * Escape clears, Delete moves the selection to Trash (or deletes permanently inside Trash), and right-click shows actions.
  */
-export function NotesList({ rows, title, loading, collapsed, onToggleCollapsed, canCreate, creating = false, onCreate, openId, selection, onSelectionChange, onOpen, onTrash, onRestore, onPurge, onToggleFavorite, onDuplicate }: NotesListProps): ReactNode {
+export function NotesList({ rows, title, heading, toolbar, footer, loading, collapsed, onToggleCollapsed, canCreate, creating = false, onCreate, openId, selection, onSelectionChange, onOpen, onTrash, onRestore, onPurge, onToggleFavorite, onDuplicate }: NotesListProps): ReactNode {
   const [menu, setMenu] = useState<{ point: QuickActionPoint; page: NotePage } | null>(null)
   const order = rows.map((row) => row.page.id)
   const selected = new Set(selection.ids)
@@ -108,12 +114,13 @@ export function NotesList({ rows, title, loading, collapsed, onToggleCollapsed, 
   return (
     <section id="notes-list" className={`notes-list${collapsed ? ' is-collapsed' : ''}`} aria-label="Note list">
       <div className="notes-list-head">
-        <div className="notes-list-heading"><strong>{title}</strong><span>{rows.length}</span></div>
+        <div className="notes-list-heading">{heading ?? <strong>{title}</strong>}<span>{rows.length}</span></div>
         <div className="notes-pane-actions">
           {!collapsed && canCreate ? <button type="button" className="notes-icon-button" aria-label="New note" aria-busy={creating} disabled={creating} onClick={onCreate}><FilePlus2 size={16} /></button> : null}
           <NotesPaneToggle collapsed={collapsed} panelId="notes-list" label="note list" onToggle={onToggleCollapsed} />
         </div>
       </div>
+      {toolbar}
       {selection.ids.length > 1 ? (
         <div className="notes-batch-bar" role="toolbar" aria-label="Selected notes">
           <span>{selection.ids.length} selected</span>
@@ -149,6 +156,7 @@ export function NotesList({ rows, title, loading, collapsed, onToggleCollapsed, 
           </div>
         ))}
       </div>
+      {footer !== undefined ? <div className="notes-list-foot">{footer}</div> : null}
       {menu !== null ? <QuickActionsMenu point={menu.point} label={menu.page.title || 'Untitled'} items={menuItems(menu.page)} onClose={() => setMenu(null)} /> : null}
     </section>
   )

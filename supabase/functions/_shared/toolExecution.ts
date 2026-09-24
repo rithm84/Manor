@@ -3,7 +3,14 @@ import { manorTools, type JsonObject, type JsonValue, type ManorTool } from './t
 
 /** A local path the Markdown referenced that no uploaded file was mapped to; `block_id` names the empty media block awaiting it. */
 export interface MarkdownConversionAsset { path: string; kind: 'image' | 'file'; block_id: string | null; label: string }
-export interface MarkdownConversion { blocks: JsonObject[]; assets: MarkdownConversionAsset[]; notes: string[]; frontMatter: string | null }
+export interface MarkdownConversion {
+  blocks: JsonObject[]
+  /** The opening level-one heading, removed from the blocks, when the document had one. */
+  title: string | null
+  assets: MarkdownConversionAsset[]
+  notes: string[]
+  frontMatter: string | null
+}
 export interface ManorToolClient {
   rpc(name: string, parameters: JsonObject): Promise<JsonValue>
   invoke(name: string, parameters: JsonObject): Promise<JsonValue>
@@ -92,13 +99,16 @@ async function importMarkdownNote(input: JsonObject, client: ManorToolClient): P
   if (typeof markdown !== 'string') throw new TypeError('Markdown import requires the markdown text')
   const mapping = assets === undefined || assets === null ? {} : object(assets)
   const conversion = client.convertMarkdown(markdown, mapping)
+  // The document's own heading names the note; a supplied title covers documents without one.
+  const noteTitle = conversion.title ?? (typeof title === 'string' && title.trim() !== '' ? title : null)
+  if (noteTitle === null) throw new TypeError('Supply a title or start the Markdown with a level-one heading')
   const creating = expected_revision === 0
   const operation = creating ? 'import_note' : 'update_note'
   const fields: JsonObject = creating
-    ? { id, expected_revision, format: 'block_json', title, folder_id: folder_id ?? null, parent_page_id: parent_page_id ?? null, content_json: conversion.blocks }
-    : { id, expected_revision, title, content_json: conversion.blocks }
+    ? { id, expected_revision, format: 'block_json', title: noteTitle, folder_id: folder_id ?? null, parent_page_id: parent_page_id ?? null, content_json: conversion.blocks }
+    : { id, expected_revision, title: noteTitle, content_json: conversion.blocks }
   const receipt = object(await client.rpc('manor_command', { p_command_id: command_id, p_operation: operation, p_input: fields }))
-  return { ...receipt, import: { block_count: countBlocks(conversion.blocks), assets: conversion.assets.map((asset): JsonObject => ({ ...asset })), notes: conversion.notes, front_matter: conversion.frontMatter } }
+  return { ...receipt, import: { title: noteTitle, block_count: countBlocks(conversion.blocks), assets: conversion.assets.map((asset): JsonObject => ({ ...asset })), notes: conversion.notes, front_matter: conversion.frontMatter } }
 }
 
 function countBlocks(blocks: readonly JsonValue[]): number {
