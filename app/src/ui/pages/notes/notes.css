@@ -157,11 +157,11 @@
 .notes-list-foot button:hover { color: var(--ink-body); background: var(--surface-hover); }
 
 /* The scope picker: what the list shows, chosen from the header. */
-.notes-scope { position: relative; flex: 0 1 auto; min-width: 0; }
+.notes-scope { position: relative; display: flex; flex: 0 1 auto; min-width: 0; }
 .notes-scope-trigger {
   display: flex;
   align-items: center;
-  max-width: 100%;
+  min-width: 0;
   gap: 6px;
   height: 30px;
   margin-left: -8px;
