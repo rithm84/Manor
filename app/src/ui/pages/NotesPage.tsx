@@ -9,9 +9,6 @@ import {
   Ellipsis,
   FilePlus2,
   FileText,
-  Folder,
-  FolderPlus,
-  Library,
   Move,
   Pencil,
   RefreshCw,
@@ -32,18 +29,18 @@ import type { NoteFolder, NotePage, NotesState } from '../../shared/notes'
 import { hasOpenDismissLayer, useDismissLayer } from '../components/ui/dismissLayer'
 import { Toast } from '../components/ui/Toast'
 import { PageShell } from './PageShell'
-import { importedNoteTitle, pagesForScope, scopeTitle, treeRows } from './notes/notesModel'
+import { importedNoteTitle, pagesForScope, scopeTitle, splitLeadingHeading, treeRows } from './notes/notesModel'
 import type { NotesScope } from './notes/notesModel'
 import { createNoteSaveQueue, noteContentUpdate } from './notes/notesAutosave'
 import { FolderDialog, MoveDialog, PurgeDialog } from './notes/NotesDialogs'
 import { NotesList } from './notes/NotesList'
+import { NotesScopeMenu } from './notes/NotesScopeMenu'
 import { EMPTY_SELECTION, pruneSelection, selectOne } from './notes/notesSelection'
 import { recallNotesView, rememberNotesView } from './notes/notesSession'
 import type { NoteSelection } from './notes/notesSelection'
 import type { RichNoteEditorHandle } from './notes/RichNoteEditor'
 import { loadRichNoteEditor } from './notes/loadRichNoteEditor'
 import { NoteFindBar } from './notes/NoteFindBar'
-import { NotesPaneToggle } from './notes/NotesPaneToggle'
 import { useNotesPaneVisibility } from './notes/useNotesPaneVisibility'
 import './notes/notes.css'
 
@@ -103,19 +100,6 @@ function scopeForPage(page: NotePage): NotesScope {
   return page.folderId === null ? 'all' : `folder:${page.folderId}`
 }
 
-function SidebarButton({ active, icon, label, count, onClick }: {
-  active: boolean
-  icon: ReactNode
-  label: string
-  count: number
-  onClick: () => void
-}): ReactNode {
-  return (
-    <button type="button" aria-label={label} aria-current={active ? 'page' : undefined} className={`notes-nav-row${active ? ' is-selected' : ''}`} onClick={onClick}>
-      {icon}<span>{label}</span>{count > 0 ? <span className="notes-nav-count">{count}</span> : null}
-    </button>
-  )
-}
 
 function EmptyEditor({ scope, listEmpty }: { scope: NotesScope; listEmpty: boolean }): ReactNode {
   const trash = scope === 'trash'
@@ -131,7 +115,7 @@ function EmptyEditor({ scope, listEmpty }: { scope: NotesScope; listEmpty: boole
 /** Local-first, block-based notes workspace. */
 export function NotesPage(): ReactNode {
   const notesApi = useManorService('notes')
-  const { navigationCollapsed, listCollapsed, setNavigationCollapsed, setListCollapsed } = useNotesPaneVisibility()
+  const { listCollapsed, setListCollapsed } = useNotesPaneVisibility()
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedNoteIdRef = useRef(searchParams.get('note'))
   const attemptedRouteRef = useRef<string | null>(null)
@@ -626,14 +610,13 @@ export function NotesPage(): ReactNode {
       }
       if (key === 'f' && event.shiftKey) {
         event.preventDefault()
-        setNavigationCollapsed(false)
         setListCollapsed(false)
         window.requestAnimationFrame(() => searchRef.current?.focus())
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return (): void => window.removeEventListener('keydown', onKeyDown)
-  }, [createPage, savePending, selectedId, setNavigationCollapsed, setListCollapsed])
+  }, [createPage, savePending, selectedId, setListCollapsed])
 
   const replaceState = (promise: Promise<NotesState>): Promise<NotesState | null> =>
     promise.then((state) => {
@@ -790,7 +773,11 @@ export function NotesPage(): ReactNode {
           if (typeof native !== 'object' || native === null || !('format' in native) || native.format !== 'manor-note' || !('version' in native) || native.version !== 1 || !('title' in native) || typeof native.title !== 'string' || !('content' in native)) throw new TypeError('Choose a Manor native document or a Markdown file')
           title = native.title
           contentJson = parseNoteContentJson(JSON.stringify(native.content))
-        } else contentJson = module.markdownToContentJson(source)
+        } else {
+          const { title: heading, body } = splitLeadingHeading(source)
+          if (heading !== null) title = heading
+          contentJson = module.markdownToContentJson(body)
+        }
         lastState = await notesApi.createPage({
           title,
           folderId,
@@ -863,51 +850,28 @@ export function NotesPage(): ReactNode {
 
   return (
     <PageShell title="Notes" fullBleed={true}>
-      <div className="notes-workspace" data-navigation-collapsed={navigationCollapsed} data-list-collapsed={listCollapsed}>
-        <nav id="notes-navigation" className={`notes-nav${navigationCollapsed ? ' is-collapsed' : ''}`} aria-label="Notes navigation">
-          <div className="notes-nav-head">
-            <strong>Notes</strong>
-            <div className="notes-pane-actions">
-              {!navigationCollapsed ? <button type="button" className="notes-icon-button" aria-label="New note" aria-busy={creating} disabled={creating} onClick={() => void createPage(null)}><FilePlus2 size={16} /></button> : null}
-              <NotesPaneToggle collapsed={navigationCollapsed} panelId="notes-navigation" label="Notes navigation" onToggle={() => setNavigationCollapsed(!navigationCollapsed)} />
-            </div>
-          </div>
-          <div className="notes-search-wrap">
-            <Search size={15} aria-hidden="true" />
-            <input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape' && query !== '') { event.preventDefault(); setQuery('') } }} placeholder="Search notes" aria-label="Search notes" />
-            {query !== '' ? <button type="button" aria-label="Clear search" onClick={() => setQuery('')}><X size={14} /></button> : <kbd>⌘⇧F</kbd>}
-          </div>
-          <div className="notes-nav-scroll">
-            <SidebarButton active={scope === 'all'} icon={<Library size={15} />} label="All notes" count={activeCount} onClick={() => void selectScope('all')} />
-            <SidebarButton active={scope === 'favorites'} icon={<Star size={15} />} label="Favorites" count={favoriteCount} onClick={() => void selectScope('favorites')} />
-            <SidebarButton active={scope === 'recent'} icon={<Clock3 size={15} />} label="Recent" count={0} onClick={() => void selectScope('recent')} />
-            <SidebarButton active={scope === 'archived'} icon={<Archive size={15} />} label="Archived" count={archivedCount} onClick={() => void selectScope('archived')} />
-            <SidebarButton active={scope === 'trash'} icon={<Trash2 size={15} />} label="Trash" count={trashCount} onClick={() => void selectScope('trash')} />
-            <div className="notes-folder-heading"><span>Folders</span><button type="button" className="notes-icon-button" aria-label="New folder" onClick={() => setDialog({ kind: 'folder', folder: null })}><FolderPlus size={15} /></button></div>
-            {data.folders.map((folderItem) => {
-              const folderScope = `folder:${folderItem.id}` as const
-              return (
-                <div className="notes-folder-row" key={folderItem.id}>
-                  <button type="button" className={`notes-nav-row${scope === folderScope ? ' is-selected' : ''}`} onClick={() => void selectScope(folderScope)}>
-                    <Folder size={15} /><span>{folderItem.name}</span><span className="notes-nav-count">{data.pages.filter((page) => page.folderId === folderItem.id && page.status === 'active').length}</span>
-                  </button>
-                  <button type="button" className="notes-folder-edit" aria-label={`Rename ${folderItem.name}`} onClick={() => setDialog({ kind: 'folder', folder: folderItem })}><Pencil size={13} /></button>
-                </div>
-              )
-            })}
-          </div>
-          <div className="notes-nav-foot">
-            <button type="button" onClick={() => void notesApi.syncDrafts().then((pages) => {
-              setData((current) => ({ ...current, pages: current.pages.map((page) => pages.find((saved) => saved.id === page.id) ?? page) }))
-              setDeferredNoteIds((current) => current.filter((id) => !pages.some((page) => page.id === id)))
-              setError(null)
-            }).catch((failure: unknown) => setError(failure instanceof Error ? failure.message : String(failure)))}><RefreshCw size={14} />Sync changes</button>
-            <button type="button" onClick={() => importRef.current?.click()}><Upload size={14} /> Import notes</button>
-            <input ref={importRef} type="file" accept=".md,.markdown,.json,text/markdown,application/json" multiple onChange={(event) => void importMarkdown(event)} hidden />
-          </div>
-        </nav>
-
+      <div className="notes-workspace" data-list-collapsed={listCollapsed}>
         <NotesList rows={rows} title={scopeTitle(scope, data.folders)} loading={loading} collapsed={listCollapsed} onToggleCollapsed={() => setListCollapsed(!listCollapsed)}
+          heading={<NotesScopeMenu scope={scope} folders={data.folders} onSelect={(next) => void selectScope(next)} onNewFolder={() => setDialog({ kind: 'folder', folder: null })} onRenameFolder={(folderItem) => setDialog({ kind: 'folder', folder: folderItem })}
+            counts={{ all: activeCount, favorites: favoriteCount, archived: archivedCount, trash: trashCount, folder: (folderId) => data.pages.filter((page) => page.folderId === folderId && page.status === 'active').length }} />}
+          toolbar={
+            <div className="notes-search-wrap">
+              <Search size={15} aria-hidden="true" />
+              <input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape' && query !== '') { event.preventDefault(); setQuery('') } }} placeholder="Search notes" aria-label="Search notes" />
+              {query !== '' ? <button type="button" aria-label="Clear search" onClick={() => setQuery('')}><X size={14} /></button> : <kbd>⌘⇧F</kbd>}
+            </div>
+          }
+          footer={
+            <>
+              <button type="button" onClick={() => void notesApi.syncDrafts().then((pages) => {
+                setData((current) => ({ ...current, pages: current.pages.map((page) => pages.find((saved) => saved.id === page.id) ?? page) }))
+                setDeferredNoteIds((current) => current.filter((id) => !pages.some((page) => page.id === id)))
+                setError(null)
+              }).catch((failure: unknown) => setError(failure instanceof Error ? failure.message : String(failure)))}><RefreshCw size={14} />Sync changes</button>
+              <button type="button" onClick={() => importRef.current?.click()}><Upload size={14} />Import notes</button>
+              <input ref={importRef} type="file" accept=".md,.markdown,.json,text/markdown,application/json" multiple onChange={(event) => void importMarkdown(event)} hidden />
+            </>
+          }
           canCreate={scope !== 'trash' && scope !== 'archived'} creating={creating} onCreate={() => void createPage(null)} openId={selectedId} selection={selection} onSelectionChange={setSelection}
           onOpen={(pageId) => void openPage(pageId)} onTrash={(ids) => void trashPages(ids)} onRestore={(ids) => void restorePages(ids)} onPurge={setPurgeRequest}
           onToggleFavorite={(page) => void toggleFavorite(page)} onDuplicate={(pageId) => void duplicateSelected(pageId)} />

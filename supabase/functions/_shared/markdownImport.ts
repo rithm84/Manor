@@ -37,8 +37,12 @@ class Conversion {
       mdastExtensions: [gfmFromMarkdown(), mathFromMarkdown()]
     })
     for (const node of tree.children) if (node.type === 'definition') this.definitions.set(node.identifier, { url: node.url, title: node.title ?? null })
-    const blocks = this.blocks(tree.children)
-    return { blocks: blocks.length === 0 ? [paragraph([])] : blocks, assets: this.assets, notes: [...this.notes], frontMatter }
+    // A document that opens with a level-one heading is titled by it; the heading leaves the body so the
+    // title is not shown twice.
+    const [first, ...rest] = tree.children
+    const title = first?.type === 'heading' && first.depth === 1 ? plainText(first).trim() : ''
+    const blocks = this.blocks(title !== '' ? rest : tree.children)
+    return { blocks: blocks.length === 0 ? [paragraph([])] : blocks, title: title === '' ? null : title, assets: this.assets, notes: [...this.notes], frontMatter }
   }
 
   private blocks(nodes: readonly RootContent[]): Block[] {

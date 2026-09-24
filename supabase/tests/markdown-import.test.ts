@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertThrows } from 'jsr:@std/assert@1'
+import { assert, assertEquals, assertRejects, assertThrows } from 'jsr:@std/assert@1'
 
 import { markdownToNoteBlocks } from '../functions/_shared/markdownImport.ts'
 import type { JsonObject, JsonValue } from '../functions/_shared/toolDefinitions.ts'
@@ -62,9 +62,9 @@ Deno.test('maps the common document structure to native blocks with unique ids',
     'Inline $x^2$ math.'
   ].join('\n'), {})
 
-  assertEquals(types(result.blocks), ['heading', 'paragraph', 'bulletListItem', 'bulletListItem', 'numberedListItem', 'numberedListItem', 'checkListItem', 'checkListItem', 'quote', 'codeBlock', 'divider', 'table', 'mathBlock', 'paragraph'])
-  assertEquals(props(result.blocks[0]!).level, 1)
-  assertEquals(content(result.blocks[1]!), [
+  assertEquals(result.title, 'Title')
+  assertEquals(types(result.blocks), ['paragraph', 'bulletListItem', 'bulletListItem', 'numberedListItem', 'numberedListItem', 'checkListItem', 'checkListItem', 'quote', 'codeBlock', 'divider', 'table', 'mathBlock', 'paragraph'])
+  assertEquals(content(result.blocks[0]!), [
     { type: 'text', text: 'Plain ', styles: {} },
     { type: 'text', text: 'bold', styles: { bold: true } },
     { type: 'text', text: ' and ', styles: {} },
@@ -77,16 +77,16 @@ Deno.test('maps the common document structure to native blocks with unique ids',
     { type: 'link', href: 'https://example.com/a', content: [{ type: 'text', text: 'link', styles: {} }] },
     { type: 'text', text: '.', styles: {} }
   ])
-  assertEquals(types(result.blocks[3]!.children as JsonObject[]), ['bulletListItem'])
-  assertEquals(props(result.blocks[6]!).checked, false)
-  assertEquals(props(result.blocks[7]!).checked, true)
-  assertEquals(props(result.blocks[9]!).language, 'ts')
-  assertEquals(content(result.blocks[9]!)[0]!.text, 'const x = 1')
-  const table = result.blocks[11]!.content as JsonObject
+  assertEquals(types(result.blocks[2]!.children as JsonObject[]), ['bulletListItem'])
+  assertEquals(props(result.blocks[5]!).checked, false)
+  assertEquals(props(result.blocks[6]!).checked, true)
+  assertEquals(props(result.blocks[8]!).language, 'ts')
+  assertEquals(content(result.blocks[8]!)[0]!.text, 'const x = 1')
+  const table = result.blocks[10]!.content as JsonObject
   assertEquals(table.type, 'tableContent')
   assertEquals((table.rows as JsonObject[]).length, 2)
-  assertEquals(result.blocks[12]!.content, 'E = mc^2')
-  assertEquals(content(result.blocks[13]!)[1], { type: 'math', content: 'x^2' })
+  assertEquals(result.blocks[11]!.content, 'E = mc^2')
+  assertEquals(content(result.blocks[12]!)[1], { type: 'math', content: 'x^2' })
   const ids = allIds(result.blocks)
   assertEquals(new Set(ids).size, ids.length)
   assert(ids.every((id) => /^[0-9a-f-]{36}$/.test(id)))
@@ -150,16 +150,19 @@ Deno.test('the tool creates through import_note at revision 0 and replaces throu
   const first = calls[0]!.parameters as JsonObject
   assertEquals(first.p_operation, 'import_note')
   assertEquals((first.p_input as JsonObject).format, 'block_json')
-  assertEquals((first.p_input as JsonObject).title, 'Imported')
+  assertEquals((first.p_input as JsonObject).title, 'Hi') // the document's heading wins over the supplied title
   const importReport = created.import as JsonObject
+  assertEquals(importReport.title, 'Hi')
   assertEquals((importReport.assets as JsonObject[]).length, 1)
-  assertEquals(importReport.block_count, 2)
+  assertEquals(importReport.block_count, 1)
 
-  await executeManorTool('import_markdown_note', { command_id: 'c2', id: 'note-1', expected_revision: 1, title: 'Imported', markdown: '# Hi\n\n![a](a.png)', assets: { 'a.png': FILE_A } }, client)
+  await assertRejects(() => executeManorTool('import_markdown_note', { command_id: 'c0', id: 'note-2', expected_revision: 0, markdown: 'no heading' }, client), TypeError, 'Supply a title')
+
+  await executeManorTool('import_markdown_note', { command_id: 'c2', id: 'note-1', expected_revision: 1, markdown: '# Hi\n\n![a](a.png)', assets: { 'a.png': FILE_A } }, client)
   const second = calls[1]!.parameters as JsonObject
   assertEquals(second.p_operation, 'update_note')
   assertEquals((second.p_input as JsonObject).expected_revision, 1)
   assert(!('format' in (second.p_input as JsonObject)))
   const blocks = (second.p_input as JsonObject).content_json as JsonObject[]
-  assertEquals(props(blocks[1]!).url, FILE_A)
+  assertEquals(props(blocks[0]!).url, FILE_A)
 })
