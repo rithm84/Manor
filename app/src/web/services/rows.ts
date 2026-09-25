@@ -1,6 +1,6 @@
 import { dateInTimezone } from '../../shared/timezone'
 import { z } from 'zod'
-import { ManorRequestError } from '../ManorGateway'
+import { requestFailure } from '../ManorGateway'
 import type { CommandResult, JsonObject, JsonValue, ManorGateway } from '../ManorGateway'
 import type { DerivedName } from '../mirror/MirrorStore'
 
@@ -25,8 +25,8 @@ export function rowRevision(row: JsonObject): number {
  */
 export function derivedRead(gateway: ManorGateway, name: DerivedName, label: string): Promise<JsonValue> {
   return gateway.cachedDerived(name, async () => {
-    const { data, error } = await gateway.client.rpc(name)
-    if (error !== null) throw new ManorRequestError(label, error.code, error.message)
+    const { data, error, status } = await gateway.client.rpc(name)
+    if (error !== null) throw requestFailure(label, error, status)
     return z.json().parse(data)
   })
 }

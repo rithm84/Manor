@@ -64,10 +64,29 @@ export class ManorRequestError extends Error {
 }
 
 export class ManorConnectionError extends Error {
+  /** The command or read that failed, for logs. */
+  readonly operation: string
+  /** What the transport reported ("TypeError: Load failed"), for logs; the message is written for the reader. */
+  readonly detail: string
   constructor(operation: string, detail: string) {
-    super(`${operation}: Manor could not reach the server. ${detail}`)
+    super('Manor could not reach the server. Check the connection; this retries on its own.')
     this.name = 'ManorConnectionError'
+    this.operation = operation
+    this.detail = detail
   }
+}
+
+/**
+ * The error for a failed Supabase request. A status of 0 means the request never got an answer (offline,
+ * DNS, a dropped socket; WebKit words it "Load failed"), which is a connection problem rather than a
+ * refusal, and the app hears about the connection state either way.
+ */
+export function requestFailure(operation: string, error: { code: string; message: string }, status: number): Error {
+  if (status === 0) {
+    window.dispatchEvent(new CustomEvent('manor:connection', { detail: { connected: false } }))
+    return new ManorConnectionError(operation, error.message)
+  }
+  return new ManorRequestError(operation, error.code, error.message)
 }
 
 /** Account-bound transport. Domain adapters validate each row's specific schema. */
@@ -129,11 +148,7 @@ export class ManorGateway {
       for (const column of tableOrder[table]) query = query.order(column, { ascending: true })
       for (const filter of filters) query = query.eq(filter.column, filter.value)
       const { data, error, status } = await query
-      if (error && status === 0) {
-        window.dispatchEvent(new CustomEvent('manor:connection', { detail: { connected: false } }))
-        throw new ManorConnectionError(`Read ${table}`, error.message)
-      }
-      if (error) throw new ManorRequestError(`Read ${table}`, error.code, error.message)
+      if (error) throw requestFailure(`Read ${table}`, error, status)
       window.dispatchEvent(new CustomEvent('manor:connection', { detail: { connected: true } }))
       const page = z.array(rowSchema).parse(data)
       all.push(...page)
@@ -194,7 +209,7 @@ export class ManorGateway {
       }
       // A revision conflict is final. A serialization failure (40001) is transient and the command id makes a retry a replay.
       if (attempt === 2 || error.code === 'PT409' || (error.code !== '40001' && status !== 0 && status !== 429 && status < 500)) {
-        throw new ManorRequestError(operation, error.code, error.message)
+        throw requestFailure(operation, error, status)
       }
       console.warn('Retrying Manor command', { operation, commandId, status, attempt: attempt + 1 })
       await new Promise(resolve => setTimeout(resolve, 250 * 2 ** attempt))

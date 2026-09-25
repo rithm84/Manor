@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type { CalendarApi, CalendarAccount, GoogleCalendar, CalendarDayEvent } from '../../shared/calendar'
 import type { XApi, XConnectionStatus } from '../../shared/xConnection'
 import type { CourseFeedApi, CourseFeedCheck, CourseFeedStatus } from '../../shared/courseFeed'
-import { ManorRequestError, type ManorGateway, type JsonObject } from '../ManorGateway'
+import { requestFailure, type ManorGateway, type JsonObject } from '../ManorGateway'
 import { calendarDays } from '../../shared/calendarDays'
 import { calendarWindow, calendarWindowFilter, withinCalendarWindow, type CalendarWindow } from '../mirror/calendarWindow'
 import { accountToday } from './rows'
@@ -93,9 +93,9 @@ export class CalendarService implements CalendarApi {
   }
 
   private async readStoredEvents(window: CalendarWindow): Promise<z.infer<typeof storedEventSchema>[]> {
-    const { data, error } = await this.gateway.client.from('calendar_events').select('*')
+    const { data, error, status } = await this.gateway.client.from('calendar_events').select('*')
       .eq('user_id', this.gateway.accountId).or(calendarWindowFilter(window))
-    if (error) throw new ManorRequestError('Read calendar_events', error.code, error.message)
+    if (error) throw requestFailure('Read calendar_events', error, status)
     return z.array(storedEventSchema).parse(data)
   }
   async setCalendarEnabled(calendarId: string, accountId: string, enabled: boolean): Promise<void> {
@@ -116,8 +116,8 @@ export class XService implements XApi {
   connect(): Promise<void> { return this.integration.connect('x', this.openAuthorization) }
   completeConnection(code: string, state: string): Promise<void> { return this.integration.completeConnection(code, state) }
   async status(): Promise<XConnectionStatus> {
-    const { data, error } = await this.gateway.client.rpc('manor_x_status')
-    if (error) throw new ManorRequestError('manor_x_status', error.code, error.message)
+    const { data, error, status } = await this.gateway.client.rpc('manor_x_status')
+    if (error) throw requestFailure('manor_x_status', error, status)
     return z.object({ connected: z.boolean(), username: z.string().nullable(), connectedAt: z.string().nullable() }).parse(data)
   }
   async disconnect(): Promise<void> { await this.integration.request('x_disconnect', {}, z.object({ committed: z.literal(true) })) }
@@ -131,8 +131,8 @@ export class CourseFeedService implements CourseFeedApi {
   private readonly integration: IntegrationService
   constructor(gateway: ManorGateway) { this.gateway = gateway; this.integration = new IntegrationService(gateway, 'course-feed') }
   async status(): Promise<CourseFeedStatus> {
-    const { data, error } = await this.gateway.client.rpc('manor_course_feed_status')
-    if (error) throw new ManorRequestError('manor_course_feed_status', error.code, error.message)
+    const { data, error, status } = await this.gateway.client.rpc('manor_course_feed_status')
+    if (error) throw requestFailure('manor_course_feed_status', error, status)
     return courseFeedStatusSchema.parse(data)
   }
   connect(url: string): Promise<{ host: string; count: number }> {

@@ -87,6 +87,21 @@ export function HabitsPage(): ReactNode {
   const pendingEntries = useRef<Map<string, PendingEntry>>(new Map())
   const clickSequence = useRef(0)
 
+  /* A load that failed for want of a connection runs again when the connection is back, so the page
+     does not sit on a stale banner until the next edit happens to refetch. */
+  const [reconnects, setReconnects] = useState(0)
+  useEffect(() => {
+    // Every successful read reports the connection; only the change from lost to back counts.
+    let connected = true
+    const onConnection = (event: Event): void => {
+      const now = event.type === 'online' ? true : event.type === 'offline' ? false : event instanceof CustomEvent && typeof event.detail?.connected === 'boolean' ? event.detail.connected as boolean : connected
+      if (now && !connected) setReconnects((count) => count + 1)
+      connected = now
+    }
+    for (const type of ['online', 'offline', 'manor:connection']) window.addEventListener(type, onConnection)
+    return (): void => { for (const type of ['online', 'offline', 'manor:connection']) window.removeEventListener(type, onConnection) }
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     void habitsApi
@@ -96,6 +111,7 @@ export function HabitsPage(): ReactNode {
           return
         }
         setState(overlayPendingEntries(loaded, pendingEntries.current))
+        setPersistError(null)
         if (state === null) {
           setSelectedDate(loaded.today)
           setHistoryMonth(monthKey(loaded.today))
@@ -113,7 +129,7 @@ export function HabitsPage(): ReactNode {
     return (): void => {
       cancelled = true
     }
-  }, [habitsApi, commitVersion])
+  }, [habitsApi, commitVersion, reconnects])
 
   const persist = async (
     operation: string,
