@@ -869,7 +869,7 @@ export function HomePage(): ReactNode {
         />
         {/* Default drop animation so a cancelled drag settles home visibly. */}
         <DragOverlay zIndex={1000} dropAnimation={dropLanded ? null : undefined}>
-          {activeTask === null ? null : <TaskCardPreview task={activeTask} contexts={contexts} />}
+          {activeTask === null ? null : <TaskCardPreview task={activeTask} contexts={contexts} bucket={dragSourceBucket} />}
         </DragOverlay>
         {quickTarget !== null && quickTask !== null ? (
           <QuickActionsMenu
