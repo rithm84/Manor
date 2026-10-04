@@ -1,5 +1,5 @@
 import { recurrenceLabel } from '../../../shared/recurrence'
-import { CalendarDays, Repeat } from 'lucide-react'
+import { CalendarDays, Clock3, Repeat } from 'lucide-react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { ReactNode } from 'react'
@@ -13,6 +13,7 @@ import {
   PRIORITY_COLORWAY,
   daysLate,
   estimateLabel,
+  formatClock,
   taskDueLabel
 } from './taskModel'
 
@@ -30,10 +31,12 @@ export interface TaskCardProps {
 
 export function TaskCardPreview({
   task,
-  contexts
+  contexts,
+  bucket
 }: {
   task: Task
   contexts: readonly ContextDefinition[]
+  bucket: TaskBucket | null
 }): ReactNode {
   return (
     <div className="task-card task-drag-card" aria-hidden="true">
@@ -42,7 +45,7 @@ export function TaskCardPreview({
         <span className="task-card-title">{task.title}</span>
       </div>
       <div className="task-card-chips">
-        <span className="tnum"><Pill variant="tag" colorway="neutral" label={taskDueLabel(task)} icon={<CalendarDays size={12} />} /></span>
+        <TaskDeadlineTag task={task} bucket={bucket} />
         <ContextPill name={task.context} contexts={contexts} />
         {task.estimateMinutes !== null ? (
           <Pill
@@ -55,6 +58,14 @@ export function TaskCardPreview({
       </div>
     </div>
   )
+}
+
+function TaskDeadlineTag({ task, bucket }: { task: Task; bucket: TaskBucket | null }): ReactNode {
+  if (bucket === 'today' || bucket === 'tomorrow') {
+    if (task.dueTime === null) return null
+    return <span className="tnum"><Pill variant="tag" colorway={bucket} label={formatClock(task.dueTime)} icon={<Clock3 size={12} />} /></span>
+  }
+  return <span className="tnum"><Pill variant="tag" colorway={bucket ?? 'neutral'} label={taskDueLabel(task)} icon={<CalendarDays size={12} />} /></span>
 }
 
 /**
@@ -119,7 +130,7 @@ export function TaskCard({
         <span className="task-card-title">{task.title}</span>
       </div>
       <div className="task-card-chips">
-        <span className="tnum"><Pill variant="tag" colorway={bucket ?? 'neutral'} label={taskDueLabel(task)} icon={<CalendarDays size={12} />} /></span>
+        <TaskDeadlineTag task={task} bucket={bucket} />
         <ContextPill name={task.context} contexts={contexts} />
         {task.estimateMinutes !== null ? (
           <Pill
