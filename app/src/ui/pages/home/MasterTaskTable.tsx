@@ -22,9 +22,10 @@ import {
   PRIORITY_COLORWAY,
   STATUS_COLORWAY,
   contextDefinitionFor,
-  dueColorway,
+  bucketForTask,
+  compareWeeklyTasks,
   estimateLabel,
-  formatDayLabel
+  taskDueLabel
 } from './taskModel'
 import './master.css'
 
@@ -32,6 +33,7 @@ export interface MasterTaskTableProps {
   tasks: readonly Task[]
   contexts: readonly ContextDefinition[]
   today: string
+  nowTime: string
   savedViews: readonly SavedTaskView[]
   onOpenTask: (taskId: string) => void
   onQuickActions: (taskId: string, point: QuickActionPoint) => void
@@ -144,13 +146,14 @@ interface MasterTaskRowProps {
   task: Task
   contexts: readonly ContextDefinition[]
   today: string
+  nowTime: string
   /** False when the table groups by context and the column is redundant. */
   showContext: boolean
   onOpenTask: (taskId: string) => void
   onQuickActions: (taskId: string, point: QuickActionPoint) => void
 }
 
-function MasterTaskRow({ task, contexts, today, showContext, onOpenTask, onQuickActions }: MasterTaskRowProps): ReactNode {
+function MasterTaskRow({ task, contexts, today, nowTime, showContext, onOpenTask, onQuickActions }: MasterTaskRowProps): ReactNode {
   const clickIntent = useClickIntent<HTMLButtonElement>(
     () => onOpenTask(task.id),
     (point) => onQuickActions(task.id, point),
@@ -160,6 +163,7 @@ function MasterTaskRow({ task, contexts, today, showContext, onOpenTask, onQuick
     <button
       type="button"
       className="master-row"
+      data-testid={`master-task-${task.id}`}
       role="row"
       onClick={clickIntent.onClick}
       onContextMenu={clickIntent.onContextMenu}
@@ -167,7 +171,7 @@ function MasterTaskRow({ task, contexts, today, showContext, onOpenTask, onQuick
     >
       <span className="master-title" role="cell">{task.title}</span>
       {showContext ? <span role="cell"><ContextPill name={task.context} contexts={contexts} /></span> : null}
-      <span className="tnum" role="cell"><Pill variant="tag" colorway={dueColorway(task.due, today)} label={formatDayLabel(task.due)} /></span>
+      <span className="tnum" role="cell"><Pill variant="tag" colorway={bucketForTask(task, today, nowTime) ?? 'neutral'} label={taskDueLabel(task)} /></span>
       <span role="cell">
         {task.estimateMinutes === null ? (
           <Pill variant="tag" colorway="neutral" label="Empty" />
@@ -187,7 +191,7 @@ function MasterTaskRow({ task, contexts, today, showContext, onOpenTask, onQuick
   )
 }
 
-export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask, onQuickActions, onSaveView, onDeleteView }: MasterTaskTableProps): ReactNode {
+export function MasterTaskTable({ tasks, contexts, today, nowTime, savedViews, onOpenTask, onQuickActions, onSaveView, onDeleteView }: MasterTaskTableProps): ReactNode {
   const [query, setQuery] = useState('')
   const [rules, setRules] = useState<readonly MasterFilterRule[]>([])
   const [groupByContext, setGroupByContext] = useState(false)
@@ -237,9 +241,7 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
       completedView ? task.status === 'Done' : task.status !== 'Done'
     )
     const filtered = filterTasks(scoped, rules).filter((task) => normalizedQuery === '' || task.title.toLocaleLowerCase().includes(normalizedQuery))
-    return [...filtered].sort((left, right) =>
-      left.due.localeCompare(right.due) || left.title.localeCompare(right.title)
-    )
+    return [...filtered].sort(compareWeeklyTasks)
   }, [completedView, query, rules, tasks])
 
   const contextGroups = useMemo(() => {
@@ -389,7 +391,7 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
           <span role="columnheader">Task</span>
           {groupByContext ? null : <span role="columnheader">Context</span>}
           <span role="columnheader">Due</span>
-          <span role="columnheader">Time</span>
+          <span role="columnheader">Estimate</span>
           <span role="columnheader">Priority</span>
           <span role="columnheader">Status</span>
         </div>
@@ -400,6 +402,7 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
                 task={task}
                 contexts={contexts}
                 today={today}
+                nowTime={nowTime}
                 showContext
                 onOpenTask={onOpenTask}
                 onQuickActions={onQuickActions}
@@ -426,6 +429,7 @@ export function MasterTaskTable({ tasks, contexts, today, savedViews, onOpenTask
                     task={task}
                     contexts={contexts}
                     today={today}
+                    nowTime={nowTime}
                     showContext={false}
                     onOpenTask={onOpenTask}
                     onQuickActions={onQuickActions}

@@ -13,7 +13,7 @@ import type {
 } from '../../data/mock'
 import { recurrenceLabel } from '../../../shared/recurrence'
 import { ContextSelect } from './ContextSelect'
-import { DueDatePicker } from './DueDatePicker'
+import { TaskDeadlinePicker } from './TaskDeadlinePicker'
 import { RecurrenceEditor } from './RecurrenceEditor'
 import { useEnterAction } from './enterAction'
 import {
@@ -63,6 +63,7 @@ export function TaskDetailDialog({
   onDuplicate,
   onDelete
 }: TaskDetailDialogProps): ReactNode {
+  const [timeValid, setTimeValid] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [draft, setDraft] = useState<Task | null>(task)
@@ -83,6 +84,7 @@ export function TaskDetailDialog({
     setDraft(task)
     setSavedTask(task)
     setSaveError(null)
+    setTimeValid(true)
     setRecurrenceOpen(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId, open])
@@ -99,6 +101,7 @@ export function TaskDetailDialog({
   const dirty = savedTask !== null && JSON.stringify(normalizedDraft()) !== JSON.stringify(savedTask)
 
   const saveDraft = async (): Promise<void> => {
+    if (!timeValid) throw new Error('Enter a valid due time or remove the time')
     if (normalizedDraft().title === '') throw new Error('Enter a task title')
     if (dirty) await onUpdate(normalizedDraft())
   }
@@ -186,13 +189,14 @@ export function TaskDetailDialog({
               <div className="task-property-row">
                 <CalendarDays size={15} aria-hidden="true" />
                 <span className="task-property-label">Due</span>
-                <DueDatePicker
+                <TaskDeadlinePicker
                   today={today}
-                  value={draft.due}
-                  onChange={(due) => setDraft({ ...draft, due })}
-                  ariaLabel="Due date"
+                  date={draft.due}
+                  time={draft.dueTime}
+                  onDateChange={(due) => setDraft((current) => current === null ? null : { ...current, due })}
+                  onTimeChange={(dueTime) => setDraft((current) => current === null ? null : { ...current, dueTime })}
+                  onValidityChange={setTimeValid}
                   min={null}
-                  max={null}
                 />
               </div>
               <div className="task-property-row">
@@ -272,7 +276,7 @@ export function TaskDetailDialog({
               <Button
                 variant="primary"
                 icon={<Check size={16} />}
-                disabled={!dirty || saving}
+                disabled={!dirty || !timeValid || saving}
                 onClick={closeWithSave}
               >
                 Save changes

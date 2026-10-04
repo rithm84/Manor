@@ -1,5 +1,5 @@
 import { recurrenceLabel } from '../../../shared/recurrence'
-import { Repeat } from 'lucide-react'
+import { CalendarDays, Repeat } from 'lucide-react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { ReactNode } from 'react'
@@ -12,7 +12,8 @@ import {
   ESTIMATE_COLORWAY,
   PRIORITY_COLORWAY,
   daysLate,
-  estimateLabel
+  estimateLabel,
+  taskDueLabel
 } from './taskModel'
 
 export interface TaskCardProps {
@@ -41,6 +42,7 @@ export function TaskCardPreview({
         <span className="task-card-title">{task.title}</span>
       </div>
       <div className="task-card-chips">
+        <span className="tnum"><Pill variant="tag" colorway="neutral" label={taskDueLabel(task)} icon={<CalendarDays size={12} />} /></span>
         <ContextPill name={task.context} contexts={contexts} />
         {task.estimateMinutes !== null ? (
           <Pill
@@ -83,6 +85,7 @@ export function TaskCard({
   return (
     <div
       className={`task-card${completing ? ' is-completing' : ''}${isDragging ? ' is-dragging' : ''}`}
+      data-testid={`task-card-${task.id}`}
       ref={setNodeRef}
       style={{ transform: isDragging ? undefined : CSS.Translate.toString(transform) }}
       {...listeners}
@@ -116,6 +119,7 @@ export function TaskCard({
         <span className="task-card-title">{task.title}</span>
       </div>
       <div className="task-card-chips">
+        <span className="tnum"><Pill variant="tag" colorway={bucket ?? 'neutral'} label={taskDueLabel(task)} icon={<CalendarDays size={12} />} /></span>
         <ContextPill name={task.context} contexts={contexts} />
         {task.estimateMinutes !== null ? (
           <Pill

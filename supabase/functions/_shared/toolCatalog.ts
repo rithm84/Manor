@@ -9,6 +9,7 @@ export type { JsonValue, JsonObject, ToolSchema, ToolExecution, ManorTool } from
 const taskFields = {
   title: { type: 'string', minLength: 1, maxLength: 300 } as ToolSchema,
   context_id: id, due: date,
+  due_time: { type: ['string', 'null'], pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$', description: 'Optional HH:MM deadline in the saved account timezone; null means date-only.' } as ToolSchema,
   status: { type: 'string', enum: ['Not started', 'In Progress', 'Done'] } as ToolSchema,
   priority: { type: ['string', 'null'], enum: ['Low', 'Medium', 'High', null] } as ToolSchema,
   estimate_minutes: { type: ['integer', 'null'], enum: [15, 30, 60, 120, 180, 240, null] } as ToolSchema,

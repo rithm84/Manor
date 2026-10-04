@@ -132,6 +132,7 @@ export interface DraftTask {
   title: string
   context: string | null
   due: string | null
+  dueTime: string | null
   estimateMinutes: TaskEstimateMinutes | null
   priority: TaskPriority | null
   recurrence: string | null
@@ -243,13 +244,21 @@ const PRIORITY_ORDER: Readonly<Record<TaskPriority, number>> = {
 export function compareWeeklyTasks(left: Task, right: Task): number {
   const dueOrder = left.due.localeCompare(right.due)
   if (dueOrder !== 0) return dueOrder
+  const timeOrder = (left.dueTime ?? '24:00').localeCompare(right.dueTime ?? '24:00')
+  if (timeOrder !== 0) return timeOrder
   const leftPriority = left.priority === null ? 3 : PRIORITY_ORDER[left.priority]
   const rightPriority = right.priority === null ? 3 : PRIORITY_ORDER[right.priority]
   return leftPriority - rightPriority || left.title.localeCompare(right.title)
 }
 
-export function dueColorway(due: string, today: string): PillColorway {
-  return bucketForDue(due, today) ?? 'neutral'
+/** Timed deadlines become overdue at the saved account's wall-clock minute. */
+export function bucketForTask(task: Task, today: string, nowTime: string): TaskBucket | null {
+  if (task.due === today && task.dueTime !== null && task.dueTime <= nowTime) return 'overdue'
+  return bucketForDue(task.due, today)
+}
+
+export function taskDueLabel(task: Task): string {
+  return `${formatDayLabel(task.due)}${task.dueTime === null ? '' : ` · ${formatClock(task.dueTime)}`}`
 }
 
 export function estimateLabel(estimate: TaskEstimateMinutes): string {

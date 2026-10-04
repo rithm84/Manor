@@ -77,6 +77,7 @@ export interface Task {
   priority: TaskPriority | null
   status: TaskStatus
   due: string
+  dueTime: string | null
   tags: readonly string[]
   recurrence: string | null
 }
@@ -220,6 +221,13 @@ function estimateValue(value: unknown): TaskEstimateMinutes | null {
   return value as TaskEstimateMinutes
 }
 
+function taskDueTime(value: unknown): string | null {
+  if (value === null) return null
+  const time = timeValue(value, 'task.dueTime')
+  if (time === '24:00') throw new RangeError('task.dueTime must be before midnight')
+  return time
+}
+
 export function parseTask(value: unknown): Task {
   const task = recordValue(value, 'task')
   return {
@@ -230,6 +238,7 @@ export function parseTask(value: unknown): Task {
     priority: priorityValue(task.priority),
     status: statusValue(task.status),
     due: isoDateValue(task.due, 'task.due'),
+    dueTime: taskDueTime(task.dueTime),
     tags: stringList(task.tags, 'task.tags'),
     recurrence: nullableString(task.recurrence, 'task.recurrence')
   }

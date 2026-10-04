@@ -11,7 +11,7 @@ import type {
   TaskPriority
 } from '../../data/mock'
 import { ContextSelect } from './ContextSelect'
-import { DueDatePicker } from './DueDatePicker'
+import { TaskDeadlinePicker } from './TaskDeadlinePicker'
 import { RecurrenceEditor } from './RecurrenceEditor'
 import { useEnterAction } from './enterAction'
 import { recurrenceLabel } from '../../../shared/recurrence'
@@ -41,6 +41,7 @@ function emptyDraft(bucket: TaskBucket, today: string): DraftTask {
     title: '',
     context: defaults.context,
     due: defaults.due,
+    dueTime: null,
     estimateMinutes: null,
     priority: null,
     recurrence: null
@@ -52,6 +53,7 @@ function sameDraft(left: DraftTask, right: DraftTask): boolean {
     left.title === right.title &&
     left.context === right.context &&
     left.due === right.due &&
+    left.dueTime === right.dueTime &&
     left.estimateMinutes === right.estimateMinutes &&
     left.priority === right.priority &&
     left.recurrence === right.recurrence
@@ -78,6 +80,7 @@ export function TaskCreateDialog({
 }: TaskCreateDialogProps): ReactNode {
   const activeBucket = bucket ?? 'today'
   const [draft, setDraft] = useState<DraftTask>(() => emptyDraft(activeBucket, today))
+  const [timeValid, setTimeValid] = useState(true)
   const [saving, setSaving] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -88,6 +91,7 @@ export function TaskCreateDialog({
     if (bucket === null) return
     setDraft(emptyDraft(bucket, today))
     setSaving(false)
+    setTimeValid(true)
     setConfirmDiscard(false)
     setCreateError(null)
     setRecurrenceOpen(false)
@@ -107,7 +111,7 @@ export function TaskCreateDialog({
   const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault()
     const title = draft.title.trim()
-    if (title === '' || draft.context === null || draft.due === null || saving) return
+    if (title === '' || draft.context === null || draft.due === null || !timeValid || saving) return
     setSaving(true)
     setCreateError(null)
     try {
@@ -120,7 +124,7 @@ export function TaskCreateDialog({
   }
 
   const canSubmit =
-    draft.title.trim() !== '' && draft.context !== null && draft.due !== null && !saving
+    draft.title.trim() !== '' && draft.context !== null && draft.due !== null && timeValid && !saving
 
   return (
     <>
@@ -178,13 +182,14 @@ export function TaskCreateDialog({
           <div className="task-property-row">
             <CalendarDays size={15} aria-hidden="true" />
             <span className="task-property-label">Due <span aria-hidden="true">*</span></span>
-            <DueDatePicker
+            <TaskDeadlinePicker
               today={today}
-              value={draft.due}
-              onChange={(due) => setDraft({ ...draft, due })}
-              ariaLabel="Due date"
+              date={draft.due}
+              time={draft.dueTime}
+              onDateChange={(due) => setDraft((current) => ({ ...current, due }))}
+              onTimeChange={(dueTime) => setDraft((current) => ({ ...current, dueTime }))}
+              onValidityChange={setTimeValid}
               min={today}
-              max={null}
             />
           </div>
 

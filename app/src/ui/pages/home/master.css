@@ -455,7 +455,7 @@
 
 .master-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1.8fr) minmax(100px, 0.8fr) minmax(130px, 1fr) minmax(80px, 0.7fr) minmax(90px, 0.8fr) minmax(100px, 0.8fr);
+  grid-template-columns: minmax(220px, 1.8fr) minmax(100px, 0.8fr) minmax(210px, 1.3fr) minmax(80px, 0.7fr) minmax(90px, 0.8fr) minmax(100px, 0.8fr);
   width: 100%;
   min-height: 42px;
   align-items: center;
@@ -496,7 +496,7 @@ button.master-row:hover {
 }
 
 .master-table.is-grouped .master-row {
-  grid-template-columns: minmax(220px, 1.8fr) minmax(130px, 1fr) minmax(80px, 0.7fr) minmax(90px, 0.8fr) minmax(100px, 0.8fr);
+  grid-template-columns: minmax(220px, 1.8fr) minmax(210px, 1.3fr) minmax(80px, 0.7fr) minmax(90px, 0.8fr) minmax(100px, 0.8fr);
 }
 
 .master-group-head {

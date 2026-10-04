@@ -43,7 +43,7 @@ import type { ScheduleDay, TimelineDropPreview } from './home/TodayPanel'
 import {
   addDays,
   blockMinutesFor,
-  bucketForDue,
+  bucketForTask,
   canDropTaskOnBucket,
   defaultPortion,
   dueForTaskCreation,
@@ -286,6 +286,7 @@ export function HomePage(): ReactNode {
       priority: draft.priority,
       status: 'Not started',
       due: dueForTaskCreation(bucket, today, draft.due),
+      dueTime: draft.dueTime,
       tags: [],
       recurrence: draft.recurrence
     }
@@ -629,7 +630,7 @@ export function HomePage(): ReactNode {
   const boardTasks = tasks.filter(
     (task) =>
       (task.status !== 'Done' || completingIds.has(task.id)) &&
-      bucketForDue(task.due, today) !== null
+      bucketForTask(task, today, nowTime) !== null
   )
   const peekTask = peekId === null ? null : tasks.find((task) => task.id === peekId) ?? null
   const blockPeek = blockPeekId === null
@@ -642,7 +643,7 @@ export function HomePage(): ReactNode {
   const scheduleDate = scheduleDay === 'today' ? today : addDays(today, 1)
   const scheduleDateLabel = formatDayLabel(scheduleDate)
   const activeTask = activeTaskId === null ? null : tasks.find((task) => task.id === activeTaskId) ?? null
-  const dragSourceBucket = activeTask === null ? null : bucketForDue(activeTask.due, today)
+  const dragSourceBucket = activeTask === null ? null : bucketForTask(activeTask, today, nowTime)
   const quickTask = quickTarget === null
     ? null
     : tasks.find((task) => task.id === quickTarget.taskId) ?? null
@@ -750,6 +751,7 @@ export function HomePage(): ReactNode {
                 tasks={boardTasks}
                 contexts={contexts}
                 today={today}
+                nowTime={nowTime}
                 completingIds={completingIds}
                 dragSourceBucket={dragSourceBucket}
                 onOpenComposer={openTaskCreation}
@@ -780,6 +782,7 @@ export function HomePage(): ReactNode {
               tasks={tasks}
               contexts={contexts}
               today={today}
+              nowTime={nowTime}
               savedViews={savedViews}
               onOpenTask={openTask}
               onQuickActions={openQuickActions}
