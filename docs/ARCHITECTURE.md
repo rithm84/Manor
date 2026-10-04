@@ -1,12 +1,12 @@
 # Manor architecture
 
-_Last updated: 2026-09-23_
+_Last updated: 2026-10-04_
 
 Manor is a macOS desktop app: a React frontend built with Vite inside a Tauri shell, with Supabase behind it. This page describes how the pieces fit together, the rules each part follows, and what remains to verify. Product behavior lives in the [PRD](PRD.md) and the visual direction in the [design charter](DESIGN.md).
 
 ## Status
 
-The production Supabase project carries all 56 migrations applied over the preserved account data, the eleven Edge Functions, the four `manor-*` schedules, Google-only Auth with both hooks and the OAuth server, and the migrated resume and capture files. The legacy functions and schedules are removed, and the app installs and updates from Manor's GitHub Releases. The app has a Vite entry point, Supabase view adapters, transactional commands, account-scoped query refresh, and the redesigned light and dark interface. The Notes editor includes native columns and tabs, durable browser drafts, attachment queues, conflicts, versions, and suggestions.
+The production Supabase project carries all 57 migrations applied over the preserved account data, the eleven Edge Functions, the four `manor-*` schedules, Google-only Auth with both hooks and the OAuth server, and the migrated resume and capture files. The legacy functions and schedules are removed, and the app installs and updates from Manor's GitHub Releases. The app has a Vite entry point, Supabase view adapters, transactional commands, account-scoped query refresh, and the redesigned light and dark interface. The Notes editor includes native columns and tabs, durable browser drafts, attachment queues, conflicts, versions, and suggestions.
 
 Verified in staging:
 
@@ -118,7 +118,7 @@ History and receipts serve different purposes: history explains meaningful chang
 
 ### Dates and recurrence
 
-Instants are stored as time-zone-aware timestamps and date-keyed logs as dates. Business dates come from the account time zone in the PRD, with the same clock rules in browser hints and server validation. A unique occurrence key combines the series identity with its scheduled occurrence identity, and exceptions plus completed and skipped outcomes are stored separately from the series definition.
+Instants are stored as time-zone-aware timestamps and date-keyed logs as dates. Task deadlines keep the required local date in `tasks.due` and an optional `HH:MM` wall-clock value in `tasks.due_time`, interpreted in the saved account time zone. A database constraint rejects invalid times. Sparse edits preserve omitted times, explicit null clears them, and recurring series carry the same optional time to generated occurrences. Date filters keep calendar-day semantics; the board compares the current account-local date and minute for overdue state. Business dates come from the account time zone in the PRD, with the same clock rules in browser hints and server validation. A unique occurrence key combines the series identity with its scheduled occurrence identity, and exceptions plus completed and skipped outcomes are stored separately from the series definition.
 
 Historical mood and focus corrections use a dedicated account-authenticated command with date and revision checks that preserves synthesis fields and records ordinary action history. That command rejects OAuth agent clients and is not in the MCP catalog; the History editor owns this exception to the daily capture window.
 

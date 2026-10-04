@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
+import { tasks as showroomTasks } from '../../data/mock'
+import { dateInTimezone, timeInTimezone } from '../../../shared/timezone'
+import { parseTask } from '../../../shared/home'
 import type { ScratchBlock } from '../../data/mock'
 import {
   bucketForDue,
+  bucketForTask,
+  taskDueLabel,
   canCreateTaskInBucket,
   canDropTaskOnBucket,
   compareWeeklyTasks,
@@ -65,11 +70,11 @@ describe('computed task buckets', () => {
 
   it('orders the weekly board by exact due date, then High to Low priority', () => {
     const tasks = [
-      { id: 'low', title: 'Low', context: 'Personal', estimateMinutes: null, priority: 'Low' as const, status: 'Not started' as const, due: '2026-08-25', tags: [], recurrence: null },
-      { id: 'later', title: 'Later', context: 'Personal', estimateMinutes: null, priority: 'High' as const, status: 'Not started' as const, due: '2026-08-26', tags: [], recurrence: null },
-      { id: 'none', title: 'None', context: 'Personal', estimateMinutes: null, priority: null, status: 'Not started' as const, due: '2026-08-25', tags: [], recurrence: null },
-      { id: 'high', title: 'High', context: 'Personal', estimateMinutes: null, priority: 'High' as const, status: 'Not started' as const, due: '2026-08-25', tags: [], recurrence: null },
-      { id: 'medium', title: 'Medium', context: 'Personal', estimateMinutes: null, priority: 'Medium' as const, status: 'Not started' as const, due: '2026-08-25', tags: [], recurrence: null }
+      { id: 'low', title: 'Low', context: 'Personal', estimateMinutes: null, priority: 'Low' as const, status: 'Not started' as const, due: '2026-08-25', dueTime: null, tags: [], recurrence: null },
+      { id: 'later', title: 'Later', context: 'Personal', estimateMinutes: null, priority: 'High' as const, status: 'Not started' as const, due: '2026-08-26', dueTime: null, tags: [], recurrence: null },
+      { id: 'none', title: 'None', context: 'Personal', estimateMinutes: null, priority: null, status: 'Not started' as const, due: '2026-08-25', dueTime: null, tags: [], recurrence: null },
+      { id: 'high', title: 'High', context: 'Personal', estimateMinutes: null, priority: 'High' as const, status: 'Not started' as const, due: '2026-08-25', dueTime: null, tags: [], recurrence: null },
+      { id: 'medium', title: 'Medium', context: 'Personal', estimateMinutes: null, priority: 'Medium' as const, status: 'Not started' as const, due: '2026-08-25', dueTime: null, tags: [], recurrence: null }
     ]
     expect([...tasks].sort(compareWeeklyTasks).map((task) => task.id)).toEqual([
       'high', 'medium', 'low', 'none', 'later'
@@ -142,5 +147,29 @@ describe('scratch block scheduling', () => {
     const expiry = new Date(scratchExpiry('2026-08-22', '15:00')).getTime()
     const scheduledEnd = new Date('2026-08-22T15:00:00').getTime()
     expect(expiry - scheduledEnd).toBe(48 * 60 * 60 * 1000)
+  })
+})
+
+
+describe('task deadlines', () => {
+  it('uses the account-local minute, including midnight, while date-only tasks last through the day', () => {
+    const now = new Date('2026-10-05T02:59:00Z')
+    const today = dateInTimezone(now, 'America/Los_Angeles')
+    const time = timeInTimezone(now, 'America/Los_Angeles')
+    const task = { ...showroomTasks[0]!, due: today, dueTime: '19:59' }
+    expect(bucketForTask(task, today, '19:58')).toBe('today')
+    expect(bucketForTask(task, today, time)).toBe('overdue')
+    expect(bucketForTask({ ...task, dueTime: null }, today, '23:59')).toBe('today')
+    expect(bucketForTask({ ...task, dueTime: '00:00' }, today, '00:00')).toBe('overdue')
+    expect(taskDueLabel(task)).toBe('Sun, Oct 4 · 7:59 PM')
+  })
+
+  it('sorts exact deadlines before priorities and date-only deadlines', () => {
+    const task = { ...showroomTasks[0]!, due: '2026-10-05' }
+    const tasks = [{ ...task, id: 'all-day', dueTime: null }, { ...task, id: 'evening', dueTime: '19:59', priority: 'High' as const }, { ...task, id: 'noon', dueTime: '12:00', priority: 'Low' as const }]
+    expect(tasks.sort(compareWeeklyTasks).map((item) => item.id)).toEqual(['noon', 'evening', 'all-day'])
+    expect(parseTask({ ...task, dueTime: '19:59' }).dueTime).toBe('19:59')
+    expect(() => parseTask({ ...task, dueTime: '24:00' })).toThrow('before midnight')
+    expect(() => parseTask({ ...task, dueTime: '12:60' })).toThrow('HH:MM')
   })
 })

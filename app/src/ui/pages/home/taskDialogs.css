@@ -640,3 +640,42 @@
     display: none;
   }
 }
+
+.task-deadline-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.task-deadline-picker > .ui-datepicker {
+  min-width: 0;
+  flex: 1;
+}
+
+.task-deadline-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.task-deadline-add:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
+.task-deadline-time {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.task-deadline-time .ui-timepicker {
+  min-width: 0;
+  flex: 1;
+}

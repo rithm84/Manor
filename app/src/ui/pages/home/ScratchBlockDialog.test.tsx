@@ -16,7 +16,7 @@ const TASK: Task = {
   estimateMinutes: 60,
   priority: 'Medium',
   status: 'Not started',
-  due: '2026-08-22',
+  due: '2026-08-22', dueTime: null,
   tags: [],
   recurrence: null
 }

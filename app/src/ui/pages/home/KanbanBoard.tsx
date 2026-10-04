@@ -5,12 +5,13 @@ import type { QuickActionPoint } from '../../components/ui'
 import type { ContextDefinition, Task, TaskBucket } from '../../data/mock'
 import { taskBuckets } from '../../data/mock'
 import { KanbanColumn } from './KanbanColumn'
-import { bucketForDue, compareWeeklyTasks } from './taskModel'
+import { bucketForTask, compareWeeklyTasks } from './taskModel'
 
 export interface KanbanBoardProps {
   tasks: readonly Task[]
   contexts: readonly ContextDefinition[]
   today: string
+  nowTime: string
   completingIds: ReadonlySet<string>
   /** The active drag's source bucket; null while nothing is dragging. */
   dragSourceBucket: TaskBucket | null
@@ -30,6 +31,7 @@ export function KanbanBoard({
   tasks,
   contexts,
   today,
+  nowTime,
   completingIds,
   dragSourceBucket,
   onOpenComposer,
@@ -76,7 +78,7 @@ export function KanbanBoard({
             key={meta.bucket}
             meta={meta}
             tasks={tasks
-              .filter((task) => bucketForDue(task.due, today) === meta.bucket)
+              .filter((task) => bucketForTask(task, today, nowTime) === meta.bucket)
               .sort(compareWeeklyTasks)}
             contexts={contexts}
             today={today}

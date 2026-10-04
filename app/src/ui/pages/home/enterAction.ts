@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
 
 /** Closed picker triggers: Enter would only reopen them, while Space and the arrow keys still do. */
-const PICKER_TRIGGER = 'button.ui-select-trigger, [role="combobox"], button[aria-haspopup]'
+const PICKER_TRIGGER = 'button.ui-select-trigger, [role="combobox"]:not(input), button[aria-haspopup]'
 
 /** Controls whose Enter means something of its own, from text entry to a Delete button. */
 const OWN_ENTER = 'input, textarea, select, button, a[href], [role="option"], [role="radio"], [role="listbox"], [role="menu"], [contenteditable="true"]'

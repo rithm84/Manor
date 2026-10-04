@@ -293,6 +293,7 @@ export const tasks: readonly Task[] = [
     priority: null,
     status: 'Not started',
     due: '2026-08-19',
+    dueTime: null,
     tags: [],
     recurrence: null
   },
@@ -304,6 +305,7 @@ export const tasks: readonly Task[] = [
     priority: 'High',
     status: 'Not started',
     due: '2026-08-20',
+    dueTime: null,
     tags: [],
     recurrence: null
   },
@@ -315,6 +317,7 @@ export const tasks: readonly Task[] = [
     priority: null,
     status: 'Not started',
     due: '2026-08-20',
+    dueTime: null,
     tags: [],
     recurrence: null
   },
@@ -326,6 +329,7 @@ export const tasks: readonly Task[] = [
     priority: null,
     status: 'Not started',
     due: '2026-08-21',
+    dueTime: null,
     tags: ['Exam'],
     recurrence: null
   },
@@ -337,6 +341,7 @@ export const tasks: readonly Task[] = [
     priority: null,
     status: 'Not started',
     due: '2026-08-21',
+    dueTime: null,
     tags: [],
     recurrence: null
   },
@@ -348,6 +353,7 @@ export const tasks: readonly Task[] = [
     priority: null,
     status: 'In Progress',
     due: '2026-08-22',
+    dueTime: null,
     tags: [],
     recurrence: null
   },
@@ -359,6 +365,7 @@ export const tasks: readonly Task[] = [
     priority: null,
     status: 'Not started',
     due: '2026-08-24',
+    dueTime: null,
     tags: [],
     recurrence: 'Every Sunday'
   },
@@ -370,6 +377,7 @@ export const tasks: readonly Task[] = [
     priority: null,
     status: 'Not started',
     due: '2026-08-23',
+    dueTime: null,
     tags: [],
     recurrence: null
   },
@@ -381,6 +389,7 @@ export const tasks: readonly Task[] = [
     priority: null,
     status: 'Not started',
     due: '2026-08-23',
+    dueTime: null,
     tags: [],
     recurrence: null
   },
@@ -392,6 +401,7 @@ export const tasks: readonly Task[] = [
     priority: 'Medium',
     status: 'Not started',
     due: '2026-09-02',
+    dueTime: null,
     tags: [],
     recurrence: null
   },
@@ -403,6 +413,7 @@ export const tasks: readonly Task[] = [
     priority: 'Low',
     status: 'Not started',
     due: '2026-09-18',
+    dueTime: null,
     tags: [],
     recurrence: null
   }

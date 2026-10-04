@@ -15,7 +15,7 @@ const TASK: Task = {
   estimateMinutes: 180,
   priority: 'High',
   status: 'In Progress',
-  due: '2026-08-22',
+  due: '2026-08-22', dueTime: null,
   tags: [],
   recurrence: null
 }
@@ -26,7 +26,7 @@ describe('Master task property presentation', () => {
       <MasterTaskTable
         tasks={[TASK]}
         contexts={CONTEXTS}
-        today="2026-08-22"
+        today="2026-08-22" nowTime="09:00"
         savedViews={[]}
         onOpenTask={() => undefined}
         onQuickActions={() => undefined}
@@ -48,7 +48,7 @@ describe('Master task property presentation', () => {
       <MasterTaskTable
         tasks={[TASK]}
         contexts={CONTEXTS}
-        today="2026-08-22"
+        today="2026-08-22" nowTime="09:00"
         savedViews={[]}
         onOpenTask={() => undefined}
         onQuickActions={() => undefined}

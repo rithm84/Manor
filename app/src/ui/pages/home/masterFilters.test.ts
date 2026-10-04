@@ -4,9 +4,9 @@ import type { MasterFilterRule, Task } from '../../../shared/home'
 import { filterTasks, taskMatchesRules } from './masterFilters'
 
 const TASKS: readonly Task[] = [
-  { id: 'one', title: 'Alpha', context: 'Personal', estimateMinutes: 60, priority: 'High', status: 'Not started', due: '2026-08-22', tags: [], recurrence: null },
-  { id: 'two', title: 'Beta', context: 'Uni', estimateMinutes: 30, priority: 'Low', status: 'In Progress', due: '2026-08-25', tags: [], recurrence: null },
-  { id: 'three', title: 'Gamma', context: 'Personal', estimateMinutes: null, priority: 'Medium', status: 'Done', due: '2026-09-02', tags: [], recurrence: null }
+  { id: 'one', title: 'Alpha', context: 'Personal', estimateMinutes: 60, priority: 'High', status: 'Not started', due: '2026-08-22', dueTime: null, tags: [], recurrence: null },
+  { id: 'two', title: 'Beta', context: 'Uni', estimateMinutes: 30, priority: 'Low', status: 'In Progress', due: '2026-08-25', dueTime: null, tags: [], recurrence: null },
+  { id: 'three', title: 'Gamma', context: 'Personal', estimateMinutes: null, priority: 'Medium', status: 'Done', due: '2026-09-02', dueTime: null, tags: [], recurrence: null }
 ]
 
 describe('Master task filters', () => {

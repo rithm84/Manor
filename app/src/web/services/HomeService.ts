@@ -52,7 +52,7 @@ export class HomeService implements HomeApi {
     const existing = this.taskRows.find((row) => row.id === task.id)
     if (existing !== undefined && input.revision === undefined) throw new Error('Task revision is missing. Reload the task before saving.')
     const fields: JsonObject = { id: task.id, title: task.title, context_id: this.context(task.context).id,
-      estimate_minutes: task.estimateMinutes, priority: task.priority, status: task.status, due: task.due,
+      estimate_minutes: task.estimateMinutes, priority: task.priority, status: task.status, due: task.due, due_time: task.dueTime,
       tags: [...task.tags], expected_revision: existing === undefined ? 0 : z.number().int().positive().parse(input.revision) }
     let operation = existing === undefined ? 'create_task' : 'update_task'
     if (existing === undefined && task.recurrence !== null) {
