@@ -28,8 +28,6 @@ printf '%s\n' "BLAXEL_API_KEY=$BLAXEL_API_KEY" "BLAXEL_WORKSPACE=$BLAXEL_WORKSPA
 mkdir -p "$DATA"
 node "$REPO/tools/problem-import/workdata.mjs" pull "$DATA" --project-ref cysdooljdslgvqrahymm
 
-# The private tooling and the authoring guides use these absolute paths.
-if [ -w / ]; then mkdir -p /Users/rithvik/Projects; else sudo mkdir -p /Users/rithvik/Projects && sudo chown "$(id -u)" /Users/rithvik /Users/rithvik/Projects; fi
-ln -sfn "$REPO" /Users/rithvik/Projects/Manor
-ln -sfn "$DATA" /Users/rithvik/Manor-handoff-2026-10-12
-echo "Problem pipeline ready: data in $DATA, handoff notes in $DATA/work/CLOUD-HANDOFF.md"
+# The private tooling finds the repository through this file; it is never synced to the bucket.
+printf '%s\n' "$REPO" > "$DATA/work/.repo"
+echo "Problem pipeline ready: repository $REPO, data $DATA, handoff notes $DATA/work/CLOUD-HANDOFF.md"
