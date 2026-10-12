@@ -60,7 +60,11 @@ if (command === 'push') {
   const temporary = mkdtempSync(join(tmpdir(), 'manor-workdata-'))
   try {
     const archive = join(temporary, 'snapshot.tar.gz')
-    execFileSync('tar', ['-czf', archive, ...EXCLUDES.flatMap(pattern => ['--exclude', pattern]), '-C', root, ...readdirSync(root).filter(name => !EXCLUDES.includes(name)).sort()], { env: { ...process.env, COPYFILE_DISABLE: '1' } })
+    // Authoring keeps writing while a push runs. GNU tar then exits 1 ("file changed as we read it") after
+    // writing a complete archive; the next push captures the newer files.
+    const gnu = /GNU tar/.test(execFileSync('tar', ['--version']).toString())
+    try { execFileSync('tar', ['-czf', archive, ...(gnu ? ['--warning=no-file-changed'] : []), ...EXCLUDES.flatMap(pattern => ['--exclude', pattern]), '-C', root, ...readdirSync(root).filter(name => !EXCLUDES.includes(name)).sort()], { env: { ...process.env, COPYFILE_DISABLE: '1' }, maxBuffer: 64 * 1024 * 1024 }) }
+    catch (error) { if (!(gnu && error.status === 1)) throw error }
     const bytes = readFileSync(archive)
     const sha256 = createHash('sha256').update(bytes).digest('hex')
     const parts = Math.ceil(bytes.length / PART)
