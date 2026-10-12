@@ -8,12 +8,14 @@ Writes <spec-dir>/validated.json on success and prints one JSON result line per 
 """
 from __future__ import annotations
 
+import ctypes
 import json
 import math
 import os
 import random
 import re
 import resource
+import signal
 import subprocess
 import sys
 import tempfile
@@ -207,12 +209,17 @@ def display_input(spec: dict, case: Case) -> str:
 
 # ---------- Execution ----------
 # Each program gets a 2 GiB address-space ceiling, so a runaway reference, oracle, or generator fails
-# with a clear error instead of exhausting the machine that runs many validators at once.
+# with a clear error instead of exhausting the machine that runs many validators at once. On Linux it
+# also dies with the validator, so a killed validator never leaves its program spinning.
 PROGRAM_MEMORY_BYTES = 2 << 30
+PR_SET_PDEATHSIG = 1
+LIBC = ctypes.CDLL(None, use_errno=True) if sys.platform.startswith("linux") else None
 
 
 def limit_memory() -> None:
     resource.setrlimit(resource.RLIMIT_AS, (PROGRAM_MEMORY_BYTES, PROGRAM_MEMORY_BYTES))
+    if LIBC is not None:
+        LIBC.prctl(PR_SET_PDEATHSIG, signal.SIGKILL)
 
 
 def run_batch(program: str, cases: list[Case], timeout: float, hash_seed: str) -> list[tuple[str | None, int]]:
