@@ -13,6 +13,7 @@ import math
 import os
 import random
 import re
+import resource
 import subprocess
 import sys
 import tempfile
@@ -205,12 +206,21 @@ def display_input(spec: dict, case: Case) -> str:
 
 
 # ---------- Execution ----------
+# Each program gets a 2 GiB address-space ceiling, so a runaway reference, oracle, or generator fails
+# with a clear error instead of exhausting the machine that runs many validators at once.
+PROGRAM_MEMORY_BYTES = 2 << 30
+
+
+def limit_memory() -> None:
+    resource.setrlimit(resource.RLIMIT_AS, (PROGRAM_MEMORY_BYTES, PROGRAM_MEMORY_BYTES))
+
+
 def run_batch(program: str, cases: list[Case], timeout: float, hash_seed: str) -> list[tuple[str | None, int]]:
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory, "main.py")
         path.write_text(program)
         try:
-            result = subprocess.run([sys.executable, str(path)], input="".join(case.text for case in cases), capture_output=True, text=True, timeout=timeout, env={"PATH": os.environ["PATH"], "PYTHONHASHSEED": hash_seed})
+            result = subprocess.run([sys.executable, str(path)], input="".join(case.text for case in cases), capture_output=True, text=True, timeout=timeout, env={"PATH": os.environ["PATH"], "PYTHONHASHSEED": hash_seed}, preexec_fn=limit_memory)
         except subprocess.TimeoutExpired as error:
             raise SpecError(f"program exceeded {timeout:.0f}s over {len(cases)} cases") from error
     outputs: list[tuple[str | None, int]] = []
@@ -234,7 +244,7 @@ def run_stdin(program: str, cases: list[Case], timeout: float) -> list[tuple[str
         path.write_text(program)
         for case in cases:
             try:
-                result = subprocess.run([sys.executable, str(path)], input=case.text, capture_output=True, text=True, timeout=timeout, env={"PATH": os.environ["PATH"]})
+                result = subprocess.run([sys.executable, str(path)], input=case.text, capture_output=True, text=True, timeout=timeout, env={"PATH": os.environ["PATH"]}, preexec_fn=limit_memory)
             except subprocess.TimeoutExpired as error:
                 raise SpecError(f"stdin program exceeded {timeout:.0f}s on {case.origin}") from error
             if result.returncode != 0:
@@ -303,7 +313,7 @@ def run_judge(directory: Path, items: list[dict]) -> list[bool]:
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder, "judge.py")
         path.write_text(program)
-        result = subprocess.run([sys.executable, str(path)], input=json.dumps(items), capture_output=True, text=True, timeout=120)
+        result = subprocess.run([sys.executable, str(path)], input=json.dumps(items), capture_output=True, text=True, timeout=120, preexec_fn=limit_memory)
     if result.returncode != 0:
         raise SpecError("judge.py failed: " + result.stderr.strip()[-1500:])
     verdicts = json.loads(result.stdout)
