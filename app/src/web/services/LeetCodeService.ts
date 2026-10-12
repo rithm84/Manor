@@ -1,28 +1,19 @@
 import { z } from 'zod'
-import { parseLeetCodeProblem, parseLeetCodeAttempt, parseLeetCodeNote, parseLeetCodeSummary, parseAddLeetCodeAttemptMutation, parseUpdateLeetCodeAttemptMutation, parseLeetCodeNoteText } from '../../shared/leetcode'
-import type { LeetCodeApi, LeetCodeState, AddLeetCodeAttemptMutation, UpdateLeetCodeAttemptMutation, UpdateLeetCodeNoteMutation, LeetCodeFreezeMutation } from '../../shared/leetcode'
+import { parseLeetCodeProblem, parseLeetCodeAttempt, parseLeetCodeNote, parseAddLeetCodeAttemptMutation, parseUpdateLeetCodeAttemptMutation, parseLeetCodeNoteText } from '../../shared/leetcode'
+import type { LeetCodeApi, LeetCodeState, AddLeetCodeAttemptMutation, UpdateLeetCodeAttemptMutation, UpdateLeetCodeNoteMutation } from '../../shared/leetcode'
 import type { ManorGateway } from '../ManorGateway'
-import { camelRow, derivedRead, rowRevision } from './rows'
+import { camelRow, rowRevision } from './rows'
 
 export class LeetCodeService implements LeetCodeApi {
   private readonly gateway: ManorGateway
   constructor(gateway: ManorGateway) { this.gateway = gateway }
   async load(): Promise<LeetCodeState> {
-    const [problems, attempts, notes, summary] = await Promise.all([
-      this.gateway.rows('leetcode_problems'), this.gateway.rows('leetcode_attempts'), this.gateway.rows('leetcode_notes'),
-      derivedRead(this.gateway, 'manor_leetcode_summary', 'Read LeetCode summary')
+    const [problems, attempts, notes] = await Promise.all([
+      this.gateway.rows('leetcode_problems'), this.gateway.rows('leetcode_attempts'), this.gateway.rows('leetcode_notes')
     ])
-    return { problems: problems.map((row) => parseLeetCodeProblem(camelRow(row))).sort((a,b) => a.curriculumOrder - b.curriculumOrder),
+    return { problems: problems.filter(row => (row.source_type === undefined || row.source_type === 'stock') && row.difficulty !== null).map((row) => parseLeetCodeProblem(camelRow(row))).sort((a,b) => a.curriculumOrder - b.curriculumOrder),
       attempts: attempts.map((row) => ({ ...parseLeetCodeAttempt(camelRow(row)), revision: rowRevision(row) })),
-      notes: notes.map((row) => ({ ...parseLeetCodeNote(camelRow(row)), revision: rowRevision(row) })), summary: parseLeetCodeSummary(summary) }
-  }
-  async applyFreeze(mutation: LeetCodeFreezeMutation): Promise<LeetCodeState> {
-    await this.gateway.command('apply_leetcode_freeze', { date: z.iso.date().parse(mutation.date), expected_revision: z.number().int().nonnegative().parse(mutation.expectedRevision) }, crypto.randomUUID())
-    return this.load()
-  }
-  async clearFreeze(mutation: LeetCodeFreezeMutation): Promise<LeetCodeState> {
-    await this.gateway.command('clear_leetcode_freeze', { date: z.iso.date().parse(mutation.date), expected_revision: z.number().int().nonnegative().parse(mutation.expectedRevision) }, crypto.randomUUID())
-    return this.load()
+      notes: notes.map((row) => ({ ...parseLeetCodeNote(camelRow(row)), revision: rowRevision(row) })), summary: { totalProblems: problems.length, legacyProgress: [] } }
   }
   async addAttempt(input: AddLeetCodeAttemptMutation): Promise<LeetCodeState> {
     const mutation = parseAddLeetCodeAttemptMutation(input)

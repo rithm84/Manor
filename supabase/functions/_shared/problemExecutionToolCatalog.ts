@@ -1,0 +1,12 @@
+import { id, uuid, object, type ManorTool, type ToolSchema } from './toolDefinitions.ts'
+
+const language: ToolSchema = { type: 'string', enum: ['cpp', 'c', 'python', 'javascript', 'java', 'go'] }
+const source: ToolSchema = { type: 'string', minLength: 1, maxLength: 262144, description: 'Complete stdin/stdout program; Java uses public class Main.' }
+const execution = { problemId: id, language, code: source, requestId: uuid }
+
+export const problemExecutionTools: readonly ManorTool[] = [
+  { name: 'run_problem', description: 'Run a complete program against a problem’s public examples, or optional custom stdin. Returns a durable queued submission; query its ID until completed or failed. Expected answers and hidden cases stay private. Reuse requestId only with the exact same input.', inputSchema: object({ ...execution, customInput: { type: 'string', maxLength: 1048576 } }, ['problemId', 'language', 'code', 'requestId']), execution: { kind: 'edge', function: 'problem-runner', fixedInput: { action: 'execute', mode: 'run' } }, readOnly: false },
+  { name: 'submit_problem', description: 'Grade a complete program against the current private versioned testset. Returns a durable queued submission; query its ID for the server verdict. This applies to coding problems with imported content and a testset. Reuse requestId only with the exact same input.', inputSchema: object(execution, ['problemId', 'language', 'code', 'requestId']), execution: { kind: 'edge', function: 'problem-runner', fixedInput: { action: 'execute', mode: 'submit' } }, readOnly: false },
+  { name: 'query_problem_submission', description: 'Read one account-owned execution submission and its status, verdict, and sanitized results. Hidden inputs, expected answers, and outputs are never returned.', inputSchema: object({ submissionId: uuid }, ['submissionId']), execution: { kind: 'edge', function: 'problem-runner', fixedInput: { action: 'submission' } }, readOnly: true },
+  { name: 'list_problem_submissions', description: 'Read the 50 newest account-owned executions for one problem, including final verdicts and sanitized case results.', inputSchema: object({ problemId: id }, ['problemId']), execution: { kind: 'edge', function: 'problem-runner', fixedInput: { action: 'submissions' } }, readOnly: true },
+]

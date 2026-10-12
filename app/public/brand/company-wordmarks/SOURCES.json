@@ -1,0 +1,2894 @@
+{
+  "notice": "Company names and marks identify their respective owners. MIT and CC0 cover the upstream asset collections; trademarks remain with their owners. Each Wikimedia Commons asset records its public-domain basis (PD-textlogo, PD-shape, PD-text, or PD-ineligible) or CC0 dedication in its license field.",
+  "repositories": [
+    {
+      "url": "https://github.com/pheralb/svgl",
+      "commit": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "license": "MIT"
+    },
+    {
+      "url": "https://github.com/gilbarbara/logos",
+      "commit": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "license": "CC0-1.0"
+    }
+  ],
+  "assets": [
+    {
+      "company": "Amazon",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.amazon.com/",
+      "revision": "2025-06-15T11:28:00Z",
+      "files": [
+        {
+          "file": "amazon-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/06/Amazon_2024.svg",
+          "originalSha256": "7026ea1e93b80e5aa3d88d9a8bfc9279f75ef4e263ad50da7e7d7a5cb2b735aa",
+          "sha256": "f451a78a6f7b435499c50fc7a21772989a96f05202b7455fc108c59114ceaaf2",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Google",
+      "license": "MIT",
+      "brandUrl": "https://www.google.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "google-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/google-wordmark.svg",
+          "originalSha256": "a58915079f6e2c6dcced5694eb815108c79d5b57be4269c9d33306331b03b6e8",
+          "sha256": "c3674c46b63e772977147991dbb4bb89acaf74fc5f6c3b55d0dbf0fd026b7048",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Meta",
+      "license": "CC0-1.0",
+      "brandUrl": "https://about.meta.com/brand/resources/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "meta-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/meta.svg",
+          "originalSha256": "800370c28f99da069bf9bb1112ab74c6451ed750976c8bbf73e1a418630561bc",
+          "sha256": "b3775e3d8ffcbfeedd75a98d5d89c44f9a8a42b39dca4ca4bdb0a2824a926977",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Microsoft",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.microsoft.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "microsoft-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/microsoft.svg",
+          "originalSha256": "bb4e29fe2cdc2e80e39c3f6c10b54ea59f66ca0fbf23934ef0cc6a47dad93082",
+          "sha256": "a468939afb03de517884acba937c17a7fd620c442a544a70437be14ceeaf9979",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Uber",
+      "license": "MIT",
+      "brandUrl": "https://brand.uber.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "uber-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/uber_light.svg",
+          "originalSha256": "7b1e21e850dcf4664c8f138c680a327e98e9171684d1412c759d14807d821468",
+          "sha256": "7b34554435e798723ef803f0ee0d1518fab0d50d038d7192029a7cbcde6a2a23",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "uber-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/uber_dark.svg",
+          "originalSha256": "b878e4a3a4697b68dc57d9799325b9afd1c1652d63ae5d93e55bdefa659842ce",
+          "sha256": "9ffbf903157d6b40e005226d48fd98820ebe894a45b8d916199b78680787f8a5",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Oracle",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.oracle.com/database/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "oracle-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/oracle.svg",
+          "originalSha256": "282101a714c62e917154dce433c3f8a8815f4755172ce8d1c379f253ef4800b9",
+          "sha256": "7bd7385680677feccb67fbdb22b01842f6e504865e4c4582162ad2fc765ac035",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Tiktok",
+      "license": "MIT",
+      "brandUrl": "https://www.tiktok.com",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "tiktok-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/tiktok-wordmark-light.svg",
+          "originalSha256": "d3f4c2cf67b47b66fc5c7445760c5760937c0888c95fdb7d64c067aadfc401aa",
+          "sha256": "79ab4ec109d86fe2ea1c1ab852cd509e46dac7a0aa98c6eea6dc4b21aff36d5c",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "tiktok-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/tiktok-wordmark-dark.svg",
+          "originalSha256": "01ca7254cd87333442a78bcbca8626daf83eb0c9c4056dff42f8251b6188a586",
+          "sha256": "672e6b47d6af930dbb30c65ce7849d55fc55f57bda078dd2b141b6e2003711e7",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "LinkedIn",
+      "license": "CC0-1.0",
+      "brandUrl": "https://brand.linkedin.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "linkedin-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/linkedin.svg",
+          "originalSha256": "6235d95730278992ff6b8f464117a1af4a8b726f74fefb58fb3bfcc8f199f11b",
+          "sha256": "6efb5bc50539697d5e5d570ea257d16b3d971aa32c91dad0288fc265829f2753",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Snowflake",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.snowflake.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "snowflake-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/snowflake.svg",
+          "originalSha256": "ec9a922fe3abe4862f79acf519bae9a40b37cfe95f300808e483c7d231108700",
+          "sha256": "cc7190db73ebc3f2766fd4a3d133c4c00aaf66bb281da830eb3114d8b3e9bfc9",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "IBM",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.ibm.com",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "ibm-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/ibm.svg",
+          "originalSha256": "4ab790217bc213342bca473358087bf2cdc8a102f529bbfcbb533a8857360dc2",
+          "sha256": "ac1435430eb31500e587951bf87944a39647ed44aec1c6c1e4a9386676fad863",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "OpenAI",
+      "license": "MIT",
+      "brandUrl": "https://openai.com/brand/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "openai-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/openai_wordmark_light.svg",
+          "originalSha256": "b88314de4d1d4be19df6c160100fb9b7ec204d9a9a9b29457b1452abce47f30d",
+          "sha256": "c9e35dfede90b9a30720ecca56d7fbfee44d00af1f298a6528cab040ef5e797b",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "openai-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/openai_wordmark_dark.svg",
+          "originalSha256": "138f603df96e7562dfa77d0a6aabfd743f80f2f760655c06d65f1236b7a2e19f",
+          "sha256": "d756fefe1a8d1a209ce4597db975b1e8c374ed55a3a7410c24c17d227b298b58",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Stripe",
+      "license": "MIT",
+      "brandUrl": "https://stripe.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "stripe-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/stripe_wordmark.svg",
+          "originalSha256": "46b4e4fb7802875c5572ba28c5d50a8a01c06ea847352ca153332b9228537bfe",
+          "sha256": "949fde6b026147ce94f22bcce17a574e37ed02d32881ea937cc21b537e688dda",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "NVIDIA",
+      "license": "MIT",
+      "brandUrl": "https://www.nvidia.com/en-us/about-nvidia/legal-info/logo-brand-usage",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "nvidia-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/nvidia-wordmark-light.svg",
+          "originalSha256": "bdf5f3ae72bcfda892a686c03b7932985c694e9a9828643c980601bbc9e53cb4",
+          "sha256": "caadbc3b50fbcd9bb0e41b5b19775354a59601e855824b8c516728b29f809633",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "nvidia-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/nvidia-wordmark-dark.svg",
+          "originalSha256": "588167abf74c9bb29b3d1ed74ac0ecbdece24adeaf41b65a719a458b7a99514c",
+          "sha256": "1a153a7d03fa7de614b6b51daaf741126938ef2a89cf9c3a251bcdeed491a518",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Airbnb",
+      "license": "MIT",
+      "brandUrl": "https://www.airbnb.com",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "airbnb-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/airbnb-wordmark.svg",
+          "originalSha256": "08eba7a5f7d37dec01b7051fa1c1c420516d8dcdb5a85c6fe459be3e2a2efe70",
+          "sha256": "ecf6257afcd604156f952d663fe0b374e619602e46743506e00240348d9329bd",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Visa",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.visa.com",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "visa-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/visa.svg",
+          "originalSha256": "69cf2684a59f89393b0a25636c091c94ea39b516fce4ad02b91f0c23b53be8da",
+          "sha256": "b42b7047771fde49abd25f8647c910fdf24f8d26d4c2b2b9bdc7b3f2b4375e5e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Databricks",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.databricks.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "databricks-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/databricks.svg",
+          "originalSha256": "ff4c901b33c07f8a1f551965b05b527646b72a4223e488515fec8550f68d3a99",
+          "sha256": "9bf7b6e38d19eb55571fcf1292fd07d6a4b0cacd9059a89df1673df9b145f511",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Adobe",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.adobe.com/legal/permissions.html",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "adobe-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/adobe.svg",
+          "originalSha256": "187ccd0fc347c24d3d6a7c4f3790ad24a8e583039f2f459d399786004e23ff9d",
+          "sha256": "0112e73b86f8d7ece2f5cdf289fd110f688be5cd1fd8590db59044111d362f34",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Roblox",
+      "license": "MIT",
+      "brandUrl": "https://www.roblox.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "roblox-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/roblox.svg",
+          "originalSha256": "7f63d524e48915dbe9d005fb82aac5214d575becdd9c81f12093a2616c9e9fe0",
+          "sha256": "ed805a863b22787051d19bc761cbb5726f33ae463c97335c061cdc0694070a9e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "roblox-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/roblox_light.svg",
+          "originalSha256": "4b8d50d04639796213a6f6c915f3e9ba8576d4fdb7ddf7ec4bc70987db65675f",
+          "sha256": "b8e4116aa52ed1fe36f3b469d5aa48947551aea47dcb5d1081c03fd28b18ab97",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Yandex",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.yandex.ru/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "yandex-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/yandex-ru.svg",
+          "originalSha256": "4f7063b7251a846b6725ceb732ba8cd0ddc6aedc3733eef2b08c8d4d29f4a029",
+          "sha256": "f54a5842b0bf6ae779afa01d324eccfcac64b7895d9ed2f309d7e8bc00ec07ef",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Netflix",
+      "license": "MIT",
+      "brandUrl": "https://brand.netflix.com/en/assets/logos",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "netflix-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/netflix-wordmark.svg",
+          "originalSha256": "5685587e25c461e1c3147aa8d7a8cd72c50a0fcc039d74a31675de311195a497",
+          "sha256": "553e64365d58eb3ae4c4200b62b948a0411d36143c3fab2776cc1524f8a9b371",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Anthropic",
+      "license": "MIT",
+      "brandUrl": "https://www.anthropic.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "anthropic-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/anthropic_black_wordmark.svg",
+          "originalSha256": "8881186cd4eeca6259631d6f0c96733049b9f9c597da283908cadc51f04a5005",
+          "sha256": "a4fd60403cde55bb6f4e7854f04378b1df84fd01fa6d7508c4c5979919dd56f9",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "anthropic-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/anthropic_white_wordmark.svg",
+          "originalSha256": "2d90dc7fe207a3ffa5daf9c45aeee8c3e22b79bb7bfe9450f67b33fe8a43426c",
+          "sha256": "9faa34ab57bd7503c15029914f7747e54c70860ce76f30db48736c9eae74bf0d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "PayPal",
+      "license": "MIT",
+      "brandUrl": "https://paypal.com",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "paypal-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/paypal-wordmark.svg",
+          "originalSha256": "405ba562e961698aae1a1bcd0795c9c981a47dfe530ecffa283587ef54abd83a",
+          "sha256": "13871697838913153f1006d170955d863e8af1ca63fcd5d14bf6011022bb6481",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Coinbase",
+      "license": "MIT",
+      "brandUrl": "https://www.coinbase.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "coinbase-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/coinbase-wordmark-light.svg",
+          "originalSha256": "1082bec13f4e1a1e4b031c1e2c2b741895911aafd263cb4b7f71b82fb235ca4f",
+          "sha256": "25cbeef9084e5fa8d86d16a6a340680bd51f2b836bc030247eae02db9c4329fd",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "coinbase-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/coinbase-wordmark-dark.svg",
+          "originalSha256": "7d1daec78c6e9f7da18baa5218cdef35727fc5bf78d84ce491ca3346021a509d",
+          "sha256": "966e5d0e401c00a534f7307d13ff4fcf1623d4aa9f060fbe94fa39959fe91ea8",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Samsung",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.samsung.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "samsung-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/samsung.svg",
+          "originalSha256": "a178eb6d3c7fcb588edcc652a8b3443e7f73e334ebfdbc4feb9f28a5bdf5b6cf",
+          "sha256": "dfc457d516ceb4b4e597ac32b821c6ed7acf93c32996d70bd1b12e8452c4f7c4",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Qualcomm",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.qualcomm.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "qualcomm-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/qualcomm.svg",
+          "originalSha256": "a9ff98757d5e6c0e179bd19b203a3768b080dd3058397fe7284c77c494485e09",
+          "sha256": "786810db269a85193469646d0e0c17d0d6dfdc7c1f8100b22b628e122004f862",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Reddit",
+      "license": "MIT",
+      "brandUrl": "https://redditinc.com/brand",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "reddit-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/reddit-wordmark-orange.svg",
+          "originalSha256": "a4f5f916f333e735fe458e125ec17793528c5922566ac03b3f4c6008f7591b81",
+          "sha256": "2f2aa0c79bb18524636cf8e3565f180d2593f75b4d3f2d2e968ba0a5f05bc69f",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "reddit-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/reddit-wordmark-white.svg",
+          "originalSha256": "7d00c8a39252b7857fea77d4cc04fe885c9646d2467fd9bea1bcdf21c37c01ca",
+          "sha256": "14a8c324b436ce02a7f27582636ab63ef89ce65732b67fd56b1dbf5227083b52",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Wix",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.wix.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "wix-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/wix.svg",
+          "originalSha256": "d9b671a80274482b585ec2c4f231a74b095d78a2d2e3e2e6e7999794d6cc12db",
+          "sha256": "5fff4e50380b71fb82b44a092ab13f1535ab28ee05798961e5eca63d72ea1801",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Grammarly",
+      "license": "CC0-1.0",
+      "brandUrl": "https://grammarly.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "grammarly-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/grammarly.svg",
+          "originalSha256": "6b0fc316289e33969dcd127bafcc90454235b5e4d8d29d4f35f1c720b2211141",
+          "sha256": "50cf726e7bf000ed4f1507ef3a812c05425847a2d40659346fb1a37c4ba2aa9f",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Sap",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.sap.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "sap-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/sap.svg",
+          "originalSha256": "45ea08e192deb5d01c9d1a7aeae43d6dffd14befb83a462f2926cf5c3cebe3ac",
+          "sha256": "3078da72597422a2a762ca9aa9590a1dad6199969243cc890f8f598b7c692aa1",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Shopify",
+      "license": "MIT",
+      "brandUrl": "https://www.shopify.com/brand-assets",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "shopify-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/shopify-wordmark-dark.svg",
+          "originalSha256": "c3a4c5d6e3ef092718635d7d76046fab0bc90c2f6d0ffa45e0cb1f4e850874cc",
+          "sha256": "5572add0b7d74f803c74e3b518ba3817a3089092e6b9218c37a22b1b25c0ea1f",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "shopify-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/shopify-wordmark-light.svg",
+          "originalSha256": "97a63fa497c2cfda12508ca46afdb66704f0fe5f88cf1f15323c662f3b1903c3",
+          "sha256": "0c9532d4e2f9bdc99620a7293528efa49ac7e43b865dedab608ca8cba51d3ba8",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Okta",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.okta.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "okta-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/okta.svg",
+          "originalSha256": "4bcf231d0bd89fe88702e6635942bd9f81a16fbfa58ab7fb46fb48e83256575a",
+          "sha256": "60dc9c42722a8861c6efb7b18dd592832b12dd1672b94d697113abd82a3dd9b0",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Perplexity",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.perplexity.ai/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "perplexity-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/perplexity.svg",
+          "originalSha256": "9aabb93a0afad47d8c6260a57bba8c6b32fbe65850e77de9b21843e41d2b85e9",
+          "sha256": "ea65bf5acb52d1896765ddfc19b5f2af4f82ad46456c92c49b9bde1c77ec57f0",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Dropbox",
+      "license": "MIT",
+      "brandUrl": "https://brand.dropbox.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "dropbox-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/dropbox_wordmark.svg",
+          "originalSha256": "6f4af829ad6ba3dd0f5c604cf6eb6e77fb8560e4ea925754300d3e21b137b301",
+          "sha256": "373e34b48e3d297300e530f72540fa97217ace1e47b7ad6466fb15fc282101c7",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "dropbox-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/dropbox_wordmark_dark.svg",
+          "originalSha256": "3b4590936141c753f56d908b2d89b4e29df57654aa89df31d36e3cd2b86dee9f",
+          "sha256": "6f23791832f0d587f272b2e7c077aac555e434c3e57df1ce61bf8ff498e248ce",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "MongoDB",
+      "license": "MIT",
+      "brandUrl": "https://www.mongodb.com/company/newsroom/brand-resources",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "mongodb-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/mongodb-wordmark-light.svg",
+          "originalSha256": "b5d621422b088312e2eef3afa470d8653e55b16ab720d48351e4ad30c2e33452",
+          "sha256": "58f47a322f31a0fb20aec7a6a69096cb611284ebfeadcad84ed8847268ea2229",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "mongodb-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/mongodb-wordmark-dark.svg",
+          "originalSha256": "abb4e9bca7fbbcbc915fcef95e2c1d847a1633db87ec5be821db04736daed4d5",
+          "sha256": "9b6c7957fe8e5d0a9f80eb7a82da2d0b3f2416519a6f380219b181b524adc9fe",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Quora",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.quora.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "quora-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/quora.svg",
+          "originalSha256": "a495ab6ef369894ecb4253ced4e46d34a782d559ecad7900fa4a6bbaa8dbe767",
+          "sha256": "1f395d88d9275f8f2995c62046b44ef7fca7cdf2cae2618af29e893c3d1e3127",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Intel",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.intel.com",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "intel-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/intel.svg",
+          "originalSha256": "097a7726428d3dc394b6266fbbb12a7c8c6743bb13e00921e5efe7e66588fb1c",
+          "sha256": "a6c3dde235af6172800736a533b2bd0f5847a056d0cdca2979ff68cacadacbe6",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "HubSpot",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.hubspot.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "hubspot-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/hubspot.svg",
+          "originalSha256": "3f0de98a544f2828fdc9e059906de8476776c552c9f931bbd026c2daa528e518",
+          "sha256": "5140901afaed6de402611f370f20f04ded11e7b43e7dc8538c9ac8b3074840ad",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Spotify",
+      "license": "MIT",
+      "brandUrl": "https://www.spotify.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "spotify-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/spotify_wordmark.svg",
+          "originalSha256": "f97c6214d2b821caaf1fcbe51ecc82041729e0bf1e8f424754e644a82be22390",
+          "sha256": "7a628e4177e170402297cbb4c41cd4de7ac6fbaf14a8464331076e64b3b65e81",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "AMD",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.amd.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "amd-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/amd.svg",
+          "originalSha256": "f98f40a09e2d417ca2d0b48deddb7142630415b28e0555c325fcc008ab18bfeb",
+          "sha256": "2aa0e2c4c5abb437514aa1a5e330badd0ae23aa193618ff08578f06d85ce2c8c",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Notion",
+      "license": "CC0-1.0",
+      "brandUrl": "https://notion.so/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "notion-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/notion.svg",
+          "originalSha256": "0a95453acfa1738fd5177aab184a98bd77c30ac69745a1827f774b1e5f868612",
+          "sha256": "726fb3b3410fa9138ab551eb2ab9b4859aba2ff2ccc187d1182e1c22d6af8823",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Asana",
+      "license": "MIT",
+      "brandUrl": "https://asana.com",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "asana-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/asana-wordmark-dark.svg",
+          "originalSha256": "8e2555963e128665366129059cc4a59b718f5d4fdeb0473310aeca7441f16447",
+          "sha256": "8415fef2bd491a4f1aae2028ff137e5c04768d5dfd749527bf0dbe1b150f0107",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "asana-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/asana-wordmark-light.svg",
+          "originalSha256": "e75adc91fad0047c63a5f9c7cdd9948b078f754ccad47e2d12565ca3a008e158",
+          "sha256": "bb4ab3993918d6d0f26de3fa5c111c527a50d617dd25513d068627fda8671021",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Docker",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.docker.com/company/newsroom/media-resources/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "docker-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/docker.svg",
+          "originalSha256": "8b8884fe29c107861fa85f510276e5bf0da81c870f4d08436488b60b7956dfbd",
+          "sha256": "a7c06bdc7a7fe5dbe5040670eb42b12d75517dc156b3996a18520f744d82654e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Cloudflare",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.cloudflare.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "cloudflare-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/cloudflare.svg",
+          "originalSha256": "2e46ced5dd7706e295cd6d9787f54743f33996c400b34ad7196a8b685f97a5e0",
+          "sha256": "0e482d0a0fea57bb68cc4f774af01ee4b6b0911095d53b70edc60a621b355da0",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Akamai",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.akamai.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "akamai-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/akamai.svg",
+          "originalSha256": "a6f44d7e8229a4c9ce213ddc45b966eed3a0384b99a61d7bc8e92aa37117b61a",
+          "sha256": "a40e27dc582eeef0cff5809641e624b16dbf8ab8efe3eb81bdee8a4b78d80b12",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Coursera",
+      "license": "MIT",
+      "brandUrl": "https://www.coursera.org/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "coursera-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/coursera.svg",
+          "originalSha256": "1835f3c9f31264390c686138ffdbd950c13feaf2aa829c07b0671a8b6c4c5c1c",
+          "sha256": "8a03553156670faf0148832dab7ffaa79e3446abda9801b76bc9cea9fc043f52",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Discord",
+      "license": "CC0-1.0",
+      "brandUrl": "https://discord.com/branding",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "discord-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/discord.svg",
+          "originalSha256": "279101e85d6565b9dab0b975dbdb2a7fbad6906a7d70ba6440a02e3acd86631e",
+          "sha256": "d8b753d966426e98195fa36051b3b83cf40fda0b09a18e7815c1f9fed857cd1c",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Box",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.box.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "box-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/box.svg",
+          "originalSha256": "b6bdb02ac6c6c9ace82f5f570f0165167c6782cad01e14124de3c9a56f24495a",
+          "sha256": "6b8eaa8a4928255c03da1e58a7bb9748ef993fc81ffdd4eb48c2f04a2b583f79",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Gusto",
+      "license": "CC0-1.0",
+      "brandUrl": "https://gusto.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "gusto-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/gusto.svg",
+          "originalSha256": "f6269c699aa52d1da93d597b6344a6fb253e65c798d1680c1f836be2dd2db496",
+          "sha256": "7a3e01b06452dec8337260ef93ee2a6c0a3fa10d1ce7be1643ca09d2306d91ad",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Splunk",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.splunk.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "splunk-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/splunk.svg",
+          "originalSha256": "f51c0938ccbebebc9bcc6ffa6a96fd709506490123093fcec2a2ef4e48ae1592",
+          "sha256": "888190c2a75e85be32da0e6c3dcb94bb549bdb8fb0ea81d08d9dc64e330f8935",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Cursor",
+      "license": "MIT",
+      "brandUrl": "https://cursor.com/brand",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "cursor-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/cursor_wordmark_light.svg",
+          "originalSha256": "769f7193d59d67c894ec64f9c06c134b9622fdd76d5476f96c58a222fb371c16",
+          "sha256": "e4ffec56e0adfa307a6e3c2610a88e3a68889bf27fed3e8c36d83d6eb2fe8c4c",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "cursor-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/cursor_wordmark_dark.svg",
+          "originalSha256": "8d4fdb9ea532b8b2d11125bcd200177af198173662058a797bbe2aea160454a6",
+          "sha256": "4fe5b443944ec7867c164df78c077b5b1e68795fadc695bdf9f38be9c77ea435",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Twilio",
+      "license": "CC0-1.0",
+      "brandUrl": "https://twilio.com",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "twilio-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/twilio.svg",
+          "originalSha256": "317d10101b48dde6bd620e7474f72ccc1e00d48c8290ee8ab18df0428b64b12b",
+          "sha256": "609faf4c64a3f2414b4df1d1a664bfe68b4cb5edf05a00e411c9cc9f15b01b5f",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Hugging Face",
+      "license": "CC0-1.0",
+      "brandUrl": "https://huggingface.co/brand",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "hugging-face-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/hugging-face.svg",
+          "originalSha256": "d23bed7218994ddb9ad1fde409841ac7a5a647f88f8017b56ccd124ffe182d7b",
+          "sha256": "5f2744617a38ecee86123ed61154eb2bb08e9720bb367c0ed0cf80eebc774d45",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "VMware",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.vmware.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "vmware-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/vmware.svg",
+          "originalSha256": "458e127aa6efa34ad6a60462475add42a8baeaee39ca49325c93a3ede908ea47",
+          "sha256": "4339c85a55756f1eca4f70bc76a6ff1398c16dc433fbbe1ee3f810394d5cd3fb",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Baseten",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.baseten.co",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "baseten-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/baseten.svg",
+          "originalSha256": "a70132f1490767f0f22c5aee48a527a4580e5766f6c9bd71245751f35ca041ee",
+          "sha256": "2ebbb15d3bc11fe414af2457c62506ae1ffdb594035f69a7b7eb4c1fa1205a53",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Temporal",
+      "license": "CC0-1.0",
+      "brandUrl": "https://temporal.io",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "temporal-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/temporal.svg",
+          "originalSha256": "83c641d09ee71b96d7d2d4ff3f9bbf4889412e6d8a881851cddad9fb4591b1b4",
+          "sha256": "f5289aa8d9f29188b90cc76e3904a458691efba7822f058a66ae408e6d7c7c59",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Amplitude",
+      "license": "CC0-1.0",
+      "brandUrl": "https://amplitude.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "amplitude-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/amplitude.svg",
+          "originalSha256": "03fb14c63d15eeec084b336501e177c69c537c375d5b4bd761befe7bd5b9f02f",
+          "sha256": "fdec5ac9edc4c8ae03ee1b237e0effe486c6a1885a8c75b1e802cf75fde8c25b",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Vimeo",
+      "license": "CC0-1.0",
+      "brandUrl": "https://vimeo.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "vimeo-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/vimeo.svg",
+          "originalSha256": "5e14f4a4fa36e451bd3afb498247e1a4126b8fb7249557913356ad424e67ac2c",
+          "sha256": "00ef2915bf7062a2255c99fca83a7fbe8631b846b4ad720fb065020ad1496554",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Udemy",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.udemy.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "udemy-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/udemy.svg",
+          "originalSha256": "c50c06b637a3270380320125400db328ce8bb8a60e07898b362f0a68bb9294c7",
+          "sha256": "a28993c4fbd544c99c4d29348afff87610714b615ec348773e67c71e67655a0e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Cartesia",
+      "license": "CC0-1.0",
+      "brandUrl": "https://cartesia.ai/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "cartesia-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/cartesia.svg",
+          "originalSha256": "0d32e6f2007dd542a76bf416bca570cbbdeaa2cffc03e4eb4b3eb1e2fc3f1086",
+          "sha256": "c03c4bcc83751062570fb16b850b3e3730e15f798b5d5c7bb6d3893ff4127da2",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Harness",
+      "license": "CC0-1.0",
+      "brandUrl": "https://harness.io/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "harness-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/harness.svg",
+          "originalSha256": "1b29c32e82193bc0f9b2faab7cdb6bee54b9d85e126bb62927ed4e9beac67139",
+          "sha256": "4356b72ec95dcaf4e84e8c6d7fd0f36a3cc8a33a415fff5d975c96063d3fb06d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Hulu",
+      "license": "MIT",
+      "brandUrl": "https://www.hulu.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "hulu-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/hulu.svg",
+          "originalSha256": "d14d779e9ac79c2eefc2ba0b0fdc8aad1087c533a3d4039a4940a7adc343eff8",
+          "sha256": "8cd2c4a2c2679b84f2b93c2ee70be900a91ab952a6b1b15ff1402a3b7a85e0e8",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "hulu-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/hulu-dark.svg",
+          "originalSha256": "e8d747e1cf3fb6d66d623d5ffd2df2f81861e0b1883b27fccc7e6aded4495df0",
+          "sha256": "ef121c725670f8cd989afe4531fa3248ef86fab1ae23cb1b83dffd20d53b4341",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "GitHub",
+      "license": "MIT",
+      "brandUrl": "https://brand.github.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "github-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/github_wordmark_light.svg",
+          "originalSha256": "90f01a9537335666282ae5acc80bd4305f86d085a92d60904c3aa3ccc4414570",
+          "sha256": "698bedf8d537b2365dbf6eb57f7edeb642045639ce6e725079e6e3263c6aef2d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "github-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/github_wordmark_dark.svg",
+          "originalSha256": "75514139f966d4152cf4d254d6aabce0cf347401b391ef8dfb3eda6bb7f76e77",
+          "sha256": "4b3f98ca19d447dd54b182353577b8395e75db17b710d4e61d50a5801f2b9cbc",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Mixpanel",
+      "license": "CC0-1.0",
+      "brandUrl": "https://mixpanel.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "mixpanel-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/mixpanel.svg",
+          "originalSha256": "15c94e669c2885130cc391ff15ce109a58a2486fcee67fb9a4dba4a0dbde3739",
+          "sha256": "dd4e44891bb28793367c16a27ec4e0f7e7bff1023e42266f6e100f3fde292baa",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Zoom",
+      "license": "CC0-1.0",
+      "brandUrl": "https://zoom.us/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "zoom-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/zoom.svg",
+          "originalSha256": "d00a97c880fce1a764131c01f44584a6cbd5f2229378da3f2ce63afc9880fc7e",
+          "sha256": "8e60e23b2506254ec6c7639b9050eada1ac80a878c7014249d8fea549be6bc7a",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Coreweave",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.coreweave.com",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "coreweave-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/coreweave.svg",
+          "originalSha256": "c91a81ab2b07698edccd698b9bccc701be36a44c4299299ff7c81593fe9c2a23",
+          "sha256": "4d0ead978f37bbb0658419896beaae371083c85725da4e0ee84c5b6d5e0ee0f9",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Vercel",
+      "license": "MIT",
+      "brandUrl": "https://vercel.com/geist/brands",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "vercel-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/vercel_wordmark.svg",
+          "originalSha256": "5624b7c243ac8d60e848fb5ea222ec932c1600df54a2762238b37498372fb0c8",
+          "sha256": "1865648ae409456b89b2dca03ef97b8af3542d95c2aa81eacf2b066086ea2731",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "vercel-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/vercel_wordmark_dark.svg",
+          "originalSha256": "158da5cf518d2ec37706e6234e05c2e1be7741554fd78f17d0892552c5b4dc29",
+          "sha256": "98cd7a2fa8dd29f208718fb0f5c8c512c934063ba28dff723ba730d1d95bebbc",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Cohere",
+      "license": "MIT",
+      "brandUrl": "https://cohere.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "cohere-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/cohere_wordmark.svg",
+          "originalSha256": "540c493aa5b55cad1f8e4782a651d7798214883617c86a8f1cf08b58fa35bd23",
+          "sha256": "bfda60fea1c05271c56073ceff88dedb36add698626c63dee596c6cad2b58849",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Together AI",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.together.ai/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "together-ai-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/togetherai.svg",
+          "originalSha256": "2bd9eb1c791b8f8be9ce786dc2be90b0e9f297244d416f568bdd6a832ddc685f",
+          "sha256": "de1e8c5bae0acd3cf045df61a3e385d8dadb18ba5a19e97cdd15b6e43b598de7",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Replit",
+      "license": "MIT",
+      "brandUrl": "https://replit.com/brandkit",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "replit-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/replit-wordmark-light.svg",
+          "originalSha256": "b85cf2144c27d14024f69f7dbbde902a35074ba18c9ebe655a820667466d7ab4",
+          "sha256": "9be5f8c7881fea2f5cf5961150e8c74a5ca3c3bcb5f3e4e8f05962e038251da2",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "replit-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/replit-wordmark-dark.svg",
+          "originalSha256": "e5eff073d080c37ab5521e8998bd9caefe588062f7447124249d884a0dc3363a",
+          "sha256": "dfd2d6313cb9a24ca1b3f8dcdb95a32986f9ff7f3d7ef21b6e0943ee9032d0e2",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Mistral AI",
+      "license": "MIT",
+      "brandUrl": "https://mistral.ai/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "mistral-ai-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/mistral-ai_wordmark.svg",
+          "originalSha256": "538a60edadba0002e601a4103dda386305551b99767ddfed1f0c81474331f56a",
+          "sha256": "4baf76aba3b4c186ee024977f239459dacb170e8111f4beec29e587591a0f794",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Miro",
+      "license": "CC0-1.0",
+      "brandUrl": "https://miro.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "miro-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/miro.svg",
+          "originalSha256": "0c2b965f7097127beb66581770ddbcc52806211406937ad0e929340bdc0102d9",
+          "sha256": "ccc4d8859f4704dfadde3ded9505571d73e1bc9d51e27da946cb71da6f35eb11",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Broadcom",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.broadcom.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "broadcom-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/broadcom.svg",
+          "originalSha256": "e1d8bdc577b71f09f33a8d5887081b91c88938442f34ac4c71842c983da059a6",
+          "sha256": "e5fc73ab8dabcbdba0ae5b23c51a1ed23c12bc18d4eac8b61ff911d85c961a21",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Appdynamics",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.appdynamics.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "appdynamics-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/appdynamics.svg",
+          "originalSha256": "999e31cd810207f8de8c6796475fbb923572951c691fea3a10b579a36b8515e9",
+          "sha256": "dd0f21d31225152921be3bb90b2fd9ccabec453586f2b9149f03f270a8711d08",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "New Relic",
+      "license": "CC0-1.0",
+      "brandUrl": "https://newrelic.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "new-relic-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/new-relic.svg",
+          "originalSha256": "8779f0a64c157d16de6aec3c86b1b879fe213df817677e7f81c5f59e323b51a1",
+          "sha256": "ce61b3690b87817d791af88782ea385314ab171ad5216d7f4866819d7cc0ffcb",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Sentry",
+      "license": "CC0-1.0",
+      "brandUrl": "https://sentry.io/branding/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "sentry-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/sentry.svg",
+          "originalSha256": "ea907f5e79f4d73addd04f9468503cf70546c8b22a6b04a12c6295e4c2bf849c",
+          "sha256": "3b39d5f2baf8e3c431c8d6fce3ecf5f120308292da9f3ee8b02864675f2e524d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Zendesk",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.zendesk.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "zendesk-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/zendesk.svg",
+          "originalSha256": "8e21f196af2185fb186bdef726fa0cf1dc40ea97225173b356d30b9fccc52350",
+          "sha256": "037485858318a20aec586dddf1a037b9431c913aabf9d07db0d4970a67dd3a10",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Retool",
+      "license": "CC0-1.0",
+      "brandUrl": "https://retool.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "retool-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/retool.svg",
+          "originalSha256": "76ddc960546850e82e046ffe6d9dcedd1bff9d1f476d0ad695ac6c6287ce8fbc",
+          "sha256": "e0f205f89db39e923db54bc53c8f78381d7edd7c7852adad2d7becd0a4091e39",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Singlestore",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.singlestore.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "singlestore-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/singlestore.svg",
+          "originalSha256": "f554e92e9e6e4bfd30917c11ac18f90deb9a1b8bb2fd39e193cccb0601b2ef49",
+          "sha256": "fd799536b6c27b29e3751b32af17140009237682228c0bcb7523488e238cceba",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "clickup",
+      "license": "MIT",
+      "brandUrl": "https://clickup.com/brand",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "clickup-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/clickup-wordmark.svg",
+          "originalSha256": "bdf8298c01f31ead369557b139b477047db4b4ce9c7703d2aab73a43659964f5",
+          "sha256": "5e9ed30020bdee7be9627ab046ca61b2c6af8feac76154f724c9481e049ef942",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "clickup-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/clickup-wordmark-dark.svg",
+          "originalSha256": "cc3d7c99aa9bc2cd4be4fabf56dae263bdcbe2db45cc57f88ee75088cb5b349c",
+          "sha256": "b03a8423034a44611c90f604a4711c43616a4e24b5f438ed6af6715a47c4e16b",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Scribd",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.scribd.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "scribd-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/scribd.svg",
+          "originalSha256": "b40e7bc9dcd96271b39d912f260261d6abe610ec32ee0187cb32b928b620e702",
+          "sha256": "8f2d0a7a192781a2473da2eea689dbfc0075d9e950691e9fe99d4b31c09a6bc2",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Slack",
+      "license": "MIT",
+      "brandUrl": "https://www.slack.com",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "slack-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/slack-wordmark.svg",
+          "originalSha256": "87f565879630e0fe57eed33bcf12aa15bfe7fcaead5b0f6b9dd2586e1342b486",
+          "sha256": "b399630b2aeac8e947efeab020f8e35ad4a9d255bdae8e7800ee864a3fbfdde9",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Rackspace",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.rackspace.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "rackspace-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/rackspace.svg",
+          "originalSha256": "711fd9a0e979e8281e716364efb56421f5a66b553d94ad30b4246c4f4c0ef4ea",
+          "sha256": "c320d5d203fcffe1c39e1b1c3e86450512402a0ac9bcac4299a5b9b8236ed855",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Chargebee",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.chargebee.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "chargebee-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/chargebee.svg",
+          "originalSha256": "afa0c06468fdf9a511e4abdc55885e8781c68179750783fafa98c8490883d9fc",
+          "sha256": "6b2e4802a7c68d828846e40669fc824ee3bf9fed2da517beb20163f2651afe4e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Groq",
+      "license": "MIT",
+      "brandUrl": "https://groq.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "groq-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/groq_wordmark_light.svg",
+          "originalSha256": "f75d3ded7f7ab9b5a68995f632fb0a6682ee26ea945fe3c90681735d48014126",
+          "sha256": "dace34b612965c50fb1cad59aab2f7221cee6aa6576ac04180888001203cc761",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "groq-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/groq_wordmark_dark.svg",
+          "originalSha256": "6681279b27eaa8d22f9b5c18ed4ea5b09c315b51e1c56bc904ec723ff08247dd",
+          "sha256": "a289aaa1446151b6d41a26353dd8850edcc976719acdbd44a9fa58af7b9d205f",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Intercom",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.intercom.io/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "intercom-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/intercom.svg",
+          "originalSha256": "7f57a4e1e95128ddee3604cf79e3ff87d3819fc3ac3691a53bc3303ca2aa51b7",
+          "sha256": "bcfd24f16bcfee906a451180161fa31b68678e76257d5d323fa21f9eb0b7c744",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Mapbox",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.mapbox.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "mapbox-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/mapbox.svg",
+          "originalSha256": "6a62df937033474f7e51ec53781d19687c6e669bbfe692dcfa27dc92a9ff6dc0",
+          "sha256": "dfb961d26125ed9577f91dd186f3ad494749358285ac6baf26ee1af1f19cf58d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Braze",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.braze.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "braze-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/braze.svg",
+          "originalSha256": "374f08199a14dded93d3b88c815207a02237066cf30cc329ee66ad669ebfe657",
+          "sha256": "4c0907374f20b07426adbc41ad8349533aed75d8abd5ad71e399fb90d3ff3a55",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Tableau",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.tableau.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "tableau-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/tableau.svg",
+          "originalSha256": "0afa2db5406d3bb1f2aebb4af780a0b75e72cff0f8eeb75e0e2e5208ba8fe727",
+          "sha256": "119ec46e859a7351ad36222a4f24380a2ff45adf25dc1632dcceac428f0eee65",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Bloomberg",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.bloomberg.com/company/",
+      "revision": "2018-02-16T23:50:23Z",
+      "files": [
+        {
+          "file": "bloomberg-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Bloomberg_L.P._logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "abc9ae44ed4b97108bd6963833ee902d6be052f918d5ca44695f2bee3fe38147",
+          "sha256": "791f4644b6d97bfa06acd4cf92f5034e07ad125cfc8786669d1275f7779a6b8e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Goldman Sachs",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.goldmansachs.com/",
+      "revision": "2024-08-01T17:27:58Z",
+      "files": [
+        {
+          "file": "goldman-sachs-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Goldman_Sachs_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "2f2195e8160285319f742ce8ff81a61269c02a63427da7c3905fe244dfaa8d07",
+          "sha256": "ae2d49bf846afc61723ce8fda80203f9818fcb300940cfbda552ac46cc1ab38b",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Citadel",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.citadel.com/",
+      "revision": "2019-04-03T23:29:24Z",
+      "files": [
+        {
+          "file": "citadel-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/45/Citadel_LLC_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "3185be2a30e936ea7fab58d57c01b47410e614d992c6dc4f0b137b4c57f788b2",
+          "sha256": "3a7d7935448470185d68f1ef0b8055eef65bd02c7b0ecbee646270c90c8e094a",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "DoorDash",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.doordash.com/",
+      "revision": "2019-04-13T22:11:51Z",
+      "files": [
+        {
+          "file": "doordash-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/6a/DoorDash_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "929a81b9819cadd274d76794d1c7d34851a94e12ffbdd48b9c57ecb809c435c1",
+          "sha256": "3624f74787a7716a0643c2123414324b5dc89957387aa6a1c6b13b82675573e2",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Capital One",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.capitalone.com/",
+      "revision": "2022-06-20T21:05:01Z",
+      "files": [
+        {
+          "file": "capital-one-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/98/Capital_One_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "69d918170633be70ec4c0fd57f421ad7b70c59641580a0ee77e929964a157c96",
+          "sha256": "122845a8600117af1cd64af37183ac6188b46b2bd70f60f254e21cc0f510c6d0",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Snap",
+      "license": "PD-textlogo",
+      "brandUrl": "https://snap.com/",
+      "revision": "2016-10-22T23:22:59Z",
+      "files": [
+        {
+          "file": "snap-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Snap_Inc._logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "cd7a70bd5bcab79a7682219a4081db499c11b65e72862390d09e495826eef490",
+          "sha256": "30755b7ce203e7b43aa1b54ffe11184b9cc553d6e25e44b448093e55e630b8da",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Infosys",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.infosys.com/",
+      "revision": "2010-03-02T21:10:36Z",
+      "files": [
+        {
+          "file": "infosys-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/95/Infosys_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "6f3b825f71484c5cb4d211b1865dfe4250882ea4da35baaaf220030532e55fde",
+          "sha256": "47e726c191909aa8bb6fd5b525b01089c9c58b54f769c831bf58208872e56d3d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Pinterest",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.pinterest.com/",
+      "revision": "2019-03-05T20:40:00Z",
+      "files": [
+        {
+          "file": "pinterest-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/44/Pinterest_Logo_%282%29.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "d36087c9fab3e3d763e7d23abe2b2c66a751555c195ee0285b215018ab350725",
+          "sha256": "5aa1da923bf84b389bc014c3de4017b641705ad19d219ea5c424a94242ff93e0",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "JPMorgan Chase",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.jpmorganchase.com/",
+      "revision": "2024-06-20T07:19:24Z",
+      "files": [
+        {
+          "file": "jpmorgan-chase-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Logo_of_JPMorganChase_2024.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "3a2138bfe8eb81abaf6e6ecaca6ed682e07982fc79877894d7cb26dcba1db772",
+          "sha256": "85d226b5c339f78d24492f6d18c7b66938cf5e6afe584c7f9bedf54974d89e1a",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Accenture",
+      "license": "PD-shape",
+      "brandUrl": "https://www.accenture.com/",
+      "revision": "2021-09-01T03:25:32Z",
+      "files": [
+        {
+          "file": "accenture-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Accenture_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "59ffdb1dd1f9148668a27d1285eb061ad568761765aa2d5d3722bccba64e3f06",
+          "sha256": "95a406780bda64676c612c485d330b48c220da983b2a5081127a3e55190a70ee",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Cisco",
+      "license": "MIT",
+      "brandUrl": "https://www.cisco.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "cisco-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/cisco_light.svg",
+          "originalSha256": "591c0ab6e761f708e1cfc36ccd048c72e61569e8a15640d6beb46f92e427c9de",
+          "sha256": "470f08f310960f57005060ff07eed5cbbd7850d02f1444bdd17bde329a9448c3",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "cisco-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/cisco_dark.svg",
+          "originalSha256": "174dfecdc8c1ef48981b126520f2d5927ec49a7af3ce2afe228cc781c6e7247d",
+          "sha256": "b829747b39afb253bead93e883f48aa2aa5355f694613985f02eca0c39462b6e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Atlassian",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.atlassian.com/",
+      "revision": "2023-11-02T05:38:10Z",
+      "files": [
+        {
+          "file": "atlassian-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/72/Atlassian-horizontal-blue-rgb.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "f723615051b1d56281bd6f6820c17611528d8f211f5d0c09461bd7ee1c4a0614",
+          "sha256": "addcadae390068f02551f413b3e7c6f76a3bb22c73a18166ebbd8b1edf27ae91",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "eBay",
+      "license": "MIT",
+      "brandUrl": "https://www.ebay.com/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "ebay-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/ebay.svg",
+          "originalSha256": "a2d4e64c235f23c710f480f740fbd60cdfb2e08c29b6132e28dedec986e611f6",
+          "sha256": "3bfcb727c14471f6be7a1c4a30a33428102d1c139f606dd86ed785c6eea0fd1e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "D. E. Shaw",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.deshaw.com/",
+      "revision": "2024-08-19T12:33:28Z",
+      "files": [
+        {
+          "file": "d-e-shaw-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/62/D._E._Shaw_%26_Co._Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "9aa7d7a67f15ca161de92d187522eb62cafd119a303a319a7a942fe8a75b9a39",
+          "sha256": "ca7a28143c5584c640ef971298aca721f685ff252d18cf415206510df051af7a",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "PhonePe",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.phonepe.com/",
+      "revision": "2021-04-07T19:54:07Z",
+      "files": [
+        {
+          "file": "phonepe-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/71/PhonePe_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "9752502485193e5539bfcd8f5f7241ca4063befeacef7c0b7d5bd5f24bc539f3",
+          "sha256": "49749aae147378807efb1332104e41a61b0ee2f35624e33f9e2aa9b286bdfb94",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Tesla",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.tesla.com/",
+      "revision": "2016-01-10T00:51:32Z",
+      "files": [
+        {
+          "file": "tesla-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/62/Tesla_Motors_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "6d3b910bb53e8c51a1d72e8be84c868c9fb67cef4f2454a6cac63ac39907b43a",
+          "sha256": "8d0d928966b3839702cf4c99fed5be8682c134d39c44defd39a56d33a1743384",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Intuit",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.intuit.com/",
+      "revision": "2022-10-10T04:40:33Z",
+      "files": [
+        {
+          "file": "intuit-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/5/57/Intuit_logo_2022.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "9cc4aebbc9246a98c728136d7dca10b3809e31b7444ba564e35a7e5237815214",
+          "sha256": "1b7f95f4acf8c0076c3184440ee91e066da7507566261ca90b1429453b3f8800",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Expedia",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.expedia.com/",
+      "revision": "2023-04-06T21:00:29Z",
+      "files": [
+        {
+          "file": "expedia-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Expedia_Logo_2023.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "418f917f97ce23a0a2eeaca1d2d584a3c6ddd2a8157eeaca82d3901c84b5d72a",
+          "sha256": "f4e6085ca9c2fb407dc774f0654f0b8d18e3dee539041cef912f654e8a70646f",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "ServiceNow",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.servicenow.com/",
+      "revision": "2021-05-04T09:15:05Z",
+      "files": [
+        {
+          "file": "servicenow-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/5/57/ServiceNow_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "8abcd4099f0529ace2e73ced5c3aec45d97b160d84966d37d5a353c9fab2cb31",
+          "sha256": "7c9ab6ce6251807d139dc23093b0815818100f885fab98557c645f76476fe323",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Optiver",
+      "license": "PD-textlogo",
+      "brandUrl": "https://optiver.com/",
+      "revision": "2012-04-02T18:21:10Z",
+      "files": [
+        {
+          "file": "optiver-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/3/36/Optiver_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "7ad82173ceeaf14e55aff0c2eaac550bfb26bbe40e2c3d72eb2e42ad57424947",
+          "sha256": "bdfb68c801b162550a1cc159e103cc2d9d746fe42920d2a5941006066515b706",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Two Sigma",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.twosigma.com/",
+      "revision": "2019-05-08T18:59:29Z",
+      "files": [
+        {
+          "file": "two-sigma-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Two_Sigma_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "27e0b7c5b31de18b6780e73b28d30d699e4728b3b1181763e6a041a6161e876c",
+          "sha256": "abd86717e96cf15838dc444af24f69062c84bc03561f0fb60662c6d6a935a597",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Morgan Stanley",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.morganstanley.com/",
+      "revision": "2024-08-13T14:33:30Z",
+      "files": [
+        {
+          "file": "morgan-stanley-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Morgan_Stanley_Logo_2024.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "a46f1d035cc69e413810d946d360a28468d0bcacef5d7807ab63983a67d522d9",
+          "sha256": "bc8d7b3c8d09e8918bbc972756114d14208ebc6062824efc3bca556b59028999",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "SoFi",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.sofi.com/",
+      "revision": "2021-07-28T01:39:36Z",
+      "files": [
+        {
+          "file": "sofi-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/1/16/SoFi_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "cb8a7fd636013ef7f56d733531e75bfb543454f612898a0600a03ef36f6ac4e8",
+          "sha256": "ad0e9637c42f624a7a90d58adb286d128ce6e386c3771d2c0314d061d7ba9ca0",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Nutanix",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.nutanix.com/",
+      "revision": "2017-01-02T03:01:28Z",
+      "files": [
+        {
+          "file": "nutanix-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/e/ea/Nutanix_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "b2043894023328449b4076ea9a87502f22f7684ba26ff206bd6590c70bcf2974",
+          "sha256": "f435e52a6196647444d5505d56e0bd0466ca3aab305b06a1a6922197c5e1ee3b",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Lyft",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.lyft.com/",
+      "revision": "2025-07-17T19:31:06Z",
+      "files": [
+        {
+          "file": "lyft-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/63/Lyft_logo_2025.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "55695332137c2d7a1fa0d927eebbdeb50f128c86d3170232edfef4aa69c6e5b7",
+          "sha256": "ebbb0c4dd5d8cb3614262da17b102759e9149f4c90c4fc69ae01c3d1cc48454c",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Instacart",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.instacart.com/",
+      "revision": "2022-03-30T05:42:01Z",
+      "files": [
+        {
+          "file": "instacart-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Instacart_logo_and_wordmark.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "6678cb82d531f8910d5ba270a11a7e9b56fc261371bda42ea7a5abeff3492e1c",
+          "sha256": "ec0c9e2710b93e13f3b754f0d35ef926ff5b10dbf1d6d4fd70571564f93bd30d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Anduril Industries",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.anduril.com/",
+      "revision": "2025-03-02T15:40:50Z",
+      "files": [
+        {
+          "file": "anduril-industries-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/77/Anduril_Industries_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "fcdf6ed0f6f58d5eacdeddc77a48712369d9fcefb3397cad3976579fc552bea8",
+          "sha256": "1546dda44dc308a9ccbf02a82d28e2be7641d2773bd8b32d06f54f41bd799400",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Palo Alto Networks",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.paloaltonetworks.com/",
+      "revision": "2021-05-03T17:32:24Z",
+      "files": [
+        {
+          "file": "palo-alto-networks-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/d/de/PaloAltoNetworks_2020_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "7b010f11568ff033a59bf2dfe6c1b099e52e918ca58ed6df30e5ef159291985a",
+          "sha256": "8ee2668d2b009026c8cf71a2ac7264ffa7de8ce92fb733c18b36f85b7333011e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Robinhood",
+      "license": "PD-shape",
+      "brandUrl": "https://robinhood.com/",
+      "revision": "2021-02-24T12:47:24Z",
+      "files": [
+        {
+          "file": "robinhood-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/42/Robinhood_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "67b14fcef11d6f81548a28a767b8cc58dace395d9e3bec288137fe413470ad58",
+          "sha256": "d07eb6b0378f886bb91a24545fcdc9c57065a68e2409f514a536d34a17d173ea",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Coupang",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.coupang.com/",
+      "revision": "2021-12-29T05:57:18Z",
+      "files": [
+        {
+          "file": "coupang-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Coupang_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "d5f4b736959a0cadc6622495fd7963bddc0e4208b99bd6e80d4cada71650e07d",
+          "sha256": "bac601c8866425701538644a16b7b57b7a00e2c2ccc2c6f75903ec4dbe38e3b2",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Agoda",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.agoda.com/",
+      "revision": "2022-06-09T16:05:12Z",
+      "files": [
+        {
+          "file": "agoda-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Agoda_Logo_2022.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "d0b97386d2c90804a417b52b2812d7e231f73ca7085bfd2e08de3472764289d2",
+          "sha256": "be13b61a33d3593ce494954f7602b40a8aa557fe48b5af9b43e5a488a2bd44db",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Affirm",
+      "license": "PD-shape",
+      "brandUrl": "https://www.affirm.com/",
+      "revision": "2023-04-20T13:53:35Z",
+      "files": [
+        {
+          "file": "affirm-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/02/Affirm_2023_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "087df7b7e68750333a897b58bf8bd8ac72c186b2c74a4956bbb79de7d6ddea52",
+          "sha256": "e48fe5938480e2b7ed8cadceb79818794d3a04bee5b39efe0c9c4a25a01b5f84",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Hudson River Trading",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.hudsonrivertrading.com/",
+      "revision": "2019-04-02T16:53:42Z",
+      "files": [
+        {
+          "file": "hudson-river-trading-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Hudson_River_Trading_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "cad45419b2cc4d140e334b9de21e1d1f12b4291a21d1f5a70bbc08d39d11050c",
+          "sha256": "386daadd1ec1beae5603d0f5369dec3bec2680affc48d2b68a3ad821080cca12",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "xAI",
+      "license": "MIT",
+      "brandUrl": "https://x.ai/",
+      "revision": "f9b726cee1d1f3c697a18c880185e89d9a55bb70",
+      "files": [
+        {
+          "file": "xai-light.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/xai_light.svg",
+          "originalSha256": "a805762f862713b85a68f05b6a7cb15d4bc42fd3a5f17cda706b77bccca6d7b2",
+          "sha256": "03aad898feb3728ebcb462aebeaa2b28365820abc77e2757afaf758507c5d112",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "xai-dark.svg",
+          "source": "https://raw.githubusercontent.com/pheralb/svgl/f9b726cee1d1f3c697a18c880185e89d9a55bb70/static/library/xai_dark.svg",
+          "originalSha256": "aa41806e679c972053a12fd33d0165daef4ce60be572976cce0e9026bcd47158",
+          "sha256": "9512b6ecb69b02431c20ad87805bc3960423bdbb582dabed5f118a86ab22a1b4",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Arista Networks",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.arista.com/",
+      "revision": "2019-04-24T21:26:36Z",
+      "files": [
+        {
+          "file": "arista-networks-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/99/Arista-networks-logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "00dd4229dd352f8dd0269c555f0d904359b313f30ac306a8cf930cf602d628cd",
+          "sha256": "14d6a898f9275edef9ae9598b031a1cdc40b5adf1919c065521a259d15f28d42",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Cognizant",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.cognizant.com/",
+      "revision": "2022-03-19T08:31:05Z",
+      "files": [
+        {
+          "file": "cognizant-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/43/Cognizant_logo_2022.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "63126d30bc94be90ac5ce10f5971934eb34e9fd5a4cdc0bfa69d0b9c94d43dea",
+          "sha256": "5dc8b588ebc9e8f893a013173769de0b9e85554890d861d3b6a74773bfde0c57",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Scale AI",
+      "license": "PD-textlogo",
+      "brandUrl": "https://scale.com/",
+      "revision": "2023-03-12T06:43:01Z",
+      "files": [
+        {
+          "file": "scale-ai-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/74/Scale_AI.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "c7fcef0d839fdf7fb8fcbd719c898cd91390e86534a8a1aab2325fde80d4eaa8",
+          "sha256": "0a009abde150f7a827e84173dad3d87015815ac4db27f18200b2235f2ca858c4",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Temu",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.temu.com/",
+      "revision": "2024-09-05T10:11:58Z",
+      "files": [
+        {
+          "file": "temu-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Temu_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "f6d9a411db324934988c44e5c23f7b37d6c2b2cf35830fd8bae31176d85018cd",
+          "sha256": "a4048c3a63a9ffa8c28c2691d739a04b55741a91526257e1493698ffc232cb57",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Rubrik",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.rubrik.com/",
+      "revision": "2019-04-26T16:57:59Z",
+      "files": [
+        {
+          "file": "rubrik-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Rubrik_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "cc498aa15694ea3599c9855cd554124c5ad606cde1466fd5ee77a133870f390a",
+          "sha256": "e87656bdab7ce3f95307a8ed14398379e51f46cb210434ce0c5d65c37d4dc7fa",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Ramp",
+      "license": "PD-textlogo",
+      "brandUrl": "https://ramp.com/",
+      "revision": "2023-12-28T20:10:30Z",
+      "files": [
+        {
+          "file": "ramp-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Ramp_Business_Corporation_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "305d8dfa84337c595910811c74ad4b9e72d1fddbbaf3272b65a52b5ac5798f52",
+          "sha256": "4a78368c10a1d3450f18e73c9106b950873149c4fcaae279e050ed496c62ac56",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Deloitte",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.deloitte.com/",
+      "revision": "2025-08-12T09:21:43Z",
+      "files": [
+        {
+          "file": "deloitte-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Logo_of_Deloitte.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "e06c7f504f52dcb8a74783b5e26b7327b4d0c8084766a1aa9300ca4106305b03",
+          "sha256": "6efb8cec2d27367f59af2408ed41e8c0b51cf04125f2aee5c766414bfdc35563",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "DocuSign",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.docusign.com/",
+      "revision": "2020-02-05T02:57:17Z",
+      "files": [
+        {
+          "file": "docusign-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/f5/DocuSign_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "581ed190cd702fa7f9b0d506eb8b3e6de474b96995bd6b70926f56f0552cc3d2",
+          "sha256": "bd9fc6257515d36a02e59c99bd6869980cf4174b43452260e692531bd65292fb",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Palantir",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.palantir.com/",
+      "revision": "2026-03-18T03:58:12Z",
+      "files": [
+        {
+          "file": "palantir-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/1/13/Palantir_Technologies_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "6cb92a53619513e852029a0f405f65b27cd1443b2c37e1d94186d19ffe876e44",
+          "sha256": "9aab8ca6a4c7bf451a0afafd56dfa9f9b438142867bb60852a7c3e20265b0813",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Sprinklr",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.sprinklr.com/",
+      "revision": "2026-07-26T14:48:20Z",
+      "files": [
+        {
+          "file": "sprinklr-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/1/19/Sprinklr_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "07be776136e1a7760219d0ad6dfa86f614e70f0af7ead50551b403c6d28c3998",
+          "sha256": "4c07f67e0e8530cc9e084290153504704c087e771efff944bcf0975bf5ecfd1a",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Capgemini",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.capgemini.com/",
+      "revision": "2019-10-05T03:01:06Z",
+      "files": [
+        {
+          "file": "capgemini-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Capgemini_201x_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "5fd94686baa4b50aacdee2753088080cd593b2875476bee940ebdd01f11fc75a",
+          "sha256": "8fa8b0bbbfbce8aab572ab46208365a4b3c77f8d69bba6d598717088c6e207a9",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Yahoo",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.yahoo.com/",
+      "revision": "4a5b550414be64d5c007574cd395d910d50e8950",
+      "files": [
+        {
+          "file": "yahoo-light.svg",
+          "source": "https://raw.githubusercontent.com/gilbarbara/logos/4a5b550414be64d5c007574cd395d910d50e8950/logos/yahoo.svg",
+          "originalSha256": "f8b6aef88634fe29ab6a1305336c5b71bdd922121880eaf451f123bdb0c81324",
+          "sha256": "f114bc31cf7a70a2ca3521a6f3f33c80fa0f887e44426af5c221e15ff2b64d90",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Nuro",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.nuro.ai/",
+      "revision": "2026-04-27T14:17:46Z",
+      "files": [
+        {
+          "file": "nuro-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Nuro_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "ba113d2231f9feabaf32afe31ab05a98884a0dc93f8927bca56eb040a7c738b1",
+          "sha256": "54fb445c8ed0ddfad590811b2aeeed179998c30cdc03bb603d70b48ed3fb07dd",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Autodesk",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.autodesk.com/",
+      "revision": "2022-04-03T21:30:18Z",
+      "files": [
+        {
+          "file": "autodesk-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/41/Autodesk_Logo_2021.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "b6d2bd07395b4892b53a8ca4d012299f81511b287e0598c25733512da17be0f6",
+          "sha256": "14fa1b6e4b7887b7a003a976b86fdccb9494c1264db948e2cf4bf01add7dcddc",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Paytm",
+      "license": "PD-textlogo",
+      "brandUrl": "https://paytm.com/",
+      "revision": "2020-08-30T18:04:23Z",
+      "files": [
+        {
+          "file": "paytm-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo_%28standalone%29.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "300d35bbd482a3ceb6b7a752421113640d88988a36e5e69d5b3d3453932b66be",
+          "sha256": "0d7c9fac6f90208e57678afbea9a239ac594f3100fc3bfbd1c87420eac4b299c",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Whatnot",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.whatnot.com/",
+      "revision": "2025-12-12T18:07:13Z",
+      "files": [
+        {
+          "file": "whatnot-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/9/91/Whatnot_Logo_2025.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "dffcd1c84169965e0f9dcda5977ef1b3321171dc920f45fe006203d7d0543bd1",
+          "sha256": "550f1b3e52c38b6fbf28009512ff7ac19ae7265e3d9d7774d9c8b3a91645a545",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Confluent",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.confluent.io/",
+      "revision": "2024-09-23T12:49:35Z",
+      "files": [
+        {
+          "file": "confluent-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Confluent%2C_Inc._logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "fba4a0c6cc398264529d82575dc6d348118e3b4e488c47ecaf22b024cf729400",
+          "sha256": "a0749fd06644459f41045d6259ce9ca89de68ff8f3adf2fefedb4af5e2baca18",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Zomato",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.zomato.com/",
+      "revision": "2022-03-28T09:04:16Z",
+      "files": [
+        {
+          "file": "zomato-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Zomato_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "a6363690ff097247820fdb32495e60a9de44d732d3f2df61fcc1b08e5001d15a",
+          "sha256": "345adf017115d208a467004f6324e859ffbddd3a65f28a8480c409be5d17d0be",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Yelp",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.yelp.com/",
+      "revision": "2021-08-03T21:32:52Z",
+      "files": [
+        {
+          "file": "yelp-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/a/ad/Yelp_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "1422a4c930deaebef3950c47794680d983a8313fece028d73d2d5a77500e5fed",
+          "sha256": "95bacbae2434059fb40d8b07b0734f556c6379cada3ce6156396faf2db64a0b3",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "GEICO",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.geico.com/",
+      "revision": "2013-10-05T22:55:29Z",
+      "files": [
+        {
+          "file": "geico-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Geico_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "aad92450c4f2d48179e38380807c983b551d49ec4c940ab459dbe60323808efa",
+          "sha256": "77cfa9c750a6f7b9487b47d1753dc0f1209c1a673794f1ba654c9b6b1725f5a8",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Wayfair",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.wayfair.com/",
+      "revision": "2024-09-25T08:01:24Z",
+      "files": [
+        {
+          "file": "wayfair-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/3/34/Wayfair_2024_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "db1488633623feb6366ca412be96eea0ac36860a577a6e6aae6d521ae54419c9",
+          "sha256": "9591dd9861314650af615443ebc5e464b46aaa9422365f20816e7842ca1b0eff",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Ola",
+      "license": "PD-shape",
+      "brandUrl": "https://www.olacabs.com/",
+      "revision": "2023-02-21T14:20:01Z",
+      "files": [
+        {
+          "file": "ola-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Ola_Cabs_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "630b5ccdbf9aa0134f5a6442ef265e509efdbf6fd70a94b295d22b47540938b3",
+          "sha256": "d3e10c883d1f69b3b0ad05eb755a5f439b644d8020559a0fc65e0c52ae15192d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "IXL Learning",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.ixl.com/",
+      "revision": "2025-12-21T13:06:47Z",
+      "files": [
+        {
+          "file": "ixl-learning-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/6d/IXLlearning.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "98c5fb8f9bd5c55fb50f4279ca937d8a864ec17578e77ae33122108d3d357159",
+          "sha256": "fbc6e2e9245420b34874d7c284c3364d762b0c08908e1e99d4c0b12748fc69f3",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Jane Street",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.janestreet.com/",
+      "revision": "2019-04-02T16:20:20Z",
+      "files": [
+        {
+          "file": "jane-street-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Jane_Street_Capital_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "e5bad61dd8929ee99481e8648c7c9e04de5e152d2c63735b128bd0fe43bfff29",
+          "sha256": "ca24586ad6becf165e0d8e32ca3ce6d29f5e3d06fd072a2bf62787af948ed26a",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Siemens",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.siemens.com/",
+      "revision": "2013-07-06T10:36:19Z",
+      "files": [
+        {
+          "file": "siemens-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Siemens-logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "9aecdd21358888517612816505e9dd31250d9ee63a4b7c48bdab05164af75bb9",
+          "sha256": "111f35ff390ca5fd1803fca32691a8fbcb6ca1d2a56731840545ad8f367c18a2",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Deutsche Bank",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.db.com/",
+      "revision": "2009-12-22T01:04:53Z",
+      "files": [
+        {
+          "file": "deutsche-bank-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/48/Deutsche_Bank-Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "294477fba8605daa5f97337fd3adaa1738537ebc82709b748c3fc98a14976254",
+          "sha256": "1da5e99e251ac491834841ed84f1badf009042dead52ad3f7d6b08b50bd28238",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Barclays",
+      "license": "PD-textlogo",
+      "brandUrl": "https://home.barclays/",
+      "revision": "2026-06-07T06:14:29Z",
+      "files": [
+        {
+          "file": "barclays-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/88/Barclays_wordmark.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "2bf7040f0a1da39118ee30b170b99e607ef1fa1156d2fc6c8bfaf6bd94342ccb",
+          "sha256": "87329fa088cc00d30c31132d34ae11947cd3edfa86c279cfee3ea0bbaeb1de22",
+          "transform": "Replace the letterboxed width/height viewport with the equivalent viewBox, then trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "BlackRock",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.blackrock.com/",
+      "revision": "2020-11-20T05:47:20Z",
+      "files": [
+        {
+          "file": "blackrock-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/85/BlackRock_wordmark.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "9bd982f011bf6444c39076e77b7d7d28b4db52f83f866e757befb71c7a90d643",
+          "sha256": "5b9ff8a36e41bb6aa3c19d4673d68dc91d295e7a0b6f0ff075b83fc60a6bd15b",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Zepto",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.zeptonow.com/",
+      "revision": "2024-08-23T09:12:01Z",
+      "files": [
+        {
+          "file": "zepto-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/81/Zepto_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "62f4d54c55e88bcfaa42520e0d5b11f49b5fb1be5de4cb36edb56a94b31cbc2a",
+          "sha256": "87cec546da8fdb7c7d82703cca2ef8027cf1b6a8af7f9a5fbeeb801fc0053ba3",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Glean",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.glean.com/",
+      "revision": "2026-04-24T19:28:04Z",
+      "files": [
+        {
+          "file": "glean-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/f4/Glean_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "57b28c808f15a5aea9a0f81778df2eddb0b975aea6537aedb16ffe2103d02d31",
+          "sha256": "24b65cd17b1beace2fdab3f2799dfa3ff4d98648755d79bab3092e14b9df044c",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Epic Systems",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.epic.com/",
+      "revision": "2022-02-04T05:45:01Z",
+      "files": [
+        {
+          "file": "epic-systems-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/2/24/Epic_Systems.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "a2dc9d685572e2bfaa76d09d3343002c73e84dfc6017dba0863ec8051acc9c70",
+          "sha256": "944db5de0cc15b58e17423a8cad7839bfd1eb04c9965711eace49ba8e06f7bea",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Zenefits",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.zenefits.com/",
+      "revision": "2022-06-23T04:11:58Z",
+      "files": [
+        {
+          "file": "zenefits-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/3/35/TriNet_Zenefits.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "7a2b76f390619b07e1cfc423bba1674dc035be4a3d7a0f2696bd53791a7c5ff1",
+          "sha256": "94e2122c104ea0632cebc9a8e076986fc7882e079e718886e6e00214815db8aa",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Zoox",
+      "license": "PD-textlogo",
+      "brandUrl": "https://zoox.com/",
+      "revision": "2026-04-27T14:32:17Z",
+      "files": [
+        {
+          "file": "zoox-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/fc/Zoox_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "cb2804ecf9eb7e9b1890f646ba606e5f19c64b61adff36244004fc0b0c466063",
+          "sha256": "3215f12c2cbaa1f53fdb5304d32aa7c03db6d42c9b6dba63bf1cdaf8ad321edb",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "MakeMyTrip",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.makemytrip.com/",
+      "revision": "2023-07-12T10:13:21Z",
+      "files": [
+        {
+          "file": "makemytrip-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/61/Makemytrip_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "55bcd571301cd7d4abacc795d8d6469d0472d16a1468a7390247cc7e0964619c",
+          "sha256": "ac13563c1eebab5437d93540c39461663568a4142367d08bd72773b4f12502fc",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Tinkoff",
+      "license": "PD-shape",
+      "brandUrl": "https://www.tbank.ru/",
+      "revision": "2024-02-15T11:58:26Z",
+      "files": [
+        {
+          "file": "tinkoff-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/1/19/Tinkoff_logo_2024.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "bdaf828ffb7e34f0f895feed056f950177fee97c3d096fc1ede27500b114a2d3",
+          "sha256": "7ea96158bf5d2c849ccc39600ae3f91662fb071c16016a795a18c35ccc752fc3",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Virtu Financial",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.virtu.com/",
+      "revision": "2019-03-26T17:19:17Z",
+      "files": [
+        {
+          "file": "virtu-financial-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/c0/VIRTU_Financial_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "28517c6f8d0993b075b4864079730f370bc663626da93833bee2ae7d62c45d37",
+          "sha256": "dad8692038aec390e0be6ba80e5d56984cebc71fb3e7499df2018cca0591e43a",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Ripple",
+      "license": "PD-textlogo",
+      "brandUrl": "https://ripple.com/",
+      "revision": "2017-01-10T00:50:53Z",
+      "files": [
+        {
+          "file": "ripple-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/88/Ripple_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "8c310bfd7b2cb5e134ea97a99103f514cc7dabdc13c78a01b394214f7efdc09c",
+          "sha256": "bc450950c7035f76b982f6f07bbea4efeb9b8be45b2bea1fb09ae30ca1131fca",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Wipro",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.wipro.com/",
+      "revision": "2026-06-05T10:03:37Z",
+      "files": [
+        {
+          "file": "wipro-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/5/51/Wipro_Secondary_Logo_Color_RGB.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "7e1d9013fd2e06e537e0e400c3f30a5acff0e0e4b612a6e8defedb71b9599e5b",
+          "sha256": "152edc11be8679aff7fce467b114d53ff936865e27ffc31b1c0556045d7da195",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "UiPath",
+      "license": "PD-shape",
+      "brandUrl": "https://www.uipath.com/",
+      "revision": "2026-07-19T21:04:03Z",
+      "files": [
+        {
+          "file": "uipath-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/2/2c/UiPath_2025_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "101f16e0be3c45d5b043cbd52cbfc57178cf003d66eebe037be7dc2af536e919",
+          "sha256": "784e3ee1c90facaa297cc2b9f215619e0d06572f409eeaf60acdfe5ed6837691",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Pure Storage",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.purestorage.com/",
+      "revision": "2021-09-27T16:27:06Z",
+      "files": [
+        {
+          "file": "pure-storage-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/61/Pure-storage-vector-logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "914f58f15f600ac3764a2a9391c2add3a8261a21d437e2d014dbbef75d768cd0",
+          "sha256": "1e31d2882193e51d0816c4174cf7771dfab50c50d413d354103ce549e19c5a3c",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "C3.ai",
+      "license": "PD-textlogo",
+      "brandUrl": "https://c3.ai/",
+      "revision": "2025-08-24T23:50:55Z",
+      "files": [
+        {
+          "file": "c3-ai-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/1/16/C3ai_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "e55669263dbf0c2cb2a98ddfb48e0a6e50c762e2638dad863838301a07cfa3a1",
+          "sha256": "0b7e219270ea653f41b3bf67d265ba9160d29be9a6efc7ad2ff5826639b4e3e1",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Nextdoor",
+      "license": "PD-ineligible",
+      "brandUrl": "https://nextdoor.com/",
+      "revision": "2018-10-29T07:36:58Z",
+      "files": [
+        {
+          "file": "nextdoor-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/66/Nextdoor_logo_green.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "530509c69597d88e6332688a9d9a1834fdcd5aabbea8022751a999d4c0142d3d",
+          "sha256": "85760e8923beb7376d31501c0aeb78be2cc58437691dd503aec03d91a15b7cb5",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "BNY Mellon",
+      "license": "PD-shape",
+      "brandUrl": "https://www.bny.com/",
+      "revision": "2021-09-01T03:24:26Z",
+      "files": [
+        {
+          "file": "bny-mellon-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/2/2d/Bank_of_New_York_Mellon_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "76ccd8c90b54ad4e479b6e93c97241db284039d7c18029e4ecbf7964658a93e2",
+          "sha256": "4a08392ee150a2b357fec7614707e7ab318e364e337de7c383adb45528124f3d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Huawei",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.huawei.com/",
+      "revision": "2019-06-20T09:27:32Z",
+      "files": [
+        {
+          "file": "huawei-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/d/db/Huawei_wordmark_2019.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "8e15f584ab8783d154e24512aea085365b26cd4251adfa6c90c431a520b608e1",
+          "sha256": "629d2106d77712eb67f2e47a11f489ecea1a6aed5ad1136e68d091ab168e30c0",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "HCLTech",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.hcltech.com/",
+      "revision": "2022-09-26T14:27:43Z",
+      "files": [
+        {
+          "file": "hcltech-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/e/e5/HCLTech-new-logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "457e7375094927b7b5f17aba1bd23bff072e1e029246bb113782dfa4e63acc71",
+          "sha256": "1749528c7a564d0c89742bb03fecc3b33ef9dcc57c589ea7d05267036d1068bc",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Grab",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.grab.com/",
+      "revision": "2020-09-16T14:23:01Z",
+      "files": [
+        {
+          "file": "grab-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/f/f6/Grab_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "83aa4befb3cef94d2824aead86a7de0794be0f58794fae887b25cf8da19482c5",
+          "sha256": "d6070028521e6436fd5485fb4da87c5653fd81015c73f7e2b40c75bed1889dc4",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Nike",
+      "license": "PD-shape",
+      "brandUrl": "https://www.nike.com/",
+      "revision": "2025-06-19T11:10:31Z",
+      "files": [
+        {
+          "file": "nike-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/2/2a/Nike_wordmark.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "b47bff4d5b0f4c2a6767c30ada36ab7207c6136b82ed74ab27ed6c34d8def707",
+          "sha256": "0ab87482c5758350a121eed1bb00e357ea5b52ad6f60d5a20990a8fc1be8ec92",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Flexport",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.flexport.com/",
+      "revision": "2020-07-09T09:45:49Z",
+      "files": [
+        {
+          "file": "flexport-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Flexport_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "8343af5c247c26490e50433d94658dea835bebf60503e01d981014855dd56ba1",
+          "sha256": "deed0a09eee18be9be71940c9fa602f11a930f9bf3318d22605e57443acb29ac",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Citi",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.citigroup.com/",
+      "revision": "2023-11-05T04:23:53Z",
+      "files": [
+        {
+          "file": "citi-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/73/Citi_logo_March_2023.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "cb599b2ea12080cb20c66af5eba4accd5aab90fa28a9d72725cdcff78354f389",
+          "sha256": "dd28b8d064c6491fe956980c906bf164ed4c73628323d7309827b92ee699070e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Booking.com",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.booking.com/",
+      "revision": "2018-09-07T14:54:08Z",
+      "files": [
+        {
+          "file": "booking-com-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Booking.com_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "bd9f9cbd3b892b759f6a9f407c20f7edd679b879d2c8a2b72fdf0c8364c0b846",
+          "sha256": "d67f85a50c6091adb94753c57476066debbf53374d569048815c03114e2253f0",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Square",
+      "license": "PD-textlogo",
+      "brandUrl": "https://squareup.com/",
+      "revision": "2022-08-25T09:55:02Z",
+      "files": [
+        {
+          "file": "square-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/81/Square_%28Block%2C_Inc.%29_Logo_08.2022.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "d35737487fc1d3e020c742cdc53a0193f7a81521fc84ba45bb653e897197624f",
+          "sha256": "880f52f47ace59a1684902f1ecb01b24f0738f5e2f9e2397c03f48de6b05781d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "CrowdStrike",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.crowdstrike.com/",
+      "revision": "2024-10-27T08:31:31Z",
+      "files": [
+        {
+          "file": "crowdstrike-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/4/4f/CrowdStrike_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "c8a4f1eccb29399e30dbb921812b27fdd7e7068ed4ad0bea9435fea51d3cbce3",
+          "sha256": "9144336bb86435aa798ad9d24ed74dbbf0f4bc41e9bdf13969e6a9d77390de8b",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "The Trade Desk",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.thetradedesk.com/",
+      "revision": "2021-08-05T09:38:13Z",
+      "files": [
+        {
+          "file": "the-trade-desk-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/c1/The_Trade_Desk.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "876c28171b54cc02c82834116b3a68060e763f24324c29734ca6b8a4c7658641",
+          "sha256": "37b7f5f2907815e5fc7c5fa05019c34e08acb1e239d7e71db5ebfb6ac1483880",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "VK",
+      "license": "PD-shape",
+      "brandUrl": "https://vk.com/",
+      "revision": "2021-10-12T15:09:45Z",
+      "files": [
+        {
+          "file": "vk-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/65/VK_BW_Full_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "56fdd7be066c8002785679e5b81cf79cc78996c41735ad9b569626a5b7905c61",
+          "sha256": "4a742433f9ce773c167aa266d1dfd4e1b4dbcf24504655a5129636d6a50cf1f3",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "NetApp",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.netapp.com/",
+      "revision": "2022-09-01T21:41:11Z",
+      "files": [
+        {
+          "file": "netapp-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/e/e8/NetApp_logo_2020.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "a5809c1f46975781ed8963878e42d4272c5d4dc60319a71ba215b7919f627a7e",
+          "sha256": "106ed7072a6c6f4ed4869f4dd7faf7ae560aa50c07ab67bc79626905b2e97c4d",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Dream11",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.dream11.com/",
+      "revision": "2024-03-11T04:11:41Z",
+      "files": [
+        {
+          "file": "dream11-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/05/Dream11_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "190958fb0d4667e747c9e58fc83aa793fb60dec1dbf41fa49438f8d6b87446f3",
+          "sha256": "e55bda1d35c17aa2bb98362c67b23fd1d28e519fd13e8665a9111479d1ac47f8",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Verily",
+      "license": "PD-textlogo",
+      "brandUrl": "https://verily.com/",
+      "revision": "2025-07-13T10:05:49Z",
+      "files": [
+        {
+          "file": "verily-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Verily_Logo_2025.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "bf955e4eb6ad974e03ce5cca1d51c442b10b06f784a3564a949b91fda68418d4",
+          "sha256": "80d26c816049aa653cdd00d41904ea186b89d226db89cfaf5cd0b97fe1e7f37a",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Millennium",
+      "license": "PD-text",
+      "brandUrl": "https://www.mlp.com/",
+      "revision": "2022-08-04T16:51:47Z",
+      "files": [
+        {
+          "file": "millennium-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/6/60/Millennium_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "ccb96581f7cc2544c93727dbddde17d0e0e511b7dfec3b18b2f4a71e0ad94126",
+          "sha256": "1c3110b7eb2d21447844e1c24fe56179662bd794d6031e4925ba0dfa4b638191",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Walmart",
+      "license": "PD-textlogo",
+      "brandUrl": "https://corporate.walmart.com/",
+      "revision": "2025-01-13T21:05:06Z",
+      "files": [
+        {
+          "file": "walmart-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Walmart_logo_%282025%3B_Alt%29.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "d8681b6aaf9839adedd4bc12207c6c2e1273c98b51c74283ce56b3bb2866c580",
+          "sha256": "788e93e88652508c1c2a4d63d8816f13a9dd6d89cb775236d28f806d4e3e49d8",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Twitter",
+      "license": "PD-textlogo",
+      "brandUrl": "https://x.com/",
+      "revision": "2017-04-17T09:27:24Z",
+      "files": [
+        {
+          "file": "twitter-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/5/51/Twitter_logo.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+          "originalSha256": "4dfb8a5e2e2c41ca99ae46ce3ae0597e33ecc53111c49426269c310e6df1a122",
+          "sha256": "67d92a1bfb2bddc46349673d4ca77213111138a75d5d2ab15a93404ee068dff8",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    }
+  ]
+}

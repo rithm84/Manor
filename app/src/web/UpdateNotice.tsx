@@ -32,6 +32,7 @@ export function UpdateNotice(): ReactNode {
   const [update, setUpdate] = useState<Update | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [installing, setInstalling] = useState(false)
+  const [installed, setInstalled] = useState(false)
 
   useEffect(() => {
     if (update !== null) return
@@ -73,10 +74,25 @@ export function UpdateNotice(): ReactNode {
     }
     setError(null)
     setInstalling(true)
-    void ready.downloadAndInstall().then(() => relaunch()).catch((cause: unknown) => {
-      console.error('Manor could not install the update', { cause })
+    let installedReady = installed
+    const finish = async (): Promise<void> => {
+      if (!installedReady) {
+        await ready.downloadAndInstall()
+        installedReady = true
+        setInstalled(true)
+      }
+      const blockedAfterInstall = restartBlockReason()
+      if (blockedAfterInstall !== null) {
+        setError(blockedAfterInstall)
+        setInstalling(false)
+        return
+      }
+      await relaunch()
+    }
+    void finish().catch((cause: unknown) => {
+      console.error('Manor could not finish the update', { installed: installedReady, cause })
       setInstalling(false)
-      setError(`Could not install version ${ready.version}. Check your network connection, then try again.`)
+      setError(installedReady ? 'The update is installed, but Manor could not restart. Try restarting again.' : `Could not install version ${ready.version}. Check your network connection, then try again.`)
     })
   }
 
@@ -85,11 +101,11 @@ export function UpdateNotice(): ReactNode {
     <aside className="app-update-notice" role="status" data-testid="app-update-notice">
       <div className="app-update-copy">
         <strong>Update available</strong>
-        {error !== null ? <p role="alert">{error}</p> : <p>Version {update.version} is ready to install.</p>}
+        {error !== null ? <p role="alert">{error}</p> : <p>{installed ? `Version ${update.version} is installed. Restart Manor to finish.` : `Version ${update.version} is ready to install.`}</p>}
       </div>
       <button type="button" className="ui-button ui-button--primary" data-testid="app-update-restart" disabled={installing} onClick={() => restartInto(update)}>
         <RefreshCw size={14} />
-        {installing ? 'Updating…' : 'Restart to update'}
+        {installing ? 'Updating…' : installed ? 'Restart to finish update' : 'Restart to update'}
       </button>
       {error !== null ? (
         <button type="button" className="app-update-dismiss" aria-label="Dismiss" onClick={() => setError(null)}><X size={14} /></button>

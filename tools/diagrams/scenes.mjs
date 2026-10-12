@@ -42,7 +42,7 @@ export const scenes = {
       N('db', 'Postgres', 570, 300, { note: 'RLS, commands, history, cron', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
       N('files', 'Storage', 570, 470, { note: 'private manor-files bucket', icon: I.objectStorage, fill: fill.storage, stroke: S.storage }),
       N('workers', 'Workers', 900, 300, { note: 'integrations, jobs, embeddings', icon: I.microservice, fill: fill.supabase, stroke: S.supabase }),
-      N('mcp', 'manor-mcp', 900, 680, { note: 'Edge Function, 122 operations', icon: I.code, fill: fill.supabase, stroke: S.supabase }),
+      N('mcp', 'manor-mcp', 900, 680, { note: 'Edge Function, shared catalog', icon: I.code, fill: fill.supabase, stroke: S.supabase }),
       N('google', 'Google', 1230, 130, { note: 'identity, Calendar (read-only)', icon: I.cloud, fill: fill.external, stroke: S.external }),
       N('x', 'X bookmarks', 1230, 300, { icon: I.star, fill: fill.external, stroke: S.external }),
       N('simplify', 'SimplifyJobs', 1230, 470, { note: 'listings.json on GitHub', icon: I.github, fill: fill.external, stroke: S.external }),
@@ -134,7 +134,7 @@ export const scenes = {
       N('consent', 'Consent in the app', 490, 380, { note: 'from the browser; read or read-write, revocable', icon: I.webApp, fill: fill.supabase, stroke: S.supabase }),
       N('token', 'Scoped token', 720, 380, { note: 'client_id claim, refresh, revocation', icon: I.password, fill: fill.app, stroke: S.app }),
       N('rls', 'Row-level security', 1040, 255, { note: 'user_id = (select auth.uid()) and MCP scope policies', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
-      N('ops', '122 operations', 1290, 255, { note: '48 reads, 74 writes, one catalog', icon: I.code, fill: fill.storage, stroke: S.storage })
+      N('ops', 'Shared operations', 1290, 255, { note: 'one catalog, scoped reads and writes', icon: I.code, fill: fill.storage, stroke: S.storage })
     ],
     edges: [
       E('google', 'gate', { color: S.external }), E('gate', 'hook', { color: S.jobs }), E('hook', 'session', { color: S.supabase }),
@@ -304,17 +304,20 @@ export const scenes = {
       N('embeddings', 'Embedding worker', 300, 280, { note: 'every minute, changed notes and captures', icon: I.microservice, fill: fill.supabase, stroke: S.supabase }),
       N('jobs', 'Jobs ingest', 300, 460, { note: 'every 6 hours', icon: I.microservice, fill: fill.supabase, stroke: S.supabase }),
       N('maintenance', 'Maintenance', 300, 640, { note: 'hourly: recurrence, streaks, purge', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
+      N('execution', 'Problem runner', 300, 820, { note: 'every minute: leased jobs, expired editor cleanup', icon: I.microservice, fill: fill.supabase, stroke: S.supabase }),
       N('calendar', 'Google Calendar', 620, 40, { note: 'one page per calendar, resync at the next minute', icon: I.cloud, fill: fill.external, stroke: S.external }),
       N('xb', 'X bookmarks', 620, 210, { note: 'every 10 minutes', icon: I.star, fill: fill.external, stroke: S.external }),
       N('openai', 'OpenAI', 620, 380, { note: 'text-embedding-3-small, 1,536 dims', icon: I.chip, fill: fill.external, stroke: S.external }),
       N('simplify', 'SimplifyJobs', 620, 550, { note: 'listings.json, standing filters', icon: I.github, fill: fill.external, stroke: S.external }),
-      N('review', 'Weekly review', 620, 720, { note: 'ChatGPT Work task saves through MCP, Sunday 22:00', icon: I.lightning, fill: fill.neutral, stroke: S.neutral })
+      N('review', 'Weekly review', 620, 720, { note: 'ChatGPT Work task saves through MCP, Sunday 22:00', icon: I.lightning, fill: fill.neutral, stroke: S.neutral }),
+      N('sandbox', 'Blaxel', 620, 910, { note: 'disposable judge and editor environments', icon: I.cloud, fill: fill.external, stroke: S.external })
     ],
     edges: [
       E('cron', 'integrations', { color: S.jobs }), E('cron', 'embeddings', { color: S.jobs }), E('cron', 'jobs', { color: S.jobs }), E('cron', 'maintenance', { color: S.jobs }),
+      E('cron', 'execution', { color: S.jobs, via: [[90, 890]] }), E('execution', 'sandbox', { color: S.external }),
       E('integrations', 'calendar', { label: 'read-only', color: S.external }), E('integrations', 'xb', { color: S.external }), E('embeddings', 'openai', { color: S.external }), E('jobs', 'simplify', { color: S.external })
     ],
-    notes: [{ text: 'The weekly review is scheduled by the ChatGPT host, not by cron; it reads inputs and writes the review through the same MCP operations.', x: 0, y: 900, size: 13 }]
+    notes: [{ text: 'The weekly review is scheduled by the ChatGPT host, not by cron; it reads inputs and writes the review through the same MCP operations.', x: 0, y: 1110, size: 13 }]
   },
   recovery: {
     title: 'Backups and isolated restore',
@@ -397,6 +400,28 @@ export const scenes = {
       E('next', 'broken', { label: 'no', color: S.external }), E('broken', 'earnback', { color: S.external }), E('earnback', 'restored', { label: 'yes', color: S.storage }),
       E('earnback', 'reset', { label: 'no', color: S.external, via: [[590, 690]] })
     ],
-    notes: [{ text: 'LeetCode keeps its own streak and a pool of five freezes a month, with no Earn-Back.', x: 0, y: 760, size: 13 }]
+    notes: [{ text: 'Problem practice does not participate in habit streaks or freezes.', x: 0, y: 760, size: 13 }]
+  },
+  'problem-execution': {
+    title: 'Problem library and execution',
+    subtitle: 'Durable account data in Supabase, short-lived editor capabilities, and disposable execution with expected answers kept outside submitted programs.',
+    nodes: [
+      N('workspace', 'Manor workspace', 0, 140, { w: 220, note: 'Monaco, protected drafts, statement and results', icon: I.computer, fill: fill.app, stroke: S.app }),
+      N('api', 'Authenticated API', 430, 140, { w: 220, note: 'account checks and short-lived editor sessions', icon: I.lock, fill: fill.supabase, stroke: S.supabase }),
+      N('database', 'Supabase', 860, 140, { w: 220, note: 'retained sources, canonical groups and private grading', icon: I.postgres, fill: fill.storage, stroke: S.storage }),
+      N('editor', 'Blaxel editor', 430, 460, { w: 220, note: 'language servers, separate workspace', icon: I.code, fill: fill.external, stroke: S.external }),
+      N('worker', 'Execution worker', 860, 460, { w: 220, note: 'leased batches, minute recovery, trusted comparison', icon: I.gear, fill: fill.supabase, stroke: S.supabase }),
+      N('sandbox', 'Program sandbox', 1290, 460, { w: 220, note: 'submitted code with its typed driver, inputs only, jailed batches', icon: I.microservice, fill: fill.external, stroke: S.external }),
+      N('judge', 'Judge sandbox', 1290, 140, { w: 220, note: 'special judges for answers with several valid forms, no submitted code', icon: I.microservice, fill: fill.external, stroke: S.external })
+    ],
+    edges: [
+      E('workspace', 'api', { label: 'Run, Submit, results', color: S.app, both: true }),
+      E('api', 'database', { label: 'jobs and results', color: S.supabase, both: true }),
+      E('api', 'editor', { label: 'create session', color: S.external }),
+      E('workspace', 'editor', { label: 'language tools', color: S.app, both: true, via: [[110, 535]] }),
+      E('database', 'worker', { label: 'lease and results', color: S.supabase, both: true }),
+      E('worker', 'sandbox', { label: 'execute input', color: S.external, both: true }),
+      E('worker', 'judge', { label: 'outputs and answers', color: S.external, both: true })
+    ]
   }
 }

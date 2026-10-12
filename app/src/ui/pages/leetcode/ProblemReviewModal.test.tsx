@@ -16,10 +16,10 @@ describe('ProblemReviewModal', () => {
       <ProblemReviewModal
         problem={{
           id: 'two-sum',
-          topic: 'Arrays & Hashing',
+          topics: ['Arrays & Hashing'],
+          companies: [], tags: [], collections: [], sourceUrl: null,
           name: 'Two Sum',
           difficulty: 'Easy',
-          curriculumOrder: 0
         }}
         attempts={[
           {
@@ -41,11 +41,10 @@ describe('ProblemReviewModal', () => {
 
     expect(markup).toContain('role="dialog"')
     expect(markup).toContain('aria-label="Two Sum solve and review history"')
-    // Manor's own picker, never the browser's native date control.
-    expect(markup).toContain('datepicker-trigger')
+    // History leads; logging a solve made elsewhere stays one click away.
+    expect(markup).toContain('data-testid="lc-log-solve"')
     expect(markup).not.toContain('type="date"')
-    expect(markup).toContain('<textarea')
-    expect(markup).toContain('Attempt 1')
+    expect(markup.indexOf('Attempt 1')).toBeLessThan(markup.indexOf('lc-log-solve'))
     expect(markup).toContain(SOURCE)
   })
 })

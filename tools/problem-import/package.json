@@ -1,0 +1,23 @@
+{
+  "name": "manor-problem-import",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck:collector": "tsc --noEmit --strict --target ES2023 --module NodeNext --allowImportingTsExtensions --skipLibCheck --types node cloud-collect.mts",
+    "collect:cloud": "node cloud-collect.mts",
+    "import": "node import.mjs",
+    "normalize": "node normalize.mjs",
+    "enrich": "node enrich.mjs",
+    "classify": "node classify.ts",
+    "typecheck:classifier": "tsc --noEmit --strict --target ES2023 --module NodeNext --allowImportingTsExtensions --skipLibCheck --types node classification.ts classificationQuestions.ts classificationCheckpoint.ts classify.ts"
+  },
+  "dependencies": {
+    "@typesafe-ai/sdk": "0.6.0",
+    "playwright-core": "1.64.0",
+    "zod": "4.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.2.0",
+    "typescript": "7.0.2"
+  }
+}

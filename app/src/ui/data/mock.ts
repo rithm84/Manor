@@ -841,9 +841,6 @@ export const leetcodeTopics: readonly LeetCodeTopic[] = [
 export interface LeetCodeStats {
   solved: number
   total: number
-  streak: number
-  freezesLeft: number
-  freezesPerMonth: number
   earnBack: boolean
   solvedToday: number
   /** Scratch block covering today's practice, if any. */
@@ -855,9 +852,6 @@ export interface LeetCodeStats {
 export const leetcodeStats: LeetCodeStats = {
   solved: 42,
   total: 150,
-  streak: 5,
-  freezesLeft: 3,
-  freezesPerMonth: 5,
   earnBack: false,
   solvedToday: 0,
   todayBlockEventId: 'evt-neetcode-block',

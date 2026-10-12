@@ -1,0 +1,19 @@
+{
+  "name": "manor-problem-runner",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "deno test checkers.test.ts batch.test.ts",
+    "check": "deno check ../../supabase/functions/problem-runner/index.ts smoke.ts lspSmoke.ts",
+    "lsp:smoke": "deno run --allow-env --allow-net lspSmoke.ts",
+    "smoke": "deno run --allow-env --allow-net smoke.ts"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.57.4",
+    "deno": "2.5.4",
+    "zod": "4.1.12"
+  },
+  "dependencies": {
+    "lossless-json": "4.3.1"
+  }
+}

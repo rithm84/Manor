@@ -44,7 +44,7 @@ const derivedSchema = z.object({
 export type DerivedValue = z.infer<typeof derivedSchema>
 
 /** The account-derived reads the mirror caches. Both depend only on account data and the current day. */
-export type DerivedName = 'manor_habits_state' | 'manor_leetcode_summary'
+export type DerivedName = 'manor_habits_state'
 
 function failure(command: string, cause: unknown): Error {
   return new Error(`The local mirror refused ${command}: ${cause instanceof Error ? cause.message : String(cause)}`)

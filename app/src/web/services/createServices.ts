@@ -10,6 +10,8 @@ import { MoodFocusService } from './MoodFocusService'
 import { PomodoroService } from './PomodoroService'
 import { JobsService } from './JobsService'
 import { LeetCodeService } from './LeetCodeService'
+import { ProblemLibraryService } from './ProblemLibraryService'
+import { ProblemExecutionService } from './ProblemExecutionService'
 import { NotesService } from './NotesService'
 import { KnowledgeService } from './KnowledgeService'
 import { ResumesService } from './ResumesService'
@@ -20,7 +22,7 @@ export function createServices(gateway: ManorGateway, drafts: NoteDraftStore, sh
   const openAuthorization = (url: string): Promise<void> => shell.openAuthorization(url)
   return {
     account: new AccountService(gateway, drafts, shell, mirror), home: new HomeService(gateway), habits: new HabitsService(gateway),
-    moodFocus: new MoodFocusService(gateway), pomodoro: new PomodoroService(gateway), jobs: new JobsService(gateway), leetcode: new LeetCodeService(gateway),
+    moodFocus: new MoodFocusService(gateway), pomodoro: new PomodoroService(gateway), jobs: new JobsService(gateway), leetcode: new LeetCodeService(gateway), problemLibrary: new ProblemLibraryService(gateway), problemExecution: new ProblemExecutionService(gateway),
     notes: new NotesService(gateway, drafts, navigator.locks), kb: new KnowledgeService(gateway), resumes: new ResumesService(gateway),
     gcal: new CalendarService(gateway, openAuthorization), x: new XService(gateway, openAuthorization), courseFeed: new CourseFeedService(gateway), reviews: new ReviewsService(gateway)
   }

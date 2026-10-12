@@ -10,7 +10,7 @@ import type { MirrorSync } from './mirror/MirrorSync'
 export const TABLES = ['profiles', 'tasks', 'contexts', 'scratch_blocks', 'saved_task_views',
   'habits', 'habit_lifecycle', 'habit_entries', 'habit_freeze_intents', 'habit_freeze_usage', 'habit_freeze_grants', 'habit_month_pools',
   'mood_focus_entries', 'pomodoro_sessions', 'note_folders', 'note_pages', 'note_attachments', 'note_versions', 'note_suggestions',
-  'job_roles', 'job_stage_transitions', 'job_listings', 'leetcode_problems', 'leetcode_attempts', 'leetcode_notes',
+  'job_roles', 'job_stage_transitions', 'job_listings', 'leetcode_problems', 'leetcode_attempts', 'leetcode_notes', 'saved_problem_views',
   'kb_entries', 'resumes', 'weekly_reviews', 'action_events', 'calendar_accounts', 'calendars', 'calendar_events'] as const
 export type ManorTable = typeof TABLES[number]
 /** Whether a name is one of the tables the gateway caches reads for, which is what a change feed row names. */
