@@ -10,3 +10,5 @@ app/dist/
 /docs/REDESIGN-REPORT.md
 .vercel
 tools/recovery/.bin/
+
+__pycache__/
