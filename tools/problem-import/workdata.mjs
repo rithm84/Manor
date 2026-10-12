@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 const BUCKET = 'manor-problem-work'
 const PART = 5 * 1024 * 1024
 const objectPath = (key, part) => [...key.split('/'), `part-${part}`].map(encodeURIComponent).join('/')
-const EXCLUDED = [/^work\/bundles\//, /\.log$/, /(^|\/)\.DS_Store$/, /(^|\/)__pycache__\//]
+const EXCLUDED = [/^work\/bundles\//, /^work\/\.repo$/, /\.log$/, /(^|\/)\.DS_Store$/, /(^|\/)__pycache__\//]
 const [command, rawDirectory, flag, projectRef] = process.argv.slice(2)
 if (!['push', 'pull'].includes(command) || !rawDirectory || flag !== '--project-ref' || !/^[a-z]{20}$/.test(projectRef ?? '')) throw new TypeError('Usage: node workdata.mjs push|pull <data-dir> --project-ref <ref>')
 const root = resolve(rawDirectory)
@@ -54,7 +54,8 @@ function units() {
       const rel = relative(root, path)
       if (EXCLUDED.some(pattern => pattern.test(rel + (statSync(path).isDirectory() ? '/' : '')))) continue
       if (statSync(path).isDirectory()) {
-        if (/^work\/specs\/[^/]+$/.test(rel)) out.set(rel + '.tar.gz', { kind: 'spec', path: rel })
+        // An interrupted author can leave an empty spec directory; there is nothing to sync until it holds files.
+        if (/^work\/specs\/[^/]+$/.test(rel)) { if (specFiles(rel).length > 0) out.set(rel + '.tar.gz', { kind: 'spec', path: rel }) }
         else walk(path)
       } else out.set(rel, { kind: 'file', path: rel })
     }
@@ -62,9 +63,10 @@ function units() {
   walk(root)
   return out
 }
+function specFiles(rel) { return readdirSync(join(root, rel)).filter(name => !name.startsWith('.') && name !== '__pycache__').sort() }
 function specBytes(rel) {
   const directory = join(root, rel)
-  const files = readdirSync(directory).filter(name => !name.startsWith('.') && name !== '__pycache__').sort()
+  const files = specFiles(rel)
   return execFileSync('tar', ['-czf', '-', '-C', directory, ...files], { maxBuffer: 1 << 30, env: { ...process.env, GZIP: '-n' } })
 }
 function specDigest(rel) {
