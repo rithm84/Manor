@@ -3,6 +3,8 @@ import { workspaceTools } from './workspaceToolCatalog.ts'
 import { relatedTools } from './relatedToolCatalog.ts'
 import { lifecycleTools } from './lifecycleToolCatalog.ts'
 import { pomodoroTools } from './pomodoroToolCatalog.ts'
+import { problemLibraryTools } from './problemLibraryToolCatalog.ts'
+import { problemExecutionTools } from './problemExecutionToolCatalog.ts'
 import { MAX_FILE_UPLOAD_BYTES } from './fileUploadPolicy.ts'
 import { id, uuid, revision, text, date, timestamp, nullableText, blocks, block, paging, period, edit, object, query, command, batch, type ToolSchema, type ManorTool } from './toolDefinitions.ts'
 export type { JsonValue, JsonObject, ToolSchema, ToolExecution, ManorTool } from './toolDefinitions.ts'
@@ -26,6 +28,8 @@ export const manorTools: readonly ManorTool[] = [
   ...relatedTools,
   ...lifecycleTools,
   ...pomodoroTools,
+  ...problemLibraryTools,
+  ...problemExecutionTools,
   query('list_files', 'List account-owned immutable file metadata, bounded and paginated. Only ready files are returned.', { ...paging, id: uuid, purpose: { type: 'string', enum: ['note', 'capture', 'resume', 'avatar'] }, parent_id: id }, []),
   query('list_resumes', 'List saved resumes and their immutable file references.', { ...paging, id: uuid }, []),
   { name: 'prepare_file_upload', description: 'Allocate an immutable account-owned file up to 1 GB. For resumable uploads use resumable_endpoint with the returned chunk size and upload_token as the x-signature header. Upload exact bytes, then finalize; SHA-256 and byte length are verified.', inputSchema: object({ command_id: uuid, id: uuid, purpose: { type: 'string', enum: ['note', 'capture', 'resume', 'avatar'] }, parent_id: nullableText, name: { type: 'string', minLength: 1, maxLength: 255 }, label: { type: ['string', 'null'], minLength: 1, maxLength: 120 }, mime_type: { type: 'string', minLength: 1, maxLength: 150 }, size: { type: 'integer', minimum: 1, maximum: MAX_FILE_UPLOAD_BYTES }, sha256: { type: 'string', pattern: '^[a-f0-9]{64}$' } }, ['command_id', 'id', 'purpose', 'name', 'mime_type', 'size', 'sha256']), execution: { kind: 'edge', function: 'file-access', fixedInput: { action: 'prepare' } }, readOnly: false },
@@ -49,13 +53,11 @@ export const manorTools: readonly ManorTool[] = [
   query('query_job_catalog', 'Search the shared job catalog. A listing is not an application until explicitly added.', { ...paging, search: text }, []),
   query('query_knowledge', 'Read captured source content and supplied summaries.', { ...paging, search: text }, []),
   query('query_attempts', 'Read durable LeetCode attempt history and exact pasted solutions.', { ...paging, ...period, problem_id: id }, []),
-  query('query_problems', 'Read stable curriculum problems.', { ...paging, search: text }, []),
   query('query_mistakes', 'Read LeetCode mistakes notes.', { ...paging, search: text }, []),
   query('query_weekly_reviews', 'Read saved weekly reviews and their source-watermark metadata. Supply id for one saved review.', { ...paging, ...period, id }, []),
   query('query_action_history', 'Read meaningful account changes, newest first. Purged records retain only structural events.', { ...paging, from: timestamp, to: timestamp, object_type: id }, []),
   query('search', 'Search committed tasks, Notes, applications, and Knowledge by text; returns bounded snippets and revisions. This is text search, not semantic retrieval.', { ...paging, search: { type: 'string', minLength: 1, maxLength: 500 }, module: { type: 'string', enum: ['tasks', 'notes', 'applications', 'knowledge'] } }, ['search']),
   { name: 'get_streak_status', description: 'Read authoritative habit entries, lifecycle, freeze intents, derived pools and daily balances in the account timezone.', inputSchema: object({}, []), execution: { kind: 'rpc', rpc: 'manor_habits_state', argumentMap: {} }, readOnly: true },
-  { name: 'get_leetcode_summary', description: 'Read the separate LeetCode streak and monthly freeze pool.', inputSchema: object({}, []), execution: { kind: 'rpc', rpc: 'manor_leetcode_summary', argumentMap: {} }, readOnly: true },
   { name: 'get_weekly_review_input', description: 'Read a completed weekly period of habits, Mood, Focus, and task history with a source watermark. Review generation must not alter these inputs.', inputSchema: object({ period_start: timestamp, period_end: timestamp }, ['period_start', 'period_end']), execution: { kind: 'rpc', rpc: 'manor_weekly_review_input', argumentMap: { period_start: 'p_period_start', period_end: 'p_period_end' } }, readOnly: true },
   batch('create_tasks', 'create_task', 'Atomically create 1 to 50 tasks. Each needs a stable ID, selected context, exact due date, expected_revision=0, and retry-stable command ID.', { ...edit, ...taskFields }, ['id', 'expected_revision', 'title', 'context_id', 'due', 'status', 'priority', 'estimate_minutes', 'tags']),
   batch('update_tasks', 'update_task', 'Atomically apply sparse field changes to 1 to 50 existing task occurrences. Supply current revisions; changing status to Done records completion.', { ...edit, ...taskFields }, ['id', 'expected_revision']),
@@ -85,8 +87,6 @@ export const manorTools: readonly ManorTool[] = [
   command('create_note_folder', 'Create a Notes folder.', { ...edit, name: text, parent_folder_id: nullableText }, ['id', 'expected_revision', 'name', 'parent_folder_id']),
   command('update_note_folder', 'Rename or move a Notes folder without cycles.', { ...edit, name: text, parent_folder_id: nullableText }, ['id', 'expected_revision']),
   command('remove_note_folder', 'Remove a folder and lift its child folders and pages into its parent.', edit, ['id', 'expected_revision']),
-  command('apply_leetcode_freeze', 'Spend one of the five monthly LeetCode freezes on yesterday. A logged attempt refunds its effective cost.', { date, expected_revision: revision }, ['date', 'expected_revision']),
-  command('clear_leetcode_freeze', 'Undo the manually spent LeetCode freeze on yesterday.', { date, expected_revision: revision }, ['date', 'expected_revision']),
   command('create_attempt', 'Append a durable LeetCode solve/review with its exact solution source. Any past date is allowed; future dates are rejected.', { ...edit, problem_id: id, date, solution: text }, ['id', 'expected_revision', 'problem_id', 'date', 'solution']),
   command('update_attempt', 'Correct the date or exact source of a specific attempt without replacing other attempts.', { ...edit, date, solution: text }, ['id', 'expected_revision', 'date', 'solution']),
   command('save_mistake', 'Create or edit a LeetCode mistakes note up to 2000 characters.', { ...edit, text: { type: 'string', minLength: 1, maxLength: 2000 } }, ['id', 'expected_revision', 'text']),

@@ -35,25 +35,8 @@ export interface LeetCodeLegacyProgress {
   attemptCount: number
 }
 
-export interface LeetCodeFreezeAction {
-  date: string
-  applied: boolean
-  canApply: boolean
-  canClear: boolean
-  revision: number
-}
-
-export interface LeetCodeFreezeMutation {
-  date: string
-  expectedRevision: number
-}
-
 export interface LeetCodeSummary {
   totalProblems: number
-  streak: number
-  freezesLeft: number
-  freezesPerMonth: number
-  freezeAction: LeetCodeFreezeAction
   legacyProgress: readonly LeetCodeLegacyProgress[]
 }
 
@@ -87,8 +70,6 @@ export interface UpdateLeetCodeNoteMutation {
 
 export interface LeetCodeApi {
   load: () => Promise<LeetCodeState>
-  applyFreeze: (mutation: LeetCodeFreezeMutation) => Promise<LeetCodeState>
-  clearFreeze: (mutation: LeetCodeFreezeMutation) => Promise<LeetCodeState>
   addAttempt: (mutation: AddLeetCodeAttemptMutation) => Promise<LeetCodeState>
   updateAttempt: (mutation: UpdateLeetCodeAttemptMutation) => Promise<LeetCodeState>
   deleteAttempt: (attemptId: string) => Promise<LeetCodeState>
@@ -227,18 +208,6 @@ function parseLegacyProgress(value: unknown): LeetCodeLegacyProgress {
   }
 }
 
-function parseFreezeAction(value: unknown): LeetCodeFreezeAction {
-  const action = recordValue(value, 'summary.freezeAction')
-  if (typeof action.applied !== 'boolean' || typeof action.canApply !== 'boolean' || typeof action.canClear !== 'boolean') {
-    throw new TypeError('LeetCode freeze eligibility must contain boolean states')
-  }
-  const revision = nonNegativeInteger(action.revision, 'freezeAction.revision')
-  if ((action.applied && action.canApply) || action.canClear !== action.applied) {
-    throw new TypeError('LeetCode freeze eligibility is inconsistent')
-  }
-  return { date: parseLeetCodeDate(action.date, 'freezeAction.date'), applied: action.applied, canApply: action.canApply, canClear: action.canClear, revision }
-}
-
 export function parseLeetCodeSummary(value: unknown): LeetCodeSummary {
   const summary = recordValue(value, 'LeetCode summary')
   if (!Array.isArray(summary.legacyProgress)) {
@@ -249,17 +218,8 @@ export function parseLeetCodeSummary(value: unknown): LeetCodeSummary {
   if (topics.size !== legacyProgress.length) {
     throw new TypeError('summary.legacyProgress topics must be unique')
   }
-  const freezesLeft = nonNegativeInteger(summary.freezesLeft, 'summary.freezesLeft')
-  const freezesPerMonth = nonNegativeInteger(summary.freezesPerMonth, 'summary.freezesPerMonth')
-  if (freezesLeft > freezesPerMonth) {
-    throw new RangeError('summary.freezesLeft cannot exceed summary.freezesPerMonth')
-  }
   return {
     totalProblems: nonNegativeInteger(summary.totalProblems, 'summary.totalProblems'),
-    streak: nonNegativeInteger(summary.streak, 'summary.streak'),
-    freezesLeft,
-    freezesPerMonth,
-    freezeAction: parseFreezeAction(summary.freezeAction),
     legacyProgress
   }
 }

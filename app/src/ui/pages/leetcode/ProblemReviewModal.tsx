@@ -5,15 +5,17 @@ import type { FormEvent, ReactNode } from 'react'
 import type {
   AddLeetCodeAttemptMutation,
   LeetCodeAttempt,
-  LeetCodeProblem,
   UpdateLeetCodeAttemptMutation
 } from '../../../shared/leetcode'
 import { Button, Modal, Pill } from '../../components/ui'
 import { DueDatePicker } from '../home/DueDatePicker'
 import { errorMessage, formatAttemptDate } from './leetCodeModel'
+import type { ProblemRecord } from '../../../shared/problemLibrary'
+import { ProblemTagList } from './ProblemTag'
+import { ProblemSourceDetails } from './ProblemSourceDetails'
 
 export interface ProblemReviewModalProps {
-  problem: LeetCodeProblem
+  problem: Pick<ProblemRecord, 'id' | 'name' | 'difficulty' | 'sourceUrl' | 'topics' | 'companies' | 'tags' | 'collections' | 'sourceMetadata'>
   attempts: readonly LeetCodeAttempt[]
   today: string
   onClose: () => void
@@ -87,6 +89,7 @@ export function ProblemReviewModal({
 }: ProblemReviewModalProps): ReactNode {
   const [newDate, setNewDate] = useState(today)
   const [newSolution, setNewSolution] = useState('')
+  const [logging, setLogging] = useState(attempts.length === 0)
   const [editingRevision, setEditingRevision] = useState<number | undefined>(undefined)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDate, setEditDate] = useState(today)
@@ -173,14 +176,14 @@ export function ProblemReviewModal({
       <article className="lc-review-modal">
         <header className="lc-review-header">
           <div>
-            <span className="lc-review-kicker">{problem.topic}</span>
             <h2>{problem.name}</h2>
             <div className="lc-review-meta">
-              <Pill
+              {problem.difficulty === null ? null : <Pill
                 variant="tag"
                 colorway={problem.difficulty === 'Easy' ? 'success' : problem.difficulty === 'Medium' ? 'today' : 'overdue'}
                 label={problem.difficulty}
-              />
+              />}
+              {problem.sourceUrl == null ? null : <a href={problem.sourceUrl} target="_blank" rel="noreferrer">Open original problem</a>}
               <span className="tnum">
                 {attempts.length} {attempts.length === 1 ? 'attempt' : 'attempts'}
               </span>
@@ -197,35 +200,8 @@ export function ProblemReviewModal({
         </header>
 
         <div className="lc-review-body">
-          <form className="lc-new-attempt" onSubmit={(event) => void saveNewAttempt(event)}>
-            <div className="lc-section-heading">
-              <div>
-                <h3>{attempts.length === 0 ? 'Log the solve' : 'Add another attempt'}</h3>
-                <p>Save the date and the exact solution you used.</p>
-              </div>
-            </div>
-            <SolutionEditor
-              date={newDate}
-              solution={newSolution}
-              dateLabel="Solved or reviewed"
-              solutionLabel="Solution"
-              autoFocus
-              minDate={null}
-              maxDate={today}
-              onDateChange={setNewDate}
-              onSolutionChange={setNewSolution}
-            />
-            <div className="lc-attempt-actions">
-              <button
-                type="submit"
-                className="ui-button ui-button--primary"
-                disabled={submitting || newSolution.trim() === '' || newDate === ''}
-              >
-                <Plus size={15} aria-hidden="true" />
-                Save attempt
-              </button>
-            </div>
-          </form>
+          <div className="problem-labels">{(['topics', 'companies', 'collections', 'tags'] as const).filter(category => problem[category].length > 0).map(category => <ProblemTagList key={category} category={category} labels={problem[category]} limit={5} />)}</div>
+          <ProblemSourceDetails metadata={problem.sourceMetadata} />
 
           {error === null ? null : <p className="lc-error" role="alert">{error}</p>}
 
@@ -330,6 +306,35 @@ export function ProblemReviewModal({
               </ol>
             )}
           </section>
+          {logging ? <form className="lc-new-attempt" onSubmit={(event) => void saveNewAttempt(event)}>
+              <div className="lc-section-heading">
+                <div>
+                  <h3>Log a solve</h3>
+                  <p>Save the date and the exact solution you used.</p>
+                </div>
+              </div>
+              <SolutionEditor
+                date={newDate}
+                solution={newSolution}
+                dateLabel="Solved or reviewed"
+                solutionLabel="Solution"
+                autoFocus
+                minDate={null}
+                maxDate={today}
+                onDateChange={setNewDate}
+                onSolutionChange={setNewSolution}
+              />
+              <div className="lc-attempt-actions">
+                <button
+                  type="submit"
+                  className="ui-button ui-button--primary"
+                  disabled={submitting || newSolution.trim() === '' || newDate === ''}
+                >
+                  <Plus size={15} aria-hidden="true" />
+                  Save attempt
+                </button>
+              </div>
+            </form> : <Button variant="subtle" icon={<Plus size={15} />} testId="lc-log-solve" onClick={() => setLogging(true)}>Log a solve</Button>}
         </div>
       </article>
     </Modal>

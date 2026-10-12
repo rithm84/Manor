@@ -185,19 +185,17 @@ fn a_deleted_derived_value_is_gone() {
     let (mut mirror, _) = open(&directory, ACCOUNT);
     mirror
         .put_derived(
-            "manor_leetcode_summary",
+            "manor_habits_state",
             &json!({ "solved": 41 }),
             18,
             "2026-09-14",
         )
         .expect("the value is stored");
     mirror
-        .delete_derived("manor_leetcode_summary")
+        .delete_derived("manor_habits_state")
         .expect("the value is dropped");
     assert_eq!(
-        mirror
-            .get_derived("manor_leetcode_summary")
-            .expect("a read"),
+        mirror.get_derived("manor_habits_state").expect("a read"),
         None
     );
     // A name the file never held is nothing to drop, because a refresh runs
@@ -293,14 +291,12 @@ fn a_derived_value_reads_back_with_its_cursor_and_day() {
     let directory = TempDirectory::create("derived");
     let (mut mirror, _) = open(&directory, ACCOUNT);
     assert_eq!(
-        mirror
-            .get_derived("manor_leetcode_summary")
-            .expect("a read"),
+        mirror.get_derived("manor_habits_state").expect("a read"),
         None
     );
     mirror
         .put_derived(
-            "manor_leetcode_summary",
+            "manor_habits_state",
             &json!({ "solved": 41 }),
             18,
             "2026-09-14",
@@ -308,16 +304,14 @@ fn a_derived_value_reads_back_with_its_cursor_and_day() {
         .expect("the value is stored");
     mirror
         .put_derived(
-            "manor_leetcode_summary",
+            "manor_habits_state",
             &json!({ "solved": 42 }),
             19,
             "2026-09-15",
         )
         .expect("the value is replaced");
     assert_eq!(
-        mirror
-            .get_derived("manor_leetcode_summary")
-            .expect("a read"),
+        mirror.get_derived("manor_habits_state").expect("a read"),
         Some(Derived {
             value: json!({ "solved": 42 }),
             cursor: 19,

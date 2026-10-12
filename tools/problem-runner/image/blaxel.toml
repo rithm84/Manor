@@ -1,0 +1,11 @@
+name = "manor-problem-runtime"
+type = "sandbox"
+description = "Isolated programming problem execution and language services"
+[build]
+slim = false
+[runtime]
+memory = 2048
+[[runtime.ports]]
+name = "language-server"
+target = 3000
+protocol = "tcp"

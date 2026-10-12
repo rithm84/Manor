@@ -143,7 +143,7 @@ export function SettingsPage(): ReactNode {
       .then((outcome) => {
         setSignOutBusy(false)
         if (outcome === 'cancelled') {
-          setSignOutError('Your notes have unsynced changes. Stay signed in until they finish saving.');
+          setSignOutError('Your notes or code have unsynced changes. Stay signed in until they finish saving.');
           return
         }
         forgetNotesView()

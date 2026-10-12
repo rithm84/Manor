@@ -17,6 +17,7 @@ export default defineConfig({
   clearScreen: false,
   define: { __MANOR_VERSION__: JSON.stringify(packageVersion()) },
   plugins: [react()],
+  worker: { format: 'es' },
   server: { host: '127.0.0.1', port: 5173, strictPort: true },
   build: {
     target: 'es2022',

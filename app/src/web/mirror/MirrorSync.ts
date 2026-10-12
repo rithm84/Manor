@@ -25,9 +25,6 @@ const MAX_FEED_BATCHES = 100
  * connection to the page that is still loading behind it. */
 const BOOTSTRAP_CONCURRENCY = 4
 
-/** The derived read `leetcode_problems` feeds, which a refresh of that table has to drop. */
-const LEETCODE_SUMMARY: DerivedName = 'manor_leetcode_summary'
-
 /**
  * Raised when `stop()` runs while a pass sits between awaits. The pass then abandons its work instead of
  * writing into a mirror the app has left, which after a sign-out or an account switch is somebody else's.
@@ -322,12 +319,6 @@ export class MirrorSync {
 
   private async refreshTables(tables: readonly MirrorTable[]): Promise<void> {
     for (const table of tables) await this.replaceTable(table)
-    // `leetcode_problems` carries no feed trigger, so a change to it never moves the cursor the summary was
-    // cached under and the cached value would outlive the rows it summarises. Dropping it recomputes once.
-    if (tables.includes('leetcode_problems')) {
-      this.guardRunning()
-      await this.store.deleteDerived(this.gateway.accountId, LEETCODE_SUMMARY)
-    }
     await this.gateway.invalidateTables([...tables])
   }
 

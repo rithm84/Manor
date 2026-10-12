@@ -13,7 +13,7 @@ export const MIRROR_TABLES = [
   'profiles', 'contexts', 'tasks', 'scratch_blocks', 'saved_task_views',
   'habits', 'habit_entries', 'mood_focus_entries', 'pomodoro_sessions',
   'note_folders', 'note_pages', 'note_suggestions',
-  'leetcode_attempts', 'leetcode_notes', 'leetcode_problems',
+  'leetcode_attempts', 'leetcode_notes', 'leetcode_problems', 'saved_problem_views',
   'job_roles', 'job_stage_transitions', 'job_listings',
   'kb_entries', 'resumes', 'weekly_reviews',
   'calendar_accounts', 'calendars', 'calendar_events'
@@ -28,7 +28,7 @@ const KEY_COLUMNS: Record<MirrorTable, readonly string[]> = {
   profiles: ['user_id'], contexts: ['id'], tasks: ['id'], scratch_blocks: ['id'], saved_task_views: ['id'],
   habits: ['id'], habit_entries: ['habit_id', 'date'], mood_focus_entries: ['date'], pomodoro_sessions: ['id'],
   note_folders: ['id'], note_pages: ['id'], note_suggestions: ['id'],
-  leetcode_attempts: ['id'], leetcode_notes: ['id'], leetcode_problems: ['id'],
+  leetcode_attempts: ['id'], leetcode_notes: ['id'], leetcode_problems: ['id'], saved_problem_views: ['id'],
   job_roles: ['id'], job_stage_transitions: ['id'], job_listings: ['id'],
   kb_entries: ['id'], resumes: ['id'], weekly_reviews: ['id'],
   calendar_accounts: ['id'], calendars: ['account_id', 'id'], calendar_events: ['account_id', 'calendar_id', 'id']
@@ -45,7 +45,7 @@ const STANDING_FILTERS: Partial<Record<MirrorTable, readonly RowFilter[]>> = {
 const NO_FILTERS: readonly RowFilter[] = []
 
 /** No change-feed trigger covers these, so the mirror replaces them in full on launch and every hour. */
-export const HOURLY_TABLES: readonly MirrorTable[] = ['leetcode_problems', 'job_listings']
+export const HOURLY_TABLES: readonly MirrorTable[] = ['job_listings']
 
 /** No trigger either, but it only changes alongside `job_roles`, so a `job_roles` change re-pulls it. */
 export const JOB_ROLE_DEPENDENTS: readonly MirrorTable[] = ['job_stage_transitions']

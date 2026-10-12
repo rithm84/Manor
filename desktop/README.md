@@ -1,6 +1,6 @@
 # Manor desktop shell
 
-_Last updated: 2026-09-14_
+_Last updated: 2026-10-11_
 
 This package is the Tauri 2 shell that makes Manor a macOS app. The Rust
 crate owns only the native shell: window creation, deep-link receipt,
@@ -192,9 +192,10 @@ remaining directive earns its place:
 - `font-src 'self' data:`: the bundled font files, plus the math fonts that
   arrive as data URLs.
 - `connect-src 'self' ipc: http://ipc.localhost https://*.supabase.co
-  wss://*.supabase.co`: `ipc:` and `http://ipc.localhost` are the channels the
+  wss://*.supabase.co wss://*.bl.run`: `ipc:` and `http://ipc.localhost` are the channels the
   webview uses to call the shell, and the rest covers Supabase REST, storage,
-  Edge Functions, and realtime traffic.
+  Edge Functions, realtime traffic, and authenticated Blaxel language-server
+  sockets. Workspace credentials stay on the server.
 - `frame-src https:`: the note editor embeds web pages in an iframe.
 - `worker-src 'self' blob:`: the file checksum worker runs from the bundle, and
   a bundler may hand it to the page as a `blob:` URL.
@@ -223,8 +224,10 @@ signed archive, and `tauri-plugin-process` restarts the app afterwards, because
 macOS runs a replaced bundle only on the next launch. The frontend checks when
 it starts, every hour after that, whenever the window regains focus following an
 idle hour, and when the machine comes back online. A waiting release becomes a
-notice that names the version and offers to restart, and the restart waits while
-a dialog is open or a note edit is still being saved. The shell makes the check
+notice that names the version and offers to restart. Manor checks both before
+installation and before relaunch that no dialog is open and your latest Notes
+and code edits are protected locally. A blocked relaunch keeps the installed
+update ready for another restart attempt. The shell makes the check
 and the download from Rust rather than from the webview, so the content security
 policy needs no entry for GitHub.
 

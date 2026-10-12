@@ -5,6 +5,8 @@ import type { HomeApi } from '../../shared/home'
 import type { HabitsApi } from '../../shared/habits'
 import type { JobsApi } from '../../shared/jobs'
 import type { LeetCodeApi } from '../../shared/leetcode'
+import type { ProblemLibraryApi } from '../../shared/problemLibrary'
+import type { ProblemExecutionApi } from '../../shared/problemExecution'
 import type { MoodFocusApi } from '../../shared/moodFocus'
 import type { PomodoroApi } from '../../shared/pomodoro'
 import type { NotesApi } from '../../shared/notes'
@@ -23,6 +25,8 @@ export interface ManorServices {
   habits: HabitsApi
   jobs: JobsApi
   leetcode: LeetCodeApi
+  problemLibrary: ProblemLibraryApi
+  problemExecution: ProblemExecutionApi
   moodFocus: MoodFocusApi
   pomodoro: PomodoroApi
   notes: NotesApi

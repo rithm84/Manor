@@ -8,6 +8,7 @@ import { signInWithGoogle } from '../auth'
 import type { DesktopShell } from '../shell/DesktopShell'
 import { FileService } from './FileService'
 import type { AgentConnection } from '../../shared/account'
+import { clearSyncedProblemDrafts, pendingProblemDrafts } from '../problems/codeDraftStore'
 
 /**
  * Authorization IDs reach Manor through a deep link, so a malformed one is a broken request, not a bug.
@@ -66,8 +67,9 @@ export class AccountService implements AccountApi {
   }
   async signOut(): Promise<'signedOut' | 'cancelled'> {
     return navigator.locks.request(`manor-account:${this.gateway.accountId}`, async () => {
-      const [drafts, attachments] = await Promise.all([this.drafts.list(this.gateway.accountId), this.drafts.attachments(this.gateway.accountId)])
-      if (drafts.length > 0 || attachments.length > 0) return 'cancelled' as const
+      const [drafts, attachments, pendingCode] = await Promise.all([this.drafts.list(this.gateway.accountId), this.drafts.attachments(this.gateway.accountId), pendingProblemDrafts(this.gateway.accountId)])
+      if (drafts.length > 0 || attachments.length > 0 || pendingCode) return 'cancelled' as const
+      await clearSyncedProblemDrafts(this.gateway.accountId)
       const { error } = await this.gateway.client.auth.signOut({ scope: 'local' })
       if (error) throw error
       localStorage.removeItem(`manor.account:${this.gateway.accountId}`)
