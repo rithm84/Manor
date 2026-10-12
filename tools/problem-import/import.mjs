@@ -6,15 +6,12 @@
  */
 import { z } from 'zod'
 import { bundleSchema, hash, stableUuid } from './bundle.mjs'
+import { runSql, SqlError } from './sql.mjs'
 const identifier = z.string().min(1).max(200)
-import { execFile } from 'node:child_process'
 import { readFile, writeFile, rename, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { promisify } from 'node:util'
+import { join, resolve } from 'node:path'
 
-const execute = promisify(execFile)
 const outcomeSchema = z.object({ id: identifier, revision: z.number().int().positive(), content_version: z.number().int().nonnegative(), outcome: z.enum(['created', 'updated', 'unchanged']) })
 const receiptSchema = z.object({ command_id: z.uuid(), operation: z.literal('import_problems'), replayed: z.boolean(), record: z.object({ count: z.number().int().positive(), items: z.array(outcomeSchema) }) })
 const checkpointSchema = z.object({
@@ -64,20 +61,18 @@ async function saveCheckpoint(path, checkpoint) {
   await writeFile(temporary, JSON.stringify(checkpoint, null, 2), { mode: 0o600 })
   await rename(temporary, path)
 }
-async function query(cli, projectRef, path) {
-  const environment = { ...process.env }; delete environment.SUPABASE_ACCESS_TOKEN
+async function query(projectRef, path) {
   for (let attempt = 1; attempt <= 3; attempt += 1) {
-    let output
-    try {
-      output = await execute(cli, ['db', 'query', '--project-ref', projectRef, '--linked', '--output', 'json', '--file', path], { cwd: tmpdir(), env: environment, timeout: 180000, maxBuffer: 4000000 })
-    } catch (error) {
-      const reason = typeof error.stderr === 'string' ? error.stderr.trim().slice(0, 4000) : error.message
-      if (attempt === 3 || /PT409|Record changed|different input|not owned|not authorized|status 413/.test(reason)) throw new Error(`Supabase problem import failed in project ${projectRef} after attempt ${attempt} (exit ${error.code ?? 'unavailable'}): ${reason}`)
-      console.warn(JSON.stringify({ event: 'problem_import_retry', attempt, reason }))
+    let rows
+    try { rows = await runSql(projectRef, path) }
+    catch (error) {
+      if (!(error instanceof SqlError)) throw error
+      if (attempt === 3 || /PT409|Record changed|different input|not owned|not authorized|status 413/.test(error.reason)) throw new Error(`Supabase problem import failed in project ${projectRef} after attempt ${attempt} (${error.message}): ${error.reason}`)
+      console.warn(JSON.stringify({ event: 'problem_import_retry', attempt, reason: error.reason }))
       await new Promise(resolveWait => setTimeout(resolveWait, attempt * 1000))
       continue
     }
-    return z.object({ rows: z.array(z.object({ receipt: receiptSchema })) }).parse(JSON.parse(output.stdout)).rows
+    return z.object({ rows: z.array(z.object({ receipt: receiptSchema })) }).parse({ rows }).rows
   }
   throw new Error('Problem import exhausted retries')
 }
@@ -98,7 +93,6 @@ if (configuration.dryRun) {
   console.log(JSON.stringify({ event: 'problem_import_validated', problems: problems.length, batches: groups.length, payloadHash }))
 } else {
   let checkpoint = await loadCheckpoint(configuration.checkpoint, { projectRef: configuration.projectRef, accountId: configuration.accountId, payloadHash, batchSize: configuration.batchSize, batchPlanHash })
-  const cli = resolve(dirname(fileURLToPath(import.meta.url)), '../../app/node_modules/.bin/supabase')
   const temporary = await mkdtemp(join(tmpdir(), 'manor-problem-import-'))
   try {
     for (let index = 0; index < groups.length; index += 1) {
@@ -110,7 +104,7 @@ if (configuration.dryRun) {
       const sql = `with identity as materialized (select set_config('request.jwt.claims',convert_from(decode('${claims}','base64'),'UTF8'),true)) select public.manor_command('${commandId}'::uuid,'import_problems',convert_from(decode('${encoded}','base64'),'UTF8')::jsonb) as receipt from identity join public.profiles p on p.user_id='${configuration.accountId}'::uuid;`
       const sqlPath = join(temporary, 'batch.sql')
       await writeFile(sqlPath, sql, { mode: 0o600 })
-      const rows = await query(cli, configuration.projectRef, sqlPath)
+      const rows = await query(configuration.projectRef, sqlPath)
       if (rows.length !== 1) throw new Error('The selected account has no Manor profile. Check --account-id in the selected project.')
       const receipt = rows[0].receipt
       if (receipt.command_id !== commandId || receipt.record.count !== groups[index].length || receipt.record.items.length !== groups[index].length) throw new Error('Import receipt does not match the submitted batch')

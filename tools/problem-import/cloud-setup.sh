@@ -42,4 +42,6 @@ node "$REPO/tools/problem-import/workdata.mjs" pull "$DATA" --project-ref cysdoo
 
 # The private tooling finds the repository through this file; it is never synced to the bucket.
 printf '%s\n' "$REPO" > "$DATA/work/.repo"
+# Cloud containers allow only outbound HTTPS, so staging SQL goes through the Management API instead of a Postgres connection.
 echo "Problem pipeline ready: repository $REPO, data $DATA, handoff notes $DATA/work/CLOUD-HANDOFF.md"
+echo "Export MANOR_SQL_TRANSPORT=https in each command that runs staging SQL (import.mjs, import_ready.py, stage-sql.sh)"
