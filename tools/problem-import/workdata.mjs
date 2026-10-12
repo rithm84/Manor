@@ -84,7 +84,9 @@ if (command === 'push') {
   const temporary = mkdtempSync(join(tmpdir(), 'manor-workdata-'))
   try {
     writeFileSync(join(temporary, 'snapshot.tar.gz'), bytes)
-    execFileSync('tar', ['-xzf', join(temporary, 'snapshot.tar.gz'), '-C', root])
+    // Snapshots pushed from macOS can carry Apple extended-attribute headers that GNU tar reports once per file.
+    const gnu = /GNU tar/.test(execFileSync('tar', ['--version']).toString())
+    execFileSync('tar', ['-xzf', join(temporary, 'snapshot.tar.gz'), ...(gnu ? ['--warning=no-unknown-keyword'] : []), '-C', root], { maxBuffer: 64 * 1024 * 1024 })
   } finally { rmSync(temporary, { recursive: true, force: true }) }
   console.log(JSON.stringify({ event: 'workdata_pulled', sha256, parts: snapshot.parts, bytes: bytes.length, createdAt: snapshot.createdAt }))
 }
