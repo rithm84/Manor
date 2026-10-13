@@ -46,7 +46,8 @@ async function request(path, init, operation) {
 const upload = (name, body, type) => request(`/object/${BUCKET}/${name}`, { method: 'POST', headers: { 'Content-Type': type, 'x-upsert': 'true' }, body }, `upload ${name}`)
 async function download(name) { return Buffer.from(await (await request(`/object/${BUCKET}/${name}`, { method: 'GET' }, `download ${name}`)).arrayBuffer()) }
 async function latest() {
-  const response = await fetch(`${storage}/object/${BUCKET}/latest.json`, { headers })
+  // The public object path can serve a cached copy; the authenticated path always reads the current pointer.
+  const response = await fetch(`${storage}/object/authenticated/${BUCKET}/latest.json`, { headers: { ...headers, 'Cache-Control': 'no-cache' } })
   if (response.status === 400 || response.status === 404) return null
   if (!response.ok) throw new Error(`Reading latest.json returned HTTP ${response.status}: ${(await response.text()).slice(0, 500)}`)
   return response.json()
