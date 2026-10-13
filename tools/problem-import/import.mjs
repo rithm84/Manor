@@ -8,6 +8,7 @@
  */
 import { z } from 'zod'
 import { bundleSchema, hash, stableUuid } from './bundle.mjs'
+import { isProblemTopic } from '../../app/src/shared/problemTopics.ts'
 import { runSqlTextWithRetries } from './sql.mjs'
 import { readFile, writeFile, rename } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -73,6 +74,8 @@ const problems = bundle.problems.map(problem => {
   if (problem.source_type === 'custom') throw new Error(`Problem ${problem.external_key} is custom; the catalog holds only stock and imported problems, and custom problems are created through MCP`)
   const key = `${problem.source_type}:${problem.external_key}`
   if (keys.has(key)) throw new Error(`Repeated external key in import bundle: ${problem.external_key}`)
+  const outside = problem.topics.filter(topic => !isProblemTopic(topic))
+  if (problem.topics.length < 1 || problem.topics.length > 6 || outside.length > 0) throw new Error(`Problem ${problem.external_key} needs one to six topics from the problem topic vocabulary${outside.length > 0 ? `; outside it: ${outside.join(', ')}` : ''}`)
   keys.add(key)
   return { ...problem, id: problem.id ?? stableUuid(`problem:${key}`), expected_revision: problem.expected_revision ?? 0 }
 })
