@@ -37,6 +37,11 @@ begin
  problem:=jsonb_set(problem,'{expected_revision}','2')||'{"testset":{"checker":"trimmed","provenance":"generated","cases":[{"id":"example","input":"1 2","expectedOutput":"3","hidden":false},{"id":"hidden-case","input":"210 17","expectedOutput":"227","hidden":true}]}}';
  saved:=public.manor_command(gen_random_uuid(),'save_problem',problem);
  if saved->'record'->'testset'->>'count'<>'2' or saved->'record'->>'content_version'<>'2' then raise exception 'Private testset import did not preserve the statement version'; end if;
+ if saved->'record'->'testset'->>'testsetVersion'<>'1' then raise exception 'The first testset was not version 1'; end if;
+ saved:=public.manor_command(gen_random_uuid(),'save_problem',jsonb_set(problem,'{expected_revision}',saved->'record'->'revision'));
+ if saved->'record'->'testset'->>'testsetVersion'<>'1' or saved->'record'->'testset'->>'unchanged'<>'true' then raise exception 'An identical testset was stored as a new version'; end if;
+ saved:=public.manor_command(gen_random_uuid(),'save_problem',jsonb_set(jsonb_set(problem,'{expected_revision}',saved->'record'->'revision'),'{testset,cases,1}','{"id":"hidden-case","input":"210 18","expectedOutput":"228","hidden":true}'));
+ if saved->'record'->'testset'->>'testsetVersion'<>'2' or saved->'record'->'testset' ? 'unchanged' then raise exception 'A changed testset did not create a new version'; end if;
  detail:=public.manor_problem_query('read_problem','{"id":"library-example"}');
  if detail->>'can_execute'<>'true' or detail->>'grading_available'<>'true' then raise exception 'Verified current-version testset was not executable'; end if;
  if public.manor_problem_query('read_problem','{"id":"library-example"}')::text like '%hidden-case%' then raise exception 'Problem content leaked hidden test cases'; end if;
