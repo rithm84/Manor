@@ -3,24 +3,52 @@
 .problem-library-header { justify-content: space-between; margin-bottom: var(--space-4); }
 .problem-library-header .page-title { margin: 0; }
 .problem-library-header > div > span, .problem-library-pagination { color: var(--ink-muted); font-size: var(--text-sm); }
-.problem-module-tabs, .problem-tabs, .problem-saved-views { display: flex; align-items: center; gap: var(--space-1); }
+.problem-module-tabs, .problem-tabs { display: flex; align-items: center; gap: var(--space-1); }
 .problem-module-tabs { padding: var(--space-2) 0; border-bottom: 1px solid var(--hairline); margin-bottom: var(--space-4); }
-.problem-module-tabs button, .problem-tabs button, .problem-saved-views button { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink-muted); font: inherit; font-size: var(--text-sm); padding: var(--space-2) var(--space-3); border-radius: var(--radius-chip); cursor: pointer; white-space: nowrap; }
-.problem-module-tabs button:hover, .problem-tabs button:hover, .problem-saved-views button:hover { background: var(--surface-hover); color: var(--ink); }
-.problem-module-tabs button.is-active, .problem-tabs button.is-active, .problem-saved-views button.is-active { background: var(--surface-selected); color: var(--primary); font-weight: 600; }
+.problem-module-tabs button, .problem-tabs button { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink-muted); font: inherit; font-size: var(--text-sm); padding: var(--space-2) var(--space-3); border-radius: var(--radius-chip); cursor: pointer; white-space: nowrap; }
+.problem-module-tabs button:hover, .problem-tabs button:hover { background: var(--surface-hover); color: var(--ink); }
+.problem-module-tabs button.is-active, .problem-tabs button.is-active { background: var(--surface-selected); color: var(--primary); font-weight: 600; }
 /* Pills above a hairline have one fixed height, so each strip centers them with the same room above and below. */
 .problem-module-tabs button, .problem-tabs button { height: calc(var(--space-6) + var(--space-1)); padding-block: 0; }
-.problem-saved-views { overflow-x: auto; margin-bottom: var(--space-3); }
-.problem-library-toolbar { margin-bottom: var(--space-3); flex-wrap: wrap; }
-.problem-round-filter { display: flex; align-items: center; gap: var(--space-1); margin-bottom: var(--space-4); overflow-x: auto; font-size: var(--text-sm); }
-.problem-round-filter > span { color: var(--ink-muted); margin-right: var(--space-2); flex-shrink: 0; }
-.problem-round-filter button { flex-shrink: 0; min-height: 28px; padding: 0 var(--space-3); border: 1px solid var(--hairline-strong); border-radius: var(--radius-chip); color: var(--ink-body); font: inherit; font-size: var(--text-sm); cursor: pointer; white-space: nowrap; }
-.problem-round-filter button:hover { background: var(--surface-hover); color: var(--ink); }
-.problem-round-filter button.is-active { background: var(--surface-selected); border-color: transparent; color: var(--primary); font-weight: 600; }
+.problem-library-toolbar { margin-bottom: var(--space-4); flex-wrap: wrap; gap: var(--space-2); }
+/* Filters sit in the toolbar and wrap onto a second line as a group when the page narrows; nothing is clipped. */
+.problem-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.problem-filter-trigger { display: inline-flex; align-items: center; gap: var(--space-1); min-height: calc(var(--space-8) + 2px); padding: 0 var(--space-2) 0 var(--space-3); border: 1px solid var(--hairline-strong); border-radius: var(--radius-control); background: transparent; color: var(--ink-body); font: inherit; font-size: var(--text-sm); white-space: nowrap; cursor: pointer; transition: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.problem-filter-trigger svg { color: var(--ink-muted); }
+.problem-filter-trigger:hover, .problem-filter-trigger[data-popup-open] { background: var(--surface-hover); color: var(--ink); }
+.problem-filter-trigger.is-active { border-color: transparent; background: var(--surface-selected); color: var(--primary); font-weight: 600; }
+.problem-filter-trigger.is-active svg { color: currentColor; }
+.problem-filter-trigger:focus-visible, .problem-filter-reset:focus-visible, .problem-filter-clear:focus-visible, .problem-filter-option:has(input:focus-visible) { outline: none; box-shadow: var(--focus-ring); }
+.problem-filter-reset { padding: 0 var(--space-2); min-height: calc(var(--space-8) + 2px); border-radius: var(--radius-control); color: var(--ink-muted); font: inherit; font-size: var(--text-sm); cursor: pointer; }
+.problem-filter-reset:hover { color: var(--ink); background: var(--surface-hover); }
+.problem-filter-popup { display: flex; flex-direction: column; width: calc(var(--space-12) * 5 + var(--space-5)); max-width: var(--available-width); max-height: min(calc(var(--space-12) * 9), var(--available-height)); border: 1px solid var(--hairline-strong); border-radius: var(--radius-control); background: var(--surface-card); color: var(--ink-body); box-shadow: var(--shadow-overlay); font-family: var(--font-ui); outline: none; transform-origin: var(--transform-origin); transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
+.problem-filter-popup[data-starting-style], .problem-filter-popup[data-ending-style] { opacity: 0; transform: scale(0.98); }
+.problem-filter-search { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-2) var(--space-2) 0; padding: var(--space-1) var(--space-2); border: 1px solid var(--control-border); border-radius: var(--radius-chip); color: var(--ink-muted); }
+.problem-filter-search:focus-within { border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+.problem-filter-search input { flex: 1; min-width: 0; border: 0; padding: 0; outline: none; background: transparent; color: var(--ink); font: inherit; font-size: var(--text-sm); }
+.problem-filter-options { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-1); }
+.problem-filter-option { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); min-height: calc(var(--space-8) - 2px); padding: 0 var(--space-2); border-radius: var(--radius-chip); font-size: var(--text-sm); cursor: pointer; }
+.problem-filter-option:hover { background: var(--surface-hover); color: var(--ink); }
+.problem-filter-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); }
+.problem-filter-option > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.problem-filter-count { color: var(--ink-muted); font-size: var(--text-xs); }
+.problem-filter-tone.is-easy { color: var(--completion); }
+.problem-filter-tone.is-medium { color: var(--today-warning); }
+.problem-filter-tone.is-hard { color: var(--error); }
+.problem-filter-none { padding: var(--space-2); color: var(--ink-muted); font-size: var(--text-sm); }
+.problem-filter-popup footer { display: flex; justify-content: flex-end; padding: var(--space-1) var(--space-2); border-top: 1px solid var(--hairline); }
+.problem-filter-clear { padding: var(--space-1) var(--space-2); border-radius: var(--radius-chip); color: var(--primary); font: inherit; font-size: var(--text-sm); font-weight: 500; cursor: pointer; }
+.problem-filter-clear:hover:not(:disabled) { background: var(--surface-hover); }
+.problem-filter-clear:disabled { color: var(--ink-muted); opacity: 0.6; cursor: default; }
+.problem-view-switcher .ui-select-trigger { max-width: calc(var(--space-12) * 5); }
+.problem-view-switcher .ui-select-option-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .problem-filter-popup { transition: opacity var(--duration-fast) ease; transform: none !important; } }
 .problem-facet-tag { display: inline-flex; max-width: 100%; }
 .problem-search { display: flex; align-items: center; gap: var(--space-2); flex: 1; min-width: 240px; border: 1px solid var(--control-border); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); color: var(--ink-muted); }
 .problem-search input { border: 0; padding: 0; width: 100%; outline: none; background: transparent; color: var(--ink); font: inherit; font-size: var(--text-body); }
 .problem-search:focus-within { box-shadow: var(--focus-ring); border-color: var(--focus-border); }
+/* The field's own ring marks focus, so the bare input inside draws none. */
+.problem-search input:focus-visible, .problem-filter-search input:focus-visible { box-shadow: none; }
 .problem-table-scroll { width: 100%; overflow-x: auto; }
 .problem-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: var(--text-sm); color: var(--ink-body); }
 /* Fixed columns (set per column in the page) keep every row inside the page; long values end in an ellipsis and carry a title. */
@@ -82,10 +110,11 @@
 .problem-library-empty p { margin: var(--space-2) 0 var(--space-4); font-size: var(--text-body); }
 .problem-mistakes-page { max-width: 760px; }
 .problem-mistakes-page .lc-mistakes { margin: 0; padding-top: 0; border: 0; }
-.problem-edit, .problem-view-options { display: flex; flex-direction: column; max-height: min(88vh, 900px); }
+/* The dialog fills the modal's own height cap, so the body scrolls and the header and footer stay visible. */
+.problem-edit, .problem-view-options { display: flex; flex-direction: column; max-height: inherit; }
 .problem-edit header, .problem-view-options header { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--hairline); }
 .problem-edit h2, .problem-view-options h2, .problem-save-view h2 { margin: 0; font-family: var(--font-ui); font-size: var(--text-lg); font-weight: 600; }
-.problem-edit-body, .problem-view-options-body { padding: var(--space-5) var(--space-6); overflow: auto; }
+.problem-edit-body, .problem-view-options-body { flex: 1 1 auto; min-height: 0; padding: var(--space-5) var(--space-6); overflow: auto; }
 .problem-edit footer, .problem-view-options footer, .problem-save-view footer { display: flex; justify-content: flex-end; gap: var(--space-2); border-top: 1px solid var(--hairline); padding: var(--space-4) var(--space-6); }
 .problem-property { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); font-size: var(--text-body); color: var(--ink-muted); }
 .problem-property input, .problem-property select, .problem-long-field textarea, .problem-view-options select, .problem-facet-search, .problem-save-view input { color: var(--ink); background: var(--surface-canvas); border: 1px solid var(--control-border); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); font: inherit; font-size: var(--text-body); width: 100%; }
@@ -130,7 +159,7 @@
 .problem-meta-chip { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 24px; padding: 0 var(--space-2); border-radius: var(--radius-chip); background: var(--surface-soft); color: var(--ink-body); font: inherit; font-size: var(--text-xs); cursor: pointer; }
 .problem-meta-chip:hover { background: var(--surface-hover); color: var(--ink); }
 .problem-meta-chip.is-open { background: var(--surface-selected); color: var(--primary); font-weight: 600; }
-.problem-meta-chip:focus-visible, .problem-icon-button:focus-visible, .problem-case-chip button:focus-visible, .problem-case-add:focus-visible, .problem-round-filter button:focus-visible, .problem-pane-divider:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.problem-meta-chip:focus-visible, .problem-icon-button:focus-visible, .problem-case-chip button:focus-visible, .problem-case-add:focus-visible, .problem-pane-divider:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .problem-disclosure { margin-bottom: var(--space-4); }
 .problem-disclosure .problem-table-labels { max-width: none; gap: var(--space-2); }
 .problem-facets { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-5); margin: 0 0 var(--space-5); font-size: var(--text-sm); }

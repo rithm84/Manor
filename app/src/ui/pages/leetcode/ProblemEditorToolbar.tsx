@@ -68,7 +68,7 @@ export function SaveState({ status, conflict, onResolve }: { status: CodeDraftSt
     : view === 'attention' ? <Tooltip label={conflict ? 'Your code changed on another device. Compare the drafts.' : 'Your code is safe on this device but did not reach the cloud. Try again.'} side="bottom"><button type="button" className="problem-save-attention" data-testid="problem-save-resolve" onClick={onResolve}><TriangleAlert size={14} aria-hidden="true" />{conflict ? 'Compare' : 'Not synced'}</button></Tooltip>
     : view === 'saving' ? <span className="problem-save-saving"><LoaderCircle className="problem-spinner is-quiet" size={14} aria-hidden="true" />Saving…</span>
     : <Tooltip label={view === 'queued' ? 'Saved on this device. It syncs to the cloud when it can.' : `Saved to cloud${time}`} side="bottom"><span className="problem-save-icon" role="img" aria-label={view === 'queued' ? 'Saved on this device' : `Saved to cloud${time}`}>{view === 'justSaved' ? <Check size={14} aria-hidden="true" /> : view === 'queued' ? <CloudOff size={14} aria-hidden="true" /> : <CloudCheck size={14} aria-hidden="true" />}</span></Tooltip>
-  return <span className={`problem-save-state is-${view}`} role="status" data-testid="problem-draft-state" data-state={view}><span key={view} className="problem-save-view">{content}</span></span>
+  return <span className={`problem-save-state is-${view}`} role="status" data-testid="problem-draft-state" data-state={view}><span key={view} className="problem-save-state-content">{content}</span></span>
 }
 
 function SettingsPopover({ settings, onSettings }: { settings: EditorSettings; onSettings: (next: EditorSettings) => void }): ReactNode {
