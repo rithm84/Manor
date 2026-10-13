@@ -25,15 +25,23 @@ export async function runSql(projectRef, file, { timeout = 180000, maxBuffer = 4
   if (process.env.MANOR_SQL_TRANSPORT === 'https') {
     const token = process.env.SUPABASE_ACCESS_TOKEN
     if (!token) throw new Error('MANOR_SQL_TRANSPORT=https requires SUPABASE_ACCESS_TOKEN')
+    const query = await readFile(file, 'utf8')
     let response
-    try {
-      response = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: await readFile(file, 'utf8') }),
-        signal: AbortSignal.timeout(timeout),
-      })
-    } catch (error) { throw new SqlError(`SQL request failed: ${error.message}`, error.message) }
+    // The Management API throttles bursts with HTTP 429 before running anything, so a throttled request is retried.
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        response = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+          signal: AbortSignal.timeout(timeout),
+        })
+      } catch (error) { throw new SqlError(`SQL request failed: ${error.message}`, error.message) }
+      if (response.status !== 429 || attempt === 6) break
+      const wait = Number(response.headers.get('retry-after')) * 1000 || 1000 * 2 ** attempt
+      await response.body?.cancel()
+      await new Promise(resolveWait => setTimeout(resolveWait, wait))
+    }
     const text = await response.text()
     if (!response.ok) throw new SqlError(`SQL request returned status ${response.status}`, `status ${response.status}: ${text.slice(0, 4000)}`)
     if (text.length > maxBuffer) throw new SqlError(`SQL result of ${text.length} bytes exceeds ${maxBuffer}`, 'result too large')
