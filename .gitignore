@@ -12,3 +12,4 @@ app/dist/
 tools/recovery/.bin/
 
 __pycache__/
+/.scratch_*
