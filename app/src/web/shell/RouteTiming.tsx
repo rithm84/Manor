@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useIsFetching } from '@tanstack/react-query'
 
-import { logRouteSettled } from './timing'
+import { logRouteSettled, markRouteStart } from './timing'
 
 /** How long a route may stay quiet before it counts as served from cache. */
 const QUIET_WINDOW_MS = 400
@@ -26,6 +26,7 @@ export function RouteTiming(): null {
   useEffect(() => {
     const current: Watch = { path: pathname, startedAt: performance.now(), paintedAt: null, queries: 0 }
     watch.current = current
+    markRouteStart()
     const frame = requestAnimationFrame(() => { current.paintedAt = performance.now() })
     return () => cancelAnimationFrame(frame)
   }, [pathname])

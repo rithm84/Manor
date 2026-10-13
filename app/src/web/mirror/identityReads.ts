@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 import { ManorConnectionError, ManorRequestError, rowSchema, type JsonObject } from '../ManorGateway'
 import { readColumns } from '../gatewayQueries'
-import { keyColumnsOf, type MirrorTable } from './mirrorTables'
+import { isSharedTable, keyColumnsOf, type MirrorTable } from './mirrorTables'
 import type { KeyedChange } from './pullPlan'
 
 /** How large one re-read request may get: a row count for id lists, a rendered length for identity chains. */
@@ -84,16 +84,17 @@ export function identityBatches(table: MirrorTable, lookups: readonly KeyedChang
 
 /**
  * Re-reads the named rows from Postgres. The mirror never trusts a delta, so an insert or update always
- * comes back as the row itself; a row the account can no longer see simply does not come back. Every table
- * the feed covers is owner-scoped, so the owner filter always belongs here: the two shared tables have no
- * feed and are replaced in full instead.
+ * comes back as the row itself; a row the account can no longer see, or that was deleted, simply does not
+ * come back. Rows of the account's feed are owner-scoped and carry the owner filter; the problem catalog's
+ * feed names shared rows, which have no owner, so their re-reads go without it.
  */
 export async function readIdentityRows(
   client: SupabaseClient, accountId: string, table: MirrorTable, lookups: readonly KeyedChange[], limits: IdentityBatchLimits
 ): Promise<JsonObject[]> {
   const rows: JsonObject[] = []
   for (const batch of identityBatches(table, lookups, limits)) {
-    let query = client.from(table).select(readColumns(table)).eq('user_id', accountId)
+    let query = client.from(table).select(readColumns(table))
+    if (!isSharedTable(table)) query = query.eq('user_id', accountId)
     query = batch.kind === 'in' ? query.in(batch.column, [...batch.values]) : query.or(batch.expression)
     const { data, error, status } = await query
     if (error && status === 0) throw new ManorConnectionError(`Re-read ${table}`, error.message)

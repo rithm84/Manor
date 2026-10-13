@@ -1,4 +1,4 @@
-import { filterProblems } from './problemLibrary'
+import { filterProblems, searchRank } from './problemLibrary'
 import type { ProblemFilters, ProblemRecord, ProblemSort } from './problemLibrary'
 import { problemSourceDateBounds } from './problemSourceMetadata'
 import type { ProblemSourceDate, ProblemSourceMetadata } from './problemSourceMetadata'
@@ -39,11 +39,11 @@ export function problemGroups(records: readonly ProblemRecord[]): ProblemGroup[]
   })
 }
 
-/** Group recency matches any retained source, even when the newest report falls outside the range. */
+/** Group recency matches any retained source, even when the newest report falls outside the range. While searching, relevance orders results before the chosen sort. */
 export function filterProblemGroups(groups: readonly ProblemGroup[], filters: ProblemFilters, sort: readonly ProblemSort[]): ProblemRecord[] {
   const search = filters.search.trim().toLocaleLowerCase()
   const candidates = groups.filter(group => {
-    if (search !== '' && ![group.problem.name, ...group.problem.topics, ...group.problem.companies, ...group.problem.tags, ...group.sources.flatMap(source => [source.name, source.sourceName ?? ''])].join(' ').toLocaleLowerCase().includes(search)) return false
+    if (search !== '' && group.problem.externalKey !== `leetcode:${search}` && ![group.problem.name, ...group.problem.topics, ...group.problem.companies, ...group.problem.tags, ...group.sources.flatMap(source => [source.name, source.sourceName ?? ''])].join(' ').toLocaleLowerCase().includes(search)) return false
     if (!filters.lastAskedSince && !filters.lastAskedUntil) return true
     return group.sources.some(source => {
       const asked = source.sourceMetadata?.lastAsked
@@ -52,5 +52,7 @@ export function filterProblemGroups(groups: readonly ProblemGroup[], filters: Pr
       return (!filters.lastAskedSince || through >= filters.lastAskedSince) && (!filters.lastAskedUntil || from <= filters.lastAskedUntil)
     })
   })
-  return filterProblems(candidates.map(group => group.problem), { ...filters, search: '', lastAskedSince: null, lastAskedUntil: null }, sort)
+  const sorted = filterProblems(candidates.map(group => group.problem), { ...filters, search: '', lastAskedSince: null, lastAskedUntil: null }, sort)
+  // The sort is stable, so relevance leads and the chosen sort orders problems of equal relevance.
+  return search === '' ? sorted : sorted.sort((left, right) => searchRank(left, search) - searchRank(right, search))
 }

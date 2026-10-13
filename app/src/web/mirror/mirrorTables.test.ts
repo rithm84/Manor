@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  identityFromObjectKey, isMirrored, keyFromIdentity, needsRebuild,
+  identityFromObjectKey, isCatalogTable, isMirrored, isSharedTable, keyFromIdentity, needsRebuild,
   rowKey, rowRevisionOf, standingFilters, touchedWithoutRevision
 } from './mirrorTables'
 
@@ -12,6 +12,24 @@ describe('the mirrored tables', () => {
     expect(isMirrored('note_suggestions')).toBe(true)
     // A whole document per superseded revision, read only by version history and the conflict re-base.
     expect(isMirrored('note_versions')).toBe(false)
+  })
+
+  it('hold the shared problem catalog apart from the account\'s own problem rows', () => {
+    expect(isMirrored('problem_catalog')).toBe(true)
+    expect(isMirrored('problem_catalog_content')).toBe(true)
+    expect(isCatalogTable('problem_catalog')).toBe(true)
+    expect(isCatalogTable('leetcode_problems')).toBe(false)
+    // Catalog rows and job listings have no owner; custom problems, practice, and statements of custom problems do.
+    expect(isSharedTable('problem_catalog_content')).toBe(true)
+    expect(isSharedTable('job_listings')).toBe(true)
+    expect(isSharedTable('problem_practice')).toBe(false)
+    expect(isSharedTable('problem_content_versions')).toBe(false)
+  })
+
+  it('key a catalog statement by its problem and a custom statement by problem and version', () => {
+    expect(identityFromObjectKey('problem_catalog_content', { problem_id: 'two-sum' })).toEqual(new Map([['problem_id', 'two-sum']]))
+    expect(rowKey('problem_content_versions', { problem_id: 'custom-1', version: 2 })).not.toBe(rowKey('problem_content_versions', { problem_id: 'custom-1', version: 3 }))
+    expect(identityFromObjectKey('problem_practice', { problem_id: 'two-sum', revision: 2 })).toEqual(new Map([['problem_id', 'two-sum']]))
   })
 
   it('mark note pages as a table that changes without its revision moving', () => {

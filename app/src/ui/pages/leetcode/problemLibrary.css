@@ -4,10 +4,12 @@
 .problem-library-header .page-title { margin: 0; }
 .problem-library-header > div > span, .problem-library-pagination { color: var(--ink-muted); font-size: var(--text-sm); }
 .problem-module-tabs, .problem-tabs, .problem-saved-views { display: flex; align-items: center; gap: var(--space-1); }
-.problem-module-tabs { border-bottom: 1px solid var(--hairline); margin-bottom: var(--space-4); }
+.problem-module-tabs { padding: var(--space-2) 0; border-bottom: 1px solid var(--hairline); margin-bottom: var(--space-4); }
 .problem-module-tabs button, .problem-tabs button, .problem-saved-views button { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink-muted); font: inherit; font-size: var(--text-sm); padding: var(--space-2) var(--space-3); border-radius: var(--radius-chip); cursor: pointer; white-space: nowrap; }
 .problem-module-tabs button:hover, .problem-tabs button:hover, .problem-saved-views button:hover { background: var(--surface-hover); color: var(--ink); }
 .problem-module-tabs button.is-active, .problem-tabs button.is-active, .problem-saved-views button.is-active { background: var(--surface-selected); color: var(--primary); font-weight: 600; }
+/* Pills above a hairline have one fixed height, so each strip centers them with the same room above and below. */
+.problem-module-tabs button, .problem-tabs button { height: calc(var(--space-6) + var(--space-1)); padding-block: 0; }
 .problem-saved-views { overflow-x: auto; margin-bottom: var(--space-3); }
 .problem-library-toolbar { margin-bottom: var(--space-3); flex-wrap: wrap; }
 .problem-round-filter { display: flex; align-items: center; gap: var(--space-1); margin-bottom: var(--space-4); overflow-x: auto; font-size: var(--text-sm); }
@@ -20,22 +22,32 @@
 .problem-search input { border: 0; padding: 0; width: 100%; outline: none; background: transparent; color: var(--ink); font: inherit; font-size: var(--text-body); }
 .problem-search:focus-within { box-shadow: var(--focus-ring); border-color: var(--focus-border); }
 .problem-table-scroll { width: 100%; overflow-x: auto; }
-.problem-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); color: var(--ink-body); }
-.problem-table th, .problem-table td { border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: middle; padding: var(--space-3); }
+.problem-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: var(--text-sm); color: var(--ink-body); }
+/* Fixed columns (set per column in the page) keep every row inside the page; long values end in an ellipsis and carry a title. */
+.problem-table th, .problem-table td { border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: middle; padding: var(--space-3); overflow: hidden; text-overflow: ellipsis; }
 .problem-table thead th { color: var(--ink-muted); font-size: var(--text-xs); font-weight: 500; padding-top: var(--space-2); padding-bottom: var(--space-2); white-space: nowrap; }
+.problem-table-group th { white-space: nowrap; }
 .problem-table tbody tr:hover { background: var(--surface-paper); }
-.problem-table tbody th { min-width: 250px; font-weight: 500; width: 36%; }
-.problem-name-button { display: flex; align-items: center; gap: var(--space-3); width: 100%; text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
+.problem-table tbody th { font-weight: 500; }
+.problem-name-button { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-width: 0; text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
+.problem-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .problem-name-button svg { flex-shrink: 0; color: var(--ink-muted); }
-.problem-number { flex-shrink: 0; color: var(--ink-muted); font-weight: 400; margin-right: calc(var(--space-2) * -1); }
 .problem-name-button:hover { color: var(--primary); }
 .problem-table-labels { display: flex; flex-wrap: wrap; gap: var(--space-1); max-width: 240px; }
 .problem-table-labels .ui-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.problem-table td .problem-table-labels { flex-wrap: nowrap; align-items: center; max-width: 280px; }
-.problem-table td .problem-table-labels > * { min-width: 0; }
-.problem-company-tag { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; min-height: 24px; max-width: 100%; padding: 2px var(--space-2); border: 1px solid var(--hairline-strong); border-radius: var(--radius-chip); vertical-align: middle; }
-.problem-company-tag--text { color: var(--ink-body); background: var(--surface-soft); font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.problem-company-tag--wordmark { background: var(--surface-canvas); }
+/* Table cells show whole chips only: as many as fit on one line, then "+N" (see ProblemTagRow). */
+.problem-tag-row { flex-wrap: nowrap; align-items: center; max-width: 100%; }
+.problem-tag-row > * { flex-shrink: 0; }
+.problem-tag-row.is-expanded { flex-wrap: wrap; }
+.problem-tag-chip, .problem-tag { display: inline-flex; min-width: 0; }
+/* The one chip allowed to shrink: a first chip wider than its cell ends in an ellipsis. */
+.problem-tag-row > .problem-tag-chip.is-truncated { flex-shrink: 1; }
+.problem-tag-chip.is-truncated .ui-pill { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; line-height: var(--space-5); }
+.problem-tag-chip.is-truncated .problem-company-tag { flex-shrink: 1; min-width: 0; }
+/* Wordmark and text company chips are one family: the same box, edge, surface, and optical weight. */
+.problem-company-tag { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; height: var(--space-6); max-width: 100%; padding: 0 var(--space-2); border: 1px solid var(--hairline-strong); border-radius: var(--radius-chip); background: var(--surface-canvas); vertical-align: middle; overflow: hidden; }
+.problem-company-tag--text { flex-shrink: 1; min-width: 0; color: var(--ink); font-size: var(--text-sm); font-weight: 600; line-height: 1; white-space: nowrap; }
+.problem-company-tag--text > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .problem-company-tag.needs-light-surface { background: var(--brand-surface-light); border-color: var(--brand-edge-light); }
 .problem-company-tag img { display: block; max-width: 112px; height: 18px; object-fit: contain; }
 .problem-company-tag .problem-company-wordmark-dark { display: none; }
@@ -46,8 +58,7 @@
 .problem-tags-expand:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .problem-label-field { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 .problem-label-field .problem-table-labels { max-width: none; }
-.problem-recency { display: inline-block; white-space: nowrap; }
-.problem-recency small { display: block; font-size: var(--text-xs); color: var(--ink-muted); margin-top: var(--space-1); }
+.problem-recency { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .problem-difficulty { display: inline-flex; align-items: center; min-height: 22px; padding: 0 var(--space-2); border: 1px solid transparent; border-radius: var(--radius-chip); font-size: var(--text-xs); font-weight: 600; white-space: nowrap; }
 .problem-difficulty.is-easy { color: var(--completion); background: var(--completion-tint); }
 .problem-difficulty.is-medium { color: var(--today-warning); background: var(--today-warning-tint); }
@@ -55,7 +66,9 @@
 .problem-difficulty.is-estimated { background: transparent; border-style: dashed; border-color: currentColor; font-weight: 500; }
 .problem-status.is-solved { color: var(--completion); }
 .problem-empty-value { color: var(--ink-muted); white-space: nowrap; }
-.problem-status { display: inline-flex; align-items: center; gap: var(--space-1); white-space: nowrap; font-size: var(--text-xs); }
+.problem-status { display: inline-flex; align-items: center; gap: var(--space-1); max-width: 100%; white-space: nowrap; font-size: var(--text-xs); }
+.problem-status > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.problem-status > svg { flex: none; }
 .problem-status.is-unattempted { color: var(--ink-muted); }
 .problem-status.is-attempted { color: var(--today-warning); }
 .problem-row-actions { white-space: nowrap; }
@@ -105,15 +118,12 @@
 .problem-workspace-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding-bottom: var(--space-2); }
 .problem-workspace-actions { display: flex; align-items: center; gap: var(--space-1); }
 .problem-workspace-body { display: grid; grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--hairline); }
-.problem-workspace.is-coding .problem-workspace-body { height: calc(100dvh - 150px); min-height: 560px; }
 .problem-reader { min-width: 0; display: flex; flex-direction: column; }
 .problem-workspace.is-coding .problem-reader, .problem-workspace.is-coding .problem-solving { min-height: 0; }
 .problem-workspace.is-coding .problem-reader-scroll { flex: 1; min-height: 0; }
-.problem-reader-tabs { padding: var(--space-2) 0; border-bottom: 1px solid var(--hairline); }
 .problem-tab-count { color: var(--ink-muted); font-weight: 400; }
 .problem-reader-scroll { padding: var(--space-5) var(--space-5) var(--space-10) 0; overflow: auto; max-width: 920px; }
 .problem-reader-title { font-family: var(--font-display); font-size: var(--display-md); line-height: 1.2; font-weight: 600; color: var(--ink); margin: 0 0 var(--space-3); letter-spacing: -0.01em; }
-.problem-reader-title .tnum { color: var(--ink-muted); font-weight: 500; }
 .problem-reader-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
 .problem-meta-text { font-size: var(--text-xs); color: var(--ink-muted); }
 .problem-solved { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); font-weight: 600; color: var(--completion); }
@@ -128,7 +138,7 @@
 .problem-facets dt { color: var(--ink-muted); }
 .problem-facets dd { margin: 0; color: var(--ink-body); }
 .problem-statement-empty { padding: var(--space-6) 0; color: var(--ink-muted); font-size: var(--text-body); }
-.problem-markdown { color: var(--ink-body); font-size: var(--text-body); line-height: 1.7; overflow-wrap: anywhere; }
+.problem-markdown { color: var(--ink-body); font-size: var(--text-body); line-height: 1.7; overflow-wrap: break-word; }
 .problem-markdown h1, .problem-markdown h2 { font-family: var(--font-ui); font-size: var(--text-lg); color: var(--ink); margin: var(--space-5) 0 var(--space-3); }
 .problem-markdown h3 { font-size: var(--text-body); color: var(--ink); margin: var(--space-4) 0 var(--space-2); }
 .problem-markdown p, .problem-markdown ul, .problem-markdown ol, .problem-markdown table, .problem-markdown pre { margin-bottom: var(--space-4); }
@@ -137,8 +147,11 @@
 .problem-markdown strong { color: var(--ink); font-weight: 600; }
 .problem-markdown sup, .problem-markdown sub { font-size: 0.75em; line-height: 0; }
 .problem-markdown code, .problem-example-body code { font-family: var(--font-mono); font-size: var(--text-sm); background: var(--surface-soft); border: 1px solid var(--hairline); border-radius: var(--radius-chip); padding: 1px var(--space-1); }
-.problem-markdown pre, .problem-case-detail pre, .problem-compile-output { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface-paper); padding: var(--space-3); border: 1px solid var(--hairline); border-radius: var(--radius-control); font-family: var(--font-mono); font-size: var(--text-sm); line-height: 1.55; color: var(--ink-body); overflow: auto; }
+/* Code and values keep their lines and scroll sideways when they are wider than the pane; they never break mid-token. */
+.problem-markdown pre, .problem-case-detail pre, .problem-compile-output { white-space: pre; overflow-wrap: normal; background: var(--surface-paper); padding: var(--space-3); border: 1px solid var(--hairline); border-radius: var(--radius-control); font-family: var(--font-mono); font-size: var(--text-sm); line-height: 1.55; color: var(--ink-body); overflow: auto; }
 .problem-markdown pre code { padding: 0; border: 0; background: transparent; }
+/* Inline code such as a constraint stays one unit: it moves to the next line whole, and scrolls if it is wider than the line. */
+.problem-markdown :not(pre) > code { display: inline-block; max-width: 100%; overflow-x: auto; white-space: nowrap; vertical-align: middle; line-height: 1.5; }
 .problem-markdown table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 .problem-markdown th, .problem-markdown td { border: 1px solid var(--hairline); padding: var(--space-2) var(--space-3); text-align: left; }
 .problem-markdown th { background: var(--surface-paper); color: var(--ink); font-weight: 600; }
@@ -149,24 +162,42 @@
 .problem-example-body > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-3); align-items: baseline; }
 .problem-example-body dt { font-weight: 600; color: var(--ink); }
 .problem-example-body dd { margin: 0; min-width: 0; color: var(--ink-body); }
-.problem-example-body dd > code { display: inline-block; max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; border: 0; background: transparent; padding: 0; }
+/* A value is a block, so its first line shares the label's baseline. It keeps its lines and scrolls sideways when wider than the example;
+   an input breaks only between its `name = value` pairs, and only when they do not fit on one line. */
+.problem-example-body dd > code { display: block; max-width: 100%; overflow-x: auto; white-space: pre; border: 0; background: transparent; padding: 0; }
+.problem-example-body dd > code.problem-example-input { white-space: normal; }
+.problem-example-pair { white-space: pre; }
 .problem-example-body .problem-markdown p { margin: 0; }
-.problem-hints { margin-top: var(--space-6); border-top: 1px solid var(--hairline); scroll-margin-top: var(--space-4); }
-.problem-hint { border-bottom: 1px solid var(--hairline); }
-.problem-hint summary { display: flex; align-items: center; min-height: 40px; cursor: pointer; font-size: var(--text-body); color: var(--ink); list-style-position: inside; }
+.problem-hints { margin-top: var(--space-6); scroll-margin-top: var(--space-4); }
+.problem-hint + .problem-hint { border-top: 1px solid var(--hairline); }
+.problem-hint summary { display: flex; align-items: center; gap: var(--space-2); min-height: 40px; cursor: pointer; font-size: var(--text-body); color: var(--ink); }
 .problem-hint summary:hover { color: var(--primary); }
+/* Disclosures use one chevron that turns when open instead of the browser's triangle marker. */
+.problem-reader summary { list-style: none; }
+.problem-reader summary::-webkit-details-marker { display: none; }
+.problem-disclosure-icon { flex: none; color: var(--ink-muted); transition: transform var(--duration-fast) var(--ease-out); }
+details[open] > summary > .problem-disclosure-icon { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .problem-disclosure-icon { transition: none; } }
+/* Source evidence, retained sources, and the original link share one quiet footer under a single hairline. */
+.problem-reader-footer { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--hairline); }
+/* After the hints, the footer's hairline is one more row divider: no gap beyond the rows' own height, collapsed or open. */
+.problem-hints + .problem-reader-footer { margin-top: 0; }
+.problem-hints { margin-bottom: 0; }
+.problem-hint > .problem-markdown > :last-child { margin-bottom: 0; }
+.problem-reader-footer:empty { display: none; }
 .problem-hint summary:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-chip); }
-.problem-hint > .problem-markdown { padding-bottom: var(--space-3); }
-.problem-editorial-locked { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding: var(--space-6) 0; color: var(--ink-muted); font-size: var(--text-body); }
-.problem-source-link { display: inline-flex; align-items: center; gap: var(--space-1); margin-top: var(--space-5); font-size: var(--text-sm); color: var(--ink-muted); }
+.problem-hint > .problem-markdown { padding: 0 0 var(--space-3) var(--space-5); }
+/* Every tab's first line starts where the Description title does, so switching tabs never shifts the content. */
+.problem-reader-scroll > :first-child, .problem-reader-scroll > .problem-markdown:first-child > :first-child { margin-top: 0; }
+.problem-source-link { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--text-sm); color: var(--ink-muted); }
 .problem-source-link:hover { color: var(--primary); }
-.problem-source-details { margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--hairline); color: var(--ink-body); font-size: var(--text-sm); }
+.problem-source-details { color: var(--ink-body); font-size: var(--text-sm); }
 .problem-source-details dl { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin: 0; }
 .problem-source-details dl > div { display: flex; gap: var(--space-2); }
 .problem-source-details dt { color: var(--ink-muted); }
 .problem-source-details dd { margin: 0; font-variant-numeric: tabular-nums; }
 .problem-source-reports { margin-top: var(--space-3); }
-.problem-source-reports summary { cursor: pointer; color: var(--ink-muted); }
+.problem-source-reports summary { display: inline-flex; align-items: center; gap: var(--space-1); cursor: pointer; color: var(--ink-muted); }
 .problem-source-reports summary:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-chip); }
 .problem-source-reports p { margin: var(--space-2) 0; color: var(--ink-muted); font-size: var(--text-xs); }
 .problem-source-reports a { color: var(--primary); }
@@ -183,12 +214,6 @@
 .problem-pane-divider.is-vertical::after { inset: 0 4px; }
 .problem-pane-divider.is-horizontal { height: 9px; margin: -4px 0; cursor: row-resize; }
 .problem-pane-divider.is-horizontal::after { inset: 4px 0; }
-.problem-solving { min-width: 0; display: flex; flex-direction: column; }
-.problem-editor-toolbar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--hairline); }
-.problem-editor-toolbar label { display: flex; align-items: center; gap: var(--space-2); color: var(--ink-muted); }
-.problem-editor-toolbar select { font: inherit; font-size: var(--text-sm); background: var(--surface-canvas); color: var(--ink); border: 1px solid var(--control-border); border-radius: var(--radius-chip); padding: var(--space-1) var(--space-2); }
-.problem-editor-toolbar > span[role='status'] { margin-left: auto; font-size: var(--text-xs); color: var(--ink-muted); }
-.problem-editor-toolbar .is-failed { color: var(--error); }
 .problem-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--radius-chip); color: var(--ink-muted); cursor: pointer; }
 .problem-icon-button:hover:not(:disabled) { background: var(--surface-hover); color: var(--ink); }
 .problem-icon-button:disabled { opacity: 0.45; cursor: default; }
@@ -198,10 +223,10 @@
 .problem-editor-loading, .problem-editor-placeholder, .problem-editor-error { padding: var(--space-4); font-size: var(--text-sm); color: var(--ink-muted); }
 .problem-editor-error { position: absolute; inset: 0 0 auto; z-index: 2; background: var(--error-soft); color: var(--error); }
 .problem-editor-error p { margin-bottom: var(--space-2); }
+.problem-editor-assist { position: absolute; top: var(--space-2); right: var(--space-3); z-index: 2; width: var(--space-2); height: var(--space-2); border-radius: 50%; background: var(--ink-muted); opacity: 0.5; transition: background-color var(--duration-fast) var(--ease-out), opacity var(--duration-fast) var(--ease-out); }
+.problem-editor-assist[data-state='offline'] { background: var(--warning); opacity: 1; }
 .problem-console-pane { flex: 0 0 34%; min-height: 0; display: flex; }
 .problem-console { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.problem-console-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--hairline); }
-.problem-console-actions { display: flex; align-items: center; gap: var(--space-2); }
 .problem-console-body { flex: 1; min-height: 0; overflow: auto; padding: var(--space-3) var(--space-4) var(--space-4); }
 .problem-console-body > .lc-error { margin: 0 0 var(--space-3); }
 .problem-availability { color: var(--ink-muted); font-size: var(--text-sm); margin: 0 0 var(--space-3); }
@@ -211,6 +236,8 @@
 .problem-stdin > span { font-family: var(--font-ui); }
 .problem-stdin textarea, .problem-case-field textarea { width: 100%; min-height: 36px; padding: var(--space-2) var(--space-3); border: 1px solid transparent; border-radius: var(--radius-control); background: var(--surface-paper); color: var(--ink); font-family: var(--font-mono); font-size: var(--text-sm); line-height: 1.5; resize: vertical; field-sizing: content; max-height: 220px; }
 .problem-stdin textarea { min-height: 96px; }
+/* Typed values keep one line each and scroll sideways, as in an editor. */
+.problem-stdin textarea, .problem-case-field textarea { white-space: pre; overflow-x: auto; overflow-wrap: normal; }
 .problem-stdin textarea:hover, .problem-case-field textarea:hover { border-color: var(--control-border); }
 .problem-stdin textarea:focus-visible, .problem-case-field textarea:focus-visible { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
 .problem-case-field textarea[aria-invalid='true'] { border-color: var(--error); background: var(--error-soft); }
@@ -229,7 +256,6 @@
 .problem-case-chips > button::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .problem-case-chips > button.is-passed::before { background: var(--completion); }
 .problem-case-chips > button.is-failed::before { background: var(--error); }
-.problem-verdict-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); margin-bottom: var(--space-3); }
 .problem-verdict-row > span { color: var(--ink-muted); font-size: var(--text-sm); }
 .problem-verdict { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-display); font-size: var(--text-lg); font-weight: 600; color: var(--ink); }
 .problem-verdict.is-accepted { color: var(--completion); }
@@ -244,18 +270,6 @@
 .problem-result-param > span { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--ink-muted); }
 .problem-case-detail pre, .problem-compile-output { margin: 0; padding: var(--space-2) var(--space-3); border-color: transparent; }
 .problem-case-detail pre.is-error, .problem-compile-output { background: var(--error-soft); color: var(--error); }
-.problem-submissions { list-style: none; margin: 0; padding: 0; }
-.problem-submissions li { border-bottom: 1px solid var(--hairline); }
-.problem-submissions button { width: 100%; display: grid; grid-template-columns: minmax(140px, 1.4fr) minmax(80px, 0.8fr) minmax(80px, 0.8fr) minmax(120px, 1fr); align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-2); text-align: left; font: inherit; font-size: var(--text-sm); cursor: pointer; color: var(--ink-muted); border-radius: var(--radius-chip); }
-.problem-submissions button:hover:not(:disabled) { background: var(--surface-hover); }
-.problem-submissions button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-.problem-submissions strong { color: var(--ink-body); font-weight: 600; }
-.problem-submissions .is-accepted { color: var(--completion); }
-.problem-submissions .is-failed { color: var(--error); }
-.problem-submissions time { font-variant-numeric: tabular-nums; }
-.problem-submission-source { margin-top: var(--space-4); }
-.problem-submission-source summary { color: var(--ink-body); font-size: var(--text-sm); cursor: pointer; }
-.problem-submission-source pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--space-3); margin-top: var(--space-2); font-family: var(--font-mono); font-size: var(--text-sm); background: var(--surface-paper); border: 1px solid var(--hairline); border-radius: var(--radius-control); }
 .problem-draft-conflict { padding: var(--space-5); }
 .problem-draft-conflict h2 { font-family: var(--font-ui); font-size: var(--text-lg); }
 .problem-draft-conflict p { color: var(--ink-muted); font-size: var(--text-body); margin: var(--space-3) 0; }
@@ -273,8 +287,8 @@
   .problem-view-arrangement { grid-template-columns: minmax(0, 1fr); }
 }
 
-.problem-group-sources { margin-block: var(--space-4); border-block: 1px solid var(--hairline); padding-block: var(--space-3); font-size: var(--text-sm); }
-.problem-group-sources summary { cursor: pointer; color: var(--ink-body); padding-block: var(--space-2); }
+.problem-group-sources { font-size: var(--text-sm); }
+.problem-group-sources summary { display: flex; align-items: center; gap: var(--space-1); cursor: pointer; color: var(--ink-muted); }
 .problem-group-sources ul { list-style: none; padding-inline-start: var(--space-3); }
 .problem-group-sources li + li { border-top: 1px solid var(--hairline); }
 .problem-group-sources pre { overflow: auto; max-height: 320px; white-space: pre; padding: var(--space-3); background: var(--surface-soft); border-radius: var(--radius-chip); }

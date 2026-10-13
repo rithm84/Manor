@@ -15,6 +15,8 @@ export interface ProblemCaseResult {
   stdout?: string | null
   stderr: string | null
   durationMs: number
+  /** Peak memory of the batch process that ran this case, in KiB; absent for programs without a typed driver. */
+  memoryKb?: number | null
   verdict: ProblemVerdict
 }
 export interface ProblemSubmission {
@@ -42,20 +44,20 @@ export interface ExecuteProblemInput {
   customInput?: string
   requestId: string
 }
+/** The account's editor capability: one short-lived token, with the address of every language's server under it. */
 export interface ProblemEditorSession {
   id: string
-  webSocketUrl: string
+  webSocketUrls: Readonly<Record<ProblemLanguage, string>>
   token: string
   expiresAt: string
   workspaceUri: string
-  documentUri: string
 }
 export interface ProblemExecutionApi {
   execute(input: ExecuteProblemInput): Promise<ProblemSubmission>
   submission(submissionId: string): Promise<ProblemSubmission>
   submissions(problemId: string): Promise<readonly ProblemSubmission[]>
-  editorSession(problemId: string, language: ProblemLanguage): Promise<ProblemEditorSession>
-  closeEditorSession(sessionId: string): Promise<void>
+  /** Renews the account's editor sandbox for the language, binding the open problem when there is one, and returns a short-lived connection. */
+  editorSession(problemId: string | null, language: ProblemLanguage): Promise<ProblemEditorSession>
 }
 export const problemLanguageLabels: Readonly<Record<ProblemLanguage, string>> = {
   cpp: 'C++', c: 'C', python: 'Python', javascript: 'JavaScript', java: 'Java', go: 'Go',

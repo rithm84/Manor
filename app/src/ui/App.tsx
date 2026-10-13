@@ -61,11 +61,7 @@ export function App({ services, shell, routeRequest, onRouteApplied }: { service
           />
           <Route
             path="/leetcode"
-            element={
-              <SecondaryModuleSurface width="wide">
-                <LeetCodePage />
-              </SecondaryModuleSurface>
-            }
+            element={<LeetCodePage />}
           />
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/notes" element={<NotesPage />} />

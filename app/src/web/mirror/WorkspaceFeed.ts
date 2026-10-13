@@ -19,24 +19,38 @@ const changeSchema = z.object({
 /** The most rows one request asks for. The RPC clamps its own limit to 1000. */
 export const FEED_PAGE_SIZE = 1000
 
-/** The account's change feed: what changed and in which order, never what a row now holds. */
+/** The two functions that expose one change feed. Both feeds return the same columns. */
+export interface FeedFunctions {
+  readonly cursor: 'manor_workspace_cursor' | 'manor_catalog_cursor'
+  readonly changes: 'manor_workspace_changes' | 'manor_catalog_changes'
+}
+
+/** The account's own feed, covering every owner-scoped table. */
+export const WORKSPACE_FEED: FeedFunctions = { cursor: 'manor_workspace_cursor', changes: 'manor_workspace_changes' }
+
+/** The shared problem catalog's feed, the same for every account. */
+export const CATALOG_FEED: FeedFunctions = { cursor: 'manor_catalog_cursor', changes: 'manor_catalog_changes' }
+
+/** A change feed: what changed and in which order, never what a row now holds. */
 export class WorkspaceFeed {
   private readonly client: SupabaseClient
+  private readonly functions: FeedFunctions
 
-  constructor(client: SupabaseClient) {
+  constructor(client: SupabaseClient, functions: FeedFunctions) {
     this.client = client
+    this.functions = functions
   }
 
-  /** The account's head cursor, and 0 before its first change. */
+  /** The feed's head cursor, and 0 before its first change. */
   async cursor(): Promise<number> {
-    const { data, error, status } = await this.client.rpc('manor_workspace_cursor')
-    this.report('manor_workspace_cursor', error, status)
+    const { data, error, status } = await this.client.rpc(this.functions.cursor)
+    this.report(this.functions.cursor, error, status)
     return cursorSchema.parse(data)
   }
 
   async changes(since: number, limit: number): Promise<FeedChange[]> {
-    const { data, error, status } = await this.client.rpc('manor_workspace_changes', { p_since: since, p_limit: limit })
-    this.report('manor_workspace_changes', error, status)
+    const { data, error, status } = await this.client.rpc(this.functions.changes, { p_since: since, p_limit: limit })
+    this.report(this.functions.changes, error, status)
     return z.array(changeSchema).parse(data).map((row) => ({
       cursor: row.cursor, objectType: row.object_type, objectKey: row.object_key, change: row.change, revision: row.revision
     }))

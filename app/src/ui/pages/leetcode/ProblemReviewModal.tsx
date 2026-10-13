@@ -13,9 +13,10 @@ import { errorMessage, formatAttemptDate } from './leetCodeModel'
 import type { ProblemRecord } from '../../../shared/problemLibrary'
 import { ProblemTagList } from './ProblemTag'
 import { ProblemSourceDetails } from './ProblemSourceDetails'
+import { problemTitle } from './problemTestcases'
 
 export interface ProblemReviewModalProps {
-  problem: Pick<ProblemRecord, 'id' | 'name' | 'difficulty' | 'sourceUrl' | 'topics' | 'companies' | 'tags' | 'collections' | 'sourceMetadata'>
+  problem: Pick<ProblemRecord, 'id' | 'name' | 'sourceType' | 'externalKey' | 'difficulty' | 'sourceUrl' | 'topics' | 'companies' | 'tags' | 'collections' | 'sourceMetadata'>
   attempts: readonly LeetCodeAttempt[]
   today: string
   onClose: () => void
@@ -172,11 +173,11 @@ export function ProblemReviewModal({
 
   return (
     <>
-    <Modal open onClose={requestClose} width={860} ariaLabel={`${problem.name} solve and review history`}>
+    <Modal open onClose={requestClose} width={860} ariaLabel={`${problemTitle(problem)} solve and review history`}>
       <article className="lc-review-modal">
         <header className="lc-review-header">
           <div>
-            <h2>{problem.name}</h2>
+            <h2>{problemTitle(problem)}</h2>
             <div className="lc-review-meta">
               {problem.difficulty === null ? null : <Pill
                 variant="tag"

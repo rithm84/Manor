@@ -122,6 +122,8 @@ def __manor_main():
             __manor_sys.stdout.flush(); error = __manor_sys.exc_info()[1]; frames = [f for f in traceback.extract_tb(error.__traceback__) if f.filename == 'solution.py']; __manor_sys.stderr.write(('Traceback (most recent call last):\\n' + ''.join(traceback.format_list(frames)) if frames else '') + ''.join(traceback.format_exception_only(type(error), error))); __manor_sys.stderr.flush()
             text = '!'
         __manor_sys.stdout.write('\\x1eMANOR %d %d %s\\n' % (index, round((time.perf_counter() - started) * 1000), text)); __manor_sys.stdout.flush()
+    import resource
+    __manor_sys.stdout.write('\\x1eMANOR-PEAK %d\\n' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss); __manor_sys.stdout.flush()
 __manor_main()
 `
 
@@ -199,6 +201,7 @@ const javascriptDriver = (spec: ProblemInterface): string => `
     catch (error) { const stack = error && error.stack ? String(error.stack).split('\\n') : [String(error)]; const cut = stack.findIndex(line => line.includes('at runCase')); process.stderr.write((cut > 0 ? stack.slice(0, cut) : stack).join('\\n') + '\\n'); text = '!'; }
     write('\\x1eMANOR ' + index + ' ' + Math.round(performance.now() - started) + ' ' + text + '\\n');
   }
+  write('\\x1eMANOR-PEAK ' + process.resourceUsage().maxRSS + '\\n');
 })();
 `
 
@@ -223,7 +226,7 @@ export function assembleProgram(language: HarnessLanguage, source: string, spec:
   if (language === 'javascript') return source + '\n' + javascriptPrelude + javascriptNodePrelude(spec) + javascriptDriver(spec)
   if (language === 'cpp') return '#include <bits/stdc++.h>\nusing namespace std;\n#line 1\n' + source + cppDriver(spec)
   if (language === 'java') return 'import java.util.*;import java.util.function.*;import java.util.stream.*;' + source.replace(new RegExp(`\\bpublic(\\s+(?:final\\s+)?class\\s+${spec.kind === 'codec' ? `(?:Solution|${spec.className})` : 'Solution'}\\b)`), '$1') + javaDriver(spec)
-  const prelude = 'package main; import (__manor_json "encoding/json"; __manor_bufio "bufio"; __manor_os "os"; __manor_reflect "reflect"; __manor_strings "strings"; __manor_strconv "strconv"; __manor_time "time")'
+  const prelude = 'package main; import (__manor_json "encoding/json"; __manor_bufio "bufio"; __manor_os "os"; __manor_reflect "reflect"; __manor_strings "strings"; __manor_strconv "strconv"; __manor_syscall "syscall"; __manor_time "time")'
   const packageLine = /^\s*package\s+main\s*;?[ \t]*(\r?\n|$)/
   return (packageLine.test(source) ? source.replace(packageLine, prelude + '$1') : prelude + '\n' + source) + goDriver(spec)
 }
@@ -249,10 +252,15 @@ export function parseDriverOutput(stdout: string): DriverCaseOutput[] {
   }
   return cases
 }
+/** Peak resident memory of the batch process in KiB, reported by the driver after its last case; null when the process stopped first. */
+export function driverPeakKb(stdout: string): number | null {
+  const match = /\u001eMANOR-PEAK (\d+)\n/.exec(stdout)
+  return match === null ? null : Number(match[1])
+}
 /** Output printed after the last finished case belongs to the case that was running when the process stopped. */
 export function trailingDriverOutput(stdout: string): string {
   const at = stdout.lastIndexOf(marker)
   if (at < 0) return stdout
   const end = stdout.indexOf('\n', at)
-  return end < 0 ? '' : stdout.slice(end + 1)
+  return end < 0 ? '' : stdout.slice(end + 1).replace(/\u001eMANOR-PEAK \d+\n/, '')
 }

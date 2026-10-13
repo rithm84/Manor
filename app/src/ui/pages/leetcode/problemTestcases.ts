@@ -150,3 +150,25 @@ export function splitStatement(markdown: string): { readonly description: string
   if (match === null || hasInlineExamples) return { description: markdown, rest: '', hasInlineExamples }
   return { description: markdown.slice(0, match.index).trimEnd(), rest: markdown.slice(match.index), hasInlineExamples }
 }
+
+/** Splits an example input such as `nums = [1,2], target = 3` between its `name = value` pairs, so each pair can wrap as a unit. */
+export function exampleAssignments(input: string): readonly string[] {
+  const pairs: string[] = []
+  let depth = 0
+  let start = 0
+  for (let index = 0; index < input.length; index += 1) {
+    const character = input[index]
+    if (character === '"') { index = skipString(input, index) - 1; continue }
+    if ('[{('.includes(character)) depth += 1
+    else if (')}]'.includes(character)) depth -= 1
+    else if (character === ',' && depth === 0 && /^\s*[A-Za-z_]\w*\s*=(?!=)/.test(input.slice(index + 1))) { pairs.push(input.slice(start, index + 1).trim()); start = index + 1 }
+  }
+  pairs.push(input.slice(start).trim())
+  return pairs
+}
+
+/** A stock problem's title carries its LeetCode number, as LeetCode lists it ("636. Exclusive Time of Functions"); the stored name stays plain. */
+export function problemTitle(problem: Pick<ProblemRecord, 'sourceType' | 'externalKey' | 'name'>): string {
+  const number = leetCodeNumber(problem)
+  return number === null ? problem.name : `${number}. ${problem.name}`
+}

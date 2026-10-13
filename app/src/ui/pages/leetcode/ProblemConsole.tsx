@@ -1,8 +1,9 @@
-import { Play, Plus, Send, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, CloudUpload, LoaderCircle, Play, Plus, X } from 'lucide-react'
 import type { ReactNode } from 'react'
-import type { ProblemSubmission } from '../../../shared/problemExecution'
+import type { ProblemExecutionMode, ProblemSubmission } from '../../../shared/problemExecution'
 import { Button, Tooltip } from '../../components/ui'
-import { ProblemTestResult } from './ProblemTestResult'
+import { PendingVerdict, ProblemTestResult } from './ProblemTestResult'
+import { isPendingSubmission } from './problemSubmissionStats'
 import type { InvalidTestcase, Testcase, TestcaseField } from './problemTestcases'
 
 export type ConsoleTab = 'testcase' | 'result'
@@ -35,23 +36,37 @@ export function TestcaseEditor({ fields, cases, selected, invalid, disabled, onS
 interface ConsoleProps {
   tab: ConsoleTab; onTab: (tab: ConsoleTab) => void
   editor: ReactNode; notice: ReactNode
-  submission: ProblemSubmission | null; fields: readonly TestcaseField[] | null
-  busy: boolean; canRun: boolean; canSubmit: boolean; onRun: () => void; onSubmit: () => void
+  submission: ProblemSubmission | null; running: ProblemExecutionMode | null; fields: readonly TestcaseField[] | null
 }
 
-/** The console under the editor: Testcase and Test Result tabs, with Run and Submit beside them. */
-export function ProblemConsole({ tab, onTab, editor, notice, submission, fields, busy, canRun, canSubmit, onRun, onSubmit }: ConsoleProps): ReactNode {
+/** The console under the editor: Testcase and Test Result tabs. Both stay mounted so a result keeps its selected case. */
+export function ProblemConsole({ tab, onTab, editor, notice, submission, running, fields }: ConsoleProps): ReactNode {
+  const pending = running ?? (submission !== null && isPendingSubmission(submission) ? submission.mode : null)
   return <section className="problem-console" aria-label="Console" data-testid="problem-console">
     <header className="problem-console-header">
       <nav className="problem-tabs" aria-label="Console">{([['testcase', 'Testcase'], ['result', 'Test Result']] as const).map(([value, label]) => <button type="button" key={value} className={tab === value ? 'is-active' : ''} aria-pressed={tab === value} data-testid={`problem-console-${value}`} onClick={() => onTab(value)}>{label}</button>)}</nav>
-      <div className="problem-console-actions">
-        <Tooltip label="Run (⌘')" side="top"><Button variant="subtle" icon={<Play size={15} />} testId="problem-run" onClick={onRun} disabled={busy || !canRun}>{busy ? 'Running…' : 'Run'}</Button></Tooltip>
-        <Tooltip label="Submit (⌘ Enter)" side="top"><Button variant="primary" icon={<Send size={15} />} testId="problem-submit" onClick={onSubmit} disabled={busy || !canSubmit}>Submit</Button></Tooltip>
-      </div>
     </header>
     <div className="problem-console-body">
       {notice}
-      {tab === 'testcase' ? editor : submission === null ? <p className="problem-results-empty">{busy ? 'Sending your code…' : 'Run your code to see results here.'}</p> : <ProblemTestResult key={`${submission.id}-${submission.status}`} submission={submission} fields={fields} />}
+      <div hidden={tab !== 'testcase'}>{editor}</div>
+      <div hidden={tab !== 'result'}>{pending !== null ? <PendingVerdict mode={pending} /> : submission === null ? <p className="problem-results-empty">Run your code to see results here.</p> : <ProblemTestResult key={submission.id} submission={submission} fields={fields} />}</div>
     </div>
   </section>
+}
+
+interface ActionBarProps {
+  consoleOpen: boolean; onConsole: () => void
+  running: ProblemExecutionMode | null; canRun: boolean; canSubmit: boolean; onRun: () => void; onSubmit: () => void
+}
+
+/** The bar under the console: the Console toggle on the left, Run and Submit on the right, each with its own inline spinner. */
+export function ProblemActionBar({ consoleOpen, onConsole, running, canRun, canSubmit, onRun, onSubmit }: ActionBarProps): ReactNode {
+  const spinner = <LoaderCircle className="problem-spinner" size={15} aria-hidden="true" />
+  return <footer className="problem-action-bar">
+    <button type="button" className="problem-console-toggle" aria-expanded={consoleOpen} data-testid="problem-console-toggle" onClick={onConsole}>Console{consoleOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronUp size={14} aria-hidden="true" />}</button>
+    <div className="problem-console-actions">
+      <Tooltip label="Run (⌘ ')" side="top"><Button variant="ghost" icon={running === 'run' ? spinner : <Play size={15} />} testId="problem-run" onClick={onRun} disabled={running !== null || !canRun}>Run</Button></Tooltip>
+      <Tooltip label="Submit (⌘ Enter)" side="top"><Button variant="primary" icon={running === 'submit' ? spinner : <CloudUpload size={15} />} testId="problem-submit" onClick={onSubmit} disabled={running !== null || !canSubmit}>Submit</Button></Tooltip>
+    </div>
+  </footer>
 }

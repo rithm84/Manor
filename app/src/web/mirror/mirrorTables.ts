@@ -1,7 +1,10 @@
 import type { JsonObject, JsonValue, ManorTable, RowFilter } from '../ManorGateway'
 
 /**
- * The tables the local mirror holds. Notes folders, pages (whole rows, `content_json` included), and
+ * The tables the local mirror holds. `problem_catalog` and `problem_catalog_content` are the shared problem
+ * catalog, which follows its own feed and snapshot (`CatalogSync`); `leetcode_problems` and
+ * `problem_content_versions` then hold only the account's custom problems and their statements, because the
+ * owner filter excludes catalog rows. Notes folders, pages (whole rows, `content_json` included), and
  * suggestions are among them. `note_versions` is not: it keeps a full document per superseded revision and
  * only version history and the conflict re-base read it, and both stay on the server. `note_attachments`,
  * files, task series, and the legacy habit tables are never read through `rows`, so they are not mirrored
@@ -14,6 +17,7 @@ export const MIRROR_TABLES = [
   'habits', 'habit_entries', 'mood_focus_entries', 'pomodoro_sessions',
   'note_folders', 'note_pages', 'note_suggestions',
   'leetcode_attempts', 'leetcode_notes', 'leetcode_problems', 'saved_problem_views',
+  'problem_practice', 'problem_content_versions', 'problem_catalog', 'problem_catalog_content',
   'job_roles', 'job_stage_transitions', 'job_listings',
   'kb_entries', 'resumes', 'weekly_reviews',
   'calendar_accounts', 'calendars', 'calendar_events'
@@ -29,6 +33,8 @@ const KEY_COLUMNS: Record<MirrorTable, readonly string[]> = {
   habits: ['id'], habit_entries: ['habit_id', 'date'], mood_focus_entries: ['date'], pomodoro_sessions: ['id'],
   note_folders: ['id'], note_pages: ['id'], note_suggestions: ['id'],
   leetcode_attempts: ['id'], leetcode_notes: ['id'], leetcode_problems: ['id'], saved_problem_views: ['id'],
+  problem_practice: ['problem_id'], problem_content_versions: ['problem_id', 'version'],
+  problem_catalog: ['id'], problem_catalog_content: ['problem_id'],
   job_roles: ['id'], job_stage_transitions: ['id'], job_listings: ['id'],
   kb_entries: ['id'], resumes: ['id'], weekly_reviews: ['id'],
   calendar_accounts: ['id'], calendars: ['account_id', 'id'], calendar_events: ['account_id', 'calendar_id', 'id']
@@ -43,6 +49,32 @@ const STANDING_FILTERS: Partial<Record<MirrorTable, readonly RowFilter[]>> = {
 }
 
 const NO_FILTERS: readonly RowFilter[] = []
+
+/** The shared problem catalog: one copy for every account, filled from a snapshot and its own feed. */
+export const CATALOG_TABLES = ['problem_catalog', 'problem_catalog_content'] as const satisfies readonly MirrorTable[]
+export type CatalogTable = (typeof CATALOG_TABLES)[number]
+
+export function isCatalogTable(table: ManorTable): table is CatalogTable {
+  return (CATALOG_TABLES as readonly string[]).includes(table)
+}
+
+/**
+ * Tables every account reads whole, with no owner column to filter on: the job board and the problem catalog.
+ * Reads and re-reads of these skip the owner filter that every other table carries.
+ */
+export function isSharedTable(table: ManorTable): boolean {
+  return table === 'job_listings' || isCatalogTable(table)
+}
+
+/**
+ * A table only the mirror has: the company reports and source snapshots of catalog problems, keyed by problem
+ * id. `problem_catalog` keeps its rows without them (see `catalogRows.ts`), because they are most of the
+ * catalog's bytes and only an open problem shows them, while the library reads every catalog row at once.
+ */
+export const CATALOG_DETAIL_TABLE = 'problem_catalog_detail'
+
+/** A table name the mirror file stores rows under. */
+export type StoredTable = MirrorTable | typeof CATALOG_DETAIL_TABLE
 
 /** No change-feed trigger covers these, so the mirror replaces them in full on launch and every hour. */
 export const HOURLY_TABLES: readonly MirrorTable[] = ['job_listings']

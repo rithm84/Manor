@@ -18,7 +18,7 @@ describe('ProblemReviewModal', () => {
           id: 'two-sum',
           topics: ['Arrays & Hashing'],
           companies: [], tags: [], collections: [], sourceUrl: null,
-          name: 'Two Sum',
+          name: 'Two Sum', sourceType: 'stock', externalKey: 'leetcode:1',
           difficulty: 'Easy',
         }}
         attempts={[
@@ -40,7 +40,8 @@ describe('ProblemReviewModal', () => {
     )
 
     expect(markup).toContain('role="dialog"')
-    expect(markup).toContain('aria-label="Two Sum solve and review history"')
+    expect(markup).toContain('aria-label="1. Two Sum solve and review history"')
+    expect(markup).toContain('<h2>1. Two Sum</h2>')
     // History leads; logging a solve made elsewhere stays one click away.
     expect(markup).toContain('data-testid="lc-log-solve"')
     expect(markup).not.toContain('type="date"')

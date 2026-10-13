@@ -20,30 +20,27 @@ export class ProblemDraftSession {
   private timer: ReturnType<typeof setTimeout> | null = null
   private cloudConflict: CloudCodeDraft | null = null
   private cloudReadFailed = false
+  /** True while the local draft's identity was minted on this device and no cloud draft has been read. */
+  private minted = false
+  private cloudRead: Promise<string | null> = Promise.resolve(null)
   constructor(library: ProblemLibraryApi, accountId: string, problemId: string, language: ProblemLanguage, contentVersion: number, onStatus: (status: CodeDraftStatus, error: Error | null) => void) {
     this.library = library; this.accountId = accountId; this.problemId = problemId; this.language = language; this.contentVersion = contentVersion; this.onStatus = onStatus
   }
+  /**
+   * Returns this device's draft, or the starter code when there is none, without waiting for the cloud. The cloud
+   * draft is read in the background; `reconciled` reports whether it replaced the code.
+   */
   async open(starterCode: string): Promise<string> {
-    const local = readUnprotectedCodeDraft(this.accountId, this.problemId, this.language) ?? await readCodeDraft(this.accountId, this.problemId, this.language)
-    let cloud: Awaited<ReturnType<ProblemLibraryApi['loadDraft']>>
-    try { cloud = await this.library.loadDraft(this.problemId, this.language) }
-    catch (failure) {
-      if (local === null) throw failure
-      this.local = local
-      this.cloudReadFailed = true
-      this.onStatus('failed', new Error(`Your saved local code is available, but its cloud draft could not load: ${failure instanceof Error ? failure.message : String(failure)}`))
-      return local.code
-    }
-    this.cloudReadFailed = false
-    this.local = local?.pending === true ? local.contentVersion === this.contentVersion ? local : { ...local, requestId: crypto.randomUUID(), contentVersion: this.contentVersion } : { id: cloud?.id ?? local?.id ?? crypto.randomUUID(), requestId: crypto.randomUUID(), accountId: this.accountId, problemId: this.problemId, language: this.language, contentVersion: this.contentVersion, code: cloud?.source ?? local?.code ?? starterCode, cloudRevision: cloud?.revision ?? local?.cloudRevision ?? 0, pending: false, updatedAt: cloud?.updatedAt ?? new Date().toISOString() }
-    await this.queueLocalProtection(this.local)
-    if (local?.pending === true && cloud !== null && cloud.revision !== local.cloudRevision) {
-      this.cloudConflict = cloud
-      this.onStatus('protected', new Error('This code was changed on another device. Compare the two drafts before saving.'))
-    } else if (local?.pending === true) { this.onStatus('protected', null); this.schedule() }
-    else this.onStatus('saved', null)
+    const stored = readUnprotectedCodeDraft(this.accountId, this.problemId, this.language) ?? await readCodeDraft(this.accountId, this.problemId, this.language)
+    this.minted = stored === null
+    this.local = stored === null
+      ? { id: crypto.randomUUID(), requestId: crypto.randomUUID(), accountId: this.accountId, problemId: this.problemId, language: this.language, contentVersion: this.contentVersion, code: starterCode, cloudRevision: 0, pending: false, updatedAt: new Date().toISOString() }
+      : stored.pending && stored.contentVersion === this.contentVersion ? stored : { ...stored, requestId: crypto.randomUUID(), contentVersion: this.contentVersion }
+    this.cloudRead = this.readCloud()
     return this.local.code
   }
+  /** Resolves with the cloud code when it replaced unedited local code, or null when the code on screen stands. */
+  reconciled(): Promise<string | null> { return this.cloudRead }
   protect(code: string): void {
     if (this.local === null) throw new Error('The code draft must load before it can be edited.')
     this.local = { ...this.local, requestId: crypto.randomUUID(), contentVersion: this.contentVersion, code, pending: true, updatedAt: new Date().toISOString() }
@@ -59,7 +56,11 @@ export class ProblemDraftSession {
       console.warn('Retrying failed local code protection', { problemId: this.problemId, language: this.language, error: failure instanceof Error ? failure.message : String(failure) })
       try { await this.queueLocalProtection(this.local); this.onStatus('protected', null) } catch (retryFailure) { this.report(retryFailure); throw retryFailure }
     }
-    if (this.cloudReadFailed) return this.open(this.local.code)
+    if (this.cloudReadFailed) {
+      this.cloudRead = this.readCloud()
+      await this.cloudRead
+      return this.local.code
+    }
     await this.sync()
     return this.local.code
   }
@@ -81,6 +82,7 @@ export class ProblemDraftSession {
     return remote.source
   }
   async sync(): Promise<void> {
+    await this.cloudRead
     await this.localWrites
     if (this.cloudWrite !== null) { await this.cloudWrite; if (this.local?.pending === true) return this.sync(); return }
     const draft = this.local
@@ -110,6 +112,35 @@ export class ProblemDraftSession {
     if (this.timer !== null) clearTimeout(this.timer)
     this.timer = null
     void this.sync().catch(failure => console.error('Code draft save failed after navigation', { problemId: this.problemId, language: this.language, error: failure instanceof Error ? failure.message : String(failure) }))
+  }
+  /**
+   * Reconciles the cloud draft with the local one. Unedited local code takes the cloud draft; edits made before it
+   * arrived conflict with a cloud draft whose revision they did not start from, as pending local drafts always have.
+   * The decision and the swap happen synchronously after the read, so no keystroke can land between them.
+   */
+  private async readCloud(): Promise<string | null> {
+    let cloud: CloudCodeDraft | null
+    try { cloud = await this.library.loadDraft(this.problemId, this.language) }
+    catch (failure) {
+      this.cloudReadFailed = true
+      this.onStatus('failed', new Error(`Your code is safe on this device, but its cloud draft could not load: ${failure instanceof Error ? failure.message : String(failure)}`))
+      return null
+    }
+    this.cloudReadFailed = false
+    const local = this.local
+    if (local === null) throw new Error('The code draft must open before its cloud draft is reconciled.')
+    const reconciled: ProblemCodeDraft = cloud === null ? local
+      : !local.pending ? { id: cloud.id, requestId: crypto.randomUUID(), accountId: this.accountId, problemId: this.problemId, language: this.language, contentVersion: this.contentVersion, code: cloud.source, cloudRevision: cloud.revision, pending: false, updatedAt: cloud.updatedAt }
+      : this.minted ? { ...local, id: cloud.id } : local
+    this.local = reconciled; this.minted = false
+    const written = this.queueLocalProtection(reconciled)
+    if (reconciled.pending && cloud !== null && cloud.revision !== reconciled.cloudRevision) {
+      this.cloudConflict = cloud
+      this.onStatus('protected', new Error('This code was changed on another device. Compare the two drafts before saving.'))
+    } else if (reconciled.pending) { this.onStatus('protected', null); this.schedule() }
+    else this.onStatus('saved', null)
+    void written.catch(failure => this.report(failure))
+    return reconciled.code === local.code ? null : reconciled.code
   }
   private schedule(): void {
     if (this.cloudConflict !== null) return

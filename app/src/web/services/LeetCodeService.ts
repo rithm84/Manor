@@ -7,11 +7,12 @@ import { camelRow, rowRevision } from './rows'
 export class LeetCodeService implements LeetCodeApi {
   private readonly gateway: ManorGateway
   constructor(gateway: ManorGateway) { this.gateway = gateway }
+  /** The stock curriculum comes from the shared catalog; attempts and mistakes are the account's own. */
   async load(): Promise<LeetCodeState> {
     const [problems, attempts, notes] = await Promise.all([
-      this.gateway.rows('leetcode_problems'), this.gateway.rows('leetcode_attempts'), this.gateway.rows('leetcode_notes')
+      this.gateway.rows('problem_catalog'), this.gateway.rows('leetcode_attempts'), this.gateway.rows('leetcode_notes')
     ])
-    return { problems: problems.filter(row => (row.source_type === undefined || row.source_type === 'stock') && row.difficulty !== null).map((row) => parseLeetCodeProblem(camelRow(row))).sort((a,b) => a.curriculumOrder - b.curriculumOrder),
+    return { problems: problems.filter(row => row.source_type === 'stock' && row.difficulty !== null).map((row) => parseLeetCodeProblem(camelRow(row))).sort((a,b) => a.curriculumOrder - b.curriculumOrder),
       attempts: attempts.map((row) => ({ ...parseLeetCodeAttempt(camelRow(row)), revision: rowRevision(row) })),
       notes: notes.map((row) => ({ ...parseLeetCodeNote(camelRow(row)), revision: rowRevision(row) })), summary: { totalProblems: problems.length, legacyProgress: [] } }
   }

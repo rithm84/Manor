@@ -1,39 +1,47 @@
-import { z } from 'zod'
 import type { ProblemEditorSession, ProblemExecutionApi, ProblemLanguage } from '../../shared/problemExecution'
 
-const sessionIds = z.array(z.string().uuid())
-function storageKey(accountId: string): string { return `manor:problem-editor-sessions:${accountId}` }
-function readIds(accountId: string): string[] {
-  const value = localStorage.getItem(storageKey(accountId))
-  return value === null ? [] : sessionIds.parse(JSON.parse(value))
-}
-function writeIds(accountId: string, ids: readonly string[]): void {
-  if (ids.length === 0) localStorage.removeItem(storageKey(accountId))
-  else localStorage.setItem(storageKey(accountId), JSON.stringify(ids))
+/** A session this recent is reused; an older one is renewed, which also extends the account sandbox's idle lease. */
+const renewAfterMs = 5 * 60000
+
+interface Request { readonly problemId: string | null }
+interface Held extends Request { readonly session: ProblemEditorSession; readonly fetchedAt: number }
+
+/**
+ * The account's editor capability on this device. Prewarming, opening, and use renewals share one request at a
+ * time and reuse a recent answer, so the server sees at most one renewal every few minutes while the editor is in
+ * use. The server, not this cache, enforces one editor sandbox per account and removes stale ones.
+ */
+export class EditorSessions {
+  private readonly api: ProblemExecutionApi
+  private held: Held | null = null
+  private pending: (Request & { readonly promise: Promise<ProblemEditorSession> }) | null = null
+  constructor(api: ProblemExecutionApi) { this.api = api }
+
+  /**
+   * The account's editor session; with a problem, the lease also protects that problem as the open one. A session
+   * addresses every language, so a recent one serves a language switch without asking the server; the language only
+   * tells a server that has to start its language servers which one to start first.
+   */
+  session(language: ProblemLanguage, problemId: string | null): Promise<ProblemEditorSession> {
+    const covers = (value: Request): boolean => problemId === null || value.problemId === problemId
+    if (this.pending !== null && covers(this.pending)) return this.pending.promise
+    if (this.held !== null && covers(this.held) && Date.now() - this.held.fetchedAt < renewAfterMs) return Promise.resolve(this.held.session)
+    const promise = this.api.editorSession(problemId, language).then(session => {
+      // The server keeps the bound problem when a renewal names none.
+      this.held = { problemId: problemId ?? this.held?.problemId ?? null, session, fetchedAt: Date.now() }
+      return session
+    }).finally(() => { if (this.pending?.promise === promise) this.pending = null })
+    this.pending = { problemId, promise }
+    return promise
+  }
 }
 
-/** One desktop solving workspace owns the account's tracked editor leases, including leases left by Quit. */
-export async function openTrackedEditorSession(api: ProblemExecutionApi, accountId: string, problemId: string, language: ProblemLanguage): Promise<ProblemEditorSession> {
-  return navigator.locks.request(`manor-problem-editor:${accountId}`, async () => {
-    for (const id of readIds(accountId)) {
-      await api.closeEditorSession(id)
-      writeIds(accountId, readIds(accountId).filter(previous => previous !== id))
-    }
-    const session = await api.editorSession(problemId, language)
-    try { writeIds(accountId, [session.id]) }
-    catch (failure) {
-      await api.closeEditorSession(session.id)
-      throw new Error(`The editor session could not be tracked on this device: ${failure instanceof Error ? failure.message : String(failure)}`)
-    }
-    return session
-  })
-}
+const accounts = new Map<string, { readonly api: ProblemExecutionApi; readonly sessions: EditorSessions }>()
 
-export async function closeTrackedEditorSession(api: ProblemExecutionApi, accountId: string, id: string): Promise<void> {
-  await navigator.locks.request(`manor-problem-editor:${accountId}`, async () => {
-    const ids = readIds(accountId)
-    if (!ids.includes(id)) return
-    await api.closeEditorSession(id)
-    writeIds(accountId, ids.filter(previous => previous !== id))
-  })
+export function editorSessions(api: ProblemExecutionApi, accountId: string): EditorSessions {
+  const current = accounts.get(accountId)
+  if (current !== undefined && current.api === api) return current.sessions
+  const sessions = new EditorSessions(api)
+  accounts.set(accountId, { api, sessions })
+  return sessions
 }

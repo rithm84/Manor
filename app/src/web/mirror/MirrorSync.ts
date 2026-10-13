@@ -3,14 +3,16 @@ import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
 import { dateInTimezone } from '../../shared/timezone'
 import type { WorkspaceRowChange } from '../../shared/workspaceChanges'
 import { isManorTable, ManorConnectionError, type JsonObject, type JsonValue, type ManorGateway, type ManorTable } from '../ManorGateway'
+import { CatalogSync } from './CatalogSync'
 import { IDENTITY_BATCH_LIMITS, readIdentityRows } from './identityReads'
+import { MirrorAbandoned } from './MirrorAbandoned'
 import type { DerivedName, MirrorRow, MirrorStatus, MirrorStore } from './MirrorStore'
 import {
-  HOURLY_TABLES, JOB_ROLE_DEPENDENTS, LAUNCH_REFRESH_TABLES, MIRROR_TABLES,
-  needsRebuild, rowKey, rowRevisionOf, standingFilters, touchedWithoutRevision, type MirrorTable
+  CATALOG_DETAIL_TABLE, HOURLY_TABLES, JOB_ROLE_DEPENDENTS, LAUNCH_REFRESH_TABLES, MIRROR_TABLES, isCatalogTable,
+  needsRebuild, rowKey, rowRevisionOf, standingFilters, touchedWithoutRevision, type MirrorTable, type StoredTable
 } from './mirrorTables'
 import { groupFeedChanges, planTableApply, type TableChanges } from './pullPlan'
-import { FEED_PAGE_SIZE, WorkspaceFeed } from './WorkspaceFeed'
+import { FEED_PAGE_SIZE, WORKSPACE_FEED, WorkspaceFeed } from './WorkspaceFeed'
 
 /** How often the mirror catches up on its own, so a missed poke costs a minute rather than a session. */
 const POKE_INTERVAL_MS = 60_000
@@ -21,20 +23,15 @@ const FEEDLESS_INTERVAL_MS = 3_600_000
 /** One pull walks at most this many pages. Beyond it the feed is not something a catch-up should chase. */
 const MAX_FEED_BATCHES = 100
 
+/** The account's own tables. The shared catalog has its own snapshot and feed, which `CatalogSync` follows. */
+const ACCOUNT_TABLES: readonly MirrorTable[] = MIRROR_TABLES.filter((table) => !isCatalogTable(table))
+
 /** How many tables a bootstrap fills at once: enough to overlap round trips, few enough to leave the
  * connection to the page that is still loading behind it. */
 const BOOTSTRAP_CONCURRENCY = 4
 
-/**
- * Raised when `stop()` runs while a pass sits between awaits. The pass then abandons its work instead of
- * writing into a mirror the app has left, which after a sign-out or an account switch is somebody else's.
- */
-class MirrorAbandoned extends Error {
-  constructor(accountId: string) {
-    super(`The local mirror of ${accountId} stopped while it was catching up`)
-    this.name = 'MirrorAbandoned'
-  }
-}
+/** What the mirror says about one stored row: nothing while it is not serving that table, else the row or its absence. */
+export type MirrorLookup = { readonly serving: false } | { readonly serving: true; readonly row: JsonObject | null }
 
 function detail(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause)
@@ -57,6 +54,8 @@ export class MirrorSync {
   private readonly store: MirrorStore
   private readonly client: SupabaseClient
   private readonly feed: WorkspaceFeed
+  /** The shared problem catalog, which follows its own feed beside this account's. */
+  private readonly catalog: CatalogSync
   private timezone: string
   private opened: Promise<void> | null = null
   /** The shell handed over a mirror file. Without one, pokes fall back to invalidating the query cache. */
@@ -77,7 +76,8 @@ export class MirrorSync {
     this.gateway = gateway
     this.store = store
     this.client = client
-    this.feed = new WorkspaceFeed(client)
+    this.feed = new WorkspaceFeed(client, WORKSPACE_FEED)
+    this.catalog = new CatalogSync(gateway, store, client)
     this.timezone = accountTimezone
   }
 
@@ -93,6 +93,7 @@ export class MirrorSync {
         this.cursor = status.cursor
         this.isReady = status.ready
         this.serving = status.ready
+        this.catalog.open(status)
       },
       (cause: unknown) => {
         // The mirror is a copy, not the record: without it Manor still runs, one server round trip at a time.
@@ -102,6 +103,8 @@ export class MirrorSync {
     await this.opened
     if (this.stopped) return this.report()
     this.installPokes()
+    // The catalog's first fill downloads a snapshot of tens of megabytes, so the launch does not wait for it.
+    void this.catalog.pull()
     await this.pull()
     return this.report()
   }
@@ -109,6 +112,7 @@ export class MirrorSync {
   stop(): void {
     this.stopped = true
     this.serving = false
+    this.catalog.stop()
     for (const undo of this.teardown.splice(0)) undo()
     if (this.channel !== null) {
       void this.client.removeChannel(this.channel)
@@ -126,12 +130,28 @@ export class MirrorSync {
     this.timezone = timezone
   }
 
+  /** Whether this table's rows are being answered from the mirror right now; the catalog is ready on its own schedule. */
+  private servesTable(table: StoredTable): boolean {
+    return table === CATALOG_DETAIL_TABLE || isCatalogTable(table) ? this.catalog.isServing() : this.serving
+  }
+
   /** The mirrored rows of one table, or null when reads belong on the server. */
   async mirroredRows(table: MirrorTable): Promise<JsonObject[] | null> {
     if (this.opened === null) throw new Error('Start the account mirror before reading through it')
     await this.opened
-    if (!this.serving) return null
+    if (!this.servesTable(table)) return null
     return (await this.store.rows(this.gateway.accountId, table)).map((row) => row.data)
+  }
+
+  /** One mirrored row by its stored key, or `serving: false` when reads of that table belong on the server. */
+  async mirroredRow(table: StoredTable, key: string): Promise<MirrorLookup> {
+    if (this.opened === null) throw new Error('Start the account mirror before reading through it')
+    await this.opened
+    if (!this.servesTable(table)) return { serving: false }
+    const row = await this.store.row(this.gateway.accountId, table, key)
+    // A pull that stopped serving while the read ran may have left the row half applied.
+    if (!this.servesTable(table)) return { serving: false }
+    return { serving: true, row: row === null ? null : row.data }
   }
 
   /**
@@ -219,8 +239,8 @@ export class MirrorSync {
    * so any change committed during the fill lands after it and the feed walk that follows the fill applies it.
    */
   private async bootstrap(head: number): Promise<void> {
-    for (let offset = 0; offset < MIRROR_TABLES.length; offset += BOOTSTRAP_CONCURRENCY) {
-      const group = MIRROR_TABLES.slice(offset, offset + BOOTSTRAP_CONCURRENCY)
+    for (let offset = 0; offset < ACCOUNT_TABLES.length; offset += BOOTSTRAP_CONCURRENCY) {
+      const group = ACCOUNT_TABLES.slice(offset, offset + BOOTSTRAP_CONCURRENCY)
       // Settled rather than raced, so one table's failure does not leave its neighbours rejecting unheard.
       const results = await Promise.allSettled(group.map((table) => this.replaceTable(table)))
       for (const result of results) if (result.status === 'rejected') throw result.reason
@@ -336,11 +356,11 @@ export class MirrorSync {
   }
 
   private async report(): Promise<MirrorStatus> {
-    return this.available ? this.store.status() : { ready: false, cursor: 0, rowCounts: {} }
+    return this.available ? this.store.status() : { ready: false, cursor: 0, catalogReady: false, catalogCursor: 0, rowCounts: {} }
   }
 
   private installPokes(): void {
-    const poke = (): void => { void this.pull() }
+    const poke = (): void => { void this.pull(); void this.catalog.pull() }
     const onVisible = (): void => { if (document.visibilityState === 'visible') poke() }
     window.addEventListener('focus', poke)
     window.addEventListener('online', poke)
