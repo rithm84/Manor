@@ -35,6 +35,8 @@ const scalars: readonly string[] = ['int', 'long', 'double', 'bool', 'string', '
 const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/
 const reserved = new Set(['main', 'Main', 'Solution', 'ListNode', 'TreeNode', 'Node', '_Node', 'Constructor', 'class', 'function', 'return', 'var', 'let', 'const', 'new', 'this', 'self', 'int', 'long', 'double', 'char', 'bool', 'string', 'func', 'type', 'struct', 'map', 'range', 'len', 'list', 'input', 'print', 'object', 'default', 'interface', 'package', 'import', 'delete', 'in', 'is', 'not', 'and', 'or', 'lambda', 'None', 'True', 'False', 'null', 'true', 'false', 'go', 'select', 'chan', 'auto', 'operator', 'template', 'typename', 'final', 'static', 'public', 'private', 'void', 'float', 'boolean', 'byte', 'short', 'unsigned', 'signed', 'register', 'enum', 'union', 'switch', 'case', 'break', 'continue', 'for', 'while', 'do', 'if', 'else', 'try', 'catch', 'throw', 'throws', 'with', 'yield', 'async', 'await', 'export', 'extends', 'super', 'goto', 'fallthrough', 'defer', 'string', 'error', 'any', 'cap', 'make', 'append', 'copy', 'panic'])
 
+/** Class and codec problems may name their class `Solution`, as LeetCode does; only function problems wrap user code in a generated `Solution`. */
+function portableClassName(name: string): boolean { return /^[A-Z][A-Za-z0-9]*$/.test(name) && (name === 'Solution' || !reserved.has(name)) }
 function isNodeKind(name: string): name is NodeKind { return (nodeKinds as readonly string[]).includes(name) }
 /** Parses `int`, `string[][]`, `list<list<int>>`, `TreeNode`, and similar; arrays of lists are rejected because Java cannot type them cleanly, and Node types appear only alone. */
 export function parseHarnessType(text: string): HarnessType {
@@ -85,7 +87,7 @@ export function validateInterface(spec: ProblemInterface): void {
   const kinds = nodeKinds.filter(kind => usesNode(spec, kind))
   if (kinds.length > 1) throw new TypeError(`An interface uses at most one Node type; found ${kinds.join(', ')}`)
   if (spec.kind === 'codec') {
-    if (!/^[A-Z][A-Za-z0-9]*$/.test(spec.className) || reserved.has(spec.className)) throw new TypeError(`Class name is not portable: ${spec.className}`)
+    if (!portableClassName(spec.className)) throw new TypeError(`Class name is not portable: ${spec.className}`)
     for (const method of [spec.encode, spec.decode]) {
       if (!/^[A-Za-z][A-Za-z0-9]*$/.test(method.name) || reserved.has(method.name) || method.name === spec.className) throw new TypeError(`Codec method name is not portable: ${method.name}`)
       names([method.param], method.name)
@@ -114,7 +116,7 @@ export function validateInterface(spec: ProblemInterface): void {
     }
     return
   }
-  if (!/^[A-Z][A-Za-z0-9]*$/.test(spec.className) || reserved.has(spec.className)) throw new TypeError(`Class name is not portable: ${spec.className}`)
+  if (!portableClassName(spec.className)) throw new TypeError(`Class name is not portable: ${spec.className}`)
   names(spec.constructorParams, spec.className)
   if (spec.methods.length === 0) throw new TypeError('A class interface needs at least one method')
   const methodNames = new Set<string>()
