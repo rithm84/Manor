@@ -355,6 +355,24 @@ def run_judge(directory: Path, items: list[dict]) -> list[bool]:
 
 
 # ---------- Spec ----------
+HARNESS_MARKERS = ("sys.stdin", "__name__", "MANOR", "\\x1e", "input(")
+
+
+def editorial_python(solution: str | None, mode: str) -> str:
+    """The code of the editorial's closing Python section, which must be the reference a reader would submit."""
+    require(solution is not None, "solution.md is required and must end with a ## Python section")
+    sections = re.split(r"(?m)^## ", solution)
+    last = sections[-1] if len(sections) > 1 else ""
+    require(re.match(r"Python[ \t]*\n", last) is not None, "solution.md must end with a ## Python section holding the reference solution")
+    blocks = re.findall(r"```python[ \t]*\n(.*?)\n```", last, re.S)
+    require(len(blocks) == 1, "the ## Python section must hold exactly one ```python code block")
+    code = blocks[0]
+    if mode != "stdin":
+        found = [marker for marker in HARNESS_MARKERS if marker in code]
+        require(not found, f"the ## Python solution must be clean solution code without harness or input handling: {found}")
+    return code
+
+
 def load_module(path: Path) -> dict:
     namespace: dict = {"__name__": "manor_tests"}
     exec(compile(path.read_text(), str(path), "exec"), namespace)
@@ -402,6 +420,7 @@ def validate(directory: Path, topics: set[str]) -> dict:
         require(all(isinstance(e.get("input"), str) and isinstance(e.get("output"), str) for e in examples), "mode none examples are display strings with input and output")
         content["examples"] = [{"input": e["input"], "output": e["output"], "explanation": e.get("explanation")} for e in examples]
         require(meta["kind"] != "coding" or meta.get("notes"), "a coding problem without a judge must say why in notes")
+        require(solution is not None and len(solution) >= 200, "a read-only problem needs a full solution write-up in solution.md")
         return result
     require(meta["kind"] == "coding", "only coding problems can be executable")
     checker = meta.get("checker")
@@ -458,7 +477,14 @@ def validate(directory: Path, topics: set[str]) -> dict:
     require(isinstance(generated, list), "generate(rng) must return a list")
     for index, value in enumerate(generated):
         add(value, None, f"generated case {index + 1}")
-    require(len(cases) >= 12, f"only {len(cases)} distinct cases; cover boundaries, adversarial inputs, and random cases (at least 12)")
+    exhaustive = meta.get("exhaustiveInputs")
+    if exhaustive is not None:
+        # The whole valid input space is smaller than the usual minimum, so every valid input is a case instead.
+        require(isinstance(exhaustive, str) and exhaustive.strip(), "exhaustiveInputs must explain why fewer than 12 valid inputs exist")
+        require(valid is not None, "exhaustiveInputs requires valid() so every listed input is checked against the constraints")
+        require(len(cases) < 12, "exhaustiveInputs applies only when fewer than 12 valid inputs exist; remove it")
+    else:
+        require(len(cases) >= 12, f"only {len(cases)} distinct cases; cover boundaries, adversarial inputs, and random cases (at least 12), or set exhaustiveInputs when fewer than 12 valid inputs exist")
     require(len(cases) <= MAX_CASES, f"{len(cases)} cases exceed the limit of {MAX_CASES}")
     if mode == "stdin":
         expected = run_stdin(program, cases, 10)
@@ -491,6 +517,16 @@ def validate(directory: Path, topics: set[str]) -> dict:
             require(matches(answer or "", expected[i][0] or "", checker), f"oracle disagrees on {cases[i].origin}: input {cases[i].text[:400]!r} reference {expected[i][0][:300]!r} oracle {answer[:300]!r}")
     else:
         require(meta.get("oracleWaiver"), "add oracle.py (an independent brute force) or explain oracleWaiver in meta.json")
+    python = editorial_python(solution, mode)
+    python_program = python if mode == "stdin" else node_json({"interface": spec["interface"], "language": "python", "source": python})
+    written = run_stdin(python_program, cases, 10) if mode == "stdin" else run_batch(python_program, cases, 180, "4")
+    if checker == "special":
+        verdicts = run_judge(directory, [{"input": case.text, "output": answer, "expected": first} for case, (first, _), (answer, _) in zip(cases, expected, written)])
+        rejected = [case.origin for case, ok in zip(cases, verdicts) if not ok]
+        require(not rejected, f"judge rejects the ## Python solution on {rejected[:5]}")
+    else:
+        wrong = [case.origin for case, (first, _), (answer, _) in zip(cases, expected, written) if not matches(answer or "", first or "", checker)]
+        require(not wrong, f"the ## Python solution in solution.md disagrees with reference.py on {wrong[:5]}")
     for case, (answer, _) in zip(cases, expected):
         require(len(answer.encode()) <= MAX_ANSWER_BYTES, f"{case.origin} answer exceeds 64 KiB")
         require(not has_nul(case.text) and not has_nul(answer), f"{case.origin} contains a NUL character (U+0000), which saved testsets cannot store; keep NUL out of inputs and answers")
