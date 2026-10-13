@@ -68,7 +68,7 @@ interface BarProps { problems: readonly ProblemRecord[]; filters: ProblemFilters
 
 /**
  * LeetCode's filter bar: the common narrowings as dropdowns under the search. Values combine with OR inside a menu
- * and AND across menus, as every library filter does; the View options dialog keeps the finer controls.
+ * and AND across menus, as every library filter does; the Advanced dialog keeps the finer controls.
  */
 export const ProblemFilterBar = memo(function ProblemFilterBar({ problems, filters, onFilters }: BarProps): ReactNode {
   const rounds = useMemo(() => new Set(tagFacets([...new Set(problems.flatMap(problem => problem.tags))]).find(group => group.facet === 'Round')?.values.map(value => value.tag) ?? []), [problems])
