@@ -2,6 +2,7 @@ import { Building2, ChevronRight, CircleCheck, ExternalLink, Lightbulb, Tag } fr
 import { Fragment, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { ProblemDetail, ProblemLibraryApi } from '../../../shared/problemLibrary'
+import { problemTopicCategories, problemTopicCategory } from '../../../shared/problemTopics'
 import { kindLabel } from './leetCodeModel'
 import { ProblemDifficulty } from './ProblemDifficulty'
 import { ProblemGroupSources } from './ProblemGroupSources'
@@ -33,6 +34,16 @@ function Examples({ detail }: { detail: ProblemDetail }): ReactNode {
   </div>)}</section>
 }
 
+/** A problem's patterns under their categories, in vocabulary order; labels outside the vocabulary follow on their own. */
+function TopicGroups({ topics }: { topics: readonly string[] }): ReactNode {
+  const groups = problemTopicCategories(topics).map(category => ({ category, labels: topics.filter(topic => problemTopicCategory(topic) === category) }))
+  const other = topics.filter(topic => problemTopicCategory(topic) === null)
+  return <dl className="problem-topic-groups">
+    {groups.map(group => <div key={group.category}><dt>{group.category}</dt><dd><ProblemTagList category="topics" labels={group.labels} limit={1000} /></dd></div>)}
+    {other.length === 0 ? null : <div><dt>Other</dt><dd><ProblemTagList category="topics" labels={other} limit={1000} /></dd></div>}
+  </dl>
+}
+
 /** The problem reader: Description, Submissions, and Solution tabs over one scroll area, each starting at the same place. */
 export function ProblemReader({ detail, library, coding, solved, tab, onTab, submissions }: Props): ReactNode {
   const { problem, content } = detail
@@ -55,7 +66,7 @@ export function ProblemReader({ detail, library, coding, solved, tab, onTab, sub
           {disclosures.map(([value, label, icon]) => <button type="button" key={value} className={`problem-meta-chip${open === value ? ' is-open' : ''}`} aria-expanded={open === value} data-testid={`problem-disclosure-${value}`} onClick={() => setOpen(open === value ? null : value)}>{icon}{label}</button>)}
           {content === null || content.hints.length === 0 ? null : <button type="button" className="problem-meta-chip" onClick={() => hints.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })}><Lightbulb size={13} aria-hidden="true" />Hint</button>}
         </div>
-        {open === null ? null : <div className="problem-disclosure" data-testid="problem-disclosure"><ProblemTagList category={open} labels={problem[open]} limit={1000} /></div>}
+        {open === null ? null : <div className="problem-disclosure" data-testid="problem-disclosure">{open === 'topics' ? <TopicGroups topics={problem.topics} /> : <ProblemTagList category={open} labels={problem[open]} limit={1000} />}</div>}
         {facets.length === 0 ? null : <dl className="problem-facets" aria-label="Interview evidence">{facets.map(group => <div key={group.facet}><dt>{group.facet === 'Other' ? 'Tags' : group.facet}</dt><dd>{group.values.map(value => value.label).join(', ')}</dd></div>)}</dl>}
         {content === null || statement === null ? <div className="problem-statement-empty" data-testid="problem-statement-empty"><p>This problem has no statement yet.</p></div> : <>
           <ProblemMarkdown text={statement.description} />

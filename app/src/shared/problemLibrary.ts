@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { LeetCodeAttempt, LeetCodeNote } from './leetcode'
 import { problemSourceMetadataSchema, problemSourceDateBounds } from './problemSourceMetadata'
+import { topicFilterPatterns } from './problemTopics'
 
 export const PROBLEM_KINDS = ['coding', 'system_design', 'behavioral', 'other'] as const
 export const PROBLEM_LANGUAGES = ['cpp', 'c', 'python', 'javascript', 'java', 'go'] as const
@@ -128,7 +129,7 @@ export function searchRank(problem: ProblemRecord, search: string): number {
   return name.includes(search) ? 4 : 5
 }
 
-/** Filters combine with AND; values within one property, or within one tag facet such as Round, combine with OR. While searching, relevance orders results before the chosen sort. */
+/** Filters combine with AND; values within one property, or within one tag facet such as Round, combine with OR. A topic category matches any of its patterns. While searching, relevance orders results before the chosen sort. */
 export function filterProblems(problems: readonly ProblemRecord[], filters: ProblemFilters, sort: readonly ProblemSort[]): ProblemRecord[] {
   const search = filters.search.trim().toLocaleLowerCase()
   const overlaps = (actual: readonly string[], selected: readonly string[]): boolean => selected.length === 0 || selected.some(value => actual.includes(value))
@@ -137,7 +138,7 @@ export function filterProblems(problems: readonly ProblemRecord[], filters: Prob
   return problems.filter(problem =>
     (search === '' || problem.externalKey === `leetcode:${search}` || [problem.name, ...problem.topics, ...problem.companies, ...problem.tags].join(' ').toLocaleLowerCase().includes(search)) &&
     overlaps([problem.kind], filters.kinds) && overlaps(problem.difficulty === null ? [] : [problem.difficulty], filters.difficulties) &&
-    overlaps(problem.topics, filters.topics) && overlaps(problem.companies, filters.companies) && tagGroups.every(group => overlaps(problem.tags, group)) &&
+    (filters.topics.length === 0 || filters.topics.some(value => topicFilterPatterns(value).some(topic => problem.topics.includes(topic)))) && overlaps(problem.companies, filters.companies) && tagGroups.every(group => overlaps(problem.tags, group)) &&
     overlaps(problem.collections, filters.collections) && overlaps([problem.sourceType], filters.sourceTypes) &&
     overlaps([problem.status], filters.statuses) && (filters.hasContent === null || problem.contentAvailable === filters.hasContent) &&
     ((!filters.lastAskedSince && !filters.lastAskedUntil) || (problem.sourceMetadata?.lastAsked !== undefined &&
