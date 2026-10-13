@@ -26,7 +26,7 @@
 /* Save state: a muted cloud at rest, "Saving…" only for slow saves, a brief check, and a warning that stays until resolved.
    Its width is reserved, so changing state never moves the toolbar. */
 .problem-save-state { display: inline-flex; align-items: center; min-width: calc(var(--space-12) * 2); color: var(--ink-muted); font-size: var(--text-xs); white-space: nowrap; }
-.problem-save-view { display: inline-flex; align-items: center; animation: problem-save-in var(--duration-base) var(--ease-out); }
+.problem-save-state-content { display: inline-flex; align-items: center; animation: problem-save-in var(--duration-base) var(--ease-out); }
 @keyframes problem-save-in { from { opacity: 0; transform: scale(0.92); } }
 .problem-save-icon { display: inline-grid; place-items: center; width: calc(var(--space-6) + var(--space-1)); height: calc(var(--space-6) + var(--space-1)); border-radius: var(--radius-chip); opacity: 0.75; }
 .problem-save-state.is-justSaved .problem-save-icon { color: var(--completion); opacity: 1; }
@@ -72,7 +72,7 @@
   .problem-result, .problem-submission-heading { animation-name: problem-reveal-still; }
   @keyframes problem-reveal-still { from { opacity: 0; } }
   .problem-settings-popup { transition: opacity var(--duration-fast) ease; transform: none !important; }
-  .problem-save-view { animation-name: problem-reveal-still; }
+  .problem-save-state-content { animation-name: problem-reveal-still; }
 }
 
 /* Submissions: a compact history that opens each submission in place. */
