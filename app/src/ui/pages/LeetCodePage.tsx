@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, ChevronRight, Code2, ExternalLink, FileText, Search } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Code2, ExternalLink, FileText, NotebookPen, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { emptyProblemFilters } from '../../shared/problemLibrary'
@@ -6,7 +6,8 @@ import { filterProblemGroups, problemGroups } from '../../shared/problemGroups'
 import type { ProblemDetail, ProblemFilters, ProblemLibraryState, ProblemRecord, ProblemSavedView } from '../../shared/problemLibrary'
 import { useManorAccount } from '../../web/accountContext'
 import { dateInTimezone } from '../../shared/timezone'
-import { Button, Select } from '../components/ui'
+import { Button, ViewTabs } from '../components/ui'
+import { useDevicePreference } from '../preferences/devicePreference'
 import { useCommitVersion } from '../services/useCommitVersion'
 import { useManorService } from '../services/ManorServices'
 import { SecondaryModuleSurface } from './SecondaryModuleSurface'
@@ -28,8 +29,6 @@ import './leetcode/leetcode.css'
 import './leetcode/problemLibrary.css'
 import './leetcode/problemWorkspace.css'
 
-/** The switcher's value for the unsaved default view; saved views use their UUIDs. */
-const allProblemsView = 'all'
 type ViewSettings = Pick<ProblemSavedView, 'filters' | 'sort' | 'groupBy' | 'visibleColumns'>
 function initialView(): ViewSettings { return { filters: emptyProblemFilters(), sort: [{ field: 'name', direction: 'asc' }], groupBy: null, visibleColumns: ['difficulty', 'lastAsked', 'topics', 'companies', 'collections', 'status'] } }
 function groupLabel(problem: ProblemRecord, group: ProblemSavedView['groupBy']): string {
@@ -65,7 +64,7 @@ export function LeetCodePage(): ReactNode {
   const [openingId, setOpeningId] = useState<string | null>(null)
   const [detail, setDetail] = useState<ProblemDetail | null>(null)
   const [reviewProblem, setReviewProblem] = useState<ProblemRecord | null>(null)
-  const [tab, setTab] = useState<'library' | 'mistakes'>('library')
+  const [tab, setTab] = useDevicePreference<'library' | 'mistakes'>('problems.view', ['library', 'mistakes'], 'library')
   const [searchDraft, setSearchDraft] = useState('')
   const [tableScroll, tableWidth] = useElementWidth()
   const today = dateInTimezone(new Date(), account.timezone)
@@ -138,12 +137,12 @@ export function LeetCodePage(): ReactNode {
   // The library and problems span the page; solving also fills its height so the panes scroll inside themselves.
   return <SecondaryModuleSurface width={solving ? 'full' : 'fluid'}><div className={`lc problem-library${detail === null ? '' : ' has-workspace'}${solving ? ' is-solving' : ''}`} data-testid="problem-library">
     {detail !== null ? <ProblemWorkspace key={detail.problem.id} detail={detail} execution={execution} library={api} onBack={() => setDetail(null)} onReview={() => setReviewProblem(detail.problem)} onSubmitted={refresh} /> : <>
-      <header className="problem-library-header"><div><h1 className="page-title">Problems</h1><span className="tnum">{state === null ? '…' : catalog.length.toLocaleString()} in your library</span></div></header>
-      <nav className="problem-module-tabs" aria-label="Problems views"><button type="button" className={tab === 'library' ? 'is-active' : ''} onClick={() => setTab('library')}>Library</button><button type="button" className={tab === 'mistakes' ? 'is-active' : ''} onClick={() => setTab('mistakes')}>Mistakes</button></nav>
+      <header className="problem-library-header"><div><h1 className="page-title">Problems</h1><span className="tnum">{state === null ? '…' : catalog.length.toLocaleString()} in your library</span></div><ViewTabs label="Problems view" value={tab} onChange={setTab} tabs={[{ value: 'library', label: 'Problems', icon: <Code2 size={14} /> }, { value: 'mistakes', label: 'Mistakes', icon: <NotebookPen size={14} /> }]} /></header>
+      {tab === 'mistakes' || state === null ? null : <nav className="problem-module-tabs" aria-label="Saved views" data-testid="problem-saved-views"><button type="button" className={viewId === null ? 'is-active' : ''} aria-pressed={viewId === null} data-testid="problem-view-all" onClick={() => selectView(null)}>All problems</button>{state.views.map(view => <button type="button" key={view.id} className={viewId === view.id ? 'is-active' : ''} aria-pressed={viewId === view.id} data-testid={`problem-view-${view.id}`} onClick={() => selectView(view)}>{view.name}{viewId === view.id && dirty ? <span aria-label="Unsaved view changes"> ·</span> : null}</button>)}</nav>}
       {error === null ? null : <div className="lc-error lc-error--page" role="alert"><span>{error}</span><Button variant="ghost" onClick={refresh}>Try again</Button></div>}
       {state === null ? <p className="lc-loading" role="status">Loading your library…</p> : tab === 'mistakes' ? <section className="problem-mistakes-page"><MistakesPanel notes={state.notes} onAdd={text => persistAttempt(() => attemptsApi.addNote(text))} onUpdate={(noteId, text, expectedRevision) => persistAttempt(() => attemptsApi.updateNote({ noteId, text, expectedRevision }))} onDelete={noteId => persistAttempt(() => attemptsApi.deleteNote(noteId))} /></section> : <>
-        {/* One toolbar: search first, then the common filters and the saved view, with View options and Save view at the end. */}
-        <div className="problem-library-toolbar"><label className="problem-search"><Search size={16} /><input data-testid="problem-search" value={searchDraft} placeholder="Search problems, topics, or companies" aria-label="Search problems" onChange={event => setSearchDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Escape' && searchDraft !== '') { event.stopPropagation(); setSearchDraft('') } }} /></label><ProblemFilterBar problems={catalog} filters={settings.filters} onFilters={updateFilters} /><div className="problem-view-switcher" data-testid="problem-view-switcher"><Select value={viewId ?? allProblemsView} ariaLabel="Saved view" placeholder="All problems" options={[{ value: allProblemsView, label: 'All problems' }, ...state.views.map(view => ({ value: view.id, label: view.name }))]} onChange={value => selectView(state.views.find(view => view.id === value) ?? null)} /></div><ProblemViewControls problems={catalog} filters={settings.filters} sort={settings.sort} groupBy={settings.groupBy} columns={settings.visibleColumns} selectedView={selectedView} dirty={dirty} busy={busy} onFilters={updateFilters} onSort={sort => setSettings(previous => ({ ...previous, sort }))} onGroup={groupBy => setSettings(previous => ({ ...previous, groupBy }))} onColumns={visibleColumns => setSettings(previous => ({ ...previous, visibleColumns }))} onSave={saveView} onDelete={deleteView} /></div>
+        {/* One toolbar: search first, then the common filters, with Advanced and Save view at the end. */}
+        <div className="problem-library-toolbar"><label className="problem-search"><Search size={16} /><input data-testid="problem-search" value={searchDraft} placeholder="Search problems, topics, or companies" aria-label="Search problems" onChange={event => setSearchDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Escape' && searchDraft !== '') { event.stopPropagation(); setSearchDraft('') } }} /></label><ProblemFilterBar problems={catalog} filters={settings.filters} onFilters={updateFilters} /><ProblemViewControls problems={catalog} filters={settings.filters} sort={settings.sort} groupBy={settings.groupBy} columns={settings.visibleColumns} selectedView={selectedView} dirty={dirty} busy={busy} onFilters={updateFilters} onSort={sort => setSettings(previous => ({ ...previous, sort }))} onGroup={groupBy => setSettings(previous => ({ ...previous, groupBy }))} onColumns={visibleColumns => setSettings(previous => ({ ...previous, visibleColumns }))} onSave={saveView} onDelete={deleteView} /></div>
         <div className="problem-table-scroll" ref={tableScroll}><table className="problem-table" data-testid="problem-table"><colgroup><col />{shownColumns.map(column => <col key={column} style={{ width: problemColumnWidths[column] }} />)}<col style={{ width: problemActionsWidth }} /></colgroup><thead><tr><th scope="col">Problem</th>{shownColumns.map(column => <th key={column} scope="col">{columnLabels[column]}</th>)}<th scope="col" aria-label="Problem actions" /></tr></thead><tbody>{rows.map((problem, index) => {
           const group = groupLabel(problem, settings.groupBy)
           const showGroup = settings.groupBy !== null && (index === 0 || groupLabel(rows[index - 1], settings.groupBy) !== group)

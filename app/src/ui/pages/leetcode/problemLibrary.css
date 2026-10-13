@@ -4,7 +4,9 @@
 .problem-library-header .page-title { margin: 0; }
 .problem-library-header > div > span, .problem-library-pagination { color: var(--ink-muted); font-size: var(--text-sm); }
 .problem-module-tabs, .problem-tabs { display: flex; align-items: center; gap: var(--space-1); }
-.problem-module-tabs { padding: var(--space-2) 0; border-bottom: 1px solid var(--hairline); margin-bottom: var(--space-4); }
+/* Saved views as tabs: a long list scrolls sideways rather than wrapping under the hairline. */
+.problem-module-tabs { padding: var(--space-2) 0; border-bottom: 1px solid var(--hairline); margin-bottom: var(--space-4); overflow-x: auto; }
+.problem-module-tabs button { flex-shrink: 0; }
 .problem-module-tabs button, .problem-tabs button { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink-muted); font: inherit; font-size: var(--text-sm); padding: var(--space-2) var(--space-3); border-radius: var(--radius-chip); cursor: pointer; white-space: nowrap; }
 .problem-module-tabs button:hover, .problem-tabs button:hover { background: var(--surface-hover); color: var(--ink); }
 .problem-module-tabs button.is-active, .problem-tabs button.is-active { background: var(--surface-selected); color: var(--primary); font-weight: 600; }
@@ -40,8 +42,6 @@
 .problem-filter-clear { padding: var(--space-1) var(--space-2); border-radius: var(--radius-chip); color: var(--primary); font: inherit; font-size: var(--text-sm); font-weight: 500; cursor: pointer; }
 .problem-filter-clear:hover:not(:disabled) { background: var(--surface-hover); }
 .problem-filter-clear:disabled { color: var(--ink-muted); opacity: 0.6; cursor: default; }
-.problem-view-switcher .ui-select-trigger { max-width: calc(var(--space-12) * 5); }
-.problem-view-switcher .ui-select-option-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .problem-filter-popup { transition: opacity var(--duration-fast) ease; transform: none !important; } }
 .problem-facet-tag { display: inline-flex; max-width: 100%; }
 .problem-search { display: flex; align-items: center; gap: var(--space-2); flex: 1; min-width: 240px; border: 1px solid var(--control-border); border-radius: var(--radius-control); padding: var(--space-2) var(--space-3); color: var(--ink-muted); }
