@@ -43,9 +43,24 @@ class SpecError(Exception):
     """A spec defect the author must fix; the message names the file and the failing case."""
 
 
-def taxonomy() -> set[str]:
-    script = "import('" + str(ROOT / "app/src/shared/problemTopics.ts") + "').then(m => console.log(JSON.stringify(m.PROBLEM_TOPICS)))"
-    return set(json.loads(subprocess.run(["node", "-e", script], check=True, capture_output=True, text=True).stdout))
+class Taxonomy(set):
+    """The current pattern labels, plus the retired labels that map onto them (None for a dropped label)."""
+    retired: dict
+
+
+def taxonomy() -> Taxonomy:
+    script = "import('" + str(ROOT / "app/src/shared/problemTopics.ts") + "').then(m => console.log(JSON.stringify([m.PROBLEM_TOPICS, m.RETIRED_PROBLEM_TOPICS ?? {}])))"
+    current, retired = json.loads(subprocess.run(["node", "-e", script], check=True, capture_output=True, text=True).stdout)
+    labels = Taxonomy(current)
+    labels.retired = retired
+    return labels
+
+
+def current_topics(topics: list, vocabulary: set) -> list:
+    """Translates retired labels to their current pattern, dropping labels retired without a replacement."""
+    retired = getattr(vocabulary, "retired", {})
+    mapped = [retired.get(topic) if topic in retired else topic for topic in topics]
+    return list(dict.fromkeys(topic for topic in mapped if topic is not None))
 
 
 def node_json(request: dict) -> str:
@@ -393,8 +408,10 @@ def validate(directory: Path, topics: set[str]) -> dict:
     require(meta["mode"] in MODES, "mode must be function, class, codec, stdin, or none")
     require(meta["difficulty"] in ("Easy", "Medium", "Hard"), "difficulty must be Easy, Medium, or Hard")
     require(isinstance(meta["topics"], list) and 1 <= len(meta["topics"]) <= 6 and len(set(meta["topics"])) == len(meta["topics"]), "topics must be one to six distinct labels")
-    unknown = [topic for topic in meta["topics"] if topic not in topics]
+    unknown = [topic for topic in meta["topics"] if topic not in topics and topic not in getattr(topics, "retired", {})]
     require(not unknown, f"topics outside the taxonomy: {unknown}")
+    labels = current_topics(meta["topics"], topics)
+    require(len(labels) >= 1, "topics must include at least one current taxonomy label")
     require(meta.get("round") is None or meta["round"] in ROUNDS, f"round must be null or one of {sorted(ROUNDS)}")
     require(isinstance(meta["hints"], list) and all(isinstance(h, str) and h.strip() for h in meta["hints"]), "hints must be nonempty strings")
     require(isinstance(meta["constraints"], list) and all(isinstance(c, str) and c.strip() for c in meta["constraints"]), "constraints must be nonempty strings")
@@ -413,7 +430,7 @@ def validate(directory: Path, topics: set[str]) -> dict:
     if follow_ups:
         body += "\n\n## Follow-up\n\n" + "\n".join(f"- {line.strip()}" for line in follow_ups)
     content = {"statement_markdown": body, "examples": [], "hints": [h.strip() for h in meta["hints"]], "solution_markdown": solution, "starter_code": {}, "interface": None}
-    result = {"key": meta["key"], "title": meta["title"], "kind": meta["kind"], "difficulty": meta["difficulty"], "topics": meta["topics"], "content": content, "testset": None, "notes": meta.get("notes"), "round": meta.get("round")}
+    result = {"key": meta["key"], "title": meta["title"], "kind": meta["kind"], "difficulty": meta["difficulty"], "topics": labels, "content": content, "testset": None, "notes": meta.get("notes"), "round": meta.get("round")}
     mode = meta["mode"]
     if mode == "none":
         examples = meta.get("examples") or []

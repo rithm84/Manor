@@ -2,6 +2,7 @@ import { Check, ChevronLeft, ChevronRight, Code2, ExternalLink, FileText, Notebo
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { emptyProblemFilters } from '../../shared/problemLibrary'
+import { problemTopicCategories } from '../../shared/problemTopics'
 import { filterProblemGroups, problemGroups } from '../../shared/problemGroups'
 import type { ProblemDetail, ProblemFilters, ProblemLibraryState, ProblemRecord, ProblemSavedView } from '../../shared/problemLibrary'
 import { useManorAccount } from '../../web/accountContext'
@@ -32,7 +33,7 @@ import './leetcode/problemWorkspace.css'
 type ViewSettings = Pick<ProblemSavedView, 'filters' | 'sort' | 'groupBy' | 'visibleColumns'>
 function initialView(): ViewSettings { return { filters: emptyProblemFilters(), sort: [{ field: 'name', direction: 'asc' }], groupBy: null, visibleColumns: ['difficulty', 'lastAsked', 'topics', 'companies', 'collections', 'status'] } }
 function groupLabel(problem: ProblemRecord, group: ProblemSavedView['groupBy']): string {
-  if (group === 'topic') return problem.topics[0] ?? 'No topic'
+  if (group === 'topic') return problemTopicCategories(problem.topics)[0] ?? problem.topics[0] ?? 'No topic'
   if (group === 'company') return problem.companies[0] ?? 'No company'
   if (group === 'collection') return problem.collections[0] ?? 'No collection'
   if (group === 'difficulty') return problem.difficulty ?? 'No difficulty'

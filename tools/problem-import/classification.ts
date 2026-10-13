@@ -1,12 +1,12 @@
 /** Validated, source-independent metadata decisions and full-context preparation. */
 import { z } from 'zod'
 import { createHash } from 'node:crypto'
-import { PROBLEM_TOPIC_GROUPS, PROBLEM_TOPICS } from '../../app/src/shared/problemTopics.ts'
+import { PROBLEM_TOPIC_CATEGORIES, PROBLEM_TOPICS } from '../../app/src/shared/problemTopics.ts'
 
 export const difficultySchema = z.enum(['Easy', 'Medium', 'Hard'])
 export const kindSchema = z.enum(['coding', 'system_design', 'behavioral', 'other'])
 /** The closed library taxonomy, label to rubric; the app owns it so classification and the UI never diverge. */
-export const topics: Readonly<Record<string, string>> = Object.fromEntries(PROBLEM_TOPIC_GROUPS.flatMap(group => group.topics.map(topic => [topic.label, topic.rubric])))
+export const topics: Readonly<Record<string, string>> = Object.fromEntries(PROBLEM_TOPIC_CATEGORIES.flatMap(category => category.topics.map(topic => [topic.label, topic.rubric])))
 export type Topic = string
 export const topicSchema = z.enum(PROBLEM_TOPICS as [string, ...string[]])
 

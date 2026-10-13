@@ -1,14 +1,16 @@
 import { Popover } from '@base-ui/react/popover'
-import { ChevronDown, Search } from 'lucide-react'
+import { ChevronDown, ChevronRight, Search } from 'lucide-react'
 import { memo, useMemo, useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import { PROBLEM_STATUSES } from '../../../shared/problemLibrary'
 import type { ProblemFilters, ProblemRecord } from '../../../shared/problemLibrary'
+import { PROBLEM_TOPIC_CATEGORIES, problemTopicCategories } from '../../../shared/problemTopics'
 import { tagFacets } from './problemTestcases'
 import { statusLabels } from './ProblemViewControls'
 const difficulties = ['Easy', 'Medium', 'Hard'] as const
 
-interface FilterOption { readonly value: string; readonly label: string; readonly count: number; readonly tone: string | null }
+/** An option may hold sub-options, such as a topic category over its patterns; choosing the parent selects all of them. */
+interface FilterOption { readonly value: string; readonly label: string; readonly count: number; readonly tone: string | null; readonly children?: readonly FilterOption[] }
 interface MenuProps {
   label: string; testId: string; selected: readonly string[]; searchable: boolean
   /** Builds the options when the menu opens, so the catalog is only counted for a menu someone is looking at. */
@@ -27,20 +29,52 @@ function byCount(counts: ReadonlyMap<string, number>): FilterOption[] {
   return [...counts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).map(([value, count]) => ({ value, label: value, count, tone: null }))
 }
 
+/** Topic categories in vocabulary order, each over its patterns with counts; labels outside the vocabulary follow by count. */
+function topicOptionsFor(problems: readonly ProblemRecord[]): FilterOption[] {
+  const patterns = countBy(problems, problem => problem.topics)
+  const categories = countBy(problems, problem => problemTopicCategories(problem.topics))
+  const known = new Set(PROBLEM_TOPIC_CATEGORIES.flatMap(category => category.topics.map(topic => topic.label)))
+  const grouped = PROBLEM_TOPIC_CATEGORIES.filter(category => categories.has(category.category)).map(category => {
+    const children = category.topics.filter(topic => patterns.has(topic.label)).map(topic => ({ value: topic.label, label: topic.label, count: patterns.get(topic.label) ?? 0, tone: null }))
+    return { value: category.category, label: category.category, count: categories.get(category.category) ?? 0, tone: null, children: children.length <= 1 ? [] : children }
+  })
+  return [...grouped, ...byCount(new Map([...patterns].filter(([label]) => !known.has(label))))]
+}
+
+function OptionRow({ option, checked, onToggle, expanded, onExpand }: { option: FilterOption; checked: boolean; onToggle: () => void; expanded: boolean | null; onExpand: () => void }): ReactNode {
+  return <div className={`problem-filter-row${expanded === null ? '' : ' has-children'}`}>
+    <label className="problem-filter-option">
+      <input type="checkbox" checked={checked} onChange={onToggle} />
+      <span className={option.tone ?? undefined}>{option.label}</span>
+      <span className="problem-filter-count tnum">{option.count.toLocaleString()}</span>
+    </label>
+    {expanded === null ? null : <button type="button" className="problem-filter-expand" aria-expanded={expanded} aria-label={`${expanded ? 'Hide' : 'Show'} ${option.label} patterns`} onClick={onExpand}><ChevronRight className="problem-disclosure-icon" size={14} aria-hidden="true" /></button>}
+  </div>
+}
+
 function MenuOptions({ selected, searchable, options, onChange, search }: Omit<MenuProps, 'label' | 'testId'> & { search: RefObject<HTMLInputElement | null> }): ReactNode {
   const [query, setQuery] = useState('')
+  const [open, setOpen] = useState<ReadonlySet<string>>(new Set())
   const all = useMemo(options, [options])
   const needle = query.trim().toLocaleLowerCase()
-  const shown = needle === '' ? all : all.filter(option => option.label.toLocaleLowerCase().includes(needle))
+  const hit = (option: FilterOption): boolean => option.label.toLocaleLowerCase().includes(needle)
+  const shown = needle === '' ? all : all.flatMap(option => {
+    const children = (option.children ?? []).filter(hit)
+    return hit(option) || children.length > 0 ? [{ ...option, children: hit(option) ? option.children : children }] : []
+  })
   const toggle = (value: string): void => onChange(selected.includes(value) ? selected.filter(item => item !== value) : [...selected, value])
+  const expand = (value: string): void => setOpen(current => { const next = new Set(current); if (next.has(value)) next.delete(value); else next.add(value); return next })
   return <>
     {searchable ? <label className="problem-filter-search"><Search size={14} aria-hidden="true" /><input ref={search} value={query} placeholder="Search" aria-label="Search options" onChange={event => setQuery(event.target.value)} /></label> : null}
     <div className="problem-filter-options" role="group">
-      {shown.length === 0 ? <p className="problem-filter-none">No matches</p> : shown.map(option => <label key={option.value} className="problem-filter-option">
-        <input type="checkbox" checked={selected.includes(option.value)} onChange={() => toggle(option.value)} />
-        <span className={option.tone ?? undefined}>{option.label}</span>
-        <span className="problem-filter-count tnum">{option.count.toLocaleString()}</span>
-      </label>)}
+      {shown.length === 0 ? <p className="problem-filter-none">No matches</p> : shown.map(option => {
+        const children = option.children ?? []
+        const expanded = children.length === 0 ? null : open.has(option.value) || (needle !== '' && !hit(option))
+        return <div key={option.value} className="problem-filter-group">
+          <OptionRow option={option} checked={selected.includes(option.value)} onToggle={() => toggle(option.value)} expanded={expanded} onExpand={() => expand(option.value)} />
+          {expanded ? <div className="problem-filter-children" role="group" aria-label={`${option.label} patterns`}>{children.map(child => <OptionRow key={child.value} option={child} checked={selected.includes(child.value)} onToggle={() => toggle(child.value)} expanded={null} onExpand={() => undefined} />)}</div> : null}
+        </div>
+      })}
     </div>
   </>
 }
@@ -76,7 +110,7 @@ export const ProblemFilterBar = memo(function ProblemFilterBar({ problems, filte
   const anyActive = filters.difficulties.length + filters.statuses.length + filters.topics.length + filters.companies.length + filters.collections.length + chosenRounds.length > 0
   const difficultyOptions = useMemo(() => () => { const counts = countBy(problems, problem => problem.difficulty === null ? [] : [problem.difficulty]); return difficulties.map(value => ({ value, label: value, count: counts.get(value) ?? 0, tone: `problem-filter-tone is-${value.toLowerCase()}` })) }, [problems])
   const statusOptions = useMemo(() => () => { const counts = countBy(problems, problem => [problem.status]); return PROBLEM_STATUSES.map(value => ({ value, label: statusLabels[value], count: counts.get(value) ?? 0, tone: null })) }, [problems])
-  const topicOptions = useMemo(() => () => byCount(countBy(problems, problem => problem.topics)), [problems])
+  const topicOptions = useMemo(() => () => topicOptionsFor(problems), [problems])
   const companyOptions = useMemo(() => () => byCount(countBy(problems, problem => problem.companies)), [problems])
   const collectionOptions = useMemo(() => () => byCount(countBy(problems, problem => problem.collections)), [problems])
   const roundOptions = useMemo(() => () => { const counts = countBy(problems, problem => problem.tags.filter(tag => rounds.has(tag))); return tagFacets([...rounds]).flatMap(group => group.values.map(value => ({ value: value.tag, label: value.label, count: counts.get(value.tag) ?? 0, tone: null }))) }, [problems, rounds])

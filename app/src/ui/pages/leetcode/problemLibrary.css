@@ -34,6 +34,13 @@
 .problem-filter-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); }
 .problem-filter-option > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .problem-filter-count { color: var(--ink-muted); font-size: var(--text-xs); }
+.problem-filter-row { display: flex; align-items: center; gap: var(--space-1); }
+.problem-filter-row > .problem-filter-option { flex: 1; min-width: 0; }
+.problem-filter-expand { display: inline-grid; flex: none; place-items: center; width: var(--space-6); height: var(--space-6); border-radius: var(--radius-chip); color: var(--ink-muted); cursor: pointer; }
+.problem-filter-expand:hover { background: var(--surface-hover); color: var(--ink); }
+.problem-filter-expand:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.problem-filter-expand[aria-expanded="true"] > .problem-disclosure-icon { transform: rotate(90deg); }
+.problem-filter-children { padding-left: var(--space-5); }
 .problem-filter-tone.is-easy { color: var(--completion); }
 .problem-filter-tone.is-medium { color: var(--today-warning); }
 .problem-filter-tone.is-hard { color: var(--error); }
@@ -162,6 +169,10 @@
 .problem-meta-chip:focus-visible, .problem-icon-button:focus-visible, .problem-case-chip button:focus-visible, .problem-case-add:focus-visible, .problem-pane-divider:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .problem-disclosure { margin-bottom: var(--space-4); }
 .problem-disclosure .problem-table-labels { max-width: none; gap: var(--space-2); }
+.problem-topic-groups { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-2) var(--space-4); margin: 0; }
+.problem-topic-groups > div { display: contents; }
+.problem-topic-groups dt { color: var(--ink-muted); font-size: var(--text-sm); line-height: 24px; }
+.problem-topic-groups dd { margin: 0; }
 .problem-facets { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-5); margin: 0 0 var(--space-5); font-size: var(--text-sm); }
 .problem-facets > div { display: flex; gap: var(--space-2); }
 .problem-facets dt { color: var(--ink-muted); }
