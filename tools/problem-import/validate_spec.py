@@ -207,6 +207,14 @@ def display_input(spec: dict, case: Case) -> str:
     return case.text.rstrip("\n")
 
 
+# Saved testsets live in PostgreSQL text and jsonb, which cannot hold U+0000, raw or as a JSON escape.
+NUL_ESCAPE = re.compile(r"(?<!\\)(?:\\\\)*\\u0000")
+
+
+def has_nul(text: str) -> bool:
+    return "\x00" in text or NUL_ESCAPE.search(text) is not None
+
+
 # ---------- Execution ----------
 # Each program gets a 2 GiB address-space ceiling, so a runaway reference, oracle, or generator fails
 # with a clear error instead of exhausting the machine that runs many validators at once. On Linux it
@@ -465,6 +473,7 @@ def validate(directory: Path, topics: set[str]) -> dict:
         require(meta.get("oracleWaiver"), "add oracle.py (an independent brute force) or explain oracleWaiver in meta.json")
     for case, (answer, _) in zip(cases, expected):
         require(len(answer.encode()) <= MAX_ANSWER_BYTES, f"{case.origin} answer exceeds 64 KiB")
+        require(not has_nul(case.text) and not has_nul(answer), f"{case.origin} contains a NUL character (U+0000), which saved testsets cannot store; keep NUL out of inputs and answers")
     for case, (answer, _) in zip(cases[:example_count], expected[:example_count]):
         content["examples"].append({"input": display_input(spec, case), "output": answer.strip() if mode != "stdin" else answer.rstrip("\n"), "explanation": case.explanation})
     testcases = [{"id": f"case-{i + 1:03d}", "input": case.text, "expectedOutput": answer if mode == "stdin" else answer.strip(), "hidden": i >= example_count} for i, (case, (answer, _)) in enumerate(zip(cases, expected))]
