@@ -27,6 +27,11 @@ export function ProblemTag({ category, label }: { category: ProblemTagCategory; 
   if (category === 'companies') {
     const wordmark = companyWordmarks[label.trim().toLowerCase()]
     if (wordmark === undefined) return <span className="problem-company-tag problem-company-tag--text" title={label} data-testid="problem-company-tag" data-company={label}><span>{label}</span></span>
+    if (wordmark.mark === 'icon') return <span className={`problem-company-tag problem-company-tag--icon${wordmark.dark === null ? ' needs-light-surface' : ' has-dark-wordmark'}`} title={label} data-testid="problem-company-tag" data-company={label}>
+      <img className="problem-company-wordmark-light" src={`/brand/company-wordmarks/${wordmark.light}`} width={18} height={18} alt="" aria-hidden="true" loading="lazy" draggable={false} />
+      {wordmark.dark === null ? null : <img className="problem-company-wordmark-dark" src={`/brand/company-wordmarks/${wordmark.dark}`} width={18} height={18} alt="" aria-hidden="true" loading="lazy" draggable={false} />}
+      <span>{label}</span>
+    </span>
     return <span className={`problem-company-tag problem-company-tag--wordmark${wordmark.dark === null ? ' needs-light-surface' : ' has-dark-wordmark'}`} role="img" aria-label={label} title={label} data-testid="problem-company-tag" data-company={label}>
       <img className="problem-company-wordmark-light" src={`/brand/company-wordmarks/${wordmark.light}`} width={wordmark.width} height={18} alt="" aria-hidden="true" loading="lazy" draggable={false} />
       {wordmark.dark === null ? null : <img className="problem-company-wordmark-dark" src={`/brand/company-wordmarks/${wordmark.dark}`} width={wordmark.width} height={18} alt="" aria-hidden="true" loading="lazy" draggable={false} />}

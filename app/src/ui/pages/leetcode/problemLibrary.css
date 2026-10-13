@@ -83,6 +83,9 @@
 .problem-company-tag { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; height: var(--space-6); max-width: 100%; padding: 0 var(--space-2); border: 1px solid var(--hairline-strong); border-radius: var(--radius-chip); background: var(--surface-canvas); vertical-align: middle; overflow: hidden; }
 .problem-company-tag--text { flex-shrink: 1; min-width: 0; color: var(--ink); font-size: var(--text-sm); font-weight: 600; line-height: 1; white-space: nowrap; }
 .problem-company-tag--text > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.problem-company-tag--icon { gap: var(--space-1); color: var(--ink); font-size: var(--text-sm); font-weight: 600; line-height: 1; white-space: nowrap; }
+.problem-company-tag--icon img { width: 18px; }
+.problem-company-tag--icon.needs-light-surface { color: var(--brand-ink-light); }
 .problem-company-tag.needs-light-surface { background: var(--brand-surface-light); border-color: var(--brand-edge-light); }
 .problem-company-tag img { display: block; max-width: 112px; height: 18px; object-fit: contain; }
 .problem-company-tag .problem-company-wordmark-dark { display: none; }

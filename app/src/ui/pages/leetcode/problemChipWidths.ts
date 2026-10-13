@@ -13,6 +13,7 @@ export const cellPadding = 24
 const pillPadding = 14 // `.ui-pill--tag`: 7px on each side
 const companyChipChrome = 18 // `.problem-company-tag`: 8px padding and a 1px border on each side
 const wordmarkMaxWidth = 112 // `.problem-company-tag img`
+const iconMarkWidth = 22 // `.problem-company-tag--icon`: an 18px logo and a 4px gap before the name
 const counterPadding = 8 // `.problem-tags-expand`: 4px on each side
 
 let context: CanvasRenderingContext2D | null = null
@@ -44,6 +45,7 @@ function cached(key: string, weight: number, size: number, compute: () => number
 export function chipWidth(category: ProblemTagCategory, label: string): number {
   if (category === 'companies') {
     const wordmark = companyWordmarks[label.trim().toLowerCase()]
+    if (wordmark?.mark === 'icon') return cached(`company-icon\u0000${label}`, 600, 13, () => iconMarkWidth + measureText(label, 600, 13) + companyChipChrome)
     if (wordmark !== undefined) return Math.ceil(Math.min(wordmark.width, wordmarkMaxWidth)) + companyChipChrome
     return cached(`companies\u0000${label}`, 600, 13, () => measureText(label, 600, 13) + companyChipChrome)
   }

@@ -1,5 +1,6 @@
 /** Bundled full wordmarks. Asset revisions, viewport edits, and licenses live in public/brand/company-wordmarks/SOURCES.json. */
-export interface CompanyWordmark { readonly light: string; readonly dark: string | null; readonly width: number }
+/** `mark: 'icon'` is a logo without the company's name, so its chip shows the name beside it. */
+export interface CompanyWordmark { readonly light: string; readonly dark: string | null; readonly width: number; readonly mark?: 'icon' }
 
 export const companyWordmarks: Readonly<Record<string, CompanyWordmark>> = {
   "6sense": { light: "6sense-light.svg", dark: "6sense-dark.svg", width: 66.72 },
