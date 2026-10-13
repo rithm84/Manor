@@ -19,6 +19,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -220,8 +221,25 @@ def has_nul(text: str) -> bool:
 # with a clear error instead of exhausting the machine that runs many validators at once. On Linux it
 # also dies with the validator, so a killed validator never leaves its program spinning.
 PROGRAM_MEMORY_BYTES = 2 << 30
+TESTS_MEMORY_BYTES = 3 << 30
 PR_SET_PDEATHSIG = 1
 LIBC = ctypes.CDLL(None, use_errno=True) if sys.platform.startswith("linux") else None
+
+
+@contextmanager
+def tests_memory_ceiling():
+    """tests.py runs inside the validator, so its loading and generation get a temporary soft ceiling."""
+    if not sys.platform.startswith("linux"):
+        yield
+        return
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    resource.setrlimit(resource.RLIMIT_AS, (TESTS_MEMORY_BYTES, hard))
+    try:
+        yield
+    except MemoryError as error:
+        raise SpecError(f"tests.py used more than {TESTS_MEMORY_BYTES >> 30} GiB while loading or generating cases; build smaller cases") from error
+    finally:
+        resource.setrlimit(resource.RLIMIT_AS, (soft, hard))
 
 
 def limit_memory() -> None:
@@ -409,7 +427,8 @@ def validate(directory: Path, topics: set[str]) -> dict:
     else:
         program = (directory / "reference.py").read_text()
         oracle_program = (directory / "oracle.py").read_text() if (directory / "oracle.py").exists() else None
-    tests = load_module(directory / "tests.py")
+    with tests_memory_ceiling():
+        tests = load_module(directory / "tests.py")
     generate: Callable = tests.get("generate")
     valid: Callable | None = tests.get("valid")
     require(callable(generate), "tests.py must define generate(rng)")
@@ -434,7 +453,8 @@ def validate(directory: Path, topics: set[str]) -> dict:
     require(example_count == len(examples), "examples must be distinct")
     for index, value in enumerate(tests.get("EDGE", [])):
         add(value, None, f"edge case {index + 1}")
-    generated = generate(random.Random(20261012))
+    with tests_memory_ceiling():
+        generated = generate(random.Random(20261012))
     require(isinstance(generated, list), "generate(rng) must return a list")
     for index, value in enumerate(generated):
         add(value, None, f"generated case {index + 1}")
