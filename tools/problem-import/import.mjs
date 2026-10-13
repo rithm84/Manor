@@ -62,14 +62,14 @@ async function saveCheckpoint(path, checkpoint) {
   await rename(temporary, path)
 }
 async function query(projectRef, path) {
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
     let rows
     try { rows = await runSql(projectRef, path) }
     catch (error) {
       if (!(error instanceof SqlError)) throw error
-      if (attempt === 3 || /PT409|Record changed|different input|not owned|not authorized|status 413/.test(error.reason)) throw new Error(`Supabase problem import failed in project ${projectRef} after attempt ${attempt} (${error.message}): ${error.reason}`)
+      if (attempt === 5 || /PT409|Record changed|different input|not owned|not authorized|status 413/.test(error.reason)) throw new Error(`Supabase problem import failed in project ${projectRef} after attempt ${attempt} (${error.message}): ${error.reason}`)
       console.warn(JSON.stringify({ event: 'problem_import_retry', attempt, reason: error.reason }))
-      await new Promise(resolveWait => setTimeout(resolveWait, attempt * 1000))
+      await new Promise(resolveWait => setTimeout(resolveWait, 2000 * 2 ** (attempt - 1)))
       continue
     }
     return z.object({ rows: z.array(z.object({ receipt: receiptSchema })) }).parse({ rows }).rows
