@@ -1,10 +1,10 @@
 /** Batched judging for typed interfaces: case grouping and mapping one process's marked output back to per-case verdicts. */
 import type { JudgeOutput } from '../_shared/blaxelClient.ts'
-import { parseDriverOutput, trailingDriverOutput } from '../_shared/problemDrivers.ts'
+import { driverPeakKb, parseDriverOutput, trailingDriverOutput } from '../_shared/problemDrivers.ts'
 
 export interface RunnerCase { readonly id: string; readonly input: string; readonly expectedOutput: string | null; readonly hidden: boolean }
 export type Verdict = 'accepted' | 'wrong_answer' | 'compile_error' | 'runtime_error' | 'time_limit' | 'output_limit' | 'execution_error'
-export interface CaseResult { id: string; passed: boolean; hidden: boolean; input: string | null; expectedOutput: string | null; output: string | null; stdout?: string | null; stderr: string | null; durationMs: number; verdict: Verdict }
+export interface CaseResult { id: string; passed: boolean; hidden: boolean; input: string | null; expectedOutput: string | null; output: string | null; stdout?: string | null; stderr: string | null; durationMs: number; memoryKb?: number | null; verdict: Verdict }
 type Process = NonNullable<JudgeOutput['compile']>
 const chunkCases = 40, chunkInputBytes = 262144, heavyCaseBytes = 65536, chunkAnswerBytes = 49152
 
@@ -28,8 +28,10 @@ function hiddenSafe(test: RunnerCase, verdict: Verdict, output: string | null, s
 /** Maps one batched process back to its cases: finished cases are graded, the case running when the process stopped takes the stop reason, and later cases are reported as not run. */
 export function gradeChunk(tests: readonly RunnerCase[], process: Process, accepts: (test: RunnerCase, output: string) => boolean): CaseResult[] {
   const finished = parseDriverOutput(process.stdout)
+  const memoryKb = driverPeakKb(process.stdout)
   const stopped = process.timedOut ? 'time_limit' : process.outputLimit ? 'output_limit' : 'runtime_error'
-  return tests.map((test, index) => {
+  return tests.map((test, index) => ({ ...gradeOne(test, index), memoryKb }))
+  function gradeOne(test: RunnerCase, index: number): CaseResult {
     const item = finished[index]
     if (item !== undefined) {
       const verdict = item.output === null ? 'runtime_error' : accepts(test, item.output) ? 'accepted' : 'wrong_answer'
@@ -37,6 +39,6 @@ export function gradeChunk(tests: readonly RunnerCase[], process: Process, accep
     }
     if (index === finished.length) return hiddenSafe(test, stopped, null, trailingDriverOutput(process.stdout) || null, process.stderr, process.durationMs)
     return hiddenSafe(test, stopped, null, null, 'Not run because the program stopped on an earlier case.', 0)
-  })
+  }
 }
 

@@ -183,27 +183,34 @@ export const scenes = {
   },
   mirror: {
     title: 'Local mirror and sync',
-    subtitle: 'Pages read rows the shell keeps in SQLite; writes stay server-authoritative, and the change feed brings every committed change back.',
+    subtitle: 'Pages read rows the shell keeps in SQLite; writes stay server-authoritative, the workspace feed brings every account change back, and the shared catalog arrives as a snapshot plus its own feed.',
     zones: [
-      { id: 'z-app', label: 'Desktop app', x: 0, y: 90, w: 880, h: 430, stroke: S.app, fill: '#f3f0ff' },
-      { id: 'z-supabase', label: 'Supabase project', x: 960, y: 90, w: 320, h: 430, stroke: S.supabase, fill: '#e7f5ff' }
+      { id: 'z-app', label: 'Desktop app', x: 0, y: 90, w: 880, h: 860, stroke: S.app, fill: '#f3f0ff' },
+      { id: 'z-supabase', label: 'Supabase project', x: 960, y: 90, w: 420, h: 860, stroke: S.supabase, fill: '#e7f5ff' }
     ],
     nodes: [
       N('ui', 'Pages', 30, 130, { note: 'React, TanStack Query keys unchanged', icon: I.browser, fill: fill.app, stroke: S.app }),
       N('gateway', 'Gateway', 340, 130, { note: 'reads, manor_command, revisions', icon: I.bus, fill: fill.app, stroke: S.app }),
-      N('sync', 'Mirror sync', 650, 130, { note: 'bootstrap, pull, derived cache', icon: I.gear, fill: fill.neutral, stroke: S.neutral }),
-      N('sqlite', 'SQLite mirror', 650, 330, { note: 'Tauri shell: rows with revisions, cursor', icon: I.database, fill: fill.jobs, stroke: S.jobs }),
-      N('feed', 'Change feed', 990, 130, { note: 'workspace_changes: cursor, identity, revision', icon: I.json, fill: fill.supabase, stroke: S.supabase }),
-      N('tables', 'Tables', 990, 330, { note: 'owner rows under RLS', icon: I.postgres, fill: fill.supabase, stroke: S.supabase })
+      N('sync', 'Mirror sync', 650, 130, { note: 'account bootstrap, pull, derived cache', icon: I.gear, fill: fill.neutral, stroke: S.neutral }),
+      N('sqlite', 'SQLite mirror', 650, 330, { note: 'Tauri shell: rows with revisions, two cursors', icon: I.database, fill: fill.jobs, stroke: S.jobs }),
+      N('catalogSync', 'Catalog sync', 650, 530, { note: 'snapshot when far behind, then the catalog feed', icon: I.gear, fill: fill.neutral, stroke: S.neutral }),
+      N('feed', 'Workspace feed', 1010, 130, { note: 'workspace_changes: per-account cursor', icon: I.json, fill: fill.supabase, stroke: S.supabase }),
+      N('tables', 'Tables', 1010, 330, { note: 'account rows and the shared catalog under RLS', icon: I.postgres, fill: fill.supabase, stroke: S.supabase }),
+      N('catalogFeed', 'Catalog feed', 1010, 530, { note: 'catalog_changes: one shared cursor', icon: I.json, fill: fill.supabase, stroke: S.supabase }),
+      N('snapshot', 'Catalog snapshot', 1010, 730, { note: 'manor-catalog bucket: manifest, gzip NDJSON', icon: I.objectStorage, fill: fill.storage, stroke: S.storage })
     ],
     edges: [
       E('ui', 'gateway', { label: 'reads, commands', color: S.app }),
       E('gateway', 'sqlite', { label: 'rows when ready', color: S.jobs, via: [[490, 400]] }),
       E('gateway', 'sync', { label: 'pull after commit', color: S.neutral }),
-      E('gateway', 'tables', { label: 'manor_command', color: S.supabase, via: [[370, 300], [370, 560], [1080, 560]] }),
+      E('gateway', 'tables', { label: 'manor_command', color: S.supabase, via: [[370, 910], [835, 910], [1300, 910], [1300, 400]] }),
       E('sync', 'feed', { label: 'changes since cursor', color: S.supabase }),
       E('sync', 'tables', { label: 're-read changed rows, bootstrap all', color: S.supabase }),
-      E('sync', 'sqlite', { label: 'upsert, delete, cursor', color: S.jobs })
+      E('sync', 'sqlite', { label: 'upsert, delete, cursor', color: S.jobs }),
+      E('catalogSync', 'sqlite', { label: 'fill, upsert, cursor', color: S.jobs }),
+      E('catalogSync', 'tables', { label: 're-read catalog rows', color: S.supabase }),
+      E('catalogSync', 'catalogFeed', { label: 'changes since cursor', color: S.supabase }),
+      E('catalogSync', 'snapshot', { label: 'manifest, snapshot', color: S.storage })
     ]
   },
   pull: {
@@ -310,7 +317,7 @@ export const scenes = {
       N('openai', 'OpenAI', 620, 380, { note: 'text-embedding-3-small, 1,536 dims', icon: I.chip, fill: fill.external, stroke: S.external }),
       N('simplify', 'SimplifyJobs', 620, 550, { note: 'listings.json, standing filters', icon: I.github, fill: fill.external, stroke: S.external }),
       N('review', 'Weekly review', 620, 720, { note: 'ChatGPT Work task saves through MCP, Sunday 22:00', icon: I.lightning, fill: fill.neutral, stroke: S.neutral }),
-      N('sandbox', 'Blaxel', 620, 910, { note: 'disposable judge and editor environments', icon: I.cloud, fill: fill.external, stroke: S.external })
+      N('sandbox', 'Blaxel', 620, 910, { note: 'standing judge and editor sandboxes', icon: I.cloud, fill: fill.external, stroke: S.external })
     ],
     edges: [
       E('cron', 'integrations', { color: S.jobs }), E('cron', 'embeddings', { color: S.jobs }), E('cron', 'jobs', { color: S.jobs }), E('cron', 'maintenance', { color: S.jobs }),
@@ -404,20 +411,20 @@ export const scenes = {
   },
   'problem-execution': {
     title: 'Problem library and execution',
-    subtitle: 'Durable account data in Supabase, short-lived editor capabilities, and disposable execution with expected answers kept outside submitted programs.',
+    subtitle: 'Durable catalog and account data in Supabase, short-lived editor capabilities, and jailed execution in standing sandboxes with expected answers kept outside submitted programs.',
     nodes: [
       N('workspace', 'Manor workspace', 0, 140, { w: 220, note: 'Monaco, protected drafts, statement and results', icon: I.computer, fill: fill.app, stroke: S.app }),
       N('api', 'Authenticated API', 430, 140, { w: 220, note: 'account checks and short-lived editor sessions', icon: I.lock, fill: fill.supabase, stroke: S.supabase }),
       N('database', 'Supabase', 860, 140, { w: 220, note: 'retained sources, canonical groups and private grading', icon: I.postgres, fill: fill.storage, stroke: S.storage }),
-      N('editor', 'Blaxel editor', 430, 460, { w: 220, note: 'language servers, separate workspace', icon: I.code, fill: fill.external, stroke: S.external }),
+      N('editor', 'Editor sandbox', 430, 460, { w: 220, note: 'one per account, resumed; language servers, no tests', icon: I.code, fill: fill.external, stroke: S.external }),
       N('worker', 'Execution worker', 860, 460, { w: 220, note: 'leased batches, minute recovery, trusted comparison', icon: I.gear, fill: fill.supabase, stroke: S.supabase }),
-      N('sandbox', 'Program sandbox', 1290, 460, { w: 220, note: 'submitted code with its typed driver, inputs only, jailed batches', icon: I.microservice, fill: fill.external, stroke: S.external }),
-      N('judge', 'Judge sandbox', 1290, 140, { w: 220, note: 'special judges for answers with several valid forms, no submitted code', icon: I.microservice, fill: fill.external, stroke: S.external })
+      N('sandbox', 'Program sandbox', 1290, 460, { w: 220, note: 'one per account, reused; jailed batches get inputs only', icon: I.microservice, fill: fill.external, stroke: S.external }),
+      N('judge', 'Judge sandbox', 1290, 140, { w: 220, note: 'one per account for special judges, never submitted code', icon: I.microservice, fill: fill.external, stroke: S.external })
     ],
     edges: [
       E('workspace', 'api', { label: 'Run, Submit, results', color: S.app, both: true }),
       E('api', 'database', { label: 'jobs and results', color: S.supabase, both: true }),
-      E('api', 'editor', { label: 'create session', color: S.external }),
+      E('api', 'editor', { label: 'resume and renew', color: S.external }),
       E('workspace', 'editor', { label: 'language tools', color: S.app, both: true, via: [[110, 535]] }),
       E('database', 'worker', { label: 'lease and results', color: S.supabase, both: true }),
       E('worker', 'sandbox', { label: 'execute input', color: S.external, both: true }),

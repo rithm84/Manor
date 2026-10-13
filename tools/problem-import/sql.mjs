@@ -7,9 +7,9 @@
  * prints `{"rows": [...]}`, the same shape as the CLI's JSON output.
  */
 import { execFile } from 'node:child_process'
-import { readFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
@@ -55,6 +55,27 @@ export async function runSql(projectRef, file, { timeout = 180000, maxBuffer = 4
     throw new SqlError(`Supabase CLI query exited with ${error.code ?? 'unavailable'}`, reason)
   }
   return JSON.parse(output.stdout).rows
+}
+
+/**
+ * Runs one SQL text with `runSql`, retrying a transient `SqlError` after 2, 4, 8, ... seconds with a structured warning.
+ * A reason matching `permanent`, or a failure on the last of `attempts`, raises with the project, attempt, and reason.
+ */
+export async function runSqlTextWithRetries(projectRef, sql, { attempts, permanent, event, timeout, maxBuffer }) {
+  const directory = await mkdtemp(join(tmpdir(), 'manor-sql-'))
+  try {
+    const file = join(directory, 'query.sql')
+    await writeFile(file, sql, { mode: 0o600 })
+    for (let attempt = 1; ; attempt += 1) {
+      try { return await runSql(projectRef, file, { timeout, maxBuffer }) }
+      catch (error) {
+        if (!(error instanceof SqlError)) throw error
+        if (attempt === attempts || permanent.test(error.reason)) throw new Error(`SQL in project ${projectRef} failed after attempt ${attempt} (${error.message}): ${error.reason}`, { cause: error })
+        console.warn(JSON.stringify({ event, attempt, reason: error.reason }))
+        await new Promise(resolveWait => setTimeout(resolveWait, 2000 * 2 ** (attempt - 1)))
+      }
+    }
+  } finally { await rm(directory, { recursive: true, force: false }) }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

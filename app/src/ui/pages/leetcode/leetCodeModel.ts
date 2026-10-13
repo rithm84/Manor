@@ -1,4 +1,7 @@
 import type { LeetCodeAttempt } from '../../../shared/leetcode'
+import type { ProblemKind } from '../../../shared/problemLibrary'
+
+export const kindLabel: Readonly<Record<ProblemKind, string>> = { coding: 'Coding', system_design: 'System design', behavioral: 'Behavioral', other: 'Other' }
 
 export function attemptsForProblem(
   attempts: readonly LeetCodeAttempt[],

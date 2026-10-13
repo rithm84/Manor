@@ -2,9 +2,16 @@
 
 Answers and verdicts stay in Manor's server; this process only returns bounded output.
 The caller supplies source and case inputs, never expected answers or credentials.
+
+The sandbox is reused between jobs, so each run takes a lock, reads its request from a
+root-only job directory and deletes it at once, and finishes by killing every process the
+jail user still owns. Anything the jail user left behind marks the sandbox as tainted, and
+the server deletes a tainted sandbox instead of running another job in it.
 """
 from __future__ import annotations
 
+import ctypes
+import fcntl
 import json
 import os
 import resource
@@ -20,6 +27,14 @@ from typing import TypedDict
 MAX_OUTPUT = 65536
 MAX_SOURCE = 262144
 MAX_INPUT = 1048576
+JAIL_UID = 10001
+PR_SET_CHILD_SUBREAPER = 36
+JOBS = Path("/var/lib/manor/jobs")
+LOCK = Path("/var/lib/manor/judge.lock")
+# Directories the jail user could write to if it ever reached the sandbox filesystem.
+WRITABLE = [Path("/tmp"), Path("/var/tmp"), Path("/dev/shm"), Path("/workspace")]
+# The image dumps /usr/lib/manor/javac.jsa with these exact options; the archive only maps when they match.
+JAVAC = ["javac", "-J-Xmx256m", "-J-XX:+UseSerialGC", "-J-XX:TieredStopAtLevel=1", "-J-XX:SharedArchiveFile=/usr/lib/manor/javac.jsa"]
 
 
 class ProcessResult(TypedDict):
@@ -36,14 +51,21 @@ class CaseInput(TypedDict):
     input: str
 
 
+class JudgeRequest(TypedDict):
+    language: str
+    code: str
+    cases: list[CaseInput]
+
+
 def command_for(language: str) -> tuple[str, list[str] | None, list[str]]:
     commands: dict[str, tuple[str, list[str] | None, list[str]]] = {
         "cpp": ("main.cpp", ["g++", "-std=c++20", "-O2", "-pipe", "main.cpp", "-o", "answer"], ["./answer"]),
         "c": ("main.c", ["gcc", "-std=c17", "-O2", "-pipe", "main.c", "-lm", "-o", "answer"], ["./answer"]),
         "python": ("main.py", None, ["python3", "-I", "main.py"]),
         "javascript": ("main.js", None, ["node", "--max-old-space-size=256", "main.js"]),
-        "java": ("Main.java", ["javac", "-J-Xmx256m", "Main.java"], ["java", "-Xmx256m", "-XX:MaxMetaspaceSize=128m", "-XX:ReservedCodeCacheSize=64m", "-XX:CompressedClassSpaceSize=64m", "-XX:ActiveProcessorCount=1", "Main"]),
-        "go": ("main.go", ["go", "build", "-o", "answer", "main.go"], ["./answer"]),
+        "java": ("Main.java", [*JAVAC, "Main.java"], ["java", "-Xmx256m", "-XX:MaxMetaspaceSize=128m", "-XX:ReservedCodeCacheSize=64m", "-XX:CompressedClassSpaceSize=64m", "-XX:ActiveProcessorCount=1", "Main"]),
+        # The image installs the standard library into GOROOT with this setting, so builds link it instead of compiling it.
+        "go": ("main.go", ["env", "GODEBUG=installgoroot=all", "go", "build", "-o", "answer", "main.go"], ["./answer"]),
     }
     if language not in commands:
         raise ValueError(f"Unsupported language: {language}")
@@ -117,14 +139,93 @@ def execute(workspace_mount: tuple[str, str, str], command: list[str], stdin: st
     except subprocess.TimeoutExpired:
         os.killpg(process.pid, signal.SIGKILL)
         code = process.wait(timeout=1)
+    reap_orphans()
     return {"stdout": output["stdout"][:MAX_OUTPUT].decode("utf-8", errors="replace"), "stderr": output["stderr"][:MAX_OUTPUT].decode("utf-8", errors="replace"), "exitCode": code, "durationMs": round((time.monotonic() - started) * 1000), "timedOut": timed_out or code in (-signal.SIGXCPU, 128 + signal.SIGXCPU), "outputLimit": output_limit}
 
 
-def main() -> None:
-    request = json.load(sys.stdin)
+def become_subreaper() -> None:
+    """Orphans of the jails reparent to this runner instead of the sandbox API, which never reaps them."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    if libc.prctl(PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) != 0:
+        error = ctypes.get_errno()
+        raise OSError(error, f"prctl(PR_SET_CHILD_SUBREAPER) failed: {os.strerror(error)}")
+
+
+def reap_orphans() -> None:
+    """Collects exited orphans. Called only when no jail this runner started is still awaited by Popen."""
+    while True:
+        try:
+            pid, _ = os.waitpid(-1, os.WNOHANG)
+        except ChildProcessError:
+            return
+        if pid == 0:
+            return
+
+
+def jail_processes() -> list[tuple[int, str, int]]:
+    """Processes the jail user owns, as (pid, state, parent pid)."""
+    found: list[tuple[int, str, int]] = []
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit():
+            continue
+        try:
+            if os.stat(f"/proc/{entry}").st_uid != JAIL_UID:
+                continue
+            fields = Path(f"/proc/{entry}/stat").read_text().rsplit(")", 1)[1].split()
+        except FileNotFoundError:
+            continue
+        found.append((int(entry), fields[0], int(fields[1])))
+    return found
+
+
+def settle_jail_processes() -> list[str]:
+    """Waits briefly for exiting jails to finish tearing down, then kills and reaps whatever the jail user still runs.
+
+    Returns what survived the grace period or cannot be reaped; either taints the sandbox.
+    """
+    def unsettled() -> list[tuple[int, str, int]]:
+        reap_orphans()
+        return [item for item in jail_processes() if item[1] != "Z" or item[2] == os.getpid()]
+
+    grace = time.monotonic() + 0.5
+    while unsettled() and time.monotonic() < grace:
+        time.sleep(0.005)
+    survivors = [pid for pid, state, _ in unsettled() if state != "Z"]
+    for pid in survivors:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            continue
+    deadline = time.monotonic() + 2
+    while remaining := unsettled():
+        if time.monotonic() > deadline:
+            raise RuntimeError(f"Jail processes survived SIGKILL: {remaining}")
+        time.sleep(0.005)
+    reasons: list[str] = []
+    if survivors:
+        reasons.append(f"{len(survivors)} jail processes outlived their jail")
+    # Zombies another process adopted cannot be reaped here, and they count against the jail user's process limit.
+    stuck = [pid for pid, state, parent in jail_processes() if state == "Z" and parent != os.getpid()]
+    if stuck:
+        reasons.append(f"{len(stuck)} jail processes cannot be reaped")
+    return reasons
+
+
+def jail_files() -> list[str]:
+    found: list[str] = []
+    for directory in WRITABLE:
+        if not directory.is_dir():
+            continue
+        for entry in os.scandir(directory):
+            if entry.stat(follow_symlinks=False).st_uid == JAIL_UID:
+                found.append(entry.path)
+    return found
+
+
+def judge(request: JudgeRequest) -> dict[str, ProcessResult | None | list[dict[str, str | ProcessResult]]]:
     language = request["language"]
     source = request["code"]
-    cases: list[CaseInput] = request["cases"]
+    cases = request["cases"]
     if not isinstance(source, str) or len(source.encode()) > MAX_SOURCE:
         raise ValueError("Program source must be at most 256 KiB")
     if not cases or len(cases) > 200:
@@ -134,17 +235,38 @@ def main() -> None:
     filename, compile_command, run_command = command_for(language)
     with tempfile.TemporaryDirectory(prefix="manor-judge-") as directory:
         os.chmod(directory, 0o755)
-        os.chown(directory, 10001, 10001)
+        os.chown(directory, JAIL_UID, JAIL_UID)
         source_path = Path(directory, filename)
         source_path.write_text(source)
-        os.chown(source_path, 10001, 10001)
+        os.chown(source_path, JAIL_UID, JAIL_UID)
         compile_result = execute(("--bind", directory, "/workspace"), compile_command, "", 30, 25) if compile_command else None
         results: list[dict[str, str | ProcessResult]] = []
         if compile_result is None or compile_result["exitCode"] == 0:
             for case in cases:
                 results.append({"id": case["id"], "process": execute(("--ro-bind", directory, "/workspace"), run_command, case["input"], 4, 3)})
-        Path("/tmp/manor-judge-result.json").write_text(json.dumps({"compile": compile_result, "cases": results}, separators=(",", ":")))
-        print("Judge completed")
+    return {"compile": compile_result, "cases": results}
+
+
+def main() -> None:
+    job = Path(sys.argv[1]).resolve()
+    if job.parent != JOBS:
+        raise ValueError(f"Job directory must be inside {JOBS}: {job}")
+    request_path = job / "request.json"
+    request: JudgeRequest = json.loads(request_path.read_text())
+    request_path.unlink()
+    become_subreaper()
+    with open(LOCK, "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        tainted = [f"before this job: {reason}" for reason in settle_jail_processes()]
+        output = judge(request)
+        tainted.extend(f"after this job: {reason}" for reason in settle_jail_processes())
+        leftovers = jail_files()
+        if leftovers:
+            tainted.append(f"the program left files outside its job: {leftovers[:5]}")
+        result = job / "result.json"
+        result.touch(mode=0o600)
+        result.write_text(json.dumps({**output, "tainted": tainted}, separators=(",", ":")))
+    print("Judge completed")
 
 
 if __name__ == "__main__":

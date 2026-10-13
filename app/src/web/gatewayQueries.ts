@@ -1,11 +1,12 @@
 import type { ManorTable } from './ManorGateway'
 
-/** Primary keys from the retained schema and web migrations, after owner filtering. */
+/** Primary keys from the retained schema and web migrations, after owner filtering (the shared tables have none). */
 export const tableOrder: Record<ManorTable, readonly string[]> = {
  profiles:['user_id'],tasks:['id'],contexts:['name'],scratch_blocks:['id'],saved_task_views:['id'],
  habits:['id'],habit_lifecycle:['habit_id','date'],habit_entries:['habit_id','date'],habit_freeze_intents:['habit_id','date'],habit_freeze_usage:['habit_id','date'],habit_freeze_grants:['date'],habit_month_pools:['month'],
  mood_focus_entries:['date'],pomodoro_sessions:['id'],note_folders:['id'],note_pages:['id'],note_attachments:['id'],note_versions:['note_id','revision'],note_suggestions:['id'],
  job_roles:['id'],job_stage_transitions:['id'],job_listings:['id'],leetcode_problems:['id'],leetcode_attempts:['id'],leetcode_notes:['id'],saved_problem_views:['id'],
+ problem_practice:['problem_id'],problem_content_versions:['problem_id','version'],problem_catalog:['id'],problem_catalog_content:['problem_id'],
  kb_entries:['id'],resumes:['id'],weekly_reviews:['id'],action_events:['id'],calendar_accounts:['id'],calendars:['account_id','id'],calendar_events:['account_id','calendar_id','id']
 }
 /** Every kb_entries column except `embedding`: 1536 floats per row that only server-side search reads. */
@@ -30,9 +31,8 @@ const groups: readonly {operations:readonly string[];tables:readonly ManorTable[
  {operations:['commit_debrief','correct_mood_focus_history'],tables:['mood_focus_entries']},
  {operations:['start_pomodoro_session','pause_pomodoro_session','resume_pomodoro_session','end_pomodoro_session','update_pomodoro_session','delete_pomodoro_session','log_pomodoro_session'],tables:['pomodoro_sessions']},
  {operations:['save_pomodoro_settings'],tables:['profiles']},
- {operations:['create_attempt','update_attempt','delete_attempt'],tables:['leetcode_attempts','leetcode_problems']},
+ {operations:['create_attempt','update_attempt','delete_attempt'],tables:['leetcode_attempts']},
  {operations:['save_mistake','delete_mistake'],tables:['leetcode_notes']},
- {operations:['save_problem','import_problems','merge_problem_duplicates','unmerge_problem_duplicate'],tables:['leetcode_problems']},
  {operations:['save_problem_view','delete_problem_view'],tables:['saved_problem_views']},
  {operations:['save_problem_draft'],tables:[]},
  {operations:['save_capture','remove_capture','queue_embedding'],tables:['kb_entries']},

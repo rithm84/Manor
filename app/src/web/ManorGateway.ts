@@ -3,14 +3,15 @@ import type { QueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { tableOrder, affectedTables, readColumns } from './gatewayQueries'
 import { selectMirrorRows } from './mirror/mirrorRows'
-import { isMirrored } from './mirror/mirrorTables'
+import { isMirrored, isSharedTable, type StoredTable } from './mirror/mirrorTables'
 import type { DerivedName } from './mirror/MirrorStore'
-import type { MirrorSync } from './mirror/MirrorSync'
+import type { MirrorLookup, MirrorSync } from './mirror/MirrorSync'
 
 export const TABLES = ['profiles', 'tasks', 'contexts', 'scratch_blocks', 'saved_task_views',
   'habits', 'habit_lifecycle', 'habit_entries', 'habit_freeze_intents', 'habit_freeze_usage', 'habit_freeze_grants', 'habit_month_pools',
   'mood_focus_entries', 'pomodoro_sessions', 'note_folders', 'note_pages', 'note_attachments', 'note_versions', 'note_suggestions',
   'job_roles', 'job_stage_transitions', 'job_listings', 'leetcode_problems', 'leetcode_attempts', 'leetcode_notes', 'saved_problem_views',
+  'problem_practice', 'problem_content_versions', 'problem_catalog', 'problem_catalog_content',
   'kb_entries', 'resumes', 'weekly_reviews', 'action_events', 'calendar_accounts', 'calendars', 'calendar_events'] as const
 export type ManorTable = typeof TABLES[number]
 /** Whether a name is one of the tables the gateway caches reads for, which is what a change feed row names. */
@@ -137,14 +138,22 @@ export class ManorGateway {
   }
 
   /**
-   * The owner-scoped read straight from Postgres, paginated. Reads take this path for tables the mirror
-   * does not hold and while it is still filling, and the mirror's own bootstrap fills itself with it.
+   * One stored row by its mirror key, when the mirror can answer for that table right now. Opening a problem
+   * reads its statement this way; a `serving: false` answer sends the caller to the server.
+   */
+  async mirroredRow(table: StoredTable, key: string): Promise<MirrorLookup> {
+    return this.mirror === null ? { serving: false } : this.mirror.mirroredRow(table, key)
+  }
+
+  /**
+   * The read straight from Postgres, paginated and owner-scoped except for the shared tables. Reads take this
+   * path for tables the mirror does not hold and while it is still filling, and the mirror fills itself with it.
    */
   async readRowsFromServer(table: ManorTable, filters: readonly RowFilter[]): Promise<JsonObject[]> {
     const all: JsonObject[] = []
     for (let offset = 0; offset < 100_000; offset += 1000) {
       let query = this.client.from(table).select(readColumns(table)).range(offset, offset + 999)
-      if (table !== 'job_listings') query = query.eq('user_id', this.accountId)
+      if (!isSharedTable(table)) query = query.eq('user_id', this.accountId)
       for (const column of tableOrder[table]) query = query.order(column, { ascending: true })
       for (const filter of filters) query = query.eq(filter.column, filter.value)
       const { data, error, status } = await query

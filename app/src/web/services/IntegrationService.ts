@@ -1,3 +1,4 @@
+import { FunctionRegion } from '@supabase/supabase-js'
 import { z } from 'zod'
 import type { CalendarApi, CalendarAccount, GoogleCalendar, CalendarDayEvent } from '../../shared/calendar'
 import type { XApi, XConnectionStatus } from '../../shared/xConnection'
@@ -11,13 +12,17 @@ const accountSchema = z.object({ id: z.string(), email: z.email(), connectedAt: 
 const calendarSchema = z.object({ id: z.string(), accountId: z.string(), name: z.string(), colorId: z.string().nullable(), enabled: z.boolean() })
 const storedEventSchema = z.object({ id: z.string(), account_id: z.string(), calendar_id: z.string(), title: z.string(), starts_at: z.string().nullable(), ends_at: z.string().nullable(), start_date: z.string().nullable(), end_date: z.string().nullable(), all_day: z.boolean() })
 
-/** Calls one connection function (`integrations` or `course-feed`) with the session and unwraps its error envelope. */
+/**
+ * Calls one Edge Function with the session and unwraps its error envelope. `region` runs the function in that
+ * region instead of the one nearest the caller; `Any` keeps the nearest.
+ */
 export class IntegrationService {
   private readonly gateway: ManorGateway
   private readonly functionName: string
-  constructor(gateway: ManorGateway, functionName: string) { this.gateway = gateway; this.functionName = functionName }
+  private readonly region: FunctionRegion
+  constructor(gateway: ManorGateway, functionName: string, region: FunctionRegion) { this.gateway = gateway; this.functionName = functionName; this.region = region }
   async request<T>(action: string, input: JsonObject, schema: z.ZodType<T>): Promise<T> {
-    const { data, error } = await this.gateway.client.functions.invoke(this.functionName, { body: { action, ...input } })
+    const { data, error } = await this.gateway.client.functions.invoke(this.functionName, { body: { action, ...input }, region: this.region })
     if (error) {
       if ('context' in error && error.context instanceof Response) {
         const failure = z.object({ error: z.string() }).parse(await error.context.json())
@@ -52,7 +57,7 @@ export class CalendarService implements CalendarApi {
   private readonly integration: IntegrationService
   private readonly openAuthorization: (url: string) => Promise<void>
   constructor(gateway: ManorGateway, openAuthorization: (url: string) => Promise<void>) {
-    this.gateway = gateway; this.integration = new IntegrationService(gateway, 'integrations'); this.openAuthorization = openAuthorization
+    this.gateway = gateway; this.integration = new IntegrationService(gateway, 'integrations', FunctionRegion.Any); this.openAuthorization = openAuthorization
   }
   connect(): Promise<void> { return this.integration.connect('google', this.openAuthorization) }
   completeConnection(code: string, state: string): Promise<void> { return this.integration.completeConnection(code, state) }
@@ -111,7 +116,7 @@ export class XService implements XApi {
   private readonly integration: IntegrationService
   private readonly openAuthorization: (url: string) => Promise<void>
   constructor(gateway: ManorGateway, openAuthorization: (url: string) => Promise<void>) {
-    this.gateway = gateway; this.integration = new IntegrationService(gateway, 'integrations'); this.openAuthorization = openAuthorization
+    this.gateway = gateway; this.integration = new IntegrationService(gateway, 'integrations', FunctionRegion.Any); this.openAuthorization = openAuthorization
   }
   connect(): Promise<void> { return this.integration.connect('x', this.openAuthorization) }
   completeConnection(code: string, state: string): Promise<void> { return this.integration.completeConnection(code, state) }
@@ -129,7 +134,7 @@ const courseFeedStatusSchema = z.object({ connected: z.boolean(), host: z.string
 export class CourseFeedService implements CourseFeedApi {
   private readonly gateway: ManorGateway
   private readonly integration: IntegrationService
-  constructor(gateway: ManorGateway) { this.gateway = gateway; this.integration = new IntegrationService(gateway, 'course-feed') }
+  constructor(gateway: ManorGateway) { this.gateway = gateway; this.integration = new IntegrationService(gateway, 'course-feed', FunctionRegion.Any) }
   async status(): Promise<CourseFeedStatus> {
     const { data, error, status } = await this.gateway.client.rpc('manor_course_feed_status')
     if (error) throw requestFailure('manor_course_feed_status', error, status)

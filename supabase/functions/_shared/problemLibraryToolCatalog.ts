@@ -3,6 +3,7 @@ import { command, domainQuery, edit, id, object, paging, type ManorTool, type To
 const labels: ToolSchema = { type: 'array', maxItems: 100, items: { type: 'string', minLength: 1, maxLength: 100 } }
 const kind: ToolSchema = { type: 'string', enum: ['coding', 'system_design', 'behavioral', 'other'] }
 const sourceType: ToolSchema = { type: 'string', enum: ['stock', 'imported', 'custom'] }
+const customSource: ToolSchema = { type: 'string', enum: ['custom'], description: 'Manor catalog problems (stock and imported) are read-only; accounts save only their own custom problems.' }
 const language: ToolSchema = { type: 'string', enum: ['cpp', 'c', 'python', 'javascript', 'java', 'go'] }
 const sourceDate: ToolSchema = object({ value: { type: 'string', minLength: 4, maxLength: 40 }, precision: { type: 'string', enum: ['day', 'month', 'year', 'instant'] } }, ['value', 'precision'])
 const sourceMetadata: ToolSchema = object({
@@ -35,7 +36,7 @@ const problemFields = {
   ...edit, name: { type: 'string', minLength: 1, maxLength: 500 } as ToolSchema,
   difficulty: { type: ['string', 'null'], enum: ['Easy', 'Medium', 'Hard', null] } as ToolSchema,
   kind, topics: labels, companies: { ...labels, maxItems: 1000 }, tags: labels, collections: labels,
-  source_type: sourceType, source_url: { type: ['string', 'null'], maxLength: 2000 } as ToolSchema,
+  source_type: customSource, source_url: { type: ['string', 'null'], maxLength: 2000 } as ToolSchema,
   external_key: { type: ['string', 'null'], minLength: 1, maxLength: 200 } as ToolSchema,
   source_metadata: sourceMetadata, content, testset
 }
@@ -51,19 +52,19 @@ const filters = object({
 const sort: ToolSchema = { type: 'array', minItems: 1, maxItems: 5, items: object({ field: { type: 'string', enum: ['name', 'difficulty', 'kind', 'createdAt', 'updatedAt', 'lastAsked'] }, direction: { type: 'string', enum: ['asc', 'desc'] } }, ['field', 'direction']) }
 
 export const problemLibraryTools: readonly ManorTool[] = [
-  domainQuery('query_problems', 'manor_problem_query', 'Read each canonical problem group once, with topic, company, collection, source, recency, and content filters. Retained-source labels participate in filters. Statements load separately; cursor is stable problem ID order.', {
+  domainQuery('query_problems', 'manor_problem_query', 'Read each canonical group of the shared Manor catalog and of this account\'s custom problems once, with topic, company, collection, source, recency, status, and content filters. Items carry catalog (true for Manor catalog problems) and grading_version (the current grader, or null). Status comes from this account\'s own attempts and practice on that problem. Retained-source labels participate in filters. Statements load separately; cursor is stable problem ID order.', {
     ...paging, search: { type: 'string', maxLength: 500 }, kind, difficulty: { type: 'string', enum: ['Easy', 'Medium', 'Hard'] },
     topic: id, company: id, tag: id, collection: id, source_type: sourceType, has_content: { type: 'boolean' }, status: { type: 'string', enum: ['unattempted', 'attempted', 'solved'] },
     last_asked_since: { type: 'string', maxLength: 10 }, last_asked_until: { type: 'string', maxLength: 10 }
   }, []),
-  domainQuery('read_problem', 'manor_problem_query', 'Read the canonical problem and all retained source records. When an alias is requested, requested_problem and requested_content preserve its exact identity and statement for draft recovery. Hidden grading tests are never returned.', { id }, ['id']),
+  domainQuery('read_problem', 'manor_problem_query', 'Read a Manor catalog problem or one of this account\'s custom problems: the canonical problem and all retained source records. When an alias is requested, requested_problem and requested_content preserve its exact identity and statement for draft recovery. Hidden grading tests are never returned.', { id }, ['id']),
   domainQuery('list_problem_views', 'manor_problem_query', 'Read saved problem filters, sorts, grouping, and columns.', paging, []),
-  command('save_problem', 'Create or edit a general problem at its current revision. Null content preserves the current statement. Content changes create an immutable version. Optional testsets are stored privately and never exposed to clients. An external key deduplicates repeated source imports.', problemFields, problemRequired),
-  command('import_problems', 'Atomically import 1 to 100 problems. Supply stable IDs and external source keys, revision zero for new entries, or the current revision to update. An unchanged deduplicated source returns unchanged; concurrent edits conflict. Reuse command_id on retries. Return per-problem committed outcomes.', { items: { type: 'array', minItems: 1, maxItems: 100, items: object(problemFields, problemRequired) } }, ['items']),
-  command('merge_problem_duplicates', 'Reversibly group functionally equivalent imported source records under one reviewed title. Preserve all source IDs, content versions, and provenance. Stock and custom problems remain separate. Sources with attempts, drafts, submissions, or an open editor cannot be hidden. Account-global mistake jots remain independent. Choose a canonical source with a current grader when any source has one. Similar titles alone are insufficient evidence.', {
+  command('save_problem', 'Create or edit one of this account\'s private custom problems at its current revision; Manor catalog problems are read-only and refuse edits. Use a fresh UUID as the ID of a new problem. Null content preserves the current statement. Content changes create an immutable version. Optional testsets are stored privately and never exposed to clients. An external key deduplicates repeated source imports.', problemFields, problemRequired),
+  command('import_problems', 'Atomically import 1 to 100 private custom problems into this account; the Manor catalog is read-only. Supply stable IDs (fresh UUIDs for new problems) and external source keys, revision zero for new entries, or the current revision to update. An unchanged deduplicated source returns unchanged; concurrent edits conflict. Reuse command_id on retries. Return per-problem committed outcomes.', { items: { type: 'array', minItems: 1, maxItems: 100, items: object(problemFields, problemRequired) } }, ['items']),
+  command('merge_problem_duplicates', 'Reversibly group functionally equivalent custom problems of this account under one reviewed title; Manor catalog groups are curated by Manor. Preserve all source IDs, content versions, and provenance. A grouped source keeps its attempts and submissions, but they stop counting toward any status and new practice goes to the canonical problem. Account-global mistake jots remain independent. Choose a canonical source with a current grader when any source has one. Similar titles alone are insufficient evidence.', {
     ...edit, name: { type: 'string', minLength: 1, maxLength: 500 }, reason: { type: 'string', minLength: 1, maxLength: 2000 }, aliases: { type: 'array', minItems: 1, maxItems: 99, items: object(edit, ['id', 'expected_revision']) }
   }, ['id', 'expected_revision', 'name', 'reason', 'aliases']),
-  command('unmerge_problem_duplicate', 'Restore a retained source to the index without deleting or moving its content or history. Requires both source and canonical revisions.', { ...edit, canonical_expected_revision: { type: 'integer', minimum: 1 } }, ['id', 'expected_revision', 'canonical_expected_revision']),
+  command('unmerge_problem_duplicate', 'Restore a retained custom source of this account to the index without deleting or moving its content or history. Requires both source and canonical revisions.', { ...edit, canonical_expected_revision: { type: 'integer', minimum: 1 } }, ['id', 'expected_revision', 'canonical_expected_revision']),
   command('save_problem_view', 'Create or edit an account-owned saved view. Values within a filter property combine with OR; properties combine with AND.', {
     ...edit, name: { type: 'string', minLength: 1, maxLength: 120 }, filters, sort,
     group_by: { type: ['string', 'null'], enum: ['topic', 'company', 'difficulty', 'kind', 'collection', null] },

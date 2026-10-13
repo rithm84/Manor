@@ -1,6 +1,6 @@
 # Manor desktop shell
 
-_Last updated: 2026-10-11_
+_Last updated: 2026-10-13_
 
 This package is the Tauri 2 shell that makes Manor a macOS app. The Rust
 crate owns only the native shell: window creation, deep-link receipt,
@@ -158,7 +158,11 @@ The frontend writes timing lines to the same log: `boot` with
 and `since_navigation_ms` (from the document load), and `route settled` with
 the path, the milliseconds from the navigation to a painted frame after its
 queries finished (or to the first painted frame when no query ran within
-400 ms), and the highest number of concurrent queries.
+400 ms), and the highest number of concurrent queries. The Problems page adds
+`problems timed` with a `step` and its `ms`: `library` each time the library
+settles after its navigation, and the solving steps of a benchmark drive, which
+the [Benchmark](#benchmark) section lists. A drive that stops writes
+`problems benchmark failed` with the reason.
 
 ## Benchmark
 
@@ -168,6 +172,30 @@ and the first settled route from the log, then opens each route through a deep
 link and waits for its `route settled` line. `--identity staging`, `--runs N`,
 and `--routes a,b,c` change the target, the sample count, and the route list.
 Every step is a navigation, so nothing in the account changes.
+
+`--suites` picks what runs after each relaunch: `routes`, the default, is the
+route list above, and `problems` times the Problems page. Run the Problems
+suite on its own against an installed staging bundle that is signed in to an
+account with the problem:
+
+```sh
+npm --prefix desktop run benchmark -- --identity staging --suites problems
+npm --prefix desktop run benchmark -- --identity staging --suites routes,problems --runs 3
+```
+
+The Problems suite opens the library on its first visit after launch and again
+from Home, then opens a benchmark link that the staging app drives itself
+through test IDs. It types `--query` into the search, opens `--problem`, waits
+for the statement and an editable editor, asks the language server for
+completions until it answers with items, then clicks Run in each `--run`
+language and Submit in each `--submit` language and waits for each verdict.
+The defaults are `neetcode-1-3`, `Two Sum`, `python,java`, and `python`. Each
+time is measured in the webview from the navigation, the input, or the click
+to the next painted frame, except the completion, which ends when the language
+server's answer arrives. Search includes the library's 150 ms typing pause.
+Run and Submit save real submissions with the code already in the editor, so
+the suite refuses the production identity, and production builds refuse the
+benchmark link. The drive leaves the editor in the language it started with.
 
 ## Content security policy
 

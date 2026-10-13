@@ -3,12 +3,19 @@
  * frontend writes to the shell log.
  *
  * Each run quits the app, launches it, waits for the boot milestones and the
- * first settled route, then opens each route through a deep link and waits for
- * its `route settled` line. The app must be installed and signed in; nothing
- * is written to the account, since every step is a navigation.
+ * first settled route, then runs each suite. The `routes` suite opens each route
+ * through a deep link and waits for its `route settled` line; nothing is written
+ * to the account, since every step is a navigation. The `problems` suite opens
+ * the Problems library twice (first visit after launch, then after Home), then
+ * opens a benchmark link that the staging app drives itself: search, open the
+ * problem, wait for the editor and the first completion, Run in each `--run`
+ * language and Submit in each `--submit` language. It waits for each
+ * `problems timed` line. Run and Submit save real submissions, so the suite runs
+ * only against the staging identity. The app must be installed and signed in.
  *
  * Usage: node benchmark.mjs [--identity production|staging] [--runs N]
- *        [--routes habits,notes,jobs,bookmarks,settings,home]
+ *        [--suites routes,problems] [--routes habits,notes,jobs,bookmarks,settings,home]
+ *        [--problem neetcode-1-3] [--query "Two Sum"] [--run python,java] [--submit python]
  */
 import { execFileSync } from 'node:child_process'
 import { readFileSync, statSync } from 'node:fs'
@@ -20,27 +27,39 @@ const IDENTITIES = {
   staging: { app: join(homedir(), 'Applications', 'Manor Staging.app'), name: 'Manor Staging', identifier: 'app.manor.desktop.staging', scheme: 'manor-staging' }
 }
 const DEFAULT_ROUTES = ['habits', 'notes', 'jobs', 'bookmarks', 'settings', 'home']
+const SUITES = ['routes', 'problems']
+const LANGUAGES = ['cpp', 'c', 'python', 'javascript', 'java', 'go']
 const LAUNCH_TIMEOUT_MS = 20_000
 const ROUTE_TIMEOUT_MS = 10_000
+// One drive step can include starting a language server or judging a submission.
+const PROBLEMS_STEP_TIMEOUT_MS = 180_000
 const POLL_MS = 100
 
 /**
  * Parses the command line.
  *
  * @param {string[]} argv Arguments after the script path.
- * @returns {{ identity: keyof typeof IDENTITIES, runs: number, routes: string[] }} The options.
+ * @returns {{ identity: keyof typeof IDENTITIES, runs: number, suites: string[], routes: string[], problem: string, query: string, run: string[], submit: string[] }} The options.
  */
 function parseCommandLine(argv) {
-  const options = { identity: 'production', runs: 5, routes: DEFAULT_ROUTES }
+  const options = { identity: 'production', runs: 5, suites: ['routes'], routes: DEFAULT_ROUTES, problem: 'neetcode-1-3', query: 'Two Sum', run: ['python', 'java'], submit: ['python'] }
+  const list = (value) => value.split(',').map((item) => item.trim()).filter((item) => item !== '')
+  const languages = (value) => list(value).every((language) => LANGUAGES.includes(language))
   for (let index = 0; index < argv.length; index += 2) {
     const flag = argv[index]
     const value = argv[index + 1]
     if (value === undefined) throw new Error(`${flag} needs a value`)
     if (flag === '--identity' && value in IDENTITIES) options.identity = value
     else if (flag === '--runs' && /^[1-9]\d*$/.test(value)) options.runs = Number(value)
-    else if (flag === '--routes') options.routes = value.split(',').map((route) => route.trim()).filter((route) => route !== '')
+    else if (flag === '--routes') options.routes = list(value)
+    else if (flag === '--suites' && list(value).length > 0 && list(value).every((suite) => SUITES.includes(suite))) options.suites = list(value)
+    else if (flag === '--problem' && value !== '') options.problem = value
+    else if (flag === '--query' && value !== '') options.query = value
+    else if (flag === '--run' && languages(value)) options.run = list(value)
+    else if (flag === '--submit' && languages(value)) options.submit = list(value)
     else throw new Error(`Unknown or invalid option ${flag} ${value}`)
   }
+  if (options.suites.includes('problems') && options.identity !== 'staging') throw new Error('The problems suite saves submissions, so run it with --identity staging')
   return options
 }
 
@@ -180,6 +199,61 @@ async function measureRoute(identity, logPath, offset, route) {
 }
 
 /**
+ * Waits for one `problems timed` line, failing at once when the app reports that its drive stopped.
+ *
+ * @param {string} logPath Path of the shell log.
+ * @param {number} offset Byte offset in the log to read from.
+ * @param {string} step The step to wait for, such as `library` or `run`.
+ * @param {number} timeoutMs How long to wait before failing.
+ * @returns {Promise<{ entry: { message: string, fields: Record<string, string> }, offset: number }>} The line and the offset after it.
+ */
+function waitForProblemsStep(logPath, offset, step, timeoutMs) {
+  return waitForLine(logPath, offset, (entry) => {
+    if (entry.message === 'problems benchmark failed') throw new Error(`The Problems benchmark stopped in the app: ${entry.fields.reason}`)
+    return entry.message === 'problems timed' && entry.fields.step === step
+  }, timeoutMs)
+}
+
+/**
+ * Times the Problems library on its first visit after launch and on a second visit from Home, then has the app drive
+ * one solving session and collects each step it logs.
+ *
+ * @param {typeof IDENTITIES.production} identity The running app.
+ * @param {string} logPath Path of the shell log.
+ * @param {number} offset Byte offset in the log to read from.
+ * @param {{ problem: string, query: string, run: string[], submit: string[] }} options The problem and languages to drive.
+ * @returns {Promise<{ samples: { label: string, ms: number }[], offset: number }>} One sample per step, in order.
+ */
+async function measureProblems(identity, logPath, offset, options) {
+  const samples = []
+  execFileSync('open', [`${identity.scheme}://leetcode`])
+  const cold = await waitForProblemsStep(logPath, offset, 'library', PROBLEMS_STEP_TIMEOUT_MS)
+  samples.push({ label: '/leetcode library settled, first visit after launch', ms: Number(cold.entry.fields.ms) })
+  const home = await measureRoute(identity, logPath, cold.offset, 'home')
+  execFileSync('open', [`${identity.scheme}://leetcode`])
+  const cached = await waitForProblemsStep(logPath, home.offset, 'library', PROBLEMS_STEP_TIMEOUT_MS)
+  samples.push({ label: '/leetcode library settled, second visit', ms: Number(cached.entry.fields.ms) })
+  const link = new URLSearchParams({ benchmark: 'problems', problem: options.problem, query: options.query, run: options.run.join(','), submit: options.submit.join(',') })
+  execFileSync('open', [`${identity.scheme}://leetcode?${link}`])
+  const steps = [
+    ['search', () => 'Search, input to filtered rows painted'],
+    ['statement', () => 'Open problem to statement painted'],
+    ['editor', (fields) => `Open problem to editor editable (${fields.language})`],
+    ['completion', (fields) => `Editor editable to first completion (${fields.language})`],
+    ...options.run.map(() => ['run', (fields) => `Run ${fields.language}, click to verdict`]),
+    ...options.submit.map(() => ['submit', (fields) => `Submit ${fields.language}, click to verdict`])
+  ]
+  let next = cached.offset
+  for (const [step, label] of steps) {
+    const line = await waitForProblemsStep(logPath, next, step, PROBLEMS_STEP_TIMEOUT_MS)
+    samples.push({ label: label(line.entry.fields), ms: Number(line.entry.fields.ms) })
+    next = line.offset
+  }
+  const done = await waitForProblemsStep(logPath, next, 'done', PROBLEMS_STEP_TIMEOUT_MS)
+  return { samples, offset: done.offset }
+}
+
+/**
  * Summarizes a series of measurements.
  *
  * @param {number[]} values The samples.
@@ -200,14 +274,23 @@ async function main() {
   statSync(logPath)
   const launches = []
   const routes = Object.fromEntries(options.routes.map((route) => [route, []]))
+  /** @type {Map<string, number[]>} */
+  const problems = new Map()
   for (let run = 1; run <= options.runs; run += 1) {
     const launch = await measureLaunch(identity, logPath)
     launches.push(launch)
     let offset = launch.offset
-    for (const route of options.routes) {
-      const sample = await measureRoute(identity, logPath, offset, route)
-      routes[route].push(sample)
-      offset = sample.offset
+    if (options.suites.includes('routes')) {
+      for (const route of options.routes) {
+        const sample = await measureRoute(identity, logPath, offset, route)
+        routes[route].push(sample)
+        offset = sample.offset
+      }
+    }
+    if (options.suites.includes('problems')) {
+      const measured = await measureProblems(identity, logPath, offset, options)
+      for (const sample of measured.samples) problems.set(sample.label, [...(problems.get(sample.label) ?? []), sample.ms])
+      offset = measured.offset
     }
     process.stderr.write(`run ${run}/${options.runs}: shell ${launch.shell} ms, account ${launch.account} ms, ${launch.firstRoute} settled ${launch.firstRouteMs} ms after navigation\n`)
   }
@@ -218,9 +301,15 @@ async function main() {
   console.log(`| Session known | ${summarize(launches.map((launch) => launch.session))} |`)
   console.log(`| Account rendered | ${summarize(launches.map((launch) => launch.account))} |`)
   console.log(`| First route (${launches[0].firstRoute}) settled, from navigation | ${summarize(launches.map((launch) => launch.firstRouteMs))} |`)
-  console.log('\n| Route by deep link | Settled | Concurrent queries |\n|---|---|---|')
-  for (const [route, samples] of Object.entries(routes)) {
-    console.log(`| /${route} | ${summarize(samples.map((sample) => sample.ms))} | ${Math.max(...samples.map((sample) => sample.queries))} |`)
+  if (options.suites.includes('routes')) {
+    console.log('\n| Route by deep link | Settled | Concurrent queries |\n|---|---|---|')
+    for (const [route, samples] of Object.entries(routes)) {
+      console.log(`| /${route} | ${summarize(samples.map((sample) => sample.ms))} | ${Math.max(...samples.map((sample) => sample.queries))} |`)
+    }
+  }
+  if (options.suites.includes('problems')) {
+    console.log(`\n| Problems step (${options.problem}) | Time |\n|---|---|`)
+    for (const [label, samples] of problems) console.log(`| ${label} | ${summarize(samples)} |`)
   }
 }
 

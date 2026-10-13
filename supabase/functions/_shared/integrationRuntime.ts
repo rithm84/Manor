@@ -56,7 +56,7 @@ export async function accessToken(client: IntegrationClient, credentials: Creden
  return token.access_token
 }
 export function corsHeaders(request: Request): HeadersInit {
- return {'Content-Type':'application/json',...originHeaders(requestOrigin(request)),'Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info','Access-Control-Allow-Methods':'POST,OPTIONS'}
+ return {'Content-Type':'application/json',...originHeaders(requestOrigin(request)),'Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info,x-region','Access-Control-Allow-Methods':'POST,OPTIONS'}
 }
 export async function identity(client: IntegrationClient, request: Request): Promise<string> {
  const authorization=request.headers.get('authorization')
@@ -68,16 +68,31 @@ export async function identity(client: IntegrationClient, request: Request): Pro
 export function randomToken(): string { return base64url(crypto.getRandomValues(new Uint8Array(32))) }
 export function base64url(bytes: Uint8Array): string { return btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replaceAll('=','') }
 export async function digest(value: string): Promise<string> { return base64url(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)))) }
-export async function authorizeConnection(request:Request,write:boolean):Promise<void> {
- const token=request.headers.get('authorization')!.slice(7)
- const client=createClient(required('SUPABASE_URL'),required('SUPABASE_ANON_KEY'),{global:{headers:{Authorization:'Bearer '+token}},auth:{persistSession:false,autoRefreshToken:false}})
- const claims=await client.auth.getClaims(token)
+const claimsSchema=z.object({sub:z.uuid(),session_id:z.uuid().optional(),client_id:z.string().optional()})
+export interface VerifiedCaller { readonly token: string; readonly owner: string; readonly sessionId: string | null; readonly agent: boolean }
+/**
+ * Verifies the bearer JWT's signature and expiry. With the project's asymmetric signing keys this is local, against
+ * a JWKS that supabase-js caches for every client in the isolate; it does not check that the session is still live.
+ */
+export async function verifiedCaller(request:Request):Promise<VerifiedCaller> {
+ const authorization=request.headers.get('authorization')
+ if(!authorization?.startsWith('Bearer ')) throw new Error('Sign in before managing connections')
+ const token=authorization.slice(7)
+ const claims=await createClient(required('SUPABASE_URL'),required('SUPABASE_ANON_KEY'),{auth:{persistSession:false,autoRefreshToken:false}}).auth.getClaims(token)
  if(claims.error) throw claims.error
  if(!claims.data) throw new Error('Your session could not be verified')
- if(claims.data.claims.client_id) {
-  const permission=await client.rpc('manor_mcp_access')
-  if(permission.error) throw permission.error
-  const access=z.object({read:z.boolean(),write:z.boolean()}).parse(permission.data)
-  if(!access.read || (write && !access.write)) throw new Error('This agent is not authorized for this operation')
- }
+ const parsed=claimsSchema.parse(claims.data.claims)
+ return {token,owner:parsed.sub,sessionId:parsed.session_id??null,agent:parsed.client_id!==undefined}
+}
+/** An agent token reads only with the account's read grant and writes only with its write grant. */
+export async function requireAgentAccess(caller:VerifiedCaller,write:boolean):Promise<void> {
+ if(!caller.agent) return
+ const client=createClient(required('SUPABASE_URL'),required('SUPABASE_ANON_KEY'),{global:{headers:{Authorization:'Bearer '+caller.token}},auth:{persistSession:false,autoRefreshToken:false}})
+ const permission=await client.rpc('manor_mcp_access')
+ if(permission.error) throw permission.error
+ const access=z.object({read:z.boolean(),write:z.boolean()}).parse(permission.data)
+ if(!access.read || (write && !access.write)) throw new Error('This agent is not authorized for this operation')
+}
+export async function authorizeConnection(request:Request,write:boolean):Promise<void> {
+ await requireAgentAccess(await verifiedCaller(request),write)
 }

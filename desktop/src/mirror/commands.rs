@@ -18,6 +18,7 @@ use std::sync::MutexGuard;
 
 use log::{info, warn};
 use serde_json::Value;
+use tauri::ipc::Response;
 use tauri::{AppHandle, Manager, State};
 
 use super::store::{Derived, Mirror, MirrorError, MirrorRevision, MirrorRow, MirrorStatus};
@@ -128,15 +129,34 @@ pub async fn mirror_delete_rows(
     .await
 }
 
-/// Every row of one table, ordered by key.
+/// Every row of one table, ordered by key, as an array of `{key, data,
+/// revision}` objects. The store already holds each row as JSON text, so the
+/// response is that text joined into an array rather than a value serialized
+/// again.
 #[tauri::command]
 pub async fn mirror_rows(
     state: State<'_, MirrorState>,
     account_id: String,
     table: String,
-) -> Result<Vec<MirrorRow>, String> {
+) -> Result<Response, String> {
     let state = state.inner().clone();
-    blocking(move || with_mirror(&state, &account_id, |mirror| mirror.rows(&table))).await
+    let text =
+        blocking(move || with_mirror(&state, &account_id, |mirror| mirror.rows_json(&table)))
+            .await?;
+    Ok(Response::new(text))
+}
+
+/// One row of one table, or none when the mirror does not hold it. Opening a
+/// problem reads its statement this way instead of moving a whole table across.
+#[tauri::command]
+pub async fn mirror_row(
+    state: State<'_, MirrorState>,
+    account_id: String,
+    table: String,
+    key: String,
+) -> Result<Option<MirrorRow>, String> {
+    let state = state.inner().clone();
+    blocking(move || with_mirror(&state, &account_id, |mirror| mirror.row(&table, &key))).await
 }
 
 /// The key and revision of every row of one table, which is what a pull needs
@@ -162,6 +182,24 @@ pub async fn mirror_commit(
 ) -> Result<(), String> {
     let state = state.inner().clone();
     blocking(move || with_mirror(&state, &account_id, |mirror| mirror.commit(cursor, ready))).await
+}
+
+/// Records how far the shared catalog's feed has been applied and whether the
+/// catalog copy is complete.
+#[tauri::command]
+pub async fn mirror_commit_catalog(
+    state: State<'_, MirrorState>,
+    account_id: String,
+    cursor: u64,
+    ready: bool,
+) -> Result<(), String> {
+    let state = state.inner().clone();
+    blocking(move || {
+        with_mirror(&state, &account_id, |mirror| {
+            mirror.commit_catalog(cursor, ready)
+        })
+    })
+    .await
 }
 
 /// Caches a derived read against the cursor and account-local day it was
@@ -258,6 +296,8 @@ fn open_mirror(
         account = account_id,
         ready = status.ready,
         cursor = status.cursor,
+        catalog_ready = status.catalog_ready,
+        catalog_cursor = status.catalog_cursor,
         rows = status.total_rows();
         "mirror opened"
     );

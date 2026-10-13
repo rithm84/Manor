@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { z } from 'zod'
 
 import type { JsonObject, JsonValue } from '../ManorGateway'
-import type { MirrorTable } from './mirrorTables'
+import type { MirrorTable, StoredTable } from './mirrorTables'
 
 /**
  * Stored rows are checked at their envelope rather than field by field. Every one of them was validated
@@ -32,6 +32,9 @@ export type MirrorRevision = z.infer<typeof mirrorRevisionSchema>
 const mirrorStatusSchema = z.object({
   ready: z.boolean(),
   cursor: z.number().int().nonnegative(),
+  /** The shared problem catalog is complete as of `catalogCursor` on the catalog feed. */
+  catalogReady: z.boolean(),
+  catalogCursor: z.number().int().nonnegative(),
   rowCounts: z.record(z.string(), z.number().int().nonnegative())
 })
 export type MirrorStatus = z.infer<typeof mirrorStatusSchema>
@@ -78,20 +81,25 @@ export class MirrorStore {
     return read('mirror_status', {}, mirrorStatusSchema)
   }
 
-  replaceTable(accountId: string, table: MirrorTable, rows: readonly MirrorRow[]): Promise<void> {
+  replaceTable(accountId: string, table: StoredTable, rows: readonly MirrorRow[]): Promise<void> {
     return write('mirror_replace_table', { accountId, table, rows })
   }
 
-  upsertRows(accountId: string, table: MirrorTable, rows: readonly MirrorRow[]): Promise<void> {
+  upsertRows(accountId: string, table: StoredTable, rows: readonly MirrorRow[]): Promise<void> {
     return write('mirror_upsert_rows', { accountId, table, rows })
   }
 
-  deleteRows(accountId: string, table: MirrorTable, keys: readonly string[]): Promise<void> {
+  deleteRows(accountId: string, table: StoredTable, keys: readonly string[]): Promise<void> {
     return write('mirror_delete_rows', { accountId, table, keys })
   }
 
   rows(accountId: string, table: MirrorTable): Promise<MirrorRow[]> {
     return read('mirror_rows', { accountId, table }, z.array(mirrorRowSchema))
+  }
+
+  /** One stored row, or null when the table does not hold that key. Opening a problem reads its statement this way. */
+  row(accountId: string, table: StoredTable, key: string): Promise<MirrorRow | null> {
+    return read('mirror_row', { accountId, table, key }, mirrorRowSchema.nullable())
   }
 
   /** The key and revision of every stored row of a table, without the JSON a revision check never reads. */
@@ -102,6 +110,11 @@ export class MirrorStore {
   /** Records how far the mirror has caught up. Only a completed apply may move the cursor. */
   commit(accountId: string, cursor: number, ready: boolean): Promise<void> {
     return write('mirror_commit', { accountId, cursor, ready })
+  }
+
+  /** Records how far the catalog has caught up on its own feed. A snapshot that starts over records `ready: false` first. */
+  commitCatalog(accountId: string, cursor: number, ready: boolean): Promise<void> {
+    return write('mirror_commit_catalog', { accountId, cursor, ready })
   }
 
   putDerived(accountId: string, name: DerivedName, value: JsonValue, cursor: number, day: string): Promise<void> {

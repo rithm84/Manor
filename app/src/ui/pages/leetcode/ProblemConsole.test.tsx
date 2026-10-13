@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { describe, expect, it } from 'vitest'
 import type { ProblemSubmission } from '../../../shared/problemExecution'
 import { TestcaseEditor } from './ProblemConsole'
-import { ProblemTestResult } from './ProblemTestResult'
+import { ProblemTestResult, SubmissionFailure } from './ProblemTestResult'
 import { testcaseFields, testcaseInput } from './problemTestcases'
 import type { Testcase } from './problemTestcases'
 
@@ -62,12 +62,14 @@ const base: ProblemSubmission = { id: '00000000-0000-4000-8000-000000000001', pr
 describe('ProblemTestResult', () => {
   it('opens on the first failing case with labeled input, printed output, and the expected answer', async () => {
     const { host, unmount } = await mount(<ProblemTestResult fields={fields} submission={{ ...base, results: [
-      { id: 'one', passed: true, hidden: false, input: '[2,7]\n9', expectedOutput: '[0,1]', output: '[0,1]', stdout: null, stderr: null, durationMs: 3, verdict: 'accepted' },
-      { id: 'two', passed: false, hidden: false, input: '[3,3]\n6', expectedOutput: '[0,1]', output: '[1,0]', stdout: 'checking 3\n', stderr: null, durationMs: 4, verdict: 'wrong_answer' }
+      { id: 'one', passed: true, hidden: false, input: '[2,7]\n9', expectedOutput: '[0,1]', output: '[0,1]', stdout: null, stderr: null, durationMs: 3, memoryKb: 17_000, verdict: 'accepted' },
+      { id: 'two', passed: false, hidden: false, input: '[3,3]\n6', expectedOutput: '[0,1]', output: '[1,0]', stdout: 'checking 3\n', stderr: null, durationMs: 4.4, memoryKb: 17_830, verdict: 'wrong_answer' }
     ] }} />)
     try {
       expect(element(host, 'problem-verdict').textContent).toBe('Wrong Answer')
-      expect(host.textContent).toContain('1 / 2 testcases passed')
+      expect(element(host, 'problem-passed-count').textContent).toBe('Passed test cases: 1 / 2')
+      expect(host.textContent).toContain('Runtime: 7 ms')
+      expect(host.textContent).toContain('Memory: 17.4 MB')
       const detail = element(host, 'problem-case-detail').textContent
       expect(detail).toContain('target =6')
       expect(detail).toContain('Stdoutchecking 3')
@@ -90,9 +92,25 @@ describe('ProblemTestResult', () => {
     const hidden = await mount(<ProblemTestResult fields={fields} submission={{ ...base, mode: 'submit', results: [{ id: 'one', passed: true, hidden: true, input: null, expectedOutput: null, output: null, stderr: null, durationMs: 2, verdict: 'accepted' }, { id: 'two', passed: false, hidden: true, input: null, expectedOutput: null, output: null, stderr: null, durationMs: 2, verdict: 'time_limit' }] }} />)
     try {
       expect(hidden.host.textContent).toContain('Failed on hidden test case 2.')
-      expect(hidden.host.textContent).toContain('This test case is hidden.')
+      expect(hidden.host.querySelector('[data-testid="problem-case-detail"]')).toBeNull()
     } finally {
       await hidden.unmount()
+    }
+  })
+})
+
+describe('SubmissionFailure', () => {
+  it('names an earlier hidden failure and still shows the first failing case the account may see', async () => {
+    const { host, unmount } = await mount(<SubmissionFailure fields={fields} submission={{ ...base, mode: 'submit', results: [
+      { id: 'one', passed: true, hidden: false, input: '[2,7]\n9', expectedOutput: '[0,1]', output: '[0,1]', stderr: null, durationMs: 1, verdict: 'accepted' },
+      { id: 'two', passed: false, hidden: true, input: null, expectedOutput: null, output: null, stderr: null, durationMs: 1, verdict: 'wrong_answer' },
+      { id: 'three', passed: false, hidden: false, input: '[3,3]\n6', expectedOutput: '[0,1]', output: '[]', stderr: null, durationMs: 1, verdict: 'wrong_answer' }
+    ] }} />)
+    try {
+      expect(host.textContent).toContain('Failed on hidden test case 2. Test case 3 also failed.')
+      expect(element(host, 'problem-case-detail').textContent).toContain('Output[]')
+    } finally {
+      await unmount()
     }
   })
 })

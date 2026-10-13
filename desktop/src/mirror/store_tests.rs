@@ -54,6 +54,13 @@ fn row(key: &str, data: Value, revision: Option<i64>) -> MirrorRow {
     }
 }
 
+/// Reads a table back through the text the window receives, so every test
+/// also checks that the joined text is the array of rows it stands for.
+fn stored_rows(mirror: &Mirror, table: &str) -> Result<Vec<MirrorRow>, String> {
+    let text = mirror.rows_json(table).map_err(|cause| cause.to_string())?;
+    serde_json::from_str(&text).map_err(|cause| cause.to_string())
+}
+
 fn counts(table: &str, count: u64) -> BTreeMap<String, u64> {
     BTreeMap::from([(table.to_owned(), count)])
 }
@@ -84,13 +91,16 @@ fn a_replaced_table_reads_back_in_key_order() {
     mirror
         .replace_table("tasks", &[row("c", json!({ "title": "only" }), None)])
         .expect("the table is replaced again");
-    let rows = mirror.rows("tasks").expect("the table reads back");
+    let rows = stored_rows(&mirror, "tasks").expect("the table reads back");
     assert_eq!(rows, vec![row("c", json!({ "title": "only" }), None)]);
     assert_eq!(
         mirror.status().expect("a status").row_counts,
         counts("tasks", 1)
     );
-    assert_eq!(mirror.rows("habits").expect("an empty table"), Vec::new());
+    assert_eq!(
+        stored_rows(&mirror, "habits").expect("an empty table"),
+        Vec::new()
+    );
 }
 
 #[test]
@@ -110,7 +120,7 @@ fn an_upserted_row_overwrites_its_data_and_revision() {
         )
         .expect("the rows are stored");
     assert_eq!(
-        mirror.rows("tasks").expect("the rows read back"),
+        stored_rows(&mirror, "tasks").expect("the rows read back"),
         vec![
             row("a", json!({ "title": "after" }), Some(4)),
             row("b", json!({ "title": "new" }), None),
@@ -140,7 +150,7 @@ fn deleting_removes_only_the_named_keys() {
             ],
         )
         .expect("the keys are deleted");
-    let rows = mirror.rows("habit_entries").expect("the rows read back");
+    let rows = stored_rows(&mirror, "habit_entries").expect("the rows read back");
     assert_eq!(
         rows,
         vec![row("h1\u{1f}2026-09-14", json!({ "done": false }), Some(1))]
@@ -176,6 +186,122 @@ fn revisions_read_back_every_key_without_its_row() {
     assert_eq!(
         mirror.revisions("habits").expect("an empty table"),
         Vec::new()
+    );
+}
+
+#[test]
+fn a_single_row_reads_back_by_key() {
+    let directory = TempDirectory::create("row");
+    let (mut mirror, _) = open(&directory, ACCOUNT);
+    mirror
+        .replace_table(
+            "problem_catalog_content",
+            &[
+                row("two-sum", json!({ "statement_markdown": "Find two" }), None),
+                row(
+                    "valid-anagram",
+                    json!({ "statement_markdown": "Compare" }),
+                    None,
+                ),
+            ],
+        )
+        .expect("the table is stored");
+    assert_eq!(
+        mirror
+            .row("problem_catalog_content", "valid-anagram")
+            .expect("a read"),
+        Some(row(
+            "valid-anagram",
+            json!({ "statement_markdown": "Compare" }),
+            None
+        ))
+    );
+    // A key the table does not hold, and a key held only by another table, are both absent.
+    assert_eq!(
+        mirror
+            .row("problem_catalog_content", "missing")
+            .expect("a read"),
+        None
+    );
+    assert_eq!(
+        mirror.row("problem_catalog", "two-sum").expect("a read"),
+        None
+    );
+}
+
+#[test]
+fn the_catalog_cursor_is_recorded_apart_from_the_account_cursor() {
+    let directory = TempDirectory::create("catalog");
+    let (mut mirror, status) = open(&directory, ACCOUNT);
+    assert!(!status.catalog_ready);
+    assert_eq!(status.catalog_cursor, 0);
+    mirror
+        .commit(12, true)
+        .expect("the account cursor is recorded");
+    mirror
+        .commit_catalog(4_294_967_296, true)
+        .expect("the catalog cursor is recorded");
+    let status = mirror.status().expect("a status");
+    assert_eq!((status.ready, status.cursor), (true, 12));
+    assert_eq!(
+        (status.catalog_ready, status.catalog_cursor),
+        (true, 4_294_967_296)
+    );
+
+    // A snapshot that starts over marks the catalog incomplete without touching the account copy.
+    mirror
+        .commit_catalog(4_294_967_296, false)
+        .expect("the catalog is marked incomplete");
+    drop(mirror);
+    let (_mirror, reopened) = open(&directory, ACCOUNT);
+    assert_eq!((reopened.ready, reopened.cursor), (true, 12));
+    assert_eq!(
+        (reopened.catalog_ready, reopened.catalog_cursor),
+        (false, 4_294_967_296)
+    );
+}
+
+#[test]
+fn a_file_from_the_previous_schema_drops_its_catalog_and_problem_rows() {
+    let directory = TempDirectory::create("schema-five");
+    let (mut mirror, _) = open(&directory, ACCOUNT);
+    mirror
+        .replace_table(
+            "leetcode_problems",
+            &[row(
+                "neetcode-two-sum",
+                json!({ "name": "Two Sum" }),
+                Some(3),
+            )],
+        )
+        .expect("the table is stored");
+    mirror.commit(40, true).expect("the cursor is recorded");
+    mirror
+        .commit_catalog(7, true)
+        .expect("the catalog is recorded");
+    drop(mirror);
+
+    // Version 5 files held every stock and imported problem as an account row.
+    let connection = Connection::open(directory.file()).expect("the file opens");
+    connection
+        .execute(
+            "update meta set value = '5' where key = 'schema_version'",
+            [],
+        )
+        .expect("the version is changed");
+    connection.close().expect("the file closes");
+
+    let (mirror, status) = open(&directory, ACCOUNT);
+    assert_eq!(MIRROR_SCHEMA_VERSION, 6);
+    assert!(!status.ready);
+    assert!(!status.catalog_ready);
+    assert_eq!((status.cursor, status.catalog_cursor), (0, 0));
+    assert_eq!(status.row_counts, BTreeMap::new());
+    assert_eq!(
+        mirror
+            .row("leetcode_problems", "neetcode-two-sum")
+            .expect("a read"),
+        None
     );
 }
 
@@ -223,7 +349,7 @@ fn a_reopened_file_reports_its_cursor_and_rows() {
     assert_eq!(status.row_counts, counts("tasks", 1));
     assert_eq!(status.total_rows(), 1);
     assert_eq!(
-        mirror.rows("tasks").expect("the rows read back"),
+        stored_rows(&mirror, "tasks").expect("the rows read back"),
         vec![row("a", json!({ "title": "kept" }), Some(7))]
     );
 }

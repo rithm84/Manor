@@ -34,7 +34,7 @@ export const problemInterfaceSchema = z.discriminatedUnion('kind', [
     decode: z.object({ name: z.string().min(1).max(64), param: interfaceParamSchema, returns: z.string().min(1).max(64) }) }),
 ])
 export type ProblemInterface = z.infer<typeof problemInterfaceSchema>
-export const problemContentInputSchema = z.object({
+const problemContentInputSchema = z.object({
   statementMarkdown: z.string().min(1).max(1000000),
   examples: z.array(problemExampleSchema).max(100),
   hints: z.array(z.string().min(1).max(100000)).max(100),
@@ -45,7 +45,6 @@ export const problemContentInputSchema = z.object({
 export const problemContentSchema = problemContentInputSchema.extend({
   problemId: idSchema, version: z.number().int().positive(), createdAt: z.iso.datetime({ offset: true })
 })
-export type ProblemContentInput = z.infer<typeof problemContentInputSchema>
 export type ProblemContent = z.infer<typeof problemContentSchema>
 
 export const problemRecordSchema = z.object({
@@ -85,11 +84,6 @@ export type ProblemSort = z.infer<typeof problemSortSchema>
 export type ProblemSavedView = z.infer<typeof problemSavedViewSchema>
 export type SaveProblemViewInput = z.infer<typeof problemSavedViewInputSchema>
 
-export const saveProblemInputSchema = problemRecordSchema.pick({
-  id: true, name: true, difficulty: true, kind: true, topics: true, companies: true, tags: true, collections: true,
-  sourceUrl: true, sourceType: true, externalKey: true, sourceMetadata: true
-}).extend({ expectedRevision: revisionSchema, content: problemContentInputSchema.nullable() })
-export type SaveProblemInput = z.infer<typeof saveProblemInputSchema>
 export const saveProblemDraftInputSchema = z.object({
   id: idSchema, problemId: idSchema, language: problemLanguageSchema, contentVersion: z.number().int().positive(),
   source: z.string().max(262144).refine(value => new TextEncoder().encode(value).byteLength <= 262144, 'Code drafts must contain at most 256 KiB of UTF-8 source'), expectedRevision: revisionSchema, requestId: z.uuid()
@@ -98,13 +92,6 @@ export const problemCodeDraftSchema = saveProblemDraftInputSchema.omit({ expecte
   revision: z.number().int().positive(), updatedAt: z.iso.datetime({ offset: true })
 })
 export type SaveProblemDraftInput = z.infer<typeof saveProblemDraftInputSchema>
-export const mergeProblemDuplicatesInputSchema = z.object({
-  id: idSchema, expectedRevision: revisionSchema, requestId: z.uuid(), name: z.string().trim().min(1).max(500), reason: z.string().trim().min(1).max(2000),
-  aliases: z.array(z.object({ id: idSchema, expectedRevision: revisionSchema })).min(1).max(99)
-})
-export const unmergeProblemDuplicateInputSchema = z.object({ id: idSchema, expectedRevision: revisionSchema, canonicalExpectedRevision: revisionSchema, requestId: z.uuid() })
-export type MergeProblemDuplicatesInput = z.infer<typeof mergeProblemDuplicatesInputSchema>
-export type UnmergeProblemDuplicateInput = z.infer<typeof unmergeProblemDuplicateInputSchema>
 export type ProblemCodeDraft = z.infer<typeof problemCodeDraftSchema>
 export interface ProblemLibraryState {
   readonly problems: readonly ProblemRecord[]
@@ -112,16 +99,14 @@ export interface ProblemLibraryState {
   readonly attempts: readonly LeetCodeAttempt[]
   readonly notes: readonly LeetCodeNote[]
 }
+/** The library as the app uses it. Problems are read-only in the app; custom problems change only through Codex. */
 export interface ProblemLibraryApi {
   load(): Promise<ProblemLibraryState>
   loadProblem(id: string): Promise<ProblemDetail>
-  saveProblem(input: SaveProblemInput): Promise<ProblemDetail>
   saveView(input: SaveProblemViewInput): Promise<ProblemSavedView>
   deleteView(input: { id: string; expectedRevision: number }): Promise<void>
   loadDraft(problemId: string, language: ProblemLanguage): Promise<ProblemCodeDraft | null>
   saveDraft(input: SaveProblemDraftInput): Promise<ProblemCodeDraft>
-  mergeDuplicates(input: MergeProblemDuplicatesInput): Promise<ProblemDetail>
-  unmergeDuplicate(input: UnmergeProblemDuplicateInput): Promise<ProblemDetail>
 }
 
 export function emptyProblemFilters(): ProblemFilters {
@@ -133,13 +118,14 @@ const naturalOrder = new Intl.Collator(undefined, { numeric: true })
 /** Tag facets are the evidence prefix before ': ' (Round, Role, Technology, Employment); unprefixed tags form their own facet. */
 function tagFacet(tag: string): string { const at = tag.indexOf(': '); return at < 0 ? '' : tag.slice(0, at) }
 
-/** Search relevance: a LeetCode number or exact title first, then title prefixes, title words, title text, and finally other labels. */
-function searchRank(problem: ProblemRecord, search: string): number {
+/** Search relevance: a LeetCode number or exact title first (the LeetCode problem ahead of same-titled imports), then title prefixes, title words, title text, and finally other labels. */
+export function searchRank(problem: ProblemRecord, search: string): number {
   const name = problem.name.toLocaleLowerCase()
-  if (name === search || problem.externalKey === `leetcode:${search}`) return 0
-  if (name.startsWith(search)) return 1
-  if (name.includes(' ' + search)) return 2
-  return name.includes(search) ? 3 : 4
+  if (problem.externalKey === `leetcode:${search}`) return 0
+  if (name === search) return problem.sourceType === 'stock' ? 0 : 1
+  if (name.startsWith(search)) return 2
+  if (name.includes(' ' + search)) return 3
+  return name.includes(search) ? 4 : 5
 }
 
 /** Filters combine with AND; values within one property, or within one tag facet such as Round, combine with OR. While searching, relevance orders results before the chosen sort. */

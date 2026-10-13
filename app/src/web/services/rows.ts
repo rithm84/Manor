@@ -6,8 +6,28 @@ import type { DerivedName } from '../mirror/MirrorStore'
 
 export const revisionSchema = z.number().int().positive()
 
+/**
+ * Column names already converted. A table has a few dozen columns, while a library load converts every one of
+ * them on each of thousands of rows, where the regular expression was most of the load's time.
+ */
+const camelNames = new Map<string, string>()
+
+function camelName(key: string): string {
+  const known = camelNames.get(key)
+  if (known !== undefined) return known
+  const name = key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())
+  camelNames.set(key, name)
+  return name
+}
+
+/** A row with camelCase keys. No column is named `__proto__`, and assigning one would replace the prototype, so it is refused. */
 export function camelRow(row: JsonObject): JsonObject {
-  return Object.fromEntries(Object.entries(row).map(([key, value]) => [key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase()), value]))
+  const camel: JsonObject = {}
+  for (const key of Object.keys(row)) {
+    if (key === '__proto__') throw new TypeError('A row has a `__proto__` key, which is not a column')
+    camel[camelName(key)] = row[key]
+  }
+  return camel
 }
 
 export function commandRecord(result: CommandResult): JsonObject {

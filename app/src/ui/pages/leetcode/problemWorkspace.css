@@ -1,0 +1,159 @@
+/* The solving workspace: reader, editor, console, and the Monaco overlays they open. */
+
+/* While solving, the page surface spans the window and fills its height (see LeetCodePage), so panes scroll inside
+   themselves and nothing is cut off by the window edge. The reader keeps its measure and the editor takes the width. */
+.problem-library.is-solving { display: flex; flex-direction: column; padding-bottom: 0; }
+/* A 28px pill with 8px above and below, plus the strip's 1px hairline. */
+.problem-workspace { --problem-strip-height: calc(var(--space-6) + var(--space-1) + var(--space-2) * 2 + 1px); }
+.problem-workspace.is-coding { flex: 1; min-height: 0; }
+.problem-workspace.is-coding .problem-workspace-body { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+.problem-workspace-body.is-fullscreen > .problem-reader, .problem-workspace-body.is-fullscreen > .problem-pane-divider { display: none; }
+
+/* Strips that sit side by side share one height and one bottom hairline across the split. */
+.problem-reader-tabs, .problem-editor-toolbar, .problem-console-header, .problem-action-bar { box-sizing: border-box; display: flex; align-items: center; flex-shrink: 0; min-height: var(--problem-strip-height); }
+.problem-reader-tabs, .problem-editor-toolbar { height: var(--problem-strip-height); border-bottom: 1px solid var(--hairline); }
+.problem-reader-tabs { padding: 0; }
+.problem-reader-scroll { padding-bottom: var(--space-12); }
+
+.problem-solving { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.problem-editor-toolbar { gap: var(--space-3); padding: 0 var(--space-2) 0 var(--space-3); }
+.problem-language-picker { position: relative; display: inline-flex; align-items: center; color: var(--ink-muted); }
+.problem-language-picker select { appearance: none; min-height: calc(var(--space-6) + var(--space-1)); padding: 0 calc(var(--space-5) + var(--space-1)) 0 var(--space-2); border: 1px solid transparent; border-radius: var(--radius-chip); background: transparent; color: var(--ink); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.problem-language-picker select:hover:not(:disabled) { background: var(--surface-hover); }
+.problem-language-picker select:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.problem-language-picker select:disabled { color: var(--ink-muted); cursor: default; }
+.problem-language-picker svg { position: absolute; right: var(--space-2); pointer-events: none; }
+/* Save state: a muted cloud at rest, "Saving…" only for slow saves, a brief check, and a warning that stays until resolved.
+   Its width is reserved, so changing state never moves the toolbar. */
+.problem-save-state { display: inline-flex; align-items: center; min-width: calc(var(--space-12) * 2); color: var(--ink-muted); font-size: var(--text-xs); white-space: nowrap; }
+.problem-save-view { display: inline-flex; align-items: center; animation: problem-save-in var(--duration-base) var(--ease-out); }
+@keyframes problem-save-in { from { opacity: 0; transform: scale(0.92); } }
+.problem-save-icon { display: inline-grid; place-items: center; width: calc(var(--space-6) + var(--space-1)); height: calc(var(--space-6) + var(--space-1)); border-radius: var(--radius-chip); opacity: 0.75; }
+.problem-save-state.is-justSaved .problem-save-icon { color: var(--completion); opacity: 1; }
+.problem-save-saving { display: inline-flex; align-items: center; gap: var(--space-1); padding-left: var(--space-1); }
+.problem-save-attention { display: inline-flex; align-items: center; gap: var(--space-1); min-height: calc(var(--space-6) + var(--space-1)); padding: 0 var(--space-2); border-radius: var(--radius-chip); background: var(--warning-soft); color: var(--warning); font: inherit; font-size: var(--text-xs); font-weight: 600; cursor: pointer; }
+.problem-save-attention:hover { background: color-mix(in srgb, var(--warning) 18%, var(--warning-soft)); }
+.problem-save-attention:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.problem-editor-tools { display: flex; align-items: center; gap: var(--space-1); margin-left: auto; }
+
+.problem-settings-popup { display: grid; gap: var(--space-3); min-width: calc(var(--space-12) * 5); padding: var(--space-3); border: 1px solid var(--hairline-strong); border-radius: var(--radius-control); background: var(--surface-card); color: var(--ink-body); box-shadow: var(--shadow-overlay); font-family: var(--font-ui); font-size: var(--text-sm); outline: none; transform-origin: var(--transform-origin); transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
+.problem-settings-popup[data-starting-style], .problem-settings-popup[data-ending-style] { opacity: 0; transform: scale(0.98); }
+.problem-settings-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.problem-stepper, .problem-segmented { display: inline-flex; align-items: center; padding: calc(var(--space-1) / 2); border-radius: var(--radius-control); background: var(--surface-soft); }
+.problem-stepper button, .problem-segmented button { display: inline-grid; place-items: center; min-width: calc(var(--space-6) + var(--space-1)); min-height: var(--space-6); border-radius: var(--radius-chip); color: var(--ink-muted); font: inherit; font-size: var(--text-sm); cursor: pointer; }
+.problem-stepper button:hover:not(:disabled), .problem-segmented button:hover { color: var(--ink); background: var(--surface-hover); }
+.problem-stepper button:disabled { opacity: 0.45; cursor: default; }
+.problem-stepper output { min-width: var(--space-8); text-align: center; color: var(--ink); font-weight: 600; }
+.problem-segmented button[aria-checked='true'] { background: var(--surface-card); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-hover); }
+.problem-stepper button:focus-visible, .problem-segmented button:focus-visible, .problem-console-toggle:focus-visible, .problem-back-link:focus-visible, .problem-submissions button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.problem-solving-panes { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.problem-solving-panes.is-console-closed .problem-editor-pane { flex: 1 1 auto; }
+.problem-console-header { padding: 0 var(--space-3); border-bottom: 1px solid var(--hairline); }
+.problem-console-body { padding-bottom: var(--space-8); }
+.problem-action-bar { justify-content: space-between; gap: var(--space-3); padding: 0 var(--space-3); border-top: 1px solid var(--hairline); }
+.problem-console-toggle { display: inline-flex; align-items: center; gap: var(--space-1); min-height: calc(var(--space-6) + var(--space-1)); padding: 0 var(--space-2); border-radius: var(--radius-chip); color: var(--ink-muted); font: inherit; font-size: var(--text-sm); font-weight: 500; cursor: pointer; }
+.problem-console-toggle:hover { background: var(--surface-hover); color: var(--ink); }
+.problem-console-actions { display: flex; align-items: center; gap: var(--space-2); }
+/* The button that started the execution keeps full strength while both wait. */
+.problem-console-actions .ui-button:disabled:has(.problem-spinner) { opacity: 1; }
+
+/* Running and judging: a small spinner and one word, in the same row the verdict takes when it arrives. */
+.problem-spinner { flex: none; animation: problem-spin 800ms linear infinite; }
+.problem-spinner.is-quiet { opacity: 0.7; }
+@keyframes problem-spin { to { transform: rotate(360deg); } }
+.problem-result-pending, .problem-verdict-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); min-height: calc(var(--space-8) - var(--space-1)); margin-bottom: var(--space-3); }
+.problem-result-pending { align-items: center; gap: var(--space-2); color: var(--ink-muted); font-size: var(--text-body); font-weight: 500; }
+.problem-verdict-row > span { color: var(--ink-muted); font-size: var(--text-sm); }
+.problem-result, .problem-submission-heading { animation: problem-reveal var(--duration-base) var(--ease-out); }
+@keyframes problem-reveal { from { opacity: 0; transform: translateY(var(--space-1)); } }
+@media (prefers-reduced-motion: reduce) {
+  .problem-spinner { animation: none; }
+  .problem-result, .problem-submission-heading { animation-name: problem-reveal-still; }
+  @keyframes problem-reveal-still { from { opacity: 0; } }
+  .problem-settings-popup { transition: opacity var(--duration-fast) ease; transform: none !important; }
+  .problem-save-view { animation-name: problem-reveal-still; }
+}
+
+/* Submissions: a compact history that opens each submission in place. */
+.problem-submissions ol { list-style: none; margin: 0; padding: 0; }
+.problem-submissions-head, .problem-submissions button { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.8fr); align-items: center; gap: var(--space-3); padding: 0 var(--space-2); }
+.problem-submissions-head { padding-bottom: var(--space-2); border-bottom: 1px solid var(--hairline); color: var(--ink-muted); font-size: var(--text-xs); font-weight: 500; }
+.problem-submissions li { border-bottom: 1px solid var(--hairline); }
+.problem-submissions button { width: 100%; min-height: calc(var(--space-12) + var(--space-1)); text-align: left; font: inherit; font-size: var(--text-sm); color: var(--ink-body); border-radius: var(--radius-chip); cursor: pointer; }
+.problem-submissions button > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.problem-submissions button:hover:not(:disabled) { background: var(--surface-hover); }
+.problem-submissions button[aria-busy='true'] { background: var(--surface-soft); }
+.problem-submission-status { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.problem-submission-status strong { color: var(--ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.problem-submission-status time { color: var(--ink-muted); font-size: var(--text-xs); }
+.problem-submission-status strong.is-accepted, .problem-submission-heading .problem-submission-status strong.is-failed, .problem-submission-heading .is-failed { color: var(--error); }
+
+.problem-submission-detail { display: flex; flex-direction: column; gap: var(--space-4); }
+.problem-back-link { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--space-1); min-height: calc(var(--space-6) + var(--space-1)); margin-left: calc(var(--space-2) * -1); padding: 0 var(--space-2); border-radius: var(--radius-chip); color: var(--ink-muted); font: inherit; font-size: var(--text-sm); cursor: pointer; }
+.problem-back-link:hover { background: var(--surface-hover); color: var(--ink); }
+.problem-submission-heading > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); }
+.problem-submission-heading .problem-verdict { font-size: var(--display-md); line-height: 1.2; }
+.problem-submission-heading > div > span { color: var(--ink-muted); font-size: var(--text-sm); }
+.problem-submission-heading p { margin-top: var(--space-1); color: var(--ink-muted); font-size: var(--text-sm); }
+.problem-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-12) * 3), 1fr)); gap: var(--space-3); }
+.problem-stat { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--hairline); border-radius: var(--radius-card); background: var(--surface-paper); }
+.problem-stat > span { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink-muted); font-size: var(--text-sm); }
+.problem-stat strong { color: var(--ink); font-family: var(--font-display); font-size: var(--text-lg); font-weight: 600; }
+.problem-submission-failure .problem-result-note { margin-bottom: var(--space-2); }
+.problem-submission-code-section header { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); }
+.problem-submission-code-section h3 { display: flex; align-items: baseline; gap: var(--space-2); margin: 0 auto 0 0; color: var(--ink); font-family: var(--font-ui); font-size: var(--text-body); font-weight: 600; }
+.problem-submission-code-section h3 > span { color: var(--ink-muted); font-size: var(--text-sm); font-weight: 400; }
+.problem-submission-code { margin: 0; padding: var(--space-3) var(--space-4); overflow: auto; border: 1px solid var(--hairline); border-radius: var(--radius-control); background: var(--surface-paper); color: var(--ink-body); font-family: var(--font-mono); font-size: var(--text-sm); line-height: 1.6; white-space: pre; }
+
+/* Monaco overlays (hover, signature help, completion, diagnostics) live in a fixed host on the body, styled as Manor
+   popovers. Overriding Monaco's own color variables keeps every widget it draws on the same tokens in both themes. */
+.monaco-editor.problem-monaco-overflow {
+  position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 115; overflow: visible;
+  font-family: var(--font-ui); font-size: var(--text-sm);
+  --monaco-monospace-font: var(--font-mono);
+  --vscode-cornerRadius-large: var(--radius-control);
+  --vscode-shadow-lg: var(--shadow-overlay);
+  --vscode-widget-shadow: transparent;
+  --vscode-hover-maxWidth: min(calc(var(--space-12) * 16), 90vw);
+  --vscode-editorHoverWidget-background: var(--surface-card);
+  --vscode-editorHoverWidget-foreground: var(--ink-body);
+  --vscode-editorHoverWidget-border: var(--hairline-strong);
+  --vscode-editorHoverWidget-statusBarBackground: var(--surface-paper);
+  --vscode-editorHoverWidget-highlightForeground: var(--primary);
+  --vscode-editorWidget-background: var(--surface-card);
+  --vscode-editorWidget-foreground: var(--ink-body);
+  --vscode-editorWidget-border: var(--hairline-strong);
+  --vscode-editorSuggestWidget-background: var(--surface-card);
+  --vscode-editorSuggestWidget-foreground: var(--ink-body);
+  --vscode-editorSuggestWidget-border: var(--hairline-strong);
+  --vscode-editorSuggestWidget-selectedBackground: var(--surface-selected);
+  --vscode-editorSuggestWidget-selectedForeground: var(--ink);
+  --vscode-editorSuggestWidget-selectedIconForeground: var(--ink);
+  --vscode-editorSuggestWidget-highlightForeground: var(--primary);
+  --vscode-editorSuggestWidget-focusHighlightForeground: var(--primary);
+  --vscode-list-hoverBackground: var(--surface-hover);
+  --vscode-textLink-foreground: var(--primary);
+  --vscode-textLink-activeForeground: var(--primary-hover);
+  --vscode-textCodeBlock-background: var(--surface-soft);
+  --vscode-focusBorder: var(--focus-border);
+  --vscode-scrollbarSlider-background: color-mix(in srgb, var(--ink-muted) 30%, transparent);
+  --vscode-scrollbarSlider-hoverBackground: color-mix(in srgb, var(--ink-muted) 45%, transparent);
+}
+.problem-monaco-overflow .monaco-hover, .problem-monaco-overflow .suggest-widget, .problem-monaco-overflow .suggest-details, .problem-monaco-overflow .parameter-hints-widget { border-radius: var(--radius-control); box-shadow: var(--shadow-overlay); font-family: var(--font-ui); font-size: var(--text-sm); line-height: 1.5; }
+.problem-monaco-overflow .monaco-hover .hover-contents:not(.html-hover-contents) { padding: var(--space-2) var(--space-3); }
+/* Popovers take their content's natural width up to the shared maximum. Prose wraps only past it; code keeps its
+   lines and scrolls sideways past it, so a type is never broken mid-name. */
+.problem-monaco-overflow .monaco-hover { width: max-content; }
+.monaco-editor.problem-monaco-overflow .parameter-hints-widget > .phwrapper { max-width: var(--vscode-hover-maxWidth); }
+.problem-monaco-overflow .monaco-hover .markdown-hover > .hover-contents, .problem-monaco-overflow .parameter-hints-widget .docs, .problem-monaco-overflow .suggest-details .docs { overflow-wrap: break-word; }
+.problem-monaco-overflow .monaco-hover .monaco-tokenized-source, .problem-monaco-overflow .parameter-hints-widget .signature .code, .problem-monaco-overflow .parameter-hints-widget .docs .monaco-tokenized-source { white-space: pre; }
+.problem-monaco-overflow .monaco-hover .hover-contents pre, .problem-monaco-overflow .monaco-hover .hover-contents .code, .problem-monaco-overflow .parameter-hints-widget .signature { max-width: 100%; overflow-x: auto; }
+.problem-monaco-overflow .monaco-hover code, .problem-monaco-overflow .monaco-hover .code, .problem-monaco-overflow .parameter-hints-widget .code, .problem-monaco-overflow .suggest-details .header { font-family: var(--font-mono); font-size: var(--text-xs); }
+.problem-monaco-overflow .monaco-hover hr { border-color: var(--hairline); }
+.problem-monaco-overflow .monaco-hover .hover-row.status-bar { font-size: var(--text-xs); }
+
+@media (max-width: 820px) {
+  .problem-library.is-solving { flex: none; }
+  .problem-workspace.is-coding .problem-workspace-body { display: flex; flex-direction: column; }
+}

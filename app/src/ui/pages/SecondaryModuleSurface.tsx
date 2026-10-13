@@ -3,7 +3,11 @@ import type { ReactNode } from 'react'
 import './secondary-module-surface.css'
 
 export interface SecondaryModuleSurfaceProps {
-  width: 'focused' | 'wide'
+  /**
+   * `fluid` spans the page for dense tables; `full` also fills its height, for working surfaces whose panes scroll
+   * inside themselves.
+   */
+  width: 'focused' | 'wide' | 'fluid' | 'full'
   children: ReactNode
 }
 

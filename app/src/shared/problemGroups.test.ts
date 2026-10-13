@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { emptyProblemFilters } from './problemLibrary'
 import type { ProblemRecord } from './problemLibrary'
 import { filterProblemGroups, problemGroups } from './problemGroups'
-import { affectedTables } from '../web/gatewayQueries'
 
 const canonical: ProblemRecord = {
   id: 'main', name: 'Add two integers', sourceName: 'Original sum title', canonicalProblemId: null,
@@ -34,11 +33,16 @@ describe('retained problem sources', () => {
     expect(filterProblemGroups(groups, filters, [{ field: 'lastAsked', direction: 'desc' }]).map(problem => problem.id)).toEqual(['main'])
     expect(filterProblemGroups(groups, { ...filters, lastAskedSince: '2026-08-01', lastAskedUntil: '2026-08-31' }, [{ field: 'name', direction: 'asc' }])).toEqual([])
   })
+  it('orders search results by relevance before the chosen sort and finds a LeetCode number', () => {
+    const solo = (id: string, name: string, sourceType: ProblemRecord['sourceType'], externalKey: string): ProblemRecord => ({ ...canonical, id, name, sourceName: null, sourceType, externalKey })
+    const groups = problemGroups([solo('variant', 'Cross-Array Two Sum', 'imported', 'a'), solo('report', 'Two Sum', 'imported', 'b'), solo('stock', 'Two Sum', 'stock', 'leetcode:1')])
+    const byName = [{ field: 'name', direction: 'asc' }] as const
+    expect(filterProblemGroups(groups, { ...emptyProblemFilters(), search: 'two sum' }, byName).map(problem => problem.id)).toEqual(['stock', 'report', 'variant'])
+    expect(filterProblemGroups(groups, { ...emptyProblemFilters(), search: '1' }, byName).map(problem => problem.id)).toEqual(['stock'])
+  })
   it('unmerging restores both rows and rejects an incomplete or nested group', () => {
     expect(problemGroups([canonical, { ...alias, canonicalProblemId: null }])).toHaveLength(2)
     expect(() => problemGroups([alias])).toThrow(/canonical problem.*unavailable/)
     expect(() => problemGroups([canonical, alias, { ...alias, id: 'nested', canonicalProblemId: alias.id }])).toThrow(/canonical problem.*unavailable/)
-    expect(affectedTables('merge_problem_duplicates')).toEqual(['leetcode_problems', 'action_events'])
-    expect(affectedTables('unmerge_problem_duplicate')).toEqual(['leetcode_problems', 'action_events'])
   })
 })

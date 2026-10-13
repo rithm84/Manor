@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ProblemInterface } from '../../../shared/problemLibrary'
-import { exampleTestcases, firstInvalidTestcase, labeledInput, leetCodeNumber, parseExampleInput, sameTestcases, splitStatement, tagFacets, testcaseFields, testcaseInput } from './problemTestcases'
+import { exampleAssignments, exampleTestcases, problemTitle, firstInvalidTestcase, labeledInput, leetCodeNumber, parseExampleInput, sameTestcases, splitStatement, tagFacets, testcaseFields, testcaseInput } from './problemTestcases'
 
 const twoSum: ProblemInterface = { kind: 'function', name: 'twoSum', params: [{ name: 'nums', type: 'int[]' }, { name: 'target', type: 'int' }], returns: 'int[]', output: { mode: 'return' } }
 const words: ProblemInterface = { kind: 'function', name: 'join', params: [{ name: 's', type: 'string' }, { name: 'grid', type: 'list<list<string>>' }, { name: 'k', type: 'long' }], returns: 'string', output: { mode: 'return' } }
@@ -67,5 +67,20 @@ describe('problem presentation helpers', () => {
     expect(splitStatement('Find two numbers.\n\n**Constraints:**\n\n- `2 <= n`\n\n**Follow-up:** Faster?')).toEqual({ description: 'Find two numbers.', rest: '**Constraints:**\n\n- `2 <= n`\n\n**Follow-up:** Faster?', hasInlineExamples: false })
     expect(splitStatement('Text\n\n**Example 1:**\n\nInput\n\n## Constraints').rest).toBe('')
     expect(splitStatement('No sections here').description).toBe('No sections here')
+  })
+})
+
+describe('exampleAssignments', () => {
+  it('splits between top-level name = value pairs and keeps commas inside values', () => {
+    expect(exampleAssignments('weights = [1,3,4], values = [15, 20, 30], capacity = 4')).toEqual(['weights = [1,3,4],', 'values = [15, 20, 30],', 'capacity = 4'])
+    expect(exampleAssignments('s = "a, b = c", k = 2')).toEqual(['s = "a, b = c",', 'k = 2'])
+    expect(exampleAssignments('[1,2,3]')).toEqual(['[1,2,3]'])
+  })
+})
+
+describe('problemTitle', () => {
+  it('puts the LeetCode number inside a stock title and leaves other titles as stored', () => {
+    expect(problemTitle({ sourceType: 'stock', externalKey: 'leetcode:636', name: 'Exclusive Time of Functions' })).toBe('636. Exclusive Time of Functions')
+    expect(problemTitle({ sourceType: 'custom', externalKey: null, name: '0/1 Knapsack' })).toBe('0/1 Knapsack')
   })
 })

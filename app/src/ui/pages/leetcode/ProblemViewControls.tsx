@@ -5,8 +5,7 @@ import { PROBLEM_COLUMNS, PROBLEM_KINDS, PROBLEM_SOURCE_TYPES, PROBLEM_STATUSES 
 import { PROBLEM_TOPIC_GROUPS } from '../../../shared/problemTopics'
 import type { ProblemFilters, ProblemRecord, ProblemSavedView, ProblemSort } from '../../../shared/problemLibrary'
 import { Button, DatePicker, Modal } from '../../components/ui'
-import { kindLabel } from './ProblemEditorDialog'
-import { errorMessage } from './leetCodeModel'
+import { errorMessage, kindLabel } from './leetCodeModel'
 import { ProblemTag } from './ProblemTag'
 import { tagFacets } from './problemTestcases'
 

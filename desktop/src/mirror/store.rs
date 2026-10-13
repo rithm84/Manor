@@ -3,7 +3,8 @@
 //! This is plain Rust with no Tauri types, so the tests below exercise it
 //! without a runtime. Three tables carry everything: `meta` holds the schema
 //! version, the account the file belongs to, the change-feed cursor the copy is
-//! current to, and whether the copy is complete; `rows` holds one record per
+//! current to, whether the copy is complete, and the same cursor and readiness
+//! for the shared problem catalog, which follows its own feed; `rows` holds one record per
 //! mirrored row, keyed by the table name and the row's identity; `derived`
 //! holds a cached derived read with the cursor and account-local day it was
 //! computed for.
@@ -33,13 +34,15 @@ use serde_json::Value;
 /// existing file, so the next launch rebuilds the copy from the server. Without
 /// the bump, a file built under the previous set stays `ready` while missing the
 /// tables that were added, and their reads would come back empty forever.
-pub const MIRROR_SCHEMA_VERSION: u32 = 5;
+pub const MIRROR_SCHEMA_VERSION: u32 = 6;
 
 /// Keys of the `meta` table.
 const META_SCHEMA_VERSION: &str = "schema_version";
 const META_ACCOUNT_ID: &str = "account_id";
 const META_CURSOR: &str = "cursor";
 const META_READY: &str = "ready";
+const META_CATALOG_CURSOR: &str = "catalog_cursor";
+const META_CATALOG_READY: &str = "catalog_ready";
 
 /// The tables, created on every open so a new file needs no separate step.
 const SCHEMA: &str = "
@@ -77,13 +80,16 @@ pub struct MirrorRevision {
 }
 
 /// What the frontend needs to decide between reading the mirror and reading the
-/// server: whether the copy is complete, how far the feed it has applied, and
-/// how many rows each table holds.
+/// server: whether the account copy is complete and how far its feed has been
+/// applied, the same two facts for the shared catalog, and how many rows each
+/// table holds.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MirrorStatus {
     pub ready: bool,
     pub cursor: u64,
+    pub catalog_ready: bool,
+    pub catalog_cursor: u64,
     pub row_counts: BTreeMap<String, u64>,
 }
 
@@ -219,6 +225,8 @@ impl Mirror {
         Ok(MirrorStatus {
             ready: self.flag(META_READY)?,
             cursor: self.number(META_CURSOR)?,
+            catalog_ready: self.flag(META_CATALOG_READY)?,
+            catalog_cursor: self.number(META_CATALOG_CURSOR)?,
             row_counts: self.row_counts()?,
         })
     }
@@ -266,8 +274,16 @@ impl Mirror {
             .map_err(|cause| database("delete rows", cause))
     }
 
-    /// Every row of one table, ordered by key.
-    pub fn rows(&self, table: &str) -> Result<Vec<MirrorRow>, MirrorError> {
+    /// Every row of one table, ordered by key, as the JSON text of an array of
+    /// [`MirrorRow`]s.
+    ///
+    /// The stored rows are joined as text rather than parsed and serialized
+    /// again: each one was written by `serde_json`, so it is valid JSON, and a
+    /// table such as the problem catalog holds tens of megabytes whose round
+    /// trip through `Value` would cost more than the read itself. The shell
+    /// hands the text to the window unchanged, which is the same response a
+    /// serialized `Vec<MirrorRow>` produces.
+    pub fn rows_json(&self, table: &str) -> Result<String, MirrorError> {
         let mut statement = self
             .connection
             .prepare("select key, data, revision from rows where table_name = ?1 order by key")
@@ -275,27 +291,72 @@ impl Mirror {
         let mut found = statement
             .query(params![table])
             .map_err(|cause| database("read a table", cause))?;
-        let mut rows = Vec::new();
+        let mut text = String::from("[");
         while let Some(row) = found
             .next()
             .map_err(|cause| database("read a table", cause))?
         {
             let key: String = row.get(0).map_err(|cause| database("read a key", cause))?;
-            let data: String = row.get(1).map_err(|cause| database("read a row", cause))?;
+            let data = row
+                .get_ref(1)
+                .map_err(|cause| database("read a row", cause))?
+                .as_str()
+                .map_err(|cause| MirrorError::Value {
+                    field: format!("the stored text of row `{key}` of {table}"),
+                    value: cause.to_string(),
+                })?;
             let revision: Option<i64> = row
                 .get(2)
                 .map_err(|cause| database("read a revision", cause))?;
-            let data = serde_json::from_str(&data).map_err(|cause| MirrorError::Json {
-                location: format!("row `{key}` of {table}"),
-                cause,
-            })?;
-            rows.push(MirrorRow {
-                key,
-                data,
-                revision,
-            });
+            if text.len() > 1 {
+                text.push(',');
+            }
+            text.push_str("{\"key\":");
+            text.push_str(
+                &serde_json::to_string(&key).map_err(|cause| MirrorError::Json {
+                    location: format!("the key `{key}` of {table}"),
+                    cause,
+                })?,
+            );
+            text.push_str(",\"data\":");
+            text.push_str(data);
+            text.push_str(",\"revision\":");
+            match revision {
+                Some(revision) => text.push_str(&revision.to_string()),
+                None => text.push_str("null"),
+            }
+            text.push('}');
         }
-        Ok(rows)
+        text.push(']');
+        Ok(text)
+    }
+
+    /// One row of one table, or none when the table does not hold that key.
+    ///
+    /// Opening a problem reads its statement this way, because the content
+    /// table is tens of megabytes and only one row of it is wanted.
+    pub fn row(&self, table: &str, key: &str) -> Result<Option<MirrorRow>, MirrorError> {
+        let found = self
+            .connection
+            .query_row(
+                "select data, revision from rows where table_name = ?1 and key = ?2",
+                params![table, key],
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, Option<i64>>(1)?)),
+            )
+            .optional()
+            .map_err(|cause| database("read a row", cause))?;
+        let Some((data, revision)) = found else {
+            return Ok(None);
+        };
+        let data = serde_json::from_str(&data).map_err(|cause| MirrorError::Json {
+            location: format!("row `{key}` of {table}"),
+            cause,
+        })?;
+        Ok(Some(MirrorRow {
+            key: key.to_owned(),
+            data,
+            revision,
+        }))
     }
 
     /// The key and revision of every row of one table, ordered by key.
@@ -331,6 +392,19 @@ impl Mirror {
         transaction
             .commit()
             .map_err(|cause| database("record its cursor", cause))
+    }
+
+    /// Records how far the shared catalog's feed has been applied and whether
+    /// the catalog copy is complete. It is separate from [`Self::commit`]
+    /// because the catalog has its own feed, cursor, and snapshot, and either
+    /// copy can be ready while the other is still filling.
+    pub fn commit_catalog(&mut self, cursor: u64, ready: bool) -> Result<(), MirrorError> {
+        let transaction = self.begin()?;
+        write_meta(&transaction, META_CATALOG_CURSOR, &cursor.to_string())?;
+        write_meta(&transaction, META_CATALOG_READY, flag_text(ready))?;
+        transaction
+            .commit()
+            .map_err(|cause| database("record its catalog cursor", cause))
     }
 
     /// Caches a derived read against the cursor and account-local day it was
@@ -444,6 +518,8 @@ impl Mirror {
         write_meta(&transaction, META_ACCOUNT_ID, &account_id)?;
         write_meta(&transaction, META_CURSOR, "0")?;
         write_meta(&transaction, META_READY, flag_text(false))?;
+        write_meta(&transaction, META_CATALOG_CURSOR, "0")?;
+        write_meta(&transaction, META_CATALOG_READY, flag_text(false))?;
         transaction
             .commit()
             .map_err(|cause| database("start a fresh copy", cause))

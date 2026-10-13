@@ -35,3 +35,13 @@ export function problemSourceDateBounds(value: ProblemSourceDate): readonly [str
   const last = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10)
   return [`${value.value}-01`, last]
 }
+
+export type ProblemCompanyReport = NonNullable<ProblemSourceMetadata['companyReports']>[number]
+
+/** Shorter windows rank first among reports of the same snapshot, because they say more about recency. */
+export const reportWindowOrder: Readonly<Record<ProblemCompanyReport['window'], number>> = { '30d': 0, '3m': 1, '6m': 2, '1y': 3, older_than_6m: 4, all: 5 }
+
+/** The report a problem's recency reads when it has no asked date: the newest snapshot, then the shortest window. */
+export function latestCompanyReport<T extends Pick<ProblemCompanyReport, 'snapshotDate' | 'window'>>(reports: readonly T[]): T | undefined {
+  return reports.reduce<T | undefined>((latest, current) => latest === undefined || current.snapshotDate > latest.snapshotDate || current.snapshotDate === latest.snapshotDate && reportWindowOrder[current.window] < reportWindowOrder[latest.window] ? current : latest, undefined)
+}
