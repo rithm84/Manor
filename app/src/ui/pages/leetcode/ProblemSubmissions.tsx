@@ -4,8 +4,8 @@ import type { ReactNode } from 'react'
 import type { ProblemLanguage, ProblemSubmission } from '../../../shared/problemExecution'
 import { problemLanguageLabels } from '../../../shared/problemExecution'
 import { Button, Tooltip } from '../../components/ui'
-import { useNoteTheme } from '../notes/useNoteTheme'
 import { errorMessage } from './leetCodeModel'
+import { ProblemHighlightedCode } from './ProblemHighlightedCode'
 import { CompileOutput, PendingVerdict, SubmissionFailure, submissionLabel, submissionTone } from './ProblemTestResult'
 import { formatMemory, formatRuntime, isPendingSubmission, relativeSubmissionTime, submissionMemoryKb, submissionRuntimeMs, submittedAt } from './problemSubmissionStats'
 import type { TestcaseField } from './problemTestcases'
@@ -48,20 +48,6 @@ function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: s
   return <div className="problem-stat"><span>{icon}{label}</span><strong className="tnum">{value}</strong></div>
 }
 
-/** Submitted code keeps the editor's grammar and theme; the plain text shows until highlighting arrives. */
-function SubmissionCode({ code, language, tabSize }: { code: string; language: ProblemLanguage; tabSize: number }): ReactNode {
-  const theme = useNoteTheme()
-  const [html, setHtml] = useState<string | null>(null)
-  useEffect(() => {
-    let cancelled = false
-    setHtml(null)
-    void import('./problemCodeEditorRuntime').then(runtime => runtime.colorizeProblemCode(code, language, theme, tabSize)).then(next => { if (!cancelled) setHtml(next) }).catch(failure => console.error('Submitted code highlighting failed', { language, error: errorMessage(failure) }))
-    return () => { cancelled = true }
-  }, [code, language, theme, tabSize])
-  // Monaco's colorizer escapes the source and emits only its token spans.
-  return html === null ? <pre className="problem-submission-code" data-testid="problem-submission-source" style={{ tabSize }}>{code}</pre> : <pre className="problem-submission-code" data-testid="problem-submission-source" style={{ tabSize }} dangerouslySetInnerHTML={{ __html: html }} />
-}
-
 function SubmissionDetail({ submission, fields, tabSize, canUseCode, onClose, onUseCode }: SubmissionsPanelProps & { submission: ProblemSubmission }): ReactNode {
   const [copied, setCopied] = useState(false)
   const [copyError, setCopyError] = useState<string | null>(null)
@@ -98,7 +84,7 @@ function SubmissionDetail({ submission, fields, tabSize, canUseCode, onClose, on
         <Button variant="ghost" icon={<SquarePen size={15} />} testId="problem-submission-use" disabled={!canUseCode(submission.language)} onClick={() => onUseCode(submission)}>Use this code</Button>
       </header>
       {copyError === null ? null : <p className="lc-error" role="alert">{copyError}</p>}
-      <SubmissionCode code={source} language={submission.language} tabSize={tabSize} />
+      <ProblemHighlightedCode code={source} language={submission.language} tabSize={tabSize} className="problem-submission-code" testId="problem-submission-source" />
     </section>}
   </section>
 }

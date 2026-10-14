@@ -2,6 +2,8 @@ import { memo } from 'react'
 import type { ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import type { ProblemLanguage } from '../../../shared/problemExecution'
+import { ProblemHighlightedCode } from './ProblemHighlightedCode'
 
 interface MarkdownNode { type: string; value?: string; children?: MarkdownNode[]; data?: { hName?: string } }
 
@@ -56,7 +58,19 @@ function remarkExponents() {
 
 const plugins = [remarkGfm, remarkExponents]
 
+const fenceLanguages: Readonly<Record<string, ProblemLanguage>> = { python: 'python', py: 'python', cpp: 'cpp', 'c++': 'cpp', java: 'java', go: 'go', javascript: 'javascript', js: 'javascript', c: 'c' }
+interface HastNode { type: string; tagName?: string; value?: string; properties?: { className?: unknown }; children?: HastNode[] }
+
+/** A fenced block in a solution language gets the editor's highlighting; other blocks stay plain. */
+function CodeBlock({ node, children }: { node?: HastNode; children?: ReactNode }): ReactNode {
+  const code = node?.children?.find(child => child.tagName === 'code')
+  const classes = Array.isArray(code?.properties?.className) ? code.properties.className.map(String) : []
+  const language = classes.map(name => fenceLanguages[name.replace(/^language-/, '').toLowerCase()]).find(value => value !== undefined)
+  const text = code?.children?.map(child => child.value ?? '').join('').replace(/\n$/, '')
+  return language === undefined || text === undefined ? <pre>{children}</pre> : <ProblemHighlightedCode code={text} language={language} tabSize={4} className="problem-markdown-code" />
+}
+
 /** Imported markup renders without executing embedded HTML or scripts. */
 export const ProblemMarkdown = memo(function ProblemMarkdown({ text }: { text: string }): ReactNode {
-  return <div className="problem-markdown"><ReactMarkdown remarkPlugins={plugins} components={{ a: ({ children, ...props }) => <a {...props} target="_blank" rel="noreferrer">{children}</a> }}>{text}</ReactMarkdown></div>
+  return <div className="problem-markdown"><ReactMarkdown remarkPlugins={plugins} components={{ a: ({ children, ...props }) => <a {...props} target="_blank" rel="noreferrer">{children}</a>, pre: ({ node, children }) => <CodeBlock node={node as HastNode | undefined}>{children}</CodeBlock> }}>{text}</ReactMarkdown></div>
 })
