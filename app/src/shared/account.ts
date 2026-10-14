@@ -32,6 +32,8 @@ export interface AccountApi {
   approveConnection: (authorizationId: string, allowWrites: boolean) => Promise<string>
   /** Refuses the grant and resolves to the address that returns the agent to its own flow. */
   denyConnection: (authorizationId: string) => Promise<string>
+  /** Gives the return address to the consent page waiting in the agent's browser window, which continues there. */
+  handOffConnection: (authorizationId: string, redirectUrl: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<'signedOut' | 'cancelled'>
   current: () => Promise<AccountInfo | null>

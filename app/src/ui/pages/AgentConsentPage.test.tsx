@@ -33,14 +33,14 @@ function Tree({ account, shell, entry }: { account: Partial<AccountApi>; shell: 
   </ManorServicesProvider>
 }
 
-async function render(account: Partial<AccountApi>, entry = '/oauth/consent?authorization_id=b7e'): Promise<{ openAuthorization: ReturnType<typeof vi.fn> }> {
-  const openAuthorization = vi.fn(() => Promise.resolve())
-  const shell = { openAuthorization } as unknown as DesktopShell
+async function render(account: Partial<AccountApi>, entry = '/oauth/consent?authorization_id=b7e'): Promise<{ handOffConnection: ReturnType<typeof vi.fn> }> {
+  const handOffConnection = vi.fn((_id: string, _url: string) => Promise.resolve())
+  const shell = {} as unknown as DesktopShell
   host = document.createElement('div')
   document.body.append(host)
   root = createRoot(host)
-  await act(async () => { root?.render(<Tree account={account} shell={shell} entry={entry} />) })
-  return { openAuthorization }
+  await act(async () => { root?.render(<Tree account={{ handOffConnection, ...account }} shell={shell} entry={entry} />) })
+  return { handOffConnection }
 }
 
 const byTestId = (id: string): HTMLElement | null => host?.querySelector<HTMLElement>(`[data-testid="${id}"]`) ?? null
@@ -60,14 +60,14 @@ afterEach(() => {
 
 describe('agent consent page', () => {
   it('offers a way back into the app after the agent is answered', async () => {
-    const { openAuthorization } = await render({
+    const { handOffConnection } = await render({
       connectionRequest: () => Promise.resolve({ clientId: '3d3a8f1e-9d9a-4d0a-8f5c-2d5c1a1b2c3d', clientName: 'ChatGPT' }),
       approveConnection: () => Promise.resolve(RETURN_URL)
     })
     expect(byTestId('back-to-manor')).toBeNull()
     await click('approve-mcp')
-    expect(openAuthorization).toHaveBeenCalledWith(RETURN_URL)
-    expect(byTestId('agent-connection-answered')?.textContent).toBe('Return to ChatGPT in your browser to finish connecting.')
+    expect(handOffConnection).toHaveBeenCalledWith('b7e', RETURN_URL)
+    expect(byTestId('agent-connection-answered')?.textContent).toBe('Go back to ChatGPT. It finishes connecting on its own.')
     await click('back-to-manor')
     expect(byTestId('home')).not.toBeNull()
   })
