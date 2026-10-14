@@ -14,6 +14,7 @@ export interface PipelineCardProps {
   arrived: boolean
   onOpen: () => void
   onMove: (stage: JobStage) => void
+  onMarkOaDone: () => void
   onRemove: () => void
 }
 
@@ -58,6 +59,7 @@ export function PipelineCard({
   arrived,
   onOpen,
   onMove,
+  onMarkOaDone,
   onRemove
 }: PipelineCardProps): ReactNode {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -92,7 +94,7 @@ export function PipelineCard({
       <div className="pipeline-card-company">{card.role.company}</div>
       <div className="pipeline-card-role">{card.role.role}</div>
       <PipelineCardChips card={card} today={today} />
-      <PipelineCardMenu card={card} onMove={onMove} onRemove={onRemove} />
+      <PipelineCardMenu card={card} onMove={onMove} onMarkOaDone={onMarkOaDone} onRemove={onRemove} />
     </div>
   )
 }

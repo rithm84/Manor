@@ -7,12 +7,12 @@ import { accountToday, camelRow, rowRevision } from './rows'
 
 function roleFromRow(row: JsonObject): JobRole {
   return { ...parseJobRole({ ...camelRow(row), postingLink: row.link, datePosted: row.posted, appliedDate: row.applied,
-    oaDueDate: row.oa_due, interview1Date: row.interview1, interview2Date: row.interview2, interview3Date: row.interview3, decisionDate: row.decision }), revision: rowRevision(row) }
+    oaDueDate: row.oa_due, oaCompletedDate: row.oa_done ?? null, interview1Date: row.interview1, interview2Date: row.interview2, interview3Date: row.interview3, decisionDate: row.decision }), revision: rowRevision(row) }
 }
 function roleFields(fields: JobRoleFields): JsonObject {
   const role = parseJobRoleFields(fields)
   return { company: role.company, role: role.role, location: role.location, link: role.postingLink, posted: role.datePosted,
-    stage: role.stage, applied: role.appliedDate, oa_due: role.oaDueDate, interview1: role.interview1Date,
+    stage: role.stage, applied: role.appliedDate, oa_due: role.oaDueDate, oa_done: role.oaCompletedDate ?? null, interview1: role.interview1Date,
     interview2: role.interview2Date, interview3: role.interview3Date, decision: role.decisionDate, resume_id: role.resumeId ?? null, term: role.term ?? null }
 }
 const listingSchema = z.object({ id: z.string(), company: z.string(), role: z.string(), locations: z.string(), url: z.url(), posted: z.iso.date(), term: z.string(), category: z.string(), active: z.boolean() })

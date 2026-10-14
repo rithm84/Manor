@@ -26,6 +26,8 @@ describe('jobs presentation model', () => {
     expect(currentUpdateLabel(ROLE, '2026-08-20')).toBe('OA due Saturday')
     expect(currentUpdateLabel({ ...ROLE, oaDueDate: '2026-08-29' }, '2026-08-20')).toBe('OA due Aug 29')
     expect(currentUpdateLabel({ ...ROLE, oaDueDate: '2026-08-18' }, '2026-08-20')).toBe('OA overdue Aug 18')
+    expect(currentUpdateLabel({ ...ROLE, oaDueDate: '2026-08-18', oaCompletedDate: '2026-08-17' }, '2026-08-20')).toBe('OA done Aug 17')
+    expect(toBoardCard({ ...ROLE, oaCompletedDate: '2026-08-17' }, '2026-08-20').detailTone).toBe('success')
     expect(currentUpdateLabel({ ...ROLE, stage: 'interview_2', interview2Date: null }, '2026-08-20')).toBe('Round 2 date not set')
   })
 

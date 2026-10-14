@@ -1,5 +1,5 @@
 import { Menu } from '@base-ui/react/menu'
-import { ArrowRight, MoreHorizontal, Trash2 } from 'lucide-react'
+import { ArrowRight, CircleCheck, MoreHorizontal, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import type { JobStage } from '../../../shared/jobs'
@@ -9,10 +9,11 @@ import { jobStageOptions } from './jobsModel'
 interface PipelineCardMenuProps {
   card: BoardCard
   onMove: (stage: JobStage) => void
+  onMarkOaDone: () => void
   onRemove: () => void
 }
 
-export function PipelineCardMenu({ card, onMove, onRemove }: PipelineCardMenuProps): ReactNode {
+export function PipelineCardMenu({ card, onMove, onMarkOaDone, onRemove }: PipelineCardMenuProps): ReactNode {
   return (
     <div
       className="pipeline-card-menu"
@@ -31,6 +32,12 @@ export function PipelineCardMenu({ card, onMove, onRemove }: PipelineCardMenuPro
         <Menu.Portal>
           <Menu.Positioner className="ui-popover-positioner" side="bottom" align="end" sideOffset={6} collisionPadding={12}>
             <Menu.Popup className="pipeline-menu" aria-label={`Actions for ${card.role.company}`}>
+              {card.role.stage === 'oa' && !card.role.oaCompletedDate ? (
+                <Menu.Item className="pipeline-menu-item" data-testid="pipeline-oa-done" onClick={onMarkOaDone}>
+                  <CircleCheck size={14} />
+                  Mark OA done
+                </Menu.Item>
+              ) : null}
               <Menu.Group>
                 <Menu.GroupLabel className="pipeline-menu-label">Move to</Menu.GroupLabel>
                 {jobStageOptions

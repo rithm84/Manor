@@ -12,6 +12,7 @@ type JobDateField =
   | 'datePosted'
   | 'appliedDate'
   | 'oaDueDate'
+  | 'oaCompletedDate'
   | 'interview1Date'
   | 'interview2Date'
   | 'interview3Date'
@@ -21,6 +22,7 @@ const DATE_FIELDS: readonly { field: JobDateField; label: string }[] = [
   { field: 'datePosted', label: 'Date posted' },
   { field: 'appliedDate', label: 'Applied date' },
   { field: 'oaDueDate', label: 'OA due date' },
+  { field: 'oaCompletedDate', label: 'OA completed date' },
   { field: 'interview1Date', label: 'Round 1 interview date' },
   { field: 'interview2Date', label: 'Round 2 interview date' },
   { field: 'interview3Date', label: 'Round 3 interview date' },
@@ -86,10 +88,12 @@ export function JobDetailModal({ role, open, stageRequest, onClose, onSave }: Jo
       if (isJobStage(value)) setSelectedStage(value)
     }} placeholder={stageRequest === 'decided' ? 'Choose outcome' : stageRequest === 'interview' ? 'Choose interview round' : 'Select stage'} ariaLabel="Stage" />
   </div>
+  // An OA role leads with both of its dates, so marking it done sits next to when it was due.
+  const leadsWith = (field: JobDateField): boolean => field === primaryDate || (primaryDate === 'oaDueDate' && field === 'oaCompletedDate')
   const dateField = ({ field, label }: typeof DATE_FIELDS[number]): ReactNode => (
     <div key={field} className="jobdetail-date-field">
       <span>{label}</span>
-      <DatePicker value={fields[field]} ariaLabel={label} min={null} max={null}
+      <DatePicker value={fields[field] ?? null} ariaLabel={label} min={null} max={null}
         onChange={date => setFields(current => current === null ? null : ({ ...current, [field]: date }))} />
     </div>
   )
@@ -141,7 +145,7 @@ export function JobDetailModal({ role, open, stageRequest, onClose, onSave }: Jo
             <h3 id="jobdetail-move-title">Move role</h3>
             <div className="jobdetail-grid">
               {stageField}
-              {DATE_FIELDS.filter(({ field }) => field === primaryDate).map(dateField)}
+              {DATE_FIELDS.filter(({ field }) => leadsWith(field)).map(dateField)}
             </div>
           </section> : null}
           <section className="jobdetail-section" aria-labelledby="jobdetail-role-title">
@@ -188,7 +192,7 @@ export function JobDetailModal({ role, open, stageRequest, onClose, onSave }: Jo
           <section className="jobdetail-section" aria-labelledby="jobdetail-dates-title">
             <h3 id="jobdetail-dates-title">Dates</h3>
             <div className="jobdetail-dates">
-              {DATE_FIELDS.filter(({ field }) => field !== primaryDate).map(dateField)}
+              {DATE_FIELDS.filter(({ field }) => !leadsWith(field)).map(dateField)}
             </div>
           </section>
         </div>
