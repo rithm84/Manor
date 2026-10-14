@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-09-23_
+_Last updated: 2026-10-14_
 
 Operational guide for coding agents working on Manor.
 
@@ -32,6 +32,8 @@ manor/
 │   └── web/                 # Authentication, Supabase adapters, drafts, services
 ├── supabase/                # Migrations, remote MCP, ingestion, and workers
 ├── desktop/                 # Tauri 2 desktop shell: Rust crate, config, icons
+├── site/                    # Static OAuth consent bridge page, deployed to GitHub Pages
+├── .github/workflows/       # GitHub Pages deployment of site/
 ├── tools/recovery/          # Encrypted backup and isolated restore operations
 ├── tools/diagrams/          # Official Excalidraw SVG export tooling
 ├── .agents/skills/          # Vendored skill groups and canonical inventory

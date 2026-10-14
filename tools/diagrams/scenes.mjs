@@ -156,15 +156,15 @@ export const scenes = {
       N('browser1', 'System browser', 250, 135, { note: 'Supabase Auth, then Google', icon: I.browser, fill: fill.external, stroke: S.external }),
       N('link1', 'manor://auth/callback', 470, 135, { w: 220, note: 'authorization code', icon: I.share, fill: fill.jobs, stroke: S.jobs }),
       N('start2', 'Agent asks', 30, 425, { note: 'ChatGPT or Codex', icon: I.client, fill: fill.neutral, stroke: S.neutral }),
-      N('server2', 'OAuth server', 250, 425, { note: 'its site URL is the app scheme', icon: I.lock, fill: fill.supabase, stroke: S.supabase }),
-      N('link2', 'manor:/oauth/consent', 470, 425, { w: 220, note: 'authorization_id', icon: I.share, fill: fill.jobs, stroke: S.jobs }),
+      N('server2', 'Consent bridge page', 250, 425, { note: 'the OAuth server\'s site URL, in the agent\'s window', icon: I.lock, fill: fill.supabase, stroke: S.supabase }),
+      N('link2', 'manor://oauth/consent', 470, 425, { w: 220, note: 'authorization_id; the bridge page waits', icon: I.share, fill: fill.jobs, stroke: S.jobs }),
       N('start3', 'Settings', 30, 715, { note: 'connect Google or X', icon: I.gear, fill: fill.app, stroke: S.app }),
       N('browser3', 'Provider consent', 250, 715, { note: 'Google or X, in the browser', icon: I.cloud, fill: fill.external, stroke: S.external }),
       N('link3', 'manor://settings', 470, 715, { w: 220, note: 'connection_code from integration-callback', icon: I.share, fill: fill.jobs, stroke: S.jobs }),
       N('inbox', 'Route inbox', 810, 425, { w: 200, note: 'a link that arrives before the router waits for it', icon: I.bus, fill: fill.app, stroke: S.app }),
       N('which', 'Which route?', 1060, 440, { shape: 'diamond', w: 210, h: 130, fill: fill.jobs, stroke: S.jobs }),
       N('session', 'Session opens', 1420, 135, { w: 220, note: 'exchangeCodeForSession', icon: I.password, fill: fill.storage, stroke: S.storage }),
-      N('consent', 'Consent page', 1420, 425, { w: 220, note: 'approve, then the agent\'s callback opens in the browser', icon: I.webApp, fill: fill.supabase, stroke: S.supabase }),
+      N('consent', 'Consent page', 1420, 425, { w: 220, note: 'approve; the bridge page continues to the agent\'s callback', icon: I.webApp, fill: fill.supabase, stroke: S.supabase }),
       N('settings', 'Back in Settings', 1420, 715, { w: 220, note: 'the connection completes', icon: I.gear, fill: fill.app, stroke: S.app })
     ],
     edges: [
