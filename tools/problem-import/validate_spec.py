@@ -165,7 +165,62 @@ def check_value(t: tuple, value, where: str) -> None:
                 groups += 1
                 index += 1
         return
+    if kind in ("SinglyListNode", "DoublyListNode"):
+        return check_value(("ListNode",), value, where)
+    if kind in ("BiNode", "ParentNode"):
+        return check_value(("TreeNode",), value, where)
+    if kind == "ExprNode":
+        if not isinstance(value, list) or any(v is not None and (not isinstance(v, str) or len(v) != 1 or not v.isascii()) for v in value) or (value and (value[0] is None or value[-1] is None)):
+            raise SpecError(f"{where}: an expression tree is a level-order array of single characters and nulls, without leading or trailing nulls")
+        return
+    if kind == "MultilevelNode":
+        if not isinstance(value, list) or any(v is not None and not is_int32(v) for v in value):
+            raise SpecError(f"{where}: a multilevel list is an array of 32-bit integers and nulls")
+        return
+    if kind == "QuadNode":
+        if not isinstance(value, list) or any(v is not None and not (isinstance(v, list) and len(v) == 2 and all(x in (0, 1) and not isinstance(x, bool) for x in v)) for v in value):
+            raise SpecError(f"{where}: a quad tree is a level-order array of [isLeaf, val] pairs of 0 or 1, and nulls")
+        return
+    if kind in ("RandomTreeNode", "NodeCopy"):
+        if not isinstance(value, list) or any(v is not None and not (isinstance(v, list) and len(v) == 2 and is_int32(v[0]) and (v[1] is None or (is_int32(v[1]) and 0 <= v[1] < len(value)))) for v in value):
+            raise SpecError(f"{where}: a random-pointer tree is a level-order array of [val, randomIndex] pairs and nulls")
+        return
+    if kind == "RopeTreeNode":
+        if not isinstance(value, list) or any(v is not None and not (is_int32(v) or (isinstance(v, str) and v.isascii())) for v in value):
+            raise SpecError(f"{where}: a rope tree is a level-order array of lengths, strings, and nulls")
+        return
+    if kind == "Employee":
+        if not (isinstance(value, list) and len(value) == 3 and is_int32(value[0]) and is_int32(value[1]) and isinstance(value[2], list) and all(is_int32(x) for x in value[2])):
+            raise SpecError(f"{where}: an Employee is [id, importance, [subordinate ids]]")
+        return
+    if kind == "Interval":
+        if not (isinstance(value, list) and len(value) == 2 and all(is_int32(x) for x in value)):
+            raise SpecError(f"{where}: an Interval is [start, end]")
+        return
+    if kind == "NestedInteger":
+        if is_int32(value):
+            return
+        if not isinstance(value, list):
+            raise SpecError(f"{where}: a NestedInteger is an integer or a list of NestedInteger values")
+        for index, item in enumerate(value):
+            check_value(t, item, f"{where}[{index}]")
+        return
+    if kind == "buffer":
+        if not is_int32(value) or not 0 <= value <= 1000000:
+            raise SpecError(f"{where}: a buffer is given by its capacity, an integer from 0 to 1000000")
+        return
     raise SpecError(f"{where}: unknown type {kind}")
+
+
+def check_param(param: dict, value, where: str) -> None:
+    """A reference names its node by value; a collection read with the nodes shape is one serialized tree."""
+    if param.get("ref") is not None:
+        if value is not None and not (is_int32(value) or (isinstance(value, str) and len(value) == 1)):
+            raise SpecError(f"{where}: a node reference is the node's value, or null")
+        return
+    if param.get("shape") == "nodes":
+        return check_value(("NaryNode",), value, where)
+    check_value(parse_type(param["type"]), value, where)
 
 
 def contains_double(t: tuple) -> bool:
@@ -187,20 +242,25 @@ def case_text(spec: dict, value) -> str:
             raise SpecError("stdin cases must be strings")
         return value if value.endswith("\n") else value + "\n"
     if mode == "function":
-        params = spec["interface"]["params"]
+        params = spec["lines"]
         if not isinstance(value, list) or len(value) != len(params):
-            raise SpecError(f"function case must be a list of {len(params)} arguments: {json.dumps(value)[:200]}")
+            raise SpecError(f"function case must be a list of {len(params)} values ({', '.join(p['name'] for p in params)}): {json.dumps(value)[:200]}")
         for param, arg in zip(params, value):
-            check_value(parse_type(param["type"]), arg, param["name"])
+            check_param(param, arg, param["name"])
         return "".join(json.dumps(arg, separators=(",", ":")) + "\n" for arg in value)
     if mode == "codec":
         param = spec["interface"]["encode"]["param"]
         check_value(parse_type(param["type"]), value, param["name"])
         return json.dumps(value, separators=(",", ":")) + "\n"
     interface = spec["interface"]
-    if not isinstance(value, list) or len(value) != 2 or not isinstance(value[0], list) or not isinstance(value[1], list) or len(value[0]) != len(value[1]) or not value[0]:
-        raise SpecError("class case must be [operations, arguments] with equal nonempty lengths")
-    operations, arguments = value
+    if interface.get("concurrency"):
+        return concurrent_case_text(interface, value)
+    hidden = interface.get("hidden") or []
+    if not isinstance(value, list) or len(value) != 2 + len(hidden) or not isinstance(value[0], list) or not isinstance(value[1], list) or len(value[0]) != len(value[1]) or not value[0]:
+        raise SpecError(f"class case must be [operations, arguments{''.join(', ' + p['name'] for p in hidden)}] with equal nonempty operation and argument lengths")
+    operations, arguments = value[:2]
+    for param, arg in zip(hidden, value[2:]):
+        check_value(parse_type(param["type"]), arg, param["name"])
     if operations[0] != interface["className"]:
         raise SpecError("class case must start with the class name")
     methods = {method["name"]: method for method in interface["methods"]}
@@ -211,13 +271,46 @@ def case_text(spec: dict, value) -> str:
         if not isinstance(args, list) or len(args) != len(params):
             raise SpecError(f"operation {index} ({operation}) needs {len(params)} arguments")
         for param, arg in zip(params, args):
-            check_value(parse_type(param["type"]), arg, f"{operation}.{param['name']}")
-    return json.dumps(operations, separators=(",", ":")) + "\n" + json.dumps(arguments, separators=(",", ":")) + "\n"
+            if param["type"] == interface["className"]:
+                if not isinstance(arg, list) or len(arg) != len(interface["constructorParams"]):
+                    raise SpecError(f"{operation}.{param['name']} is a {param['type']} given by its constructor arguments")
+                for inner, item in zip(interface["constructorParams"], arg):
+                    check_value(parse_type(inner["type"]), item, f"{operation}.{param['name']}.{inner['name']}")
+            else:
+                check_value(parse_type(param["type"]), arg, f"{operation}.{param['name']}")
+    return "".join(json.dumps(item, separators=(",", ":")) + "\n" for item in value)
+
+
+def concurrent_case_text(interface: dict, value) -> str:
+    """A concurrent case is [constructor arguments, thread scripts]; each script lists [method, arguments] steps, and a
+    ["$sleep", [milliseconds]] step pauses its thread. A callback argument is the token its calls record."""
+    if not isinstance(value, list) or len(value) != 2 or not isinstance(value[0], list) or not isinstance(value[1], list) or not value[1]:
+        raise SpecError("concurrent case must be [constructor arguments, thread scripts] with at least one thread")
+    constructor, scripts = value
+    require(len(constructor) == len(interface["constructorParams"]), "constructor arguments do not match the constructor")
+    for param, arg in zip(interface["constructorParams"], constructor):
+        check_value(parse_type(param["type"]), arg, f"constructor.{param['name']}")
+    require(len(scripts) <= 40, "a concurrent case runs at most 40 threads")
+    methods = {method["name"]: method for method in interface["methods"]}
+    for t, script in enumerate(scripts):
+        require(isinstance(script, list), f"thread {t} must be a list of steps")
+        for step in script:
+            require(isinstance(step, list) and len(step) == 2 and isinstance(step[1], list), f"thread {t} steps are [method, arguments]")
+            if step[0] == "$sleep":
+                require(len(step[1]) == 1 and is_int32(step[1][0]) and 0 <= step[1][0] <= 200, "a $sleep step waits 0 to 200 milliseconds")
+                continue
+            require(step[0] in methods, f"thread {t} calls unknown method {step[0]!r}")
+            params = methods[step[0]]["params"]
+            require(len(step[1]) == len(params), f"thread {t} passes the wrong number of arguments to {step[0]}")
+            for param, arg in zip(params, step[1]):
+                if not param["type"].startswith("callback"):
+                    check_value(parse_type(param["type"]), arg, f"{step[0]}.{param['name']}")
+    return json.dumps(constructor, separators=(",", ":")) + "\n" + json.dumps(scripts, separators=(",", ":")) + "\n"
 
 
 def display_input(spec: dict, case: Case) -> str:
     if spec["mode"] == "function":
-        return ", ".join(f"{param['name']} = {json.dumps(arg, separators=(',', ':'))}" for param, arg in zip(spec["interface"]["params"], case.value))
+        return ", ".join(f"{param['name']} = {json.dumps(arg, separators=(',', ':'))}" for param, arg in zip(spec["lines"], case.value))
     if spec["mode"] == "codec":
         return f"{spec['interface']['encode']['param']['name']} = {json.dumps(case.value, separators=(',', ':'))}"
     return case.text.rstrip("\n")
@@ -263,16 +356,29 @@ def limit_memory() -> None:
         LIBC.prctl(PR_SET_PDEATHSIG, signal.SIGKILL)
 
 
-def run_batch(program: str, cases: list[Case], timeout: float, hash_seed: str) -> list[tuple[str | None, int]]:
+def shaped_inputs(spec: dict, cases: list[Case]) -> list[str]:
+    """Program inputs for the cases: shaped node interfaces read a node table, as the runner gives them."""
+    if not spec.get("table"):
+        return [case.text for case in cases]
+    prepared = json.loads(node_json({"op": "prepare", "interface": spec["interface"], "inputs": [case.text for case in cases]}))
+    for case, item in zip(cases, prepared):
+        if "error" in item:
+            raise SpecError(f"{case.origin} cannot be shaped into nodes: {item['error']}")
+    return [item["input"] for item in prepared]
+
+
+def run_batch(program: str, cases: list[Case], timeout: float, hash_seed: str, spec: dict | None = None) -> list[tuple[str | None, int]]:
+    spec = spec or {}
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory, "main.py")
         path.write_text(program)
         try:
-            result = subprocess.run([sys.executable, str(path)], input="".join(case.text for case in cases), capture_output=True, text=True, timeout=timeout, env={"PATH": os.environ["PATH"], "PYTHONHASHSEED": hash_seed}, preexec_fn=limit_memory)
+            result = subprocess.run([sys.executable, str(path)], input="".join(shaped_inputs(spec, cases)), capture_output=True, text=True, timeout=timeout, env={"PATH": os.environ["PATH"], "PYTHONHASHSEED": hash_seed}, preexec_fn=limit_memory)
         except subprocess.TimeoutExpired as error:
             raise SpecError(f"program exceeded {timeout:.0f}s over {len(cases)} cases") from error
+    stdout = result.stdout if not spec.get("table") else json.loads(node_json({"op": "format", "interface": spec["interface"], "inputs": [case.text for case in cases], "stdout": result.stdout}))
     outputs: list[tuple[str | None, int]] = []
-    for line in result.stdout.split("\n"):
+    for line in stdout.split("\n"):
         at = line.find(MARKER)
         if at < 0:
             continue
@@ -448,6 +554,8 @@ def validate(directory: Path, topics: set[str]) -> dict:
         require(interface["kind"] == mode, "mode must match interface.kind")
         starter = json.loads(node_json({"interface": interface}))
         content["starter_code"] = starter
+        shape = json.loads(node_json({"op": "lines", "interface": interface}))
+        spec["lines"], spec["table"] = shape["lines"], shape["table"]
         content["interface"] = interface
         types = [parse_type(p["type"]) for p in interface.get("params", [])]
         returns = [interface.get("returns", "void")] if mode == "function" else [interface["decode"]["returns"]] if mode == "codec" else [m["returns"] for m in interface["methods"]]
@@ -507,8 +615,8 @@ def validate(directory: Path, topics: set[str]) -> dict:
         expected = run_stdin(program, cases, 10)
         repeat = run_stdin(program, cases, 10)
     else:
-        expected = run_batch(program, cases, 180, "1")
-        repeat = run_batch(program, cases, 180, "2")
+        expected = run_batch(program, cases, 180, "1", spec)
+        repeat = run_batch(program, cases, 180, "2", spec)
     if checker == "special":
         verdicts = run_judge(directory, [{"input": case.text, "output": second, "expected": first} for case, (first, _), (second, _) in zip(cases, expected, repeat)])
         rejected = [case.origin for case, ok in zip(cases, verdicts) if not ok]
@@ -523,7 +631,7 @@ def validate(directory: Path, topics: set[str]) -> dict:
         limit = int(meta.get("oracleMaxInputBytes", 2000))
         small = [i for i, case in enumerate(cases) if len(case.text) <= limit]
         require(len(small) >= min(10, len(cases)), f"the oracle covers only {len(small)} cases; raise oracleMaxInputBytes or add small cases")
-        oracle = (run_stdin(oracle_program, [cases[i] for i in small], 20) if mode == "stdin" else run_batch(oracle_program, [cases[i] for i in small], 300, "3"))
+        oracle = (run_stdin(oracle_program, [cases[i] for i in small], 20) if mode == "stdin" else run_batch(oracle_program, [cases[i] for i in small], 300, "3", spec))
         if checker == "special":
             verdicts = run_judge(directory, [{"input": cases[i].text, "output": answer, "expected": expected[i][0]} for i, (answer, _) in zip(small, oracle)])
             for i, ok, (answer, _) in zip(small, verdicts, oracle):
@@ -536,7 +644,7 @@ def validate(directory: Path, topics: set[str]) -> dict:
         require(meta.get("oracleWaiver"), "add oracle.py (an independent brute force) or explain oracleWaiver in meta.json")
     python = editorial_python(solution, mode)
     python_program = python if mode == "stdin" else node_json({"interface": spec["interface"], "language": "python", "source": python})
-    written = run_stdin(python_program, cases, 10) if mode == "stdin" else run_batch(python_program, cases, 180, "4")
+    written = run_stdin(python_program, cases, 10) if mode == "stdin" else run_batch(python_program, cases, 180, "4", spec)
     if checker == "special":
         verdicts = run_judge(directory, [{"input": case.text, "output": answer, "expected": first} for case, (first, _), (answer, _) in zip(cases, expected, written)])
         rejected = [case.origin for case, ok in zip(cases, verdicts) if not ok]

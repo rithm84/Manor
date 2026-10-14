@@ -9,11 +9,11 @@ type Process = NonNullable<JudgeOutput['compile']>
 const chunkCases = 40, chunkInputBytes = 262144, heavyCaseBytes = 65536, chunkAnswerBytes = 49152
 
 /** Typed drivers run many cases per process; heavy inputs run alone so one slow case cannot starve its neighbors of the per-process time limit. */
-export function chunk(cases: readonly RunnerCase[]): RunnerCase[][] {
+export function chunk(cases: readonly RunnerCase[], maxCases = chunkCases): RunnerCase[][] {
   const groups: RunnerCase[][] = []; let current: RunnerCase[] = []; let inputBytes = 0; let answerBytes = 0
   for (const test of cases) {
     const size = new TextEncoder().encode(test.input).length; const answer = test.expectedOutput?.length ?? 4096
-    if (current.length > 0 && (size >= heavyCaseBytes || current.length >= chunkCases || inputBytes + size > chunkInputBytes || answerBytes + answer > chunkAnswerBytes)) { groups.push(current); current = []; inputBytes = 0; answerBytes = 0 }
+    if (current.length > 0 && (size >= heavyCaseBytes || current.length >= maxCases || inputBytes + size > chunkInputBytes || answerBytes + answer > chunkAnswerBytes)) { groups.push(current); current = []; inputBytes = 0; answerBytes = 0 }
     current.push(test); inputBytes += size; answerBytes += answer
     if (size >= heavyCaseBytes) { groups.push(current); current = []; inputBytes = 0; answerBytes = 0 }
   }

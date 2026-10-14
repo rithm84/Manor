@@ -23,16 +23,24 @@ export type ProblemStatus = (typeof PROBLEM_STATUSES)[number]
 export const problemExampleSchema = z.object({
   input: z.string().max(100000), output: z.string().max(100000), explanation: z.string().max(100000).nullable()
 })
-const interfaceParamSchema = z.object({ name: z.string().min(1).max(64), type: z.string().min(1).max(64) })
+const interfaceParamSchema = z.object({ name: z.string().min(1).max(64), type: z.string().min(1).max(64), shape: z.string().min(1).max(200).optional(), ref: z.string().min(1).max(64).optional() })
+const interfaceMethodSchema = z.object({ name: z.string().min(1).max(64), params: z.array(interfaceParamSchema).max(20), returns: z.string().min(1).max(64), output: z.object({ mode: z.literal('prefix'), param: z.string() }).optional() })
+/** Hidden parameters, judge-provided APIs and their interactor, and offered languages; see the judge's problemInterface.ts. */
+const interfaceExtras = {
+  hidden: z.array(interfaceParamSchema).max(20).optional(),
+  apis: z.array(z.object({ name: z.string().min(1).max(64), methods: z.array(interfaceMethodSchema).min(1).max(20), global: z.boolean().optional(), pointer: z.boolean().optional() })).max(5).optional(),
+  interactor: z.string().max(49152).optional(),
+  languages: z.array(problemLanguageSchema).min(1).max(6).optional(),
+}
 /** A typed solving interface; drivers and type grammar live with the judge (supabase/functions/_shared/problemInterface.ts). */
 export const problemInterfaceSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('function'), name: z.string().min(1).max(64), params: z.array(interfaceParamSchema).max(20), returns: z.string().min(1).max(64),
-    output: z.discriminatedUnion('mode', [z.object({ mode: z.literal('return') }), z.object({ mode: z.literal('param'), param: z.string() }), z.object({ mode: z.literal('prefix'), param: z.string() })]) }),
+    output: z.discriminatedUnion('mode', [z.object({ mode: z.literal('return'), ref: z.object({ param: z.string(), by: z.enum(['value', 'index']) }).optional(), shape: z.string().min(1).max(64).optional() }), z.object({ mode: z.literal('param'), param: z.string() }), z.object({ mode: z.literal('prefix'), param: z.string() })]), ...interfaceExtras }),
   z.object({ kind: z.literal('class'), className: z.string().min(1).max(64), constructorParams: z.array(interfaceParamSchema).max(20),
-    methods: z.array(z.object({ name: z.string().min(1).max(64), params: z.array(interfaceParamSchema).max(20), returns: z.string().min(1).max(64) })).min(1).max(50) }),
+    methods: z.array(interfaceMethodSchema).min(1).max(50), concurrency: z.boolean().optional(), ...interfaceExtras }),
   z.object({ kind: z.literal('codec'), className: z.string().min(1).max(64), sharedInstance: z.boolean(),
     encode: z.object({ name: z.string().min(1).max(64), param: interfaceParamSchema, returns: z.string().min(1).max(64) }),
-    decode: z.object({ name: z.string().min(1).max(64), param: interfaceParamSchema, returns: z.string().min(1).max(64) }) }),
+    decode: z.object({ name: z.string().min(1).max(64), param: interfaceParamSchema, returns: z.string().min(1).max(64) }), languages: z.array(problemLanguageSchema).min(1).max(6).optional() }),
 ])
 export type ProblemInterface = z.infer<typeof problemInterfaceSchema>
 const problemContentInputSchema = z.object({
