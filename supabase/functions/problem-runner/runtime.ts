@@ -75,12 +75,29 @@ async function judgeTyped(provider: BlaxelClient, job: z.infer<typeof jobSchema>
   }
   const runnable = job.cases.filter(test => prepared.has(test.id))
   if (runnable.length === 0) return unprepared
-  const groups = chunk(runnable, casesPerProcess(spec))
   const code = assembleProgram(language as HarnessLanguage, job.code, spec)
-  const output = await inStandingSandbox(provider, 'judge', job.owner, { language, code, cases: groups.map((group, index) => ({ id: `chunk-${index}`, input: group.map(test => prepared.get(test.id)!).join('') })) })
-  if (output.compile !== null && output.compile.exitCode !== 0) return [{ id: job.cases[0].id, passed: false, hidden: false, input: null, expectedOutput: null, output: null, stderr: output.compile.stderr, durationMs: output.compile.durationMs, verdict: 'compile_error' }]
-  if (output.cases.length !== groups.length || output.cases.some((item, index) => item.id !== `chunk-${index}`)) throw new Error('Judge returned chunks that do not match the leased batch')
-  const processes = output.cases.map((item, index) => ({ ...item.process, stdout: formatDriverStdout(spec, groups[index].map(test => test.input.endsWith('\n') ? test.input : test.input + '\n'), item.process.stdout) }))
+  const run = async (batch: RunnerCase[][]) => {
+    const output = await inStandingSandbox(provider, 'judge', job.owner, { language, code, cases: batch.map((group, index) => ({ id: `chunk-${index}`, input: group.map(test => prepared.get(test.id)!).join('') })) })
+    if (output.compile !== null && output.compile.exitCode !== 0) return output.compile
+    if (output.cases.length !== batch.length || output.cases.some((item, index) => item.id !== `chunk-${index}`)) throw new Error('Judge returned chunks that do not match the leased batch')
+    return output.cases.map(item => item.process)
+  }
+  let groups = chunk(runnable, casesPerProcess(spec))
+  const first = await run(groups)
+  if (!Array.isArray(first)) return [{ id: job.cases[0].id, passed: false, hidden: false, input: null, expectedOutput: null, output: null, stderr: first.stderr, durationMs: first.durationMs, verdict: 'compile_error' }]
+  let raw = first
+  // Shaped answers such as node tables print far more than their expected text, so a shared process can reach the
+  // output cap on correct code. Those cases rerun one per process, where only a genuinely oversized answer stops.
+  const overflowing = groups.flatMap((group, index) => first[index].outputLimit && group.length > 1 ? [index] : [])
+  if (overflowing.length > 0) {
+    const singles = overflowing.flatMap(index => groups[index].map(test => [test]))
+    const rerun = await run(singles)
+    if (!Array.isArray(rerun)) throw new Error('A rerun of overflowing cases failed to compile after the first run compiled')
+    const kept = groups.flatMap((group, index) => overflowing.includes(index) ? [] : [[group, first[index]] as const])
+    groups = [...kept.map(([group]) => group), ...singles]
+    raw = [...kept.map(([, process]) => process), ...rerun]
+  }
+  const processes = raw.map((process, index) => ({ ...process, stdout: formatDriverStdout(spec, groups[index].map(test => test.input.endsWith('\n') ? test.input : test.input + '\n'), process.stdout) }))
   let accepts = (test: RunnerCase, answer: string): boolean => matches(answer, test.expectedOutput, job.checker)
   if (job.checker === 'special') {
     if (!job.judge) throw new Error('This testset uses a special judge but carries no judge source')
