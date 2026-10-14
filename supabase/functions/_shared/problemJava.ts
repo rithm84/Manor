@@ -177,6 +177,8 @@ function javaConcurrent(spec: ClassInterface): string {
         final java.util.List<String> log = java.util.Collections.synchronizedList(new java.util.ArrayList<>());
         final java.util.function.Consumer<String> record = log::add;
         final Throwable[] failure = new Throwable[1];
+        final int[] done = new int[1];
+        final int total = scripts.size();
         java.util.ArrayList<Thread> workers = new java.util.ArrayList<>();
         for (Object script : scripts) {
           Thread worker = new Thread(() -> {
@@ -184,11 +186,13 @@ function javaConcurrent(spec: ClassInterface): string {
               for (Object stepObject : (java.util.List<Object>) script) {
                 java.util.List<Object> step = (java.util.List<Object>) stepObject; String name = (String) step.get(0); java.util.List<Object> c = (java.util.List<Object>) step.get(1);
                 if (name.equals("$sleep")) { Thread.sleep(Long.parseLong(((__ManorNumber) c.get(0)).text)); continue; }
+                if (name.equals("$join")) { synchronized (done) { while (done[0] < total - 1) done.wait(); } continue; }
                 switch (name) {
 ${cases}                  default: throw new IllegalArgumentException("Unknown operation: " + name);
                 }
               }
             } catch (Throwable error) { synchronized (failure) { if (failure[0] == null) failure[0] = error; } }
+            synchronized (done) { done[0]++; done.notifyAll(); }
           });
           workers.add(worker); worker.start(); Thread.sleep(2);
         }

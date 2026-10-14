@@ -214,14 +214,18 @@ function goConcurrent(spec: ClassInterface): string {
 	record := func(entry string) { lock.Lock(); log = append(log, entry); lock.Unlock() }
 	var failure interface{}
 	var group __manor_sync.WaitGroup
+	finished := 0
+	signal := __manor_sync.NewCond(&lock)
 	for _, script := range scripts {
 		group.Add(1)
 		go func(steps []interface{}) {
 			defer group.Done()
+			defer func() { lock.Lock(); finished++; signal.Broadcast(); lock.Unlock() }()
 			defer func() { if r := recover(); r != nil { lock.Lock(); if failure == nil { failure = r }; lock.Unlock() } }()
 			for _, entry := range steps {
 				step := entry.([]interface{}); name := step[0].(string); c := step[1].([]interface{})
 				if name == "$sleep" { __manor_time.Sleep(__manor_time.Duration(__manor_d_int(c[0])) * __manor_time.Millisecond); continue }
+				if name == "$join" { lock.Lock(); for finished < len(scripts)-1 { signal.Wait() }; lock.Unlock(); continue }
 				switch name {
 ${cases}				default:
 					panic("Unknown operation: " + name)

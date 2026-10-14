@@ -201,7 +201,7 @@ def __manor_concurrent(spec, lines):
     ctor = __manor_json.loads(lines[0]); scripts = __manor_json.loads(lines[1])
     obj = globals()[spec['className']](*[__manor_decode(__manor_type(p['type']), a) for p, a in zip(spec['constructorParams'], ctor)])
     methods = {m['name']: m for m in spec['methods']}
-    log = []; lock = __manor_threading.Lock(); errors = []
+    log = []; lock = __manor_threading.Lock(); errors = []; finished = __manor_threading.Condition(); done = [0]
     def record(value):
         with lock: log.append(value)
     def callback(t, token):
@@ -211,12 +211,18 @@ def __manor_concurrent(spec, lines):
         try:
             for name, call in script:
                 if name == '$sleep': __manor_time.sleep(call[0] / 1000); continue
+                if name == '$join':
+                    with finished: finished.wait_for(lambda: done[0] >= len(scripts) - 1)
+                    continue
                 m = methods[name]
                 args = [callback(p['type'], a) if p['type'].startswith('callback') else __manor_decode(__manor_type(p['type']), a) for p, a in zip(m['params'], call)]
                 result = getattr(obj, name)(*args)
                 if m['returns'] != 'void': record(__manor_encode(__manor_type(m['returns']), result))
         except BaseException as error:
             errors.append(error)
+        finally:
+            with finished:
+                done[0] += 1; finished.notify_all()
     workers = [__manor_threading.Thread(target=run, args=(script,), daemon=True) for script in scripts]
     for worker in workers:
         worker.start(); __manor_time.sleep(0.002)
