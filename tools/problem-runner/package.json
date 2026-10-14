@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "deno test checkers.test.ts batch.test.ts",
-    "check": "deno check ../../supabase/functions/problem-runner/index.ts smoke.ts lspSmoke.ts latency.ts harnessLocal.ts harnessSmoke.ts",
+    "check": "deno check ../../supabase/functions/problem-runner/index.ts smoke.ts lspSmoke.ts latency.ts harnessLocal.ts harnessSmoke.ts harnessStarters.ts",
     "lsp:smoke": "deno run --allow-env --allow-net lspSmoke.ts",
     "smoke": "deno run --allow-env --allow-net smoke.ts",
     "latency": "deno run --allow-env --allow-net latency.ts",

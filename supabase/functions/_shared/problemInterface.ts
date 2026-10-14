@@ -239,7 +239,7 @@ function validateApis(spec: FunctionInterface | ClassInterface): void {
       methods.add(method.name)
       const seen = new Set<string>()
       for (const param of method.params) {
-        if (!identifier.test(param.name) || reserved.has(param.name) || seen.has(param.name)) throw new TypeError(`API parameter name is not portable: ${param.name}`)
+        if (!identifier.test(param.name) || reserved.has(param.name) || param.name.startsWith('__') || seen.has(param.name)) throw new TypeError(`API parameter name is not portable: ${param.name}`)
         seen.add(param.name)
         const t = typeOf(param.type)
         if (contains(t, x => !['scalar', 'array', 'list', 'buffer'].includes(x.tag))) throw new TypeError(`API parameters hold plain values or a buffer: ${param.type}`)

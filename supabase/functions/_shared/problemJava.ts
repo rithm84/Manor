@@ -124,11 +124,11 @@ function javaApis(spec: ProblemInterface): string {
   const classes = spec.apis.map(api => {
     const methods = api.methods.map(m => {
       const returns = m.returns === 'void' ? 'void' : javaType(typeOf(m.returns))
-      const args = m.params.map((p, i) => `${i ? "a.append(','); " : ''}${typeOf(p.type).tag === 'buffer' ? 'a.append("null");' : `Main.enc(a, ${p.name});`} `).join('')
-      const writes = m.params.map((p, i) => typeOf(p.type).tag === 'buffer' ? `if (index == ${i}) text.getChars(0, text.length(), ${p.name}, 0); ` : '').join('')
+      const args = m.params.map((p, i) => `${i ? "__manor_a.append(','); " : ''}${typeOf(p.type).tag === 'buffer' ? '__manor_a.append("null");' : `Main.enc(__manor_a, ${p.name});`} `).join('')
+      const writes = m.params.map((p, i) => typeOf(p.type).tag === 'buffer' ? `if (__manor_index == ${i}) __manor_text.getChars(0, __manor_text.length(), ${p.name}, 0); ` : '').join('')
       const target = m.returns === 'void' ? null : typeOf(m.returns)
-      const result = target === null ? '' : target.tag === 'object' ? ` if (r.get(0) == null) return null; StringBuilder h = new StringBuilder(); Main.enc(h, r.get(0)); return new ${target.name}(h.toString());` : ` return Main.d_${mangle(target)}(r.get(0));`
-      return `  public ${returns} ${m.name}(${m.params.map(p => `${javaType(typeOf(p.type))} ${p.name}`).join(', ')}) { StringBuilder a = new StringBuilder("["); ${args}a.append(']'); java.util.List<Object> r = __ManorIx.call(${api.global ? '"null"' : '__manor_handle'}, ${javaString(m.name)}, a.toString());${writes ? ` if (r.size() > 1) for (Object w : (java.util.List<Object>) r.get(1)) { java.util.List<Object> pair = (java.util.List<Object>) w; int index = Main.d_int(pair.get(0)); String text = (String) pair.get(1); ${writes}}` : ''}${result} }\n`
+      const result = target === null ? '' : target.tag === 'object' ? ` if (__manor_r.get(0) == null) return null; StringBuilder __manor_h = new StringBuilder(); Main.enc(__manor_h, __manor_r.get(0)); return new ${target.name}(__manor_h.toString());` : ` return Main.d_${mangle(target)}(__manor_r.get(0));`
+      return `  public ${returns} ${m.name}(${m.params.map(p => `${javaType(typeOf(p.type))} ${p.name}`).join(', ')}) { StringBuilder __manor_a = new StringBuilder("["); ${args}__manor_a.append(']'); java.util.List<Object> __manor_r = __ManorIx.call(${api.global ? '"null"' : '__manor_handle'}, ${javaString(m.name)}, __manor_a.toString());${writes ? ` if (__manor_r.size() > 1) for (Object __manor_w : (java.util.List<Object>) __manor_r.get(1)) { java.util.List<Object> __manor_pair = (java.util.List<Object>) __manor_w; int __manor_index = Main.d_int(__manor_pair.get(0)); String __manor_text = (String) __manor_pair.get(1); ${writes}}` : ''}${result} }\n`
     }).join('')
     return api.global ? `class ${api.name} {\n${methods}}\n` : `class ${api.name} {\n  final String __manor_handle;\n  ${api.name}(String handle) { __manor_handle = handle; }\n${methods}}\n`
   }).join('')
