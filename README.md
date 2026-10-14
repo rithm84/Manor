@@ -28,7 +28,6 @@ Manor replaces a sprawling Notion setup with one place that is cheap to keep cur
 - [How it works](#how-it-works)
 - [Working with an agent](#working-with-an-agent)
 - [Using the hosted app](#using-the-hosted-app)
-- [Running it](#running-it)
 - [Repository layout](#repository-layout)
 - [Documentation](#documentation)
 - [Status](#status)
@@ -95,31 +94,6 @@ Reads return record IDs and revisions; writes require them, so an agent cannot a
 ## Using the hosted app
 
 Install the app from the [releases](https://github.com/rithm84/Manor/releases) and sign in with Google. Creating an account requires an invitation password, and connecting an agent requires the hosted MCP URL. Neither is published here, so [open an issue](https://github.com/rithm84/Manor/issues) to ask for them. Each account's data is private to that account.
-
-## Running it
-
-These notes are for maintaining Manor itself; the source is published for reference and is not licensed for reuse (see [License](#license)).
-
-**Requirements:** macOS with the Xcode command line tools and a Rust toolchain, Node 24, a Supabase project, a Google OAuth web client, a Blaxel workspace for code execution, and (for full functionality) Google Calendar, X, and OpenAI credentials configured as function secrets.
-
-```sh
-npm --prefix app ci
-npm --prefix desktop install
-npm --prefix desktop run dev      # the app window against the Vite dev server, for unauthenticated UI work
-npm --prefix app run typecheck
-npm --prefix app test
-npm --prefix desktop run build    # writes desktop/target/release/bundle/macos/Manor.app
-npm --prefix desktop run release  # signs and publishes a release that installed apps pick up
-```
-
-The frontend needs two values per environment in `app/.env.production` or `app/.env.staging`:
-
-```
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-```
-
-Backend changes ship with the Supabase CLI: `npx supabase db push` for migrations and `npx supabase functions deploy --no-verify-jwt` for the Edge Functions. Signed-in and end-to-end testing happens on a staging build of the app; the dev origin is not an authorized backend origin. The frontend package is described in the [frontend guide](app/README.md), the shell and releases in the [desktop guide](desktop/README.md), and backup credentials and the isolated restore drill in the [recovery guide](tools/recovery/README.md).
 
 ## Repository layout
 
