@@ -13055,6 +13055,124 @@
           "transform": "Crop to the opaque artwork; preserve pixels and colors. Scale to at most 72px tall for 18px display."
         }
       ]
+    },
+    {
+      "company": "Carvana",
+      "license": "company-published asset",
+      "brandUrl": "https://www.carvana.com",
+      "revision": "2026-10-13",
+      "files": [
+        {
+          "file": "carvana-light.svg",
+          "source": "https://investors.carvana.com/~/media/Images/C/Carvana-IR/logo/logo-new.svg?iar=0 (investor relations site logo, prepared with prepare.mjs without recoloring)",
+          "originalSha256": null,
+          "sha256": "3f8c7644f4590f3003e2836f5cf98f8afe0d10ce14c66bf754c11af081d09ecb",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "GlobalLogic",
+      "license": "CC0-1.0",
+      "brandUrl": "https://www.globallogic.com/",
+      "revision": "2026-10-13",
+      "files": [
+        {
+          "file": "globallogic-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/d/de/Logo_GL-Hitachi_Black.svg",
+          "originalSha256": null,
+          "sha256": "f4c52bacc9ea83d8efed33b0a81dadafd751b4cc7ebb0b7fed1e67c6522226c0",
+          "transform": "Recolor the single-color mark to black for light surfaces; trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "globallogic-dark.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/d/de/Logo_GL-Hitachi_Black.svg",
+          "originalSha256": null,
+          "sha256": "6c2136b3c57880751a5d0f9d40d54a330729820a8b7fa3fc0feb3fd82ad9481b",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "McDonald's",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.mcdonalds.com",
+      "revision": "2026-10-13",
+      "files": [
+        {
+          "file": "mcdonalds-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/ca/McDonald%27s_wordmark.svg (Wikimedia Commons File:McDonald's wordmark.svg, the original SVG, retained as files/mcdonalds/mcdonalds-commons-source.svg)",
+          "originalSha256": "7e0968d83de3f431cc2032b8c30e4d8df8fde67f954208e81ae82c4b7e6fc852",
+          "sha256": "6eb9799ece2e95a7cfe9dfefea00f1ff8052a10e7e1891749af493df69d62c7b",
+          "transform": "Recolor the single-color mark to black for light surfaces; trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "mcdonalds-dark.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/c/ca/McDonald%27s_wordmark.svg (Wikimedia Commons File:McDonald's wordmark.svg, the original SVG, retained as files/mcdonalds/mcdonalds-commons-source.svg)",
+          "originalSha256": "7e0968d83de3f431cc2032b8c30e4d8df8fde67f954208e81ae82c4b7e6fc852",
+          "sha256": "c2c805f50b8d6c1a66270d474c760351839f70141af1c4a0b96e581df9e6525b",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Nasdaq",
+      "license": "PD-textlogo",
+      "brandUrl": "https://www.nasdaq.com/",
+      "revision": "2026-10-13",
+      "files": [
+        {
+          "file": "nasdaq-light.svg",
+          "source": "https://upload.wikimedia.org/wikipedia/commons/8/87/NASDAQ_Logo.svg",
+          "originalSha256": null,
+          "sha256": "e7b849521f8c78bc851058fab7119865afabf6ad4d6631ba59b4bb534f10b12e",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "RetailMeNot",
+      "license": "company-published asset",
+      "brandUrl": "https://www.retailmenot.com",
+      "revision": "2026-10-13",
+      "files": [
+        {
+          "file": "retailmenot-light.svg",
+          "source": "https://www.retailmenot.com/ (inline header SVG, class rmn-word-logo-anniversary, white on the header; recolored to #000000 for light surfaces; original kept at /root/manor-problem-work/work/wordmarks/files/retailmenot/retailmenot-dark.svg)",
+          "originalSha256": null,
+          "sha256": "2fbd4d3fddcff40b95f5377ba8d4f08f542ff0ae75b2229ea6738306e5f785f8",
+          "transform": "Recolor the single-color mark to black for light surfaces; trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "retailmenot-dark.svg",
+          "source": "https://www.retailmenot.com/ (inline header SVG, class rmn-word-logo-anniversary, white on the header; recolored to #000000 for light surfaces; original kept at /root/manor-problem-work/work/wordmarks/files/retailmenot/retailmenot-dark.svg)",
+          "originalSha256": null,
+          "sha256": "652954175cc7bff4e5f3fe96e4be6aed63b5889df2db26c75ba2add138e79a3a",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
+    },
+    {
+      "company": "Trexquant",
+      "license": "company-published asset",
+      "brandUrl": "https://www.trexquant.com",
+      "revision": "2026-10-13",
+      "files": [
+        {
+          "file": "trexquant-light.svg",
+          "source": "https://www.trexquant.com/ (header wordmark inline SVG, viewBox 0 0 273 41)",
+          "originalSha256": "d4c4bd17f53ac042b33659c26ebbeef2d037652e0cd509efde6972dd99535e37",
+          "sha256": "c158f0f95047cde1c20d82615983578d97d53252074872c701269d3ad053e098",
+          "transform": "Recolor the single-color mark to black for light surfaces; trim transparent viewport padding; preserve artwork and colors."
+        },
+        {
+          "file": "trexquant-dark.svg",
+          "source": "https://www.trexquant.com/ (header wordmark inline SVG, viewBox 0 0 273 41)",
+          "originalSha256": "d4c4bd17f53ac042b33659c26ebbeef2d037652e0cd509efde6972dd99535e37",
+          "sha256": "a9c88928cccb26e1ffc7991fcffffbfcdb14fa756a2f6e443f9460c3824be5e5",
+          "transform": "Trim transparent viewport padding; preserve artwork and colors."
+        }
+      ]
     }
   ]
 }
