@@ -159,6 +159,7 @@ export function currentUpdateLabel(role: JobRole, today: string): string {
     case 'applied':
       return role.appliedDate === null ? 'Applied date not set' : `Applied ${shortDate(role.appliedDate)}`
     case 'oa': {
+      if (role.oaCompletedDate) return `OA done ${shortDate(role.oaCompletedDate)}`
       if (role.oaDueDate === null) return 'OA due date not set'
       const difference = dayDifference(role.oaDueDate, today)
       return difference < 0
@@ -189,7 +190,7 @@ export function toBoardCard(role: JobRole, today: string): BoardCard {
   const detailTone: BoardCard['detailTone'] = (() => {
     switch (role.stage) {
       case 'oa':
-        return 'today'
+        return role.oaCompletedDate ? 'success' : 'today'
       case 'interview_1':
       case 'interview_2':
       case 'interview_3':
@@ -279,6 +280,7 @@ export function roleFields(role: JobRole): JobRoleFields {
     stage: role.stage,
     appliedDate: role.appliedDate,
     oaDueDate: role.oaDueDate,
+    oaCompletedDate: role.oaCompletedDate ?? null,
     interview1Date: role.interview1Date,
     interview2Date: role.interview2Date,
     interview3Date: role.interview3Date,

@@ -11,6 +11,7 @@ const FIELDS = {
   stage: 'interview_2',
   appliedDate: '2026-08-17',
   oaDueDate: '2026-08-20',
+  oaCompletedDate: null,
   interview1Date: '2026-08-22',
   interview2Date: '2026-08-29',
   interview3Date: null,

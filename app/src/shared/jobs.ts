@@ -22,6 +22,8 @@ export interface JobRoleFields {
   stage: JobStage
   appliedDate: string | null
   oaDueDate: string | null
+  /** When the online assessment was completed. Optional on input so earlier rows and seeds stay valid; parsing always emits it. */
+  oaCompletedDate?: string | null
   interview1Date: string | null
   interview2Date: string | null
   interview3Date: string | null
@@ -205,6 +207,7 @@ export function parseJobRoleFields(value: unknown): JobRoleFields {
     stage: parseJobStage(fields.stage, 'job.stage'),
     appliedDate: nullableDate(fields.appliedDate, 'job.appliedDate'),
     oaDueDate: nullableDate(fields.oaDueDate, 'job.oaDueDate'),
+    oaCompletedDate: nullableDate(fields.oaCompletedDate ?? null, 'job.oaCompletedDate'),
     interview1Date: nullableDate(fields.interview1Date, 'job.interview1Date'),
     interview2Date: nullableDate(fields.interview2Date, 'job.interview2Date'),
     interview3Date: nullableDate(fields.interview3Date, 'job.interview3Date'),

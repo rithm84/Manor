@@ -20,7 +20,7 @@ const taskFields = {
 const applicationFields = {
   company: text, role: text, location: text, link: text, posted: nullableText,
   stage: { type: 'string', enum: ['to_apply', 'applied', 'oa', 'interview_1', 'interview_2', 'interview_3', 'offer', 'rejected'] } as ToolSchema,
-  applied: nullableText, oa_due: nullableText, interview1: nullableText, interview2: nullableText, interview3: nullableText, decision: nullableText, resume_id: nullableText, term: nullableText
+  applied: nullableText, oa_due: nullableText, oa_done: nullableText, interview1: nullableText, interview2: nullableText, interview3: nullableText, decision: nullableText, resume_id: nullableText, term: nullableText
 }
 export const manorTools: readonly ManorTool[] = [
   ...notesTools,

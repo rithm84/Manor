@@ -12,7 +12,7 @@ import { JobDetailModal } from './jobs/JobDetailModal'
 import { JobsBrowse } from './jobs/JobsBrowse'
 import { PipelineBoard } from './jobs/PipelineBoard'
 import type { JobColumn } from './jobs/jobsModel'
-import { toBoardCard } from './jobs/jobsModel'
+import { roleFields, toBoardCard } from './jobs/jobsModel'
 import { useJobsView } from './jobs/jobsViewState'
 import type { JobsView } from './jobs/jobsViewState'
 import './jobs/jobs.css'
@@ -154,6 +154,12 @@ export function JobsPage(): ReactNode {
     ? null
     : state.roles.find((role) => role.id === removeCandidateId) ?? null
 
+  const markOaDone = (roleId: string): void => {
+    const role = state.roles.find((candidate) => candidate.id === roleId)
+    if (role === undefined) throw new Error(`Role ${roleId} is not on the board`)
+    void persist('Could not mark the OA done', () => jobsApi.updateRole({ id: roleId, fields: { ...roleFields(role), oaCompletedDate: state.today }, expectedRevision: role.revision }))
+  }
+
   const removeRole = (roleId: string): void => {
     if (detailRoleId === roleId) setDetailOpen(false)
     setRemoveCandidateId(null)
@@ -215,6 +221,7 @@ export function JobsPage(): ReactNode {
               onDropOnColumn={dropOnColumn}
               onOpenCard={openDetail}
               onMoveCard={requestStage}
+              onMarkOaDone={markOaDone}
               onRemoveCard={(roleId) => setRemoveCandidateId(roleId)}
             />
           </section>

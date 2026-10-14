@@ -35,6 +35,7 @@ export interface PipelineBoardProps {
   onDropOnColumn: (roleId: string, column: JobColumn) => void
   onOpenCard: (cardId: string) => void
   onMoveCard: (cardId: string, stage: JobStage) => void
+  onMarkOaDone: (cardId: string) => void
   onRemoveCard: (cardId: string) => void
 }
 
@@ -51,6 +52,7 @@ function PipelineColumn({
   sourceColumn,
   onOpenCard,
   onMoveCard,
+  onMarkOaDone,
   onRemoveCard
 }: {
   meta: ColumnMeta
@@ -60,6 +62,7 @@ function PipelineColumn({
   sourceColumn: JobColumn | null
   onOpenCard: (cardId: string) => void
   onMoveCard: (cardId: string, stage: JobStage) => void
+  onMarkOaDone: (cardId: string) => void
   onRemoveCard: (cardId: string) => void
 }): ReactNode {
   const { setNodeRef, isOver } = useDroppable({
@@ -94,6 +97,7 @@ function PipelineColumn({
               arrived={arrivedIds.has(card.role.id)}
               onOpen={() => onOpenCard(card.role.id)}
               onMove={(stage) => onMoveCard(card.role.id, stage)}
+              onMarkOaDone={() => onMarkOaDone(card.role.id)}
               onRemove={() => onRemoveCard(card.role.id)}
             />
           ))
@@ -112,6 +116,7 @@ export function PipelineBoard({
   onDropOnColumn,
   onOpenCard,
   onMoveCard,
+  onMarkOaDone,
   onRemoveCard
 }: PipelineBoardProps): ReactNode {
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -169,6 +174,7 @@ export function PipelineBoard({
             sourceColumn={sourceColumn}
             onOpenCard={onOpenCard}
             onMoveCard={onMoveCard}
+            onMarkOaDone={onMarkOaDone}
             onRemoveCard={onRemoveCard}
           />
         ))}

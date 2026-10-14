@@ -33,6 +33,7 @@ const idle = {
   onDropOnColumn: () => undefined,
   onOpenCard: () => undefined,
   onMoveCard: () => undefined,
+  onMarkOaDone: () => undefined,
   onRemoveCard: () => undefined
 }
 
