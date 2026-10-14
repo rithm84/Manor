@@ -4,7 +4,8 @@ import { checkers, matches, type Checker } from './checkers.ts'
 import { assembleProgram, parseDriverOutput } from '../_shared/problemDrivers.ts'
 import { judgeBatches, judgeProgram, type JudgeItem } from '../_shared/problemJudge.ts'
 import { chunk, gradeChunk } from './batch.ts'
-import { harnessLanguages, validateInterface, type HarnessLanguage, type ProblemInterface } from '../_shared/problemInterface.ts'
+import { offeredLanguages, validateInterface, type HarnessLanguage, type ProblemInterface } from '../_shared/problemInterface.ts'
+import { formatDriverStdout, prepareInput } from '../_shared/problemShapes.ts'
 
 export const languages = ['cpp', 'c', 'python', 'javascript', 'java', 'go'] as const
 const verdict = z.enum(['accepted', 'wrong_answer', 'compile_error', 'runtime_error', 'time_limit', 'output_limit', 'execution_error'])
@@ -58,27 +59,42 @@ async function inStandingSandbox(provider: BlaxelClient, purpose: WarmPurpose, o
   return output
 }
 
+/** Interactive and concurrent problems spend wall time on pipes and threads, so their batches are smaller. */
+function casesPerProcess(spec: ProblemInterface): number { return spec.kind === 'class' && spec.concurrency ? 8 : spec.kind !== 'codec' && (spec.apis ?? []).length > 0 ? 10 : 40 }
+
 async function judgeTyped(provider: BlaxelClient, job: z.infer<typeof jobSchema>, spec: ProblemInterface): Promise<CaseResult[]> {
   const language = job.submission.language
-  if (!(harnessLanguages as readonly string[]).includes(language)) throw new Error(`${language} is not available for this problem's solving interface`)
+  if (!(offeredLanguages(spec) as readonly string[]).includes(language)) throw new Error(`${language} is not available for this problem's solving interface`)
   validateInterface(spec)
-  const groups = chunk(job.cases)
+  // A case whose friendly input cannot be shaped into nodes fails on its own, before any code runs.
+  const prepared = new Map<string, string>()
+  const unprepared: CaseResult[] = []
+  for (const test of job.cases) {
+    try { prepared.set(test.id, prepareInput(spec, test.input.endsWith('\n') ? test.input : test.input + '\n')) }
+    catch (error) { unprepared.push({ id: test.id, passed: false, hidden: test.hidden, input: test.hidden ? null : test.input, expectedOutput: test.hidden ? null : test.expectedOutput, output: null, stderr: test.hidden ? null : `This input cannot be read: ${error instanceof Error ? error.message : String(error)}`, durationMs: 0, verdict: 'runtime_error' }) }
+  }
+  const runnable = job.cases.filter(test => prepared.has(test.id))
+  if (runnable.length === 0) return unprepared
+  const groups = chunk(runnable, casesPerProcess(spec))
   const code = assembleProgram(language as HarnessLanguage, job.code, spec)
-  const output = await inStandingSandbox(provider, 'judge', job.owner, { language, code, cases: groups.map((group, index) => ({ id: `chunk-${index}`, input: group.map(test => test.input.endsWith('\n') ? test.input : test.input + '\n').join('') })) })
+  const output = await inStandingSandbox(provider, 'judge', job.owner, { language, code, cases: groups.map((group, index) => ({ id: `chunk-${index}`, input: group.map(test => prepared.get(test.id)!).join('') })) })
   if (output.compile !== null && output.compile.exitCode !== 0) return [{ id: job.cases[0].id, passed: false, hidden: false, input: null, expectedOutput: null, output: null, stderr: output.compile.stderr, durationMs: output.compile.durationMs, verdict: 'compile_error' }]
   if (output.cases.length !== groups.length || output.cases.some((item, index) => item.id !== `chunk-${index}`)) throw new Error('Judge returned chunks that do not match the leased batch')
+  const processes = output.cases.map((item, index) => ({ ...item.process, stdout: formatDriverStdout(spec, groups[index].map(test => test.input.endsWith('\n') ? test.input : test.input + '\n'), item.process.stdout) }))
   let accepts = (test: RunnerCase, answer: string): boolean => matches(answer, test.expectedOutput, job.checker)
   if (job.checker === 'special') {
     if (!job.judge) throw new Error('This testset uses a special judge but carries no judge source')
     const items: (JudgeItem & { id: string })[] = []
-    groups.forEach((group, index) => parseDriverOutput(output.cases[index].process.stdout).forEach((finished, position) => {
+    groups.forEach((group, index) => parseDriverOutput(processes[index].stdout).forEach((finished, position) => {
       const test = group[position]
       if (test !== undefined && finished.output !== null && test.expectedOutput !== null) items.push({ id: test.id, input: test.input, output: finished.output, expected: test.expectedOutput })
     }))
     const verdicts = await specialJudge(provider, job.owner, job.judge, items)
     accepts = test => verdicts.get(test.id) === true
   }
-  return groups.flatMap((group, index) => gradeChunk(group, output.cases[index].process, accepts))
+  const graded = new Map(groups.flatMap((group, index) => gradeChunk(group, processes[index], accepts)).map(result => [result.id, result]))
+  for (const result of unprepared) graded.set(result.id, result)
+  return job.cases.map(test => graded.get(test.id)!)
 }
 
 /** Runs trusted judge source in the account's checker sandbox: expected answers never share a sandbox with submitted code. */
