@@ -149,11 +149,11 @@ function goApis(spec: ProblemInterface): string {
     const methods = api.methods.map(m => {
       const returns = m.returns === 'void' ? '' : ' ' + goType(typeOf(m.returns))
       const head = api.global ? `func ${m.name}` : `func (this *${api.name}) ${upperFirst(m.name)}`
-      const args = m.params.map((p, i) => `${i ? "a.WriteByte(','); " : ''}${typeOf(p.type).tag === 'buffer' ? 'a.WriteString("null")' : `__manor_enc(&a, __manor_reflect.ValueOf(${p.name}))`}; `).join('')
-      const writes = m.params.map((p, i) => typeOf(p.type).tag === 'buffer' ? `if index == ${i} { copy(${p.name}, []byte(text)) }; ` : '').join('')
+      const args = m.params.map((p, i) => `${i ? "__manor_a.WriteByte(','); " : ''}${typeOf(p.type).tag === 'buffer' ? '__manor_a.WriteString("null")' : `__manor_enc(&__manor_a, __manor_reflect.ValueOf(${p.name}))`}; `).join('')
+      const writes = m.params.map((p, i) => typeOf(p.type).tag === 'buffer' ? `if __manor_index == ${i} { copy(${p.name}, []byte(__manor_text)) }; ` : '').join('')
       const target = m.returns === 'void' ? null : typeOf(m.returns)
-      const result = target === null ? '' : target.tag === 'object' ? ` if r[0] == nil { return nil }; h, err := __manor_json.Marshal(r[0]); if err != nil { panic(err) }; return &${target.name}{__manor_handle: string(h)}` : ` return __manor_d_${mangle(target)}(r[0])`
-      return `${head}(${m.params.map(p => `${p.name} ${goType(typeOf(p.type))}`).join(', ')})${returns} { var a __manor_strings.Builder; a.WriteByte('['); ${args}a.WriteByte(']'); r := __manor_ix_call(${api.global ? '"null"' : 'this.__manor_handle'}, ${JSON.stringify(m.name)}, a.String()); _ = r;${writes ? ` if len(r) > 1 { for _, w := range r[1].([]interface{}) { pair := w.([]interface{}); index := __manor_d_int(pair[0]); text := pair[1].(string); ${writes}} };` : ''}${result} }\n`
+      const result = target === null ? '' : target.tag === 'object' ? ` if __manor_r[0] == nil { return nil }; __manor_h, __manor_err := __manor_json.Marshal(__manor_r[0]); if __manor_err != nil { panic(__manor_err) }; return &${target.name}{__manor_handle: string(__manor_h)}` : ` return __manor_d_${mangle(target)}(__manor_r[0])`
+      return `${head}(${m.params.map(p => `${p.name} ${goType(typeOf(p.type))}`).join(', ')})${returns} { var __manor_a __manor_strings.Builder; __manor_a.WriteByte('['); ${args}__manor_a.WriteByte(']'); __manor_r := __manor_ix_call(${api.global ? '"null"' : 'this.__manor_handle'}, ${JSON.stringify(m.name)}, __manor_a.String()); _ = __manor_r;${writes ? ` if len(__manor_r) > 1 { for _, __manor_w := range __manor_r[1].([]interface{}) { __manor_pair := __manor_w.([]interface{}); __manor_index := __manor_d_int(__manor_pair[0]); __manor_text := __manor_pair[1].(string); ${writes}} };` : ''}${result} }\n`
     }).join('')
     return api.global ? methods : `type ${api.name} struct { __manor_handle string }\n${methods}`
   }).join('')
