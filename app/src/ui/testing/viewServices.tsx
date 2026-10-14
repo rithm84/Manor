@@ -14,6 +14,7 @@ const account: AccountApi = {
   revokeConnection: unexpectedMutation,
   connectionRequest: unexpectedMutation,
   approveConnection: unexpectedMutation,
+  handOffConnection: unexpectedMutation,
   denyConnection: unexpectedMutation,
   current: async () => null,
   avatarUrl: async () => null,

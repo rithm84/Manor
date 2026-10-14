@@ -118,7 +118,9 @@
 .problem-library-empty > svg { color: var(--primary); margin-bottom: var(--space-3); }
 .problem-library-empty h2 { font-size: var(--text-emphasis); color: var(--ink); }
 .problem-library-empty p { margin: var(--space-2) 0 var(--space-4); font-size: var(--text-body); }
-.problem-mistakes-page { max-width: 760px; }
+.problem-mistakes-page { max-width: 760px; margin: var(--space-6) auto 0; }
+.problem-mistakes-page .lc-mistakes-list { max-height: none; }
+.problem-mistakes-page .lc-mistakes-date { min-width: 4.5em; text-align: right; }
 .problem-mistakes-page .lc-mistakes { margin: 0; padding-top: 0; border: 0; }
 /* The dialog fills the modal's own height cap, so the body scrolls and the header and footer stay visible. */
 .problem-edit, .problem-view-options { display: flex; flex-direction: column; max-height: inherit; }

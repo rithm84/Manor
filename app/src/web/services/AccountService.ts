@@ -58,6 +58,10 @@ export class AccountService implements AccountApi {
     if (error) throw error
     return agentConnectionReturnSchema.parse({ redirectUrl: data.redirect_url }).redirectUrl
   }
+  async handOffConnection(id: string, redirectUrl: string): Promise<void> {
+    const { error } = await this.gateway.client.rpc('manor_oauth_handoff_save', { p_authorization_id: authorizationId(id), p_redirect_url: z.url().parse(redirectUrl) })
+    if (error) throw error
+  }
   signInWithGoogle(): Promise<void> { return signInWithGoogle(this.gateway.client, this.shell) }
   async current(): Promise<AccountInfo | null> {
     const { data, error } = await this.gateway.client.auth.getSession()

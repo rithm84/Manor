@@ -32,6 +32,12 @@ export class IntegrationService {
     }
     return schema.parse(data)
   }
+  /** A request that commits account rows: the mirror pulls before callers refetch, so they read the new state. */
+  async write<T>(action: string, input: JsonObject, schema: z.ZodType<T>): Promise<T> {
+    const result = await this.request(action, input, schema)
+    await this.gateway.afterServerWrite()
+    return result
+  }
 
   /** Starts an OAuth flow: the browser goes to the provider, and the callback returns to Settings. */
   async connect(provider: 'google' | 'x', openAuthorization: (url: string) => Promise<void>): Promise<void> {
@@ -46,7 +52,7 @@ export class IntegrationService {
   async completeConnection(code: string, state: string): Promise<void> {
     const verifier = sessionStorage.getItem(`manor-connection:${state}`)
     if (verifier === null) throw new Error('Complete the connection in the same browser tab where you started it.')
-    await this.request('oauth_complete', { code, state, verifier }, z.object({ committed: z.literal(true) }))
+    await this.write('oauth_complete', { code, state, verifier }, z.object({ committed: z.literal(true) }))
     sessionStorage.removeItem(`manor-connection:${state}`)
   }
 }
@@ -104,10 +110,10 @@ export class CalendarService implements CalendarApi {
     return z.array(storedEventSchema).parse(data)
   }
   async setCalendarEnabled(calendarId: string, accountId: string, enabled: boolean): Promise<void> {
-    await this.integration.request('calendar_visibility', { calendarId, accountId, enabled }, z.object({ committed: z.literal(true) }))
+    await this.integration.write('calendar_visibility', { calendarId, accountId, enabled }, z.object({ committed: z.literal(true) }))
   }
   async disconnect(accountId: string): Promise<void> {
-    await this.integration.request('calendar_disconnect', { accountId }, z.object({ committed: z.literal(true) }))
+    await this.integration.write('calendar_disconnect', { accountId }, z.object({ committed: z.literal(true) }))
   }
 }
 
@@ -125,8 +131,8 @@ export class XService implements XApi {
     if (error) throw requestFailure('manor_x_status', error, status)
     return z.object({ connected: z.boolean(), username: z.string().nullable(), connectedAt: z.string().nullable() }).parse(data)
   }
-  async disconnect(): Promise<void> { await this.integration.request('x_disconnect', {}, z.object({ committed: z.literal(true) })) }
-  ingestNow(): Promise<{ added: number }> { return this.integration.request('x_sync', {}, z.object({ added: z.number().int().nonnegative() })) }
+  async disconnect(): Promise<void> { await this.integration.write('x_disconnect', {}, z.object({ committed: z.literal(true) })) }
+  ingestNow(): Promise<{ added: number }> { return this.integration.write('x_sync', {}, z.object({ added: z.number().int().nonnegative() })) }
 }
 
 const courseFeedStatusSchema = z.object({ connected: z.boolean(), host: z.string().nullable(), connectedAt: z.string().nullable(), lastCheckedAt: z.string().nullable(), lastItemCount: z.number().int().nullable(), lastError: z.string().nullable() })
@@ -141,9 +147,9 @@ export class CourseFeedService implements CourseFeedApi {
     return courseFeedStatusSchema.parse(data)
   }
   connect(url: string): Promise<{ host: string; count: number }> {
-    return this.integration.request('connect', { url }, z.object({ connected: z.literal(true), host: z.string(), count: z.number().int().nonnegative() }))
+    return this.integration.write('connect', { url }, z.object({ connected: z.literal(true), host: z.string(), count: z.number().int().nonnegative() }))
   }
-  async disconnect(): Promise<void> { await this.integration.request('disconnect', {}, z.object({ connected: z.literal(false) })) }
+  async disconnect(): Promise<void> { await this.integration.write('disconnect', {}, z.object({ connected: z.literal(false) })) }
   check(): Promise<CourseFeedCheck> {
     return this.integration.request('events', {}, z.object({ from: z.string(), to: z.string(), total: z.number().int().nonnegative() }))
   }

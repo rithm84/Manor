@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import type { AgentConnectionRequest } from '../../shared/account'
-import { useShell } from '../../web/shell/ShellContext'
 import { ManorLogo } from '../components/brand/ManorLogo'
 import { useManorService } from '../services/ManorServices'
 import { accountErrorMessage } from './welcome/accountSession'
@@ -17,18 +16,17 @@ type ConsentStage =
 /** How the person gets back to the agent once Manor is done with the request. */
 function returnMessage(clientName: string | null): string {
   return clientName === null
-    ? 'Return to the app that asked for access to finish connecting.'
-    : `Return to ${clientName} in your browser to finish connecting.`
+    ? 'Go back to the app that asked for access. It finishes connecting on its own.'
+    : `Go back to ${clientName}. It finishes connecting on its own.`
 }
 
 /**
- * Where an agent's authorization lands: the OAuth server's site URL is this build's scheme, so the browser
- * opens `/oauth/consent` here; the decision goes back to Supabase, and the address it answers with opens in
- * the browser the agent is waiting in.
+ * Where an agent's authorization is decided: the consent bridge page in the agent's browser window opens this
+ * route, the decision goes to Supabase, and the address it answers with is handed back to that bridge page,
+ * which continues in the agent's own window.
  */
 export function AgentConsentPage(): ReactNode {
   const accountApi = useManorService('account')
-  const shell = useShell()
   const navigate = useNavigate()
   const { search } = useLocation()
   const authorizationId = new URLSearchParams(search).get('authorization_id')
@@ -47,19 +45,19 @@ export function AgentConsentPage(): ReactNode {
       if (!active) return
       if (!('redirectUrl' in result)) { setStage({ kind: 'deciding', authorizationId, request: result }); return }
       // This account already allowed the agent, so there is nothing to decide.
-      await shell.openAuthorization(result.redirectUrl)
+      await accountApi.handOffConnection(authorizationId, result.redirectUrl)
       if (active) setStage({ kind: 'returning', clientName: null })
     }).catch((cause: unknown) => {
       if (active) setError(accountErrorMessage(cause, 'This connection request could not be read'))
     })
     return () => { active = false }
-  }, [accountApi, authorizationId, shell])
+  }, [accountApi, authorizationId])
 
-  const answer = (clientName: string, decide: () => Promise<string>): void => {
+  const answer = (authorizationId: string, clientName: string, decide: () => Promise<string>): void => {
     setBusy(true)
     setError(null)
     void decide().then(async (redirectUrl) => {
-      await shell.openAuthorization(redirectUrl)
+      await accountApi.handOffConnection(authorizationId, redirectUrl)
       setBusy(false)
       setStage({ kind: 'returning', clientName })
     }).catch((cause: unknown) => {
@@ -79,9 +77,9 @@ export function AgentConsentPage(): ReactNode {
         <p className="access-hint">You can revoke this connection in Settings.</p>
         <div className="access-actions">
           <button className="ui-button ui-button--primary" disabled={busy} data-testid="approve-mcp"
-            onClick={() => answer(stage.request.clientName, () => accountApi.approveConnection(stage.authorizationId, allowWrites))}>Allow access</button>
+            onClick={() => answer(stage.authorizationId, stage.request.clientName, () => accountApi.approveConnection(stage.authorizationId, allowWrites))}>Allow access</button>
           <button className="ui-button" disabled={busy} data-testid="deny-mcp"
-            onClick={() => answer(stage.request.clientName, () => accountApi.denyConnection(stage.authorizationId))}>Cancel</button>
+            onClick={() => answer(stage.authorizationId, stage.request.clientName, () => accountApi.denyConnection(stage.authorizationId))}>Cancel</button>
         </div>
       </>}
       {stage.kind === 'returning' && <p role="status" data-testid="agent-connection-answered">{returnMessage(stage.clientName)}</p>}
