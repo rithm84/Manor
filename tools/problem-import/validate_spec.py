@@ -313,6 +313,8 @@ def display_input(spec: dict, case: Case) -> str:
         return ", ".join(f"{param['name']} = {json.dumps(arg, separators=(',', ':'))}" for param, arg in zip(spec["lines"], case.value))
     if spec["mode"] == "codec":
         return f"{spec['interface']['encode']['param']['name']} = {json.dumps(case.value, separators=(',', ':'))}"
+    if spec["interface"].get("concurrency"):
+        return f"constructor = {json.dumps(case.value[0], separators=(',', ':'))}, threads = {json.dumps(case.value[1], separators=(',', ':'))}"
     return case.text.rstrip("\n")
 
 
