@@ -257,7 +257,7 @@ function cppConcurrent(spec: ClassInterface): string {
   }).join('')
   const ctor = spec.constructorParams.map((p, i) => `        ${cppType(typeOf(p.type))} __k${i}{}; __manor::dec(__ctor.a.at(${i}), __k${i});\n`).join('')
   return `        __manor::J __ctor = __manor::parse(__L(0)), __scripts = __manor::parse(__L(1));\n${ctor}        ${spec.className}* __obj = new ${spec.className}(${spec.constructorParams.map((_, i) => `__k${i}`).join(', ')});
-        std::mutex __logLock, __failLock; std::vector<std::string> __log; std::exception_ptr __failure;
+        std::mutex __logLock, __failLock, __doneLock; std::condition_variable __doneSignal; size_t __done = 0; std::vector<std::string> __log; std::exception_ptr __failure;
         auto record = [&](const std::string& entry) { std::lock_guard<std::mutex> g(__logLock); __log.push_back(entry); };
         std::vector<std::thread> __workers;
         for (const __manor::J& __script : __scripts.a) {
@@ -266,10 +266,12 @@ function cppConcurrent(spec: ClassInterface): string {
               for (const __manor::J& __step : __steps->a) {
                 const std::string& __name = __step.a.at(0).s; const __manor::J& __c = __step.a.at(1);
                 if (__name == "$sleep") { std::this_thread::sleep_for(std::chrono::milliseconds(std::stoll(__c.a.at(0).s))); continue; }
+                if (__name == "$join") { std::unique_lock<std::mutex> l(__doneLock); __doneSignal.wait(l, [&] { return __done + 1 >= __scripts.a.size(); }); continue; }
                 if (false) {}
 ${branches}                else throw std::runtime_error("Unknown operation: " + __name);
               }
             } catch (...) { std::lock_guard<std::mutex> g(__failLock); if (!__failure) __failure = std::current_exception(); }
+            { std::lock_guard<std::mutex> g(__doneLock); __done++; } __doneSignal.notify_all();
           });
           std::this_thread::sleep_for(std::chrono::milliseconds(2));
         }

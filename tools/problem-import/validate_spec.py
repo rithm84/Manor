@@ -283,7 +283,7 @@ def case_text(spec: dict, value) -> str:
 
 def concurrent_case_text(interface: dict, value) -> str:
     """A concurrent case is [constructor arguments, thread scripts]; each script lists [method, arguments] steps, and a
-    ["$sleep", [milliseconds]] step pauses its thread. A callback argument is the token its calls record."""
+    ["$sleep", [milliseconds]] step pauses its thread, and a ["$join", []] step (in at most one thread) waits until every other thread has finished. A callback argument is the token its calls record."""
     if not isinstance(value, list) or len(value) != 2 or not isinstance(value[0], list) or not isinstance(value[1], list) or not value[1]:
         raise SpecError("concurrent case must be [constructor arguments, thread scripts] with at least one thread")
     constructor, scripts = value
@@ -291,6 +291,7 @@ def concurrent_case_text(interface: dict, value) -> str:
     for param, arg in zip(interface["constructorParams"], constructor):
         check_value(parse_type(param["type"]), arg, f"constructor.{param['name']}")
     require(len(scripts) <= 40, "a concurrent case runs at most 40 threads")
+    require(sum(any(isinstance(step, list) and step[:1] == ["$join"] for step in script) for script in scripts if isinstance(script, list)) <= 1, "at most one thread may use $join, which waits for every other thread to finish")
     methods = {method["name"]: method for method in interface["methods"]}
     for t, script in enumerate(scripts):
         require(isinstance(script, list), f"thread {t} must be a list of steps")
@@ -298,6 +299,9 @@ def concurrent_case_text(interface: dict, value) -> str:
             require(isinstance(step, list) and len(step) == 2 and isinstance(step[1], list), f"thread {t} steps are [method, arguments]")
             if step[0] == "$sleep":
                 require(len(step[1]) == 1 and is_int32(step[1][0]) and 0 <= step[1][0] <= 200, "a $sleep step waits 0 to 200 milliseconds")
+                continue
+            if step[0] == "$join":
+                require(step[1] == [], "a $join step takes no arguments")
                 continue
             require(step[0] in methods, f"thread {t} calls unknown method {step[0]!r}")
             params = methods[step[0]]["params"]
