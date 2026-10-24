@@ -1,3 +1,4 @@
+import { usePortalContainer } from '../components/ui/PortalContainer'
 import { Popover } from '@base-ui/react/popover'
 import { useCommitVersion } from '../services/useCommitVersion'
 import { useManorService } from '../services/ManorServices'
@@ -50,6 +51,7 @@ function errorMessage(error: unknown): string {
 }
 
 export function HabitsPage(): ReactNode {
+  const portalContainer = usePortalContainer()
   const commitVersion = useCommitVersion()
   const habitsApi = useManorService('habits')
   const [state, setState] = useState<HabitsState | null>(null)
@@ -554,7 +556,7 @@ export function HabitsPage(): ReactNode {
                     </span>
                     <Popover.Root>
                       <Popover.Trigger className="habit-row-iconbtn" aria-label="About streak freezes"><Info size={14} /></Popover.Trigger>
-                      <Popover.Portal>
+                      <Popover.Portal container={portalContainer}>
                         <Popover.Positioner className="ui-popover-positioner" align="end" sideOffset={6} collisionPadding={12}>
                           <Popover.Popup className="habits-freeze-pop" aria-label="About streak freezes">
                             <strong>Keep a streak going</strong>

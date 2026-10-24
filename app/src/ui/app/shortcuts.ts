@@ -30,7 +30,7 @@ export function isTypingTarget(target: EventTarget | null): boolean {
 
 /** Whether a dialog, menu, or popup is up, which owns the keyboard until it closes. */
 export function overlayOpen(): boolean {
-  return hasOpenDismissLayer() || document.querySelector('.ui-overlay') !== null
+  return hasOpenDismissLayer()
 }
 
 /** The page's number shortcut: Cmd+1 opens the first sidebar page, and so on. `null` for other keys. */

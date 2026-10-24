@@ -1,3 +1,4 @@
+import { usePortalContainer } from '../../components/ui/PortalContainer'
 import { Menu } from '@base-ui/react/menu'
 import { ArrowRight, CircleCheck, MoreHorizontal, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -14,6 +15,7 @@ interface PipelineCardMenuProps {
 }
 
 export function PipelineCardMenu({ card, onMove, onMarkOaDone, onRemove }: PipelineCardMenuProps): ReactNode {
+  const portalContainer = usePortalContainer()
   return (
     <div
       className="pipeline-card-menu"
@@ -29,7 +31,7 @@ export function PipelineCardMenu({ card, onMove, onMarkOaDone, onRemove }: Pipel
         >
           <MoreHorizontal size={14} />
         </Menu.Trigger>
-        <Menu.Portal>
+        <Menu.Portal container={portalContainer}>
           <Menu.Positioner className="ui-popover-positioner" side="bottom" align="end" sideOffset={6} collisionPadding={12}>
             <Menu.Popup className="pipeline-menu" aria-label={`Actions for ${card.role.company}`}>
               {card.role.stage === 'oa' && !card.role.oaCompletedDate ? (

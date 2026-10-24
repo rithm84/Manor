@@ -1,3 +1,4 @@
+import { usePortalContainer } from './PortalContainer'
 import { Popover } from '@base-ui/react/popover'
 import { Clock3 } from 'lucide-react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
@@ -55,6 +56,7 @@ function nearestOptionIndex(value: string): number {
 }
 
 export function TimePicker({ value, onChange, ariaLabel, format, onValidityChange }: TimePickerProps): ReactNode {
+  const portalContainer = usePortalContainer()
   const typedValue = useRef<string | null>(null)
   const [text, setText] = useState(() => formatTimePickerValue(value, format))
   const [open, setOpen] = useState(false)
@@ -139,7 +141,7 @@ export function TimePicker({ value, onChange, ariaLabel, format, onValidityChang
       </div>
       {invalid ? <span className="ui-timepicker-error" role="alert">Use a time such as 9:15 AM or 21:15</span> : null}
     </div>
-    <Popover.Portal>
+    <Popover.Portal container={portalContainer}>
       <Popover.Positioner anchor={controlRef} className="ui-popover-positioner" align="start" sideOffset={6} collisionPadding={12}>
         <Popover.Popup initialFocus={inputRef} finalFocus={inputRef}>
         <div ref={listRef} id={listId} className="ui-timepicker-menu tnum" role="listbox" aria-label={`${ariaLabel} choices`}>

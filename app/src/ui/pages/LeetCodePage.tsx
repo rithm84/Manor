@@ -1,5 +1,5 @@
 import { Check, ChevronLeft, ChevronRight, Code2, ExternalLink, FileText, NotebookPen, Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { emptyProblemFilters } from '../../shared/problemLibrary'
 import { problemTopicCategories } from '../../shared/problemTopics'
@@ -93,7 +93,12 @@ export function LeetCodePage(): ReactNode {
     const problems = filterProblemGroups(groups, filters, sort)
     return groupBy === null ? problems : [...problems].sort((left, right) => groupLabel(left, groupBy).localeCompare(groupLabel(right, groupBy)))
   }, [groups, filters, sort, groupBy])
-  useEffect(() => { setPage(0) }, [filters, sort, groupBy])
+  const previousProjection = useRef({ filters, sort, groupBy })
+  useEffect(() => {
+    const previous = previousProjection.current
+    if (previous.filters !== filters || previous.sort !== sort || previous.groupBy !== groupBy) setPage(0)
+    previousProjection.current = { filters, sort, groupBy }
+  }, [filters, sort, groupBy])
   // Filtering re-sorts the whole library, so typing settles briefly before the search applies.
   useEffect(() => {
     const timer = setTimeout(() => setSettings(previous => previous.filters.search === searchDraft ? previous : { ...previous, filters: { ...previous.filters, search: searchDraft } }), 150)

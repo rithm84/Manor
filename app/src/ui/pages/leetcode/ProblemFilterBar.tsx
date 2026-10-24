@@ -1,3 +1,4 @@
+import { usePortalContainer } from '../../components/ui/PortalContainer'
 import { Popover } from '@base-ui/react/popover'
 import { ChevronDown, ChevronRight, Search } from 'lucide-react'
 import { memo, useMemo, useRef, useState } from 'react'
@@ -81,13 +82,14 @@ function MenuOptions({ selected, searchable, options, onChange, search }: Omit<M
 
 /** One filter in the bar: a trigger that shows how many values are chosen, over a checklist with a Clear action. */
 function FilterMenu({ label, testId, selected, searchable, options, onChange }: MenuProps): ReactNode {
+  const portalContainer = usePortalContainer()
   const search = useRef<HTMLInputElement | null>(null)
   const active = selected.length > 0
   return <Popover.Root>
     <Popover.Trigger className={`problem-filter-trigger${active ? ' is-active' : ''}`} data-testid={testId} aria-label={active ? `${label}: ${selected.length} selected` : label}>
       {label}{active ? <span className="tnum"> · {selected.length}</span> : null}<ChevronDown size={14} aria-hidden="true" />
     </Popover.Trigger>
-    <Popover.Portal>
+    <Popover.Portal container={portalContainer}>
       <Popover.Positioner className="ui-popover-positioner" side="bottom" align="start" sideOffset={6} collisionPadding={12}>
         <Popover.Popup className="problem-filter-popup" aria-label={label} data-testid={`${testId}-menu`} initialFocus={searchable ? search : true}>
           <MenuOptions selected={selected} searchable={searchable} options={options} onChange={onChange} search={search} />

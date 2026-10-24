@@ -1,11 +1,10 @@
 import { PanelLeft } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 import { Tooltip } from '../components/ui'
 import { PomodoroRuntimeProvider } from '../pomodoro/PomodoroRuntime'
-import { PageErrorBoundary } from './PageErrorBoundary'
 import { Sidebar } from './Sidebar'
 import { useGlobalShortcuts } from './shortcuts'
 import { useSidebarDocked } from './sidebarState'
@@ -14,7 +13,6 @@ const FLOAT_DISMISS_MS = 240
 
 /** Docked or floating sidebar and route content. Authentication is owned by the web entry point. */
 export function AppFrame(): ReactNode {
-  const location = useLocation()
   const navigate = useNavigate()
   useEffect(() => {
     const open = (event: Event): void => {
@@ -114,11 +112,7 @@ export function AppFrame(): ReactNode {
           </Tooltip>
           <span className="topbar-spacer" />
         </header>
-        <main className="page">
-            <PageErrorBoundary resetKey={location.pathname}>
-              <Outlet />
-            </PageErrorBoundary>
-        </main>
+        <div className="page-host"><Outlet /></div>
       </div>
 
     </div>

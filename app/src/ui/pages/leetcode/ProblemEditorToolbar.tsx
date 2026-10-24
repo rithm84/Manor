@@ -1,3 +1,4 @@
+import { usePortalContainer } from '../../components/ui/PortalContainer'
 import { Popover } from '@base-ui/react/popover'
 import { Check, ChevronDown, CloudCheck, CloudOff, LoaderCircle, Maximize2, Minimize2, Minus, Plus, RotateCcw, Settings2, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -72,11 +73,12 @@ export function SaveState({ status, conflict, onResolve }: { status: CodeDraftSt
 }
 
 function SettingsPopover({ settings, onSettings }: { settings: EditorSettings; onSettings: (next: EditorSettings) => void }): ReactNode {
+  const portalContainer = usePortalContainer()
   const fontIndex = fontSizes.findIndex(value => Number(value) === settings.fontSize)
   const stepFont = (direction: 1 | -1): void => { const next = fontSizes[fontIndex + direction]; if (next !== undefined) onSettings({ ...settings, fontSize: Number(next) }) }
   return <Popover.Root>
     <Tooltip label="Editor settings" side="bottom"><Popover.Trigger className="problem-icon-button" aria-label="Editor settings" data-testid="problem-editor-settings"><Settings2 size={15} aria-hidden="true" /></Popover.Trigger></Tooltip>
-    <Popover.Portal>
+    <Popover.Portal container={portalContainer}>
       <Popover.Positioner className="ui-popover-positioner" side="bottom" align="end" sideOffset={6} collisionPadding={12}>
         <Popover.Popup className="problem-settings-popup" aria-label="Editor settings" data-testid="problem-editor-settings-popup">
           <div className="problem-settings-row">

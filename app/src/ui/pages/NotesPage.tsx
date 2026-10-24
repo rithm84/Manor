@@ -122,6 +122,7 @@ export function NotesPage(): ReactNode {
   const pendingRouteRef = useRef<string | null | undefined>(undefined)
   const [data, setData] = useState<NotesState>({ folders: [], pages: [] })
   const [loading, setLoading] = useState(true)
+  const initialized = useRef(false)
   const [scope, setScope] = useState<NotesScope>('all')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -131,6 +132,7 @@ export function NotesPage(): ReactNode {
   const creatingRef = useRef(false)
   const [draft, setDraft] = useState<NoteDraft | null>(null)
   const [writerReady, setWriterReady] = useState(false)
+  const initializedEditor = useRef<string | null>(null)
   const [writerError, setWriterError] = useState<string | null>(null)
   const [writerAttempt, setWriterAttempt] = useState(0)
   const protectionRef = useRef<Promise<void>>(Promise.resolve())
@@ -329,6 +331,8 @@ export function NotesPage(): ReactNode {
       .then((state) => {
         if (!active) return
         setData(state)
+        if (initialized.current) return
+        initialized.current = true
         const requested = requestedNoteIdRef.current === null
           ? null
           : state.pages.find((page) => page.id === requestedNoteIdRef.current) ?? null
@@ -452,6 +456,7 @@ export function NotesPage(): ReactNode {
       }
       // Ops a save merged while this note was closed describe a document the new editor already starts from.
       notesApi.takeMergedBlockOps(selectedId)
+      initializedEditor.current = selectedId
       setWriterReady(true)
       if (recovered !== undefined && navigator.onLine) void savePending()
     }).catch((failure: unknown) => { if (active) setWriterError(failure instanceof Error ? failure.message : String(failure)) })
@@ -598,7 +603,7 @@ export function NotesPage(): ReactNode {
         return
       }
       // Leave the shortcuts alone while any modal, menu, or dialog is up.
-      if (hasOpenDismissLayer() || document.querySelector('.ui-overlay') !== null) return
+      if (hasOpenDismissLayer()) return
       const key = event.key.toLowerCase()
       if (key === 's' && !event.shiftKey && selectedId !== null) {
         event.preventDefault()
@@ -814,7 +819,7 @@ export function NotesPage(): ReactNode {
       if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.altKey) return
       if (event.key.toLowerCase() !== 'f') return
       if (selectedId === null) return
-      if (hasOpenDismissLayer() || document.querySelector('.ui-overlay') !== null) return
+      if (hasOpenDismissLayer()) return
       event.preventDefault()
       setFindOpen(true)
       document.querySelector<HTMLInputElement>('.notes-find-bar input')?.select()
@@ -921,7 +926,7 @@ export function NotesPage(): ReactNode {
                   <textarea rows={1} ref={titleRef} className="notes-title-input" disabled={!writerReady || selectedPage.status === 'trash'} value={draft.title} maxLength={300} onChange={(event) => queueSave({ ...draft, title: event.target.value.replace(/\n/g, ' ') })} onBlur={() => void savePending()} aria-label="Note title" placeholder="Untitled" />
                   <Suspense fallback={<div className="notes-editor-loading">Opening editor…</div>}>
                     {writerError !== null && <div className="notes-writer-notice" role="status"><span>{writerError}</span><button type="button" aria-label="Try editing again" onClick={() => setWriterAttempt(attempt => attempt + 1)}>Try editing again</button></div>}
-                    {writerReady && selectedPage.status !== 'trash' ? <RichNoteEditor key={selectedPage.id} page={{ ...selectedPage, title: draft.title, contentJson: draft.contentJson }} allPages={data.pages} handle={editorHandleRef} onChange={updateEditorContent} onMoveBlocks={moveEditorBlocks} /> : writerError !== null || selectedPage.status === 'trash' ? <NoteReadOnlyPreview contentJson={draft.contentJson} /> : <p className="notes-editor-loading">Opening editor…</p>}
+                    {(writerReady || initializedEditor.current === selectedPage.id) && selectedPage.status !== 'trash' ? <div inert={!writerReady} aria-busy={!writerReady}><RichNoteEditor key={selectedPage.id} page={{ ...selectedPage, title: draft.title, contentJson: draft.contentJson }} allPages={data.pages} handle={editorHandleRef} onChange={updateEditorContent} onMoveBlocks={moveEditorBlocks} /></div> : writerError !== null || selectedPage.status === 'trash' ? <NoteReadOnlyPreview contentJson={draft.contentJson} /> : <p className="notes-editor-loading">Opening editor…</p>}
                   </Suspense>
                 </article>
               </div>

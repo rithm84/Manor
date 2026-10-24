@@ -1,3 +1,4 @@
+import { usePortalContainer } from './PortalContainer'
 import { Select as BaseSelect } from '@base-ui/react/select'
 import { Check, ChevronDown } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -15,13 +16,14 @@ function label(option: SelectOption): ReactNode {
 
 /** Keyboard/typeahead selection with portal-aware focus and collision handling. */
 export function Select({ value, options, onChange, placeholder, ariaLabel }: SelectProps): ReactNode {
+  const portalContainer = usePortalContainer()
   const selected = options.find(option => option.value === value)
   return <BaseSelect.Root value={value} items={options} onValueChange={(next) => { if (next !== null) onChange(next) }}>
     <BaseSelect.Trigger className="ui-select-trigger" aria-label={selected ? `${ariaLabel}: ${selected.label}` : ariaLabel}>
       {selected ? label(selected) : <span className="ui-select-placeholder">{placeholder}</span>}
       <BaseSelect.Icon><ChevronDown size={14} /></BaseSelect.Icon>
     </BaseSelect.Trigger>
-    <BaseSelect.Portal>
+    <BaseSelect.Portal container={portalContainer}>
       <BaseSelect.Positioner className="ui-popover-positioner" sideOffset={6} align="start" alignItemWithTrigger={false}>
         <BaseSelect.Popup className="ui-select-menu" aria-label={ariaLabel}>
           <BaseSelect.List>

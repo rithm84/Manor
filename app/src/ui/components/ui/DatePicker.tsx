@@ -1,3 +1,4 @@
+import { usePortalContainer } from './PortalContainer'
 import { Popover } from '@base-ui/react/popover'
 import { CalendarDays, ChevronLeft, ChevronRight, CornerDownLeft } from 'lucide-react'
 import { useRef, useState } from 'react'
@@ -76,6 +77,7 @@ function formatDate(iso: string): string {
 }
 
 export function DatePicker({ value, onChange, ariaLabel, min, max, required, today: accountToday, showIcon }: DatePickerProps): ReactNode {
+  const portalContainer = usePortalContainer()
   const today = accountToday ?? localIso(new Date())
   const [open, setOpen] = useState(false)
   const [cursor, setCursor] = useState<MonthCursor>(cursorFor(value ?? today))
@@ -126,7 +128,7 @@ export function DatePicker({ value, onChange, ariaLabel, min, max, required, tod
     <Popover.Trigger className="ui-datepicker-trigger" aria-label={value === null ? ariaLabel : `${ariaLabel}: ${formatDate(value)}`}>
       {showIcon !== false && <CalendarDays size={15} />}{value === null ? <span className="ui-datepicker-empty">Not set</span> : <span className="tnum">{formatDate(value)}</span>}
     </Popover.Trigger>
-    <Popover.Portal>
+    <Popover.Portal container={portalContainer}>
       <Popover.Positioner className="ui-popover-positioner" align="start" sideOffset={6} collisionPadding={12}>
         <Popover.Popup ref={menu} className="ui-datepicker-menu" aria-label={`${ariaLabel} calendar`}>
           <div className="ui-date-entry">
