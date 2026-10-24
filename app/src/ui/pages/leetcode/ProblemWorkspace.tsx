@@ -80,7 +80,8 @@ export function ProblemWorkspace({ detail, execution, library, onBack, onReview,
   useEffect(() => {
     if (!coding || language === undefined) return
     let cancelled = false
-    setCode(null); setDraftStatus('loading'); setError(null)
+    if (codeLanguage !== language) setCode(null)
+    setDraftStatus('loading'); setError(null)
     const session = new ProblemDraftSession(library, account.id, problem.id, language, problem.contentVersion, (status, failure) => {
       if (!cancelled) { setDraftStatus(status); if (failure !== null) setError(failure.message) }
     })

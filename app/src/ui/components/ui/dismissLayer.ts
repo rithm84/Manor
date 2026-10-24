@@ -52,12 +52,11 @@ export function useDismissLayer(active: boolean, onDismiss: () => void): void {
 }
 
 /**
- * True while any dismiss layer is open (e.g. to scope page-level shortcuts). Besides the stack, this treats mounted
- * dialogs, menus, and listboxes as open popups; a listbox that is permanent page content (a selectable note list)
- * opts out with `data-persistent` so it does not keep page shortcuts switched off.
+ * Visible dialogs, menus, and listboxes own page-level shortcuts; hidden cached modules do not.
+ * A permanent page listbox opts out with `data-persistent`.
  */
 export function hasOpenDismissLayer(): boolean {
-  return stack.length > 0 || (typeof document !== 'undefined' && document.querySelector('[role="dialog"], [role="listbox"]:not([data-persistent]), [role="menu"]') !== null)
+  return stack.length > 0 || (typeof document !== 'undefined' && Array.from(document.querySelectorAll('[role="dialog"], [role="listbox"]:not([data-persistent]), [role="menu"], .ui-overlay')).some(element => element.checkVisibility()))
 }
 
 /**

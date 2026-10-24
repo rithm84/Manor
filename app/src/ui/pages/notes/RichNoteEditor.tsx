@@ -1,3 +1,4 @@
+import { usePortalContainer } from '../../components/ui/PortalContainer'
 import { useManorService } from '../../services/ManorServices'
 import { BlockNoteEditor } from '@blocknote/core'
 import { SideMenuExtension } from '@blocknote/core/extensions'
@@ -485,6 +486,7 @@ function attachmentId(stableUrl: string): string | null {
 
 /** The heavy BlockNote editor is lazy-loaded by NotesPage. */
 function RichNoteEditorComponent({ page, allPages, handle, onChange, onMoveBlocks }: RichNoteEditorProps): ReactNode {
+  const portalContainer = usePortalContainer()
   const [movingBlocks, setMovingBlocks] = useState<readonly string[] | null>(null)
   const [menuError, setMenuError] = useState<string | null>(null)
   const browserHighlightsRef = useRef(new Map<HTMLElement, { outline: string; offset: string; timer: number }>())
@@ -633,7 +635,7 @@ function RichNoteEditorComponent({ page, allPages, handle, onChange, onMoveBlock
       formattingToolbar={false}
       slashMenu={false}
       emojiPicker={false}
-      portalElements={{ default: document.body }}
+      portalElements={{ default: portalContainer ?? document.body }}
       onChange={(changedEditor) => {
         if (applyingExternalRef.current) return
         const content = JSON.stringify(changedEditor.document)
@@ -648,7 +650,7 @@ function RichNoteEditorComponent({ page, allPages, handle, onChange, onMoveBlock
         getItems={async (query) => slashItems(editor, query)}
       />
       <FormattingToolbarController
-        portalElement={document.body}
+        portalElement={portalContainer ?? document.body}
         formattingToolbar={(props) => (
           <FormattingToolbar
             {...props}

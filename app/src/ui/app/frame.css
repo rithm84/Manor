@@ -318,6 +318,16 @@
   transform: scale(0.96);
 }
 
+.page-host {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.module-portals { display: contents; }
+
 .page {
   flex: 1;
   min-height: 0;

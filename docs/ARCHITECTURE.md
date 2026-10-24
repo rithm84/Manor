@@ -1,6 +1,6 @@
 # Manor architecture
 
-_Last updated: 2026-10-14_
+_Last updated: 2026-10-24_
 
 Manor is a macOS desktop app: a React frontend built with Vite inside a Tauri shell, with Supabase behind it. This page describes how the pieces fit together, the rules each part follows, and what remains to verify. Product behavior lives in the [PRD](PRD.md) and the visual direction in the [design charter](DESIGN.md).
 
@@ -60,6 +60,12 @@ A production release uses production configuration; a staging bundle with baked-
 ### Code organization
 
 One repository holds the application UI, pure domain logic and contracts, Supabase adapters, remote MCP registration, and Notes persistence, with backend functions and migrations under `supabase/` and the desktop shell under `desktop/`. Types and validation are shared where runtimes permit; browser modules never import Node filesystem code.
+
+### Module navigation
+
+The signed-in app keeps only visited module pages in React `Activity` boundaries. Each page owns its scroll container, portal host, and last router location. Hidden pages retain React and DOM state while their effects disconnect, so background page listeners, timers, and polling stop. Returning reconnects effects and refreshes account data without repeating initial view selection. The account-keyed application tree bounds this cache to one signed-in session, as the PRD's [navigation behavior](PRD.md#surfaces) specifies.
+
+Dialogs, menus, Notes toolbars, and Monaco overflow widgets render into the page's portal host, outside its scroll clipping but inside its visibility boundary. Monaco saves and restores its view state across serialized editor disposal and startup. Notes retains its editor while reacquiring its writer lease and makes it inert until the lease is ready; durable draft protection remains separate from temporary page state.
 
 ## Authentication and authorization
 
@@ -309,7 +315,7 @@ Markdown with local assets is imported through an agent rather than the app. The
 
 Leaving a note waits only for the device: navigation verifies that the exact current draft is committed in IndexedDB before another note or scope opens, then hands the draft to the service, which sends it behind any save already in flight while the next note opens. Favorites, moves, Trash, restore, duplication, and block moves apply optimistically the same way; the service lands the note's protected draft before any other change to that note goes out, so a slow connection delays the receipt, never the interaction. A save that fails after the reader has moved on leaves the draft and attachment bytes protected, with a notice linking back to the note for retry, and failed local protection blocks leaving the note. Creating a note is one request at a time: the create controls disable until the note exists, so repeated clicks during a slow save cannot create duplicates.
 
-The `manor:committed` event a mirror pull dispatches names the rows it re-read or removed with their revisions. Notes folds the pulls of a short window together and reloads once only when a pull carried a folder change, a removal, or a page revision the device does not already hold; the echo of this device's own save, whose revision the service adopted from the command receipt, causes no reload. The whole-corpus snapshot in IndexedDB is rewritten only when a reload changed a page or folder. Within a session, Notes reopens on the list and note the reader last had open; a relaunch or sign-out forgets that place, and Notes then opens with no note selected.
+The `manor:committed` event a mirror pull dispatches names the rows it re-read or removed with their revisions. Notes folds the pulls of a short window together and reloads once only when a pull carried a folder change, a removal, or a page revision the device does not already hold; the echo of this device's own save, whose revision the service adopted from the command receipt, causes no reload. The whole-corpus snapshot in IndexedDB is rewritten only when a reload changed a page or folder. Notes follows the shared [module navigation](#module-navigation) lifecycle and opens with no note selected in a new session.
 
 ### Suggestions and document versions
 

@@ -1,8 +1,8 @@
 import { Tooltip } from '@base-ui/react/tooltip'
 import { ManorServicesProvider } from './services/ManorServices'
 import type { ManorServices } from './services/ManorServices'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { lazy, Suspense, type ReactNode } from 'react'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { lazy, type ReactNode } from 'react'
 
 import { DeepLinkNavigation, useLaunchRoute, type RouteRequest } from '../web/shell/DeepLinkNavigation'
 import type { DesktopShell } from '../web/shell/DesktopShell'
@@ -11,6 +11,7 @@ import { ShellProvider } from '../web/shell/ShellContext'
 
 import { AgentConsentPage } from './pages/AgentConsentPage'
 import { AppFrame } from './app/AppFrame'
+import { ModulePageCache } from './app/ModulePageCache'
 import { routeLoaders } from './routes'
 const BookmarksPage = lazy(routeLoaders['/bookmarks'])
 const HabitsPage = lazy(routeLoaders['/habits'])
@@ -32,8 +33,9 @@ export function App({ services, shell, routeRequest, onRouteApplied }: { service
     <Tooltip.Provider delay={400} timeout={500}><BrowserRouter>
       <DeepLinkNavigation request={pendingRoute} onApplied={onRouteApplied} />
       <RouteTiming />
-      <Suspense fallback={<div role="status" className="web-status">Opening page…</div>}><Routes>
+      <Routes>
         <Route element={<AppFrame />}>
+          <Route path="*" element={<ModulePageCache paths={Object.keys(routeLoaders)}>
           <Route path="/home" element={<HomePage />} />
           <Route
             path="/habits"
@@ -75,10 +77,10 @@ export function App({ services, shell, routeRequest, onRouteApplied }: { service
           />
           <Route path="/weekly-reviews" element={<SecondaryModuleSurface width="wide"><WeeklyReviewsPage /></SecondaryModuleSurface>} />
           <Route path="/settings" element={<SettingsPage />} />
+          </ModulePageCache>} />
         </Route>
         <Route path="/oauth/consent" element={<AgentConsentPage />} />
-        <Route path="*" element={<Navigate to="/home" replace />} />
-      </Routes></Suspense>
+      </Routes>
     </BrowserRouter></Tooltip.Provider>
     </ShellProvider>
     </ManorServicesProvider>

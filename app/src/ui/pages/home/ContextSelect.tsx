@@ -1,3 +1,4 @@
+import { usePortalContainer } from '../../components/ui/PortalContainer'
 import { Popover } from '@base-ui/react/popover'
 import { Check, ChevronDown, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { useRef, useState } from 'react'
@@ -62,6 +63,7 @@ export function ContextSelect({
   placeholder,
   ariaLabel
 }: ContextSelectProps): ReactNode {
+  const portalContainer = usePortalContainer()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [draft, setDraft] = useState('')
@@ -147,7 +149,7 @@ export function ContextSelect({
         )}
         <ChevronDown size={14} aria-hidden="true" />
       </Popover.Trigger>
-      <Popover.Portal>
+      <Popover.Portal container={portalContainer}>
         <Popover.Positioner className="ui-popover-positioner" sideOffset={5} align="start" collisionPadding={12}>
           <Popover.Popup
             className="context-menu"

@@ -51,20 +51,28 @@ export function initializeEditor(): Promise<void> {
 }
 
 export interface ProblemEditorOptions { readonly fontSize: number; readonly tabSize: number }
-export interface RunningProblemEditor { dispose(): Promise<void>; focus(): void; theme(value: 'light' | 'dark'): void; configure(options: ProblemEditorOptions): void }
+export type ProblemEditorViewState = editor.ICodeEditorViewState
+export interface RunningProblemEditor {
+  dispose(): Promise<void>
+  focus(): void
+  saveViewState(): ProblemEditorViewState | null
+  restoreViewState(state: ProblemEditorViewState): void
+  theme(value: 'light' | 'dark'): void
+  configure(options: ProblemEditorOptions): void
+}
 
 /** Each language has one workspace document; the language server sees a problem switch as an edit to it. */
 export function problemDocumentUri(language: ProblemLanguage): string { return 'file:///workspace/' + problemLanguageFiles[language] }
 
 /**
- * Hover, signature help, completion, and diagnostics widgets render in a fixed host on the document body, so the
+ * Hover, signature help, completion, and diagnostics widgets render in the module portal host, so the
  * editor pane never clips them and Monaco can flip them below a line near the window's top edge. The host carries
  * the `monaco-editor` class so Monaco's widget styles apply, and `problem-monaco-overflow` for Manor's theme.
  */
-function overflowHost(): HTMLElement {
+function overflowHost(parent: HTMLElement): HTMLElement {
   const host = document.createElement('div')
   host.className = 'monaco-editor problem-monaco-overflow'
-  document.body.append(host)
+  parent.append(host)
   return host
 }
 
@@ -80,9 +88,9 @@ export async function colorizeProblemCode(code: string, language: ProblemLanguag
  * The language client attaches to the same document when it connects (see `problemLanguageServer.ts`), so the
  * upgrade keeps the cursor, undo stack, and scroll position. `onUse` reports typing, caret movement, and focus.
  */
-export async function startProblemEditor(container: HTMLElement, language: ProblemLanguage, code: string, options: ProblemEditorOptions, onChange: (value: string) => void, onUse: () => void): Promise<RunningProblemEditor> {
+export async function startProblemEditor(container: HTMLElement, portalContainer: HTMLElement, language: ProblemLanguage, code: string, options: ProblemEditorOptions, onChange: (value: string) => void, onUse: () => void): Promise<RunningProblemEditor> {
   await initializeEditor()
-  const overflow = overflowHost()
+  const overflow = overflowHost(portalContainer)
   const app = new EditorApp({ codeResources: { modified: { text: code, uri: problemDocumentUri(language), enforceLanguageId: language } },
     editorOptions: { ariaLabel: 'Problem solution code', fontFamily: 'JetBrains Mono, SF Mono, monospace', minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 16 }, automaticLayout: true, wordWrap: 'off', fontSize: options.fontSize, tabSize: options.tabSize, detectIndentation: false, insertSpaces: true, fixedOverflowWidgets: true, overflowWidgetsDomNode: overflow, overviewRulerBorder: false, hideCursorInOverviewRuler: true }
   })
@@ -95,6 +103,8 @@ export async function startProblemEditor(container: HTMLElement, language: Probl
   return {
     dispose: async () => { uses.forEach(use => use.dispose()); try { await app.dispose() } finally { overflow.remove() } },
     focus: () => running.focus(),
+    saveViewState: () => running.saveViewState(),
+    restoreViewState: state => running.restoreViewState(state),
     theme: value => editor.setTheme(value === 'dark' ? 'vs-dark' : 'vs'),
     configure: value => {
       running.updateOptions({ fontSize: value.fontSize })

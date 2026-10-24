@@ -1,3 +1,4 @@
+import { usePortalContainer } from '../../components/ui/PortalContainer'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { ReactNode } from 'react'
 import type { ProblemExecutionApi, ProblemLanguage } from '../../../shared/problemExecution'
@@ -5,7 +6,7 @@ import { useNoteTheme } from '../notes/useNoteTheme'
 import { Button } from '../../components/ui'
 import { errorMessage } from './leetCodeModel'
 import { startProblemEditor } from './problemCodeEditorRuntime'
-import type { ProblemEditorOptions, RunningProblemEditor } from './problemCodeEditorRuntime'
+import type { ProblemEditorOptions, ProblemEditorViewState, RunningProblemEditor } from './problemCodeEditorRuntime'
 import { connectLanguageServer, languageServerState, noteLanguageServerUse, onLanguageServerState } from './problemLanguageServer'
 import { useManorAccount } from '../../../web/accountContext'
 import { editorSessions } from '../../../web/problems/editorSessions'
@@ -15,8 +16,11 @@ const assistLabels = { connecting: 'Starting IntelliSense', offline: 'IntelliSen
 
 /** Editable at once; language-server features arrive in place when the shared connection is ready. */
 export default function ProblemCodeEditor({ api, problemId, language, initialCode, options, onChange }: Props): ReactNode {
+  const portalContainer = usePortalContainer()
   const container = useRef<HTMLDivElement>(null)
   const running = useRef<RunningProblemEditor | null>(null)
+  const viewState = useRef<ProblemEditorViewState | null>(null)
+  const closing = useRef<Promise<void>>(Promise.resolve())
   const change = useRef(onChange)
   change.current = onChange
   const latestOptions = useRef(options)
@@ -30,6 +34,7 @@ export default function ProblemCodeEditor({ api, problemId, language, initialCod
   useEffect(() => {
     let cancelled = false
     let instance: RunningProblemEditor | null = null
+    const previousClosing = closing.current
     setError(null); setReady(false)
     const sessions = editorSessions(api, account.id)
     const bound = () => sessions.session(language, problemId)
@@ -42,21 +47,26 @@ export default function ProblemCodeEditor({ api, problemId, language, initialCod
     document.addEventListener('visibilitychange', onVisible)
     const start = async (): Promise<void> => {
       try {
+        await previousClosing
+        if (cancelled) return
         if (container.current === null) throw new Error('The code editor container is unavailable.')
-        instance = await startProblemEditor(container.current, language, initialCode, latestOptions.current, value => change.current(value), use)
-        if (cancelled) { await instance.dispose(); return }
+        instance = await startProblemEditor(container.current, portalContainer ?? document.body, language, initialCode, latestOptions.current, value => change.current(value), use)
+        if (cancelled) return
         running.current = instance
+        if (viewState.current !== null) instance.restoreViewState(viewState.current)
         instance.theme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light')
         setReady(true)
       } catch (failure) { if (!cancelled) setError(errorMessage(failure)) }
     }
-    void start()
+    const opening = start()
     return () => {
+      if (instance !== null) viewState.current = instance.saveViewState()
       cancelled = true; running.current = null
       document.removeEventListener('visibilitychange', onVisible)
-      if (instance !== null) void instance.dispose().catch(failure => console.error('Problem editor cleanup failed', { problemId, language, error: errorMessage(failure) }))
+      closing.current = opening.then(async () => { if (instance !== null) await instance.dispose() })
+      void closing.current.catch(failure => console.error('Problem editor cleanup failed', { problemId, language, error: errorMessage(failure) }))
     }
-  }, [api, account.id, problemId, language, retry])
+  }, [api, account.id, problemId, language, retry, portalContainer])
   useEffect(() => { running.current?.theme(theme) }, [theme])
   useEffect(() => { running.current?.configure({ fontSize: options.fontSize, tabSize: options.tabSize }) }, [options.fontSize, options.tabSize])
   return <div className="problem-code-editor" data-language-server={assist}>

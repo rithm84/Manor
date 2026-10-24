@@ -21,7 +21,7 @@ import type { ReactNode } from 'react'
 import { useCreateShortcut } from '../app/shortcuts'
 import { useDevicePreference } from '../preferences/devicePreference'
 
-import { Button, EmptyState, QuickActionsMenu, ViewTabs } from '../components/ui'
+import { Button, EmptyState, QuickActionsMenu, ViewTabs, hasOpenDismissLayer } from '../components/ui'
 import type { QuickActionItem, QuickActionPoint } from '../components/ui'
 import type {
   ContextDefinition,
@@ -135,6 +135,7 @@ export function HomePage(): ReactNode {
 
 
   useEffect(() => {
+    setNow(new Date())
     const clock = window.setInterval(() => setNow(new Date()), 60_000)
     return (): void => window.clearInterval(clock)
   }, [])
@@ -490,7 +491,7 @@ export function HomePage(): ReactNode {
         return
       }
       // Leave the shortcut alone while any modal or dialog is up.
-      if (document.querySelector('.ui-overlay') !== null) return
+      if (hasOpenDismissLayer()) return
       event.preventDefault()
       void performUndo()
     }
