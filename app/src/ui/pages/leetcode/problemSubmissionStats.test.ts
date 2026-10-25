@@ -29,7 +29,7 @@ describe('failing case selection', () => {
   it('skips hidden failures and passing cases to the first failing case with visible data', () => {
     const results = [result('a', {}), result('b', { passed: false, hidden: true, input: null, verdict: 'wrong_answer' }), result('c', { passed: false, verdict: 'runtime_error' }), result('d', { passed: false, verdict: 'wrong_answer' })]
     expect(firstFailingVisibleCase(results)).toEqual({ index: 2, result: results[2] })
-    expect(firstFailingVisibleCase([result('a', {}), result('b', { passed: false, hidden: true, verdict: 'time_limit' })])).toBeNull()
+    expect(firstFailingVisibleCase([result('a', {}), result('b', { passed: false, hidden: true, input: null, expectedOutput: null, output: null, verdict: 'time_limit' })])).toBeNull()
     expect(firstFailingVisibleCase([result('a', {})])).toBeNull()
   })
 })

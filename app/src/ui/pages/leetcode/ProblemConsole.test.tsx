@@ -100,6 +100,29 @@ describe('ProblemTestResult', () => {
 })
 
 describe('SubmissionFailure', () => {
+  it('shows the revealed judge counterexample in the console and saved submission', async () => {
+    const submission: ProblemSubmission = { ...base, mode: 'submit', results: [
+      { id: 'one', passed: true, hidden: true, input: null, expectedOutput: null, output: null, stdout: null, stderr: null, durationMs: 1, verdict: 'accepted' },
+      { id: 'two', passed: false, hidden: true, input: '[3,3]\n6', expectedOutput: '[0,1]', output: '[]', stdout: 'checking pair', stderr: null, durationMs: 1, verdict: 'wrong_answer' }
+    ] }
+    for (const view of [<ProblemTestResult fields={fields} submission={submission} />, <SubmissionFailure fields={fields} submission={submission} />]) {
+      const { host, unmount } = await mount(view)
+      try {
+        const detail = element(host, 'problem-case-detail')
+        expect(host.textContent).toContain('Failed on test case 2.')
+        expect(detail.textContent).toContain('nums =[3,3]')
+        expect(detail.textContent).toContain('target =6')
+        expect(detail.textContent).toContain('Output[]')
+        expect(detail.textContent).toContain('Expected[0,1]')
+        expect(detail.textContent).toContain('Stdoutchecking pair')
+        expect(host.textContent).not.toContain('This test case is hidden.')
+      } finally { await unmount() }
+    }
+    const { host, unmount } = await mount(<SubmissionFailure fields={fields} submission={{ ...submission, results: [{ ...submission.results[1], output: null }] }} />)
+    try { expect(host.textContent).toContain('Output was not saved for this submission. Submit again to see it.') }
+    finally { await unmount() }
+  })
+
   it('names an earlier hidden failure and still shows the first failing case the account may see', async () => {
     const { host, unmount } = await mount(<SubmissionFailure fields={fields} submission={{ ...base, mode: 'submit', results: [
       { id: 'one', passed: true, hidden: false, input: '[2,7]\n9', expectedOutput: '[0,1]', output: '[0,1]', stderr: null, durationMs: 1, verdict: 'accepted' },

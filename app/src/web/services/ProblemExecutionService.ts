@@ -10,7 +10,7 @@ const submissionSchema = z.object({ id: z.uuid(), problemId: z.string(), content
 const editorSchema = z.object({ id: z.uuid(), webSocketUrls: z.record(z.enum(problemLanguages), z.url()), token: z.string(), expiresAt: z.string(), workspaceUri: z.string() })
 
 /**
- * Calls owner-authorized execution endpoints. Answers and provider credentials never enter the client.
+ * Calls owner-authorized execution endpoints. Full testsets and provider credentials never enter the client; failed submissions disclose one counterexample.
  *
  * The runner makes several database and sandbox round trips per request, so it runs in AWS us-east-1, beside the
  * Blaxel sandboxes in Ashburn and near both Supabase databases in us-east-2, rather than in the region nearest the

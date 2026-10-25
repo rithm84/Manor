@@ -34,12 +34,13 @@ function Value({ label, text, tone }: { label: string; text: string; tone: 'plai
 }
 
 export function CaseDetail({ result, fields }: { result: ProblemCaseResult; fields: readonly TestcaseField[] | null }): ReactNode {
-  if (result.hidden) return <p className="problem-result-note">This test case is hidden.</p>
+  if (result.hidden && result.input === null) return <p className="problem-result-note">This test case is hidden.</p>
   const labeled = fields === null || result.input === null ? null : labeledInput(fields, result.input)
   return <div className="problem-case-detail" data-testid="problem-case-detail">
     {result.input === null ? null : labeled === null ? <Value label="Input" text={result.input} tone="plain" /> : <div className="problem-result-value"><span>Input</span>{labeled.map(item => <div className="problem-result-param" key={item.field.name}><span>{item.field.label}</span><pre>{item.value}</pre></div>)}</div>}
     {result.output === null ? null : <Value label="Output" text={result.output} tone="plain" />}
     {result.expectedOutput === null ? null : <Value label="Expected" text={result.expectedOutput} tone="plain" />}
+    {result.verdict === 'wrong_answer' && result.output === null ? <p className="problem-result-note">Output was not saved for this submission. Submit again to see it.</p> : null}
     {result.stdout === undefined || result.stdout === null || result.stdout === '' ? null : <Value label="Stdout" text={result.stdout} tone="plain" />}
     {result.stderr === null || result.stderr === '' ? null : <Value label={result.verdict === 'accepted' ? 'Errors' : verdictLabels[result.verdict]} text={result.stderr} tone="error" />}
   </div>

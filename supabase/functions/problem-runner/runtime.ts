@@ -3,7 +3,7 @@ import { BlaxelClient, SandboxUnavailableError, type JudgeInput, type JudgeOutpu
 import { checkers, matches, type Checker } from './checkers.ts'
 import { assembleProgram, parseDriverOutput } from '../_shared/problemDrivers.ts'
 import { judgeBatches, judgeProgram, type JudgeItem } from '../_shared/problemJudge.ts'
-import { chunk, gradeChunk } from './batch.ts'
+import { chunk, gradeChunk, submissionResults } from './batch.ts'
 import { offeredLanguages, validateInterface, type HarnessLanguage, type ProblemInterface } from '../_shared/problemInterface.ts'
 import { formatDriverStdout, prepareInput } from '../_shared/problemShapes.ts'
 
@@ -27,7 +27,7 @@ export async function runnerStore(client: ReturnType<typeof adminClient>, action
 
 function gradedCase(test: RunnerCase, process: NonNullable<JudgeOutput['compile']>, checker: Checker): CaseResult {
   const caseVerdict = process.timedOut ? 'time_limit' : process.outputLimit ? 'output_limit' : process.exitCode !== 0 ? 'runtime_error' : matches(process.stdout, test.expectedOutput, checker) ? 'accepted' : 'wrong_answer'
-  return { id: test.id, passed: caseVerdict === 'accepted', hidden: test.hidden, input: test.hidden ? null : test.input, expectedOutput: test.hidden ? null : test.expectedOutput, output: test.hidden ? null : process.stdout, stderr: test.hidden ? null : process.stderr, durationMs: process.durationMs, verdict: caseVerdict }
+  return { id: test.id, passed: caseVerdict === 'accepted', hidden: test.hidden, input: test.hidden ? null : test.input, expectedOutput: test.hidden ? null : test.expectedOutput, output: process.stdout, stderr: process.stderr, durationMs: process.durationMs, verdict: caseVerdict }
 }
 
 async function discardSandbox(provider: BlaxelClient, name: string, failure: unknown): Promise<never> {
@@ -71,7 +71,7 @@ async function judgeTyped(provider: BlaxelClient, job: z.infer<typeof jobSchema>
   const unprepared: CaseResult[] = []
   for (const test of job.cases) {
     try { prepared.set(test.id, prepareInput(spec, test.input.endsWith('\n') ? test.input : test.input + '\n')) }
-    catch (error) { unprepared.push({ id: test.id, passed: false, hidden: test.hidden, input: test.hidden ? null : test.input, expectedOutput: test.hidden ? null : test.expectedOutput, output: null, stderr: test.hidden ? null : `This input cannot be read: ${error instanceof Error ? error.message : String(error)}`, durationMs: 0, verdict: 'runtime_error' }) }
+    catch (error) { unprepared.push({ id: test.id, passed: false, hidden: test.hidden, input: test.hidden ? null : test.input, expectedOutput: test.hidden ? null : test.expectedOutput, output: null, stderr: `This input cannot be read: ${error instanceof Error ? error.message : String(error)}`, durationMs: 0, verdict: 'runtime_error' }) }
   }
   const runnable = job.cases.filter(test => prepared.has(test.id))
   if (runnable.length === 0) return unprepared
@@ -195,7 +195,7 @@ type Outcome = { readonly action: 'complete'; readonly results: CaseResult[] } |
 /** The runner action, owner, and input that record a job's outcome under its lease. */
 function settlement(job: Job, outcome: Outcome): ['complete' | 'fail', string, Record<string, Json>] {
   const lease = { submissionId: job.submission.id, leaseToken: job.leaseToken }
-  return outcome.action === 'complete' ? ['complete', job.owner, { ...lease, results: outcome.results }] : ['fail', job.owner, { ...lease, error: outcome.error }]
+  return outcome.action === 'complete' ? ['complete', job.owner, { ...lease, results: submissionResults(job.submission.results, outcome.results) }] : ['fail', job.owner, { ...lease, error: outcome.error }]
 }
 
 /** Judges one leased batch; a failure becomes the job's recorded error. */

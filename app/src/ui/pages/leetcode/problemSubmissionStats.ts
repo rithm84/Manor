@@ -28,9 +28,9 @@ export function formatMemory(kilobytes: number): string {
 
 export interface FailingCase { readonly index: number; readonly result: ProblemCaseResult }
 
-/** The first failing case whose input the account may see; hidden cases never reveal their data. */
+/** The first failing case with available diagnostics, including a revealed judge counterexample. */
 export function firstFailingVisibleCase(results: readonly ProblemCaseResult[]): FailingCase | null {
-  const index = results.findIndex(result => !result.passed && !result.hidden)
+  const index = results.findIndex(result => !result.passed && (!result.hidden || result.input !== null))
   return index < 0 ? null : { index, result: results[index] }
 }
 
