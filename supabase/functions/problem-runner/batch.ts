@@ -4,7 +4,7 @@ import { driverPeakKb, parseDriverOutput, trailingDriverOutput } from '../_share
 
 export interface RunnerCase { readonly id: string; readonly input: string; readonly expectedOutput: string | null; readonly hidden: boolean }
 export type Verdict = 'accepted' | 'wrong_answer' | 'compile_error' | 'runtime_error' | 'time_limit' | 'output_limit' | 'execution_error'
-export interface CaseResult { id: string; passed: boolean; hidden: boolean; input: string | null; expectedOutput: string | null; output: string | null; stdout?: string | null; stderr: string | null; durationMs: number; memoryKb?: number | null; verdict: Verdict }
+export type CaseResult = { id: string; passed: boolean; hidden: boolean; input: string | null; expectedOutput: string | null; output: string | null; stdout?: string | null; stderr: string | null; durationMs: number; memoryKb?: number | null; verdict: Verdict }
 type Process = NonNullable<JudgeOutput['compile']>
 const chunkCases = 40, chunkInputBytes = 262144, heavyCaseBytes = 65536, chunkAnswerBytes = 49152
 
@@ -21,8 +21,16 @@ export function chunk(cases: readonly RunnerCase[], maxCases = chunkCases): Runn
   return groups
 }
 
-function hiddenSafe(test: RunnerCase, verdict: Verdict, output: string | null, stdout: string | null, stderr: string | null, durationMs: number): CaseResult {
-  return { id: test.id, passed: verdict === 'accepted', hidden: test.hidden, input: test.hidden ? null : test.input, expectedOutput: test.hidden ? null : test.expectedOutput, output: test.hidden ? null : output, stdout: test.hidden ? null : stdout, stderr: test.hidden ? null : stderr, durationMs, verdict }
+function caseResult(test: RunnerCase, verdict: Verdict, output: string | null, stdout: string | null, stderr: string | null, durationMs: number): CaseResult {
+  return { id: test.id, passed: verdict === 'accepted', hidden: test.hidden, input: test.hidden ? null : test.input, expectedOutput: test.hidden ? null : test.expectedOutput, output, stdout, stderr, durationMs, verdict }
+}
+
+/** Only the first failure in the submission may disclose hidden diagnostics; SQL attaches its saved input and answer. */
+export function submissionResults(previous: readonly CaseResult[], results: readonly CaseResult[]): CaseResult[] {
+  const first = previous.some(result => !result.passed) ? -1 : results.findIndex(result => !result.passed)
+  return results.map((result, index) => !result.hidden || index === first ? result : {
+    ...result, input: null, expectedOutput: null, output: null, stdout: null, stderr: null
+  })
 }
 
 /** Maps one batched process back to its cases: finished cases are graded, the case running when the process stopped takes the stop reason, and later cases are reported as not run. */
@@ -35,10 +43,10 @@ export function gradeChunk(tests: readonly RunnerCase[], process: Process, accep
     const item = finished[index]
     if (item !== undefined) {
       const verdict = item.output === null ? 'runtime_error' : accepts(test, item.output) ? 'accepted' : 'wrong_answer'
-      return hiddenSafe(test, verdict, item.output, item.stdout || null, item.output === null ? process.stderr : null, item.durationMs)
+      return caseResult(test, verdict, item.output, item.stdout || null, item.output === null ? process.stderr : null, item.durationMs)
     }
-    if (index === finished.length) return hiddenSafe(test, stopped, null, trailingDriverOutput(process.stdout) || null, process.stderr, process.durationMs)
-    return hiddenSafe(test, stopped, null, null, 'Not run because the program stopped on an earlier case.', 0)
+    if (index === finished.length) return caseResult(test, stopped, null, trailingDriverOutput(process.stdout) || null, process.stderr, process.durationMs)
+    return caseResult(test, stopped, null, null, 'Not run because the program stopped on an earlier case.', 0)
   }
 }
 
