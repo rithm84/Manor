@@ -6,9 +6,10 @@ import {
 } from 'recharts'
 import type { SankeyLinkProps, SankeyNodeProps } from 'recharts'
 
-import type { JobRole, JobStageTransition, JobStage } from '../../../shared/jobs'
+import type { JobRole, JobStageTransition } from '../../../shared/jobs'
 import { EmptyState } from '../../components/ui'
-import { jobFlowData, jobStageOptions, stageLabel } from './jobsModel'
+import { jobFlowData, jobFlowStageLabel, jobStageOptions } from './jobsModel'
+import type { JobFlowStage } from './jobsModel'
 
 interface ChartSize {
   width: number
@@ -17,17 +18,17 @@ interface ChartSize {
 
 interface FlowNodeProps extends SankeyNodeProps {
   chartWidth: number
-  applicationTotal: string
 }
 
-const STAGE_TONES: Readonly<Record<JobStage, string>> = {
-  to_apply: '#6e6975',
-  applied: '#3d7a52',
+const STAGE_TONES: Readonly<Record<JobFlowStage, string>> = {
+  applied: 'var(--scale-resting)',
+  no_response: 'var(--scale-resting)',
+  responded: 'var(--completion)',
   oa: 'var(--chart-oa)',
   interview_1: '#6f5680',
   interview_2: '#6f5680',
   interview_3: '#6f5680',
-  offer: '#3d7a52',
+  offer: 'var(--completion)',
   rejected: '#b0434b'
 }
 
@@ -36,17 +37,25 @@ export interface JobsFlowProps {
   transitions: readonly JobStageTransition[]
 }
 
-function stageFromName(name: string): JobStage {
+function stageFromName(name: string): JobFlowStage {
+  if (name === jobFlowStageLabel('responded')) return 'responded'
+  if (name === jobFlowStageLabel('no_response')) return 'no_response'
   const option = jobStageOptions.find((candidate) => candidate.label === name)
-  if (option === undefined) {
+  if (option === undefined || option.value === 'to_apply') {
     throw new Error(`Jobs Sankey node ${name} has no stage mapping`)
   }
   return option.value
 }
 
-function FlowNode({ x, y, width, height, payload, chartWidth, applicationTotal }: FlowNodeProps): ReactNode {
+function FlowNode({ x, y, width, height, payload, chartWidth }: FlowNodeProps): ReactNode {
   const stage = stageFromName(payload.name)
   const tone = STAGE_TONES[stage]
+  const count: number = payload.value
+  const unit = stage === 'applied'
+    ? (count === 1 ? 'application' : 'applications')
+    : stage === 'responded' || stage === 'no_response'
+      ? (count === 1 ? 'role' : 'roles')
+      : 'moved'
   const rightEdge = x + width
   const alignRight = rightEdge + 88 > chartWidth
   return (
@@ -69,7 +78,7 @@ function FlowNode({ x, y, width, height, payload, chartWidth, applicationTotal }
         fill="var(--ink-muted)"
         fontSize={12}
       >
-        {stage === 'applied' ? applicationTotal : `${payload.value} moved`}
+        {`${count} ${unit}`}
       </text>
     </g>
   )
@@ -125,23 +134,23 @@ function FlowLink({
       fill="none"
       stroke={tone}
       strokeOpacity={0.28}
-      strokeWidth={Math.max(1, linkWidth)}
+      strokeWidth={linkWidth}
     />
   )
 }
 
 export function JobsFlow({ roles, transitions }: JobsFlowProps): ReactNode {
   const { chartRef, size } = useChartSize()
-  const flow = jobFlowData(transitions)
-  const appliedCount = roles.filter((role) => role.stage !== 'to_apply').length
+  const flow = jobFlowData(roles, transitions)
+  const { appliedCount } = flow
   const applicationTotal = `${appliedCount} ${appliedCount === 1 ? 'application' : 'applications'}`
   if (flow.links.length === 0) {
     return (
       <div className="jobs-flow-empty">
         <EmptyState
           icon={null}
-          title="No pipeline movement yet"
-          message={appliedCount > 0 ? applicationTotal : 'Advance an applied role to build the flow.'}
+          title="No applications yet"
+          message="Move a role to Applied to see it here."
         />
       </div>
     )
@@ -159,41 +168,28 @@ export function JobsFlow({ roles, transitions }: JobsFlowProps): ReactNode {
     ? 80
     : Math.min(104, Math.max(72, Math.round(size.width * 0.1)))
 
-  /* Size the chart from the data instead of stretching to the container:
-     a stage's roles get ~30px each, so ribbons stay ribbons, not slabs,
-     and everything always fits inside the box. */
-  const stageOutbound = new Map<string, number>()
-  const stageInbound = new Map<string, number>()
-  for (const link of flow.links) {
-    stageOutbound.set(link.sourceStage, (stageOutbound.get(link.sourceStage) ?? 0) + link.value)
-    stageInbound.set(link.targetStage, (stageInbound.get(link.targetStage) ?? 0) + link.value)
-  }
-  const maxStageTotal = Math.max(1, ...stageOutbound.values(), ...stageInbound.values())
   const chartHeight = size === null
     ? 220
-    : Math.max(170, Math.min(size.height, maxStageTotal * 22 + 96))
+    : Math.max(170, Math.min(size.height, appliedCount * 22 + 96))
 
   return (
     <div className="jobs-flow">
-      {flow.nodes.some((node) => node.stage === 'applied') ? null : (
-        <p className="jobs-section-note tnum">{applicationTotal}</p>
-      )}
       <div ref={chartRef} className="jobs-flow-chart" role="img" aria-label="Application stage flow" aria-describedby="jobs-flow-summary">
         {size !== null ? (
           <Sankey
             accessibilityLayer
+            align="left"
             width={size.width}
             height={chartHeight}
             data={chartData}
-            node={(props) => <FlowNode {...props} chartWidth={size.width} applicationTotal={applicationTotal} />}
+            node={(props) => <FlowNode {...props} chartWidth={size.width} />}
             link={FlowLink}
-            nodePadding={chartHeight < 300 ? 18 : 28}
+            nodePadding={32}
             nodeWidth={12}
             margin={{ top: 22, right: horizontalMargin, bottom: 22, left: horizontalMargin }}
           >
             <Tooltip
               itemStyle={{ color: 'var(--ink-body)' }}
-              formatter={(value, name) => name === stageLabel('applied') ? appliedCount : value}
               contentStyle={{
                 background: 'var(--surface-card)',
                 border: '1px solid var(--hairline)',
@@ -211,7 +207,7 @@ export function JobsFlow({ roles, transitions }: JobsFlowProps): ReactNode {
         <ul>
           {flow.links.map((link) => (
             <li key={`${link.sourceStage}-${link.targetStage}`}>
-              {stageLabel(link.sourceStage)} to {stageLabel(link.targetStage)}: {link.value} {link.value === 1 ? 'role' : 'roles'}
+              {jobFlowStageLabel(link.sourceStage)} to {jobFlowStageLabel(link.targetStage)}: {link.value} {link.value === 1 ? 'role' : 'roles'}
             </li>
           ))}
         </ul>

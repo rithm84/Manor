@@ -17,7 +17,7 @@ function roleAtStage(id: string, stage: JobStage): JobRole {
 }
 
 describe('JobsFlow', () => {
-  it('counts applications separately from stage moves in the accessible summary', () => {
+  it('describes the full application split and the stage moves', () => {
     const transitions: readonly JobStageTransition[] = [
       { id: '1', roleId: 'a', fromStage: 'to_apply', toStage: 'applied', changedAt: '2026-08-01T12:00:00.000Z' },
       { id: '2', roleId: 'b', fromStage: 'to_apply', toStage: 'applied', changedAt: '2026-08-02T12:00:00.000Z' },
@@ -27,15 +27,17 @@ describe('JobsFlow', () => {
     const markup = renderToStaticMarkup(<JobsFlow roles={roles} transitions={transitions} />)
     expect(markup).toContain('class="jobs-flow-a11y"')
     expect(markup).toContain('2 applications')
-    expect(markup).toContain('Applied to OA: 1 role')
+    expect(markup).toContain('Applied to Responded: 1 role')
+    expect(markup).toContain('Applied to No response yet: 1 role')
+    expect(markup).toContain('Responded to OA: 1 role')
     expect(markup).not.toContain('<table>')
     expect(markup).not.toContain('To apply')
   })
 
   it('shows the application count even before any role advances', () => {
     const markup = renderToStaticMarkup(<JobsFlow roles={[roleAtStage('a', 'applied')]} transitions={[]} />)
-    expect(markup).toContain('No pipeline movement yet')
     expect(markup).toContain('1 application')
+    expect(markup).toContain('Applied to No response yet: 1 role')
     expect(markup).not.toContain('<table>')
   })
 })
