@@ -231,7 +231,7 @@ export function JobsPage(): ReactNode {
               <span className="jobs-section-title">Flow</span>
             </div>
             <Suspense fallback={<div className="jobs-loading">Loading flow…</div>}>
-              <JobsFlow transitions={state.transitions} />
+              <JobsFlow roles={state.roles} transitions={state.transitions} />
             </Suspense>
           </section>
         </div>

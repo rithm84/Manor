@@ -6,7 +6,7 @@ import {
 } from 'recharts'
 import type { SankeyLinkProps, SankeyNodeProps } from 'recharts'
 
-import type { JobStageTransition, JobStage } from '../../../shared/jobs'
+import type { JobRole, JobStageTransition, JobStage } from '../../../shared/jobs'
 import { EmptyState } from '../../components/ui'
 import { jobFlowData, jobStageOptions, stageLabel } from './jobsModel'
 
@@ -17,6 +17,7 @@ interface ChartSize {
 
 interface FlowNodeProps extends SankeyNodeProps {
   chartWidth: number
+  applicationTotal: string
 }
 
 const STAGE_TONES: Readonly<Record<JobStage, string>> = {
@@ -31,6 +32,7 @@ const STAGE_TONES: Readonly<Record<JobStage, string>> = {
 }
 
 export interface JobsFlowProps {
+  roles: readonly JobRole[]
   transitions: readonly JobStageTransition[]
 }
 
@@ -42,7 +44,7 @@ function stageFromName(name: string): JobStage {
   return option.value
 }
 
-function FlowNode({ x, y, width, height, payload, chartWidth }: FlowNodeProps): ReactNode {
+function FlowNode({ x, y, width, height, payload, chartWidth, applicationTotal }: FlowNodeProps): ReactNode {
   const stage = stageFromName(payload.name)
   const tone = STAGE_TONES[stage]
   const rightEdge = x + width
@@ -67,7 +69,7 @@ function FlowNode({ x, y, width, height, payload, chartWidth }: FlowNodeProps): 
         fill="var(--ink-muted)"
         fontSize={12}
       >
-        {payload.value} moved
+        {stage === 'applied' ? applicationTotal : `${payload.value} moved`}
       </text>
     </g>
   )
@@ -128,16 +130,18 @@ function FlowLink({
   )
 }
 
-export function JobsFlow({ transitions }: JobsFlowProps): ReactNode {
+export function JobsFlow({ roles, transitions }: JobsFlowProps): ReactNode {
   const { chartRef, size } = useChartSize()
   const flow = jobFlowData(transitions)
+  const appliedCount = roles.filter((role) => role.stage !== 'to_apply').length
+  const applicationTotal = `${appliedCount} ${appliedCount === 1 ? 'application' : 'applications'}`
   if (flow.links.length === 0) {
     return (
       <div className="jobs-flow-empty">
         <EmptyState
           icon={null}
           title="No pipeline movement yet"
-          message="Advance an applied role to build the flow."
+          message={appliedCount > 0 ? applicationTotal : 'Advance an applied role to build the flow.'}
         />
       </div>
     )
@@ -171,6 +175,9 @@ export function JobsFlow({ transitions }: JobsFlowProps): ReactNode {
 
   return (
     <div className="jobs-flow">
+      {flow.nodes.some((node) => node.stage === 'applied') ? null : (
+        <p className="jobs-section-note tnum">{applicationTotal}</p>
+      )}
       <div ref={chartRef} className="jobs-flow-chart" role="img" aria-label="Application stage flow" aria-describedby="jobs-flow-summary">
         {size !== null ? (
           <Sankey
@@ -178,13 +185,15 @@ export function JobsFlow({ transitions }: JobsFlowProps): ReactNode {
             width={size.width}
             height={chartHeight}
             data={chartData}
-            node={(props) => <FlowNode {...props} chartWidth={size.width} />}
+            node={(props) => <FlowNode {...props} chartWidth={size.width} applicationTotal={applicationTotal} />}
             link={FlowLink}
             nodePadding={chartHeight < 300 ? 18 : 28}
             nodeWidth={12}
             margin={{ top: 22, right: horizontalMargin, bottom: 22, left: horizontalMargin }}
           >
             <Tooltip
+              itemStyle={{ color: 'var(--ink-body)' }}
+              formatter={(value, name) => name === stageLabel('applied') ? appliedCount : value}
               contentStyle={{
                 background: 'var(--surface-card)',
                 border: '1px solid var(--hairline)',
@@ -198,7 +207,7 @@ export function JobsFlow({ transitions }: JobsFlowProps): ReactNode {
         ) : null}
       </div>
       <div id="jobs-flow-summary" className="jobs-flow-a11y">
-        <p>Application stage changes</p>
+        <p>{applicationTotal}. Application stage changes.</p>
         <ul>
           {flow.links.map((link) => (
             <li key={`${link.sourceStage}-${link.targetStage}`}>
