@@ -22,20 +22,23 @@ export interface StageOption {
   tone: 'neutral' | 'forest' | 'today' | 'plum' | 'success' | 'overdue'
 }
 
-export interface JobFlowNode {
+export type JobFlowStage = Exclude<JobStage, 'to_apply'> | 'responded' | 'no_response'
+
+interface JobFlowNode {
   name: string
-  stage: JobStage
+  stage: JobFlowStage
 }
 
-export interface JobFlowLink {
+interface JobFlowLink {
   source: number
   target: number
   value: number
-  sourceStage: JobStage
-  targetStage: JobStage
+  sourceStage: JobFlowStage
+  targetStage: JobFlowStage
 }
 
-export interface JobFlowData {
+interface JobFlowData {
+  appliedCount: number
   nodes: readonly JobFlowNode[]
   links: readonly JobFlowLink[]
 }
@@ -84,15 +87,17 @@ export const jobStageOptions: readonly StageOption[] = [
   { value: 'rejected', label: 'Rejected', tone: 'overdue' }
 ]
 
-const STAGE_ORDER: Readonly<Record<JobStage, number>> = {
+const STAGE_ORDER: Readonly<Record<JobStage | JobFlowStage, number>> = {
   to_apply: 0,
   applied: 1,
-  oa: 2,
-  interview_1: 3,
-  interview_2: 4,
-  interview_3: 5,
-  offer: 6,
-  rejected: 6
+  no_response: 2,
+  responded: 2,
+  oa: 3,
+  interview_1: 4,
+  interview_2: 5,
+  interview_3: 6,
+  offer: 7,
+  rejected: 7
 }
 
 function dateFromIso(date: string): Date {
@@ -290,47 +295,55 @@ export function roleFields(role: JobRole): JobRoleFields {
   }
 }
 
-export function jobFlowData(transitions: readonly JobStageTransition[]): JobFlowData {
-  /* The flow mirrors where each role actually stands, not every drag it
-     survived. Events replay in order per role: a forward move extends the
-     role's path, and a backward move is a correction that pops the hops it
-     undoes, so a card dragged back reads as never having been there. */
-  const paths = new Map<string, { from: JobStage; to: JobStage }[]>()
+export function jobFlowStageLabel(stage: JobFlowStage): string {
+  if (stage === 'responded') return 'Responded'
+  if (stage === 'no_response') return 'No response yet'
+  return stageLabel(stage)
+}
+
+/** A correction discards undone stages and replaces an outcome at the same rank. */
+function recordStage(path: JobStage[], stage: JobStage): void {
+  while (path.length > 0 && STAGE_ORDER[path[path.length - 1]] >= STAGE_ORDER[stage]) {
+    path.pop()
+  }
+  path.push(stage)
+}
+
+export function jobFlowData(
+  roles: readonly Pick<JobRole, 'id' | 'stage'>[],
+  transitions: readonly JobStageTransition[]
+): JobFlowData {
+  const applications = roles.filter((role) => role.stage !== 'to_apply')
+  const paths = new Map<string, JobStage[]>(applications.map((role) => [role.id, []]))
   const ordered = [...transitions].sort((left, right) =>
     left.changedAt.localeCompare(right.changedAt)
   )
-  ordered.forEach((transition) => {
-    if (transition.fromStage === null) return
-    const path = paths.get(transition.roleId) ?? []
-    const fromRank = STAGE_ORDER[transition.fromStage]
-    const toRank = STAGE_ORDER[transition.toStage]
-    if (toRank > fromRank) {
-      // The queue is not part of the flow; edges begin at Applied.
-      if (transition.fromStage !== 'to_apply') {
-        path.push({ from: transition.fromStage, to: transition.toStage })
-      }
-    } else if (toRank < fromRank) {
-      while (path.length > 0 && STAGE_ORDER[path[path.length - 1].to] > toRank) {
-        path.pop()
-      }
-    }
-    paths.set(transition.roleId, path)
-  })
+  for (const transition of ordered) {
+    const path = paths.get(transition.roleId)
+    if (path === undefined) continue
+    if (transition.fromStage !== null) recordStage(path, transition.fromStage)
+    recordStage(path, transition.toStage)
+  }
 
-  const counts = new Map<string, { source: JobStage; target: JobStage; value: number }>()
-  paths.forEach((path) => {
-    path.forEach((edge) => {
-      const key = `${edge.from}:${edge.to}`
+  const counts = new Map<string, { source: JobFlowStage; target: JobFlowStage; value: number }>()
+  for (const role of applications) {
+    const history = paths.get(role.id)
+    if (history === undefined) throw new Error(`No flow path for application ${role.id}`)
+    // The current stage anchors imported roles that have incomplete history.
+    recordStage(history, role.stage)
+    const path: JobFlowStage[] = role.stage === 'applied'
+      ? ['applied', 'no_response']
+      : ['applied', 'responded', ...history.filter((stage) => stage !== 'to_apply' && stage !== 'applied')]
+    for (let i = 1; i < path.length; i++) {
+      const source = path[i - 1]
+      const target = path[i]
+      const key = `${source}:${target}`
       const current = counts.get(key)
-      counts.set(key, {
-        source: edge.from,
-        target: edge.to,
-        value: (current?.value ?? 0) + 1
-      })
-    })
-  })
+      counts.set(key, { source, target, value: (current?.value ?? 0) + 1 })
+    }
+  }
 
-  const stageSet = new Set<JobStage>()
+  const stageSet = new Set<JobFlowStage>()
   counts.forEach((link) => {
     stageSet.add(link.source)
     stageSet.add(link.target)
@@ -355,7 +368,8 @@ export function jobFlowData(transitions: readonly JobStageTransition[]): JobFlow
     }
   })
   return {
-    nodes: stages.map((stage) => ({ name: stageLabel(stage), stage })),
+    appliedCount: applications.length,
+    nodes: stages.map((stage) => ({ name: jobFlowStageLabel(stage), stage })),
     links
   }
 }

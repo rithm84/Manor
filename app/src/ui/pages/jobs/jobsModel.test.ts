@@ -54,22 +54,25 @@ describe('jobs presentation model', () => {
       // b is dragged back to Applied: its OA visit was a mistake and vanishes.
       { id: '6', roleId: 'b', fromStage: 'oa', toStage: 'applied', changedAt: '2026-08-06T12:00:00.000Z' }
     ]
-    const flow = jobFlowData(transitions)
+    const flow = jobFlowData([{ id: 'a', stage: 'rejected' }, { id: 'b', stage: 'applied' }], transitions)
+    expect(flow.appliedCount).toBe(2)
     expect(flow.links).toEqual(expect.arrayContaining([
-      expect.objectContaining({ sourceStage: 'applied', targetStage: 'oa', value: 1 }),
+      expect.objectContaining({ sourceStage: 'applied', targetStage: 'responded', value: 1 }),
+      expect.objectContaining({ sourceStage: 'applied', targetStage: 'no_response', value: 1 }),
+      expect.objectContaining({ sourceStage: 'responded', targetStage: 'oa', value: 1 }),
       expect.objectContaining({ sourceStage: 'oa', targetStage: 'rejected', value: 1 })
     ]))
-    expect(flow.links).toHaveLength(2)
+    expect(flow.links).toHaveLength(4)
     expect(flow.nodes).not.toContainEqual(expect.objectContaining({ stage: 'to_apply' }))
   })
 
-  it('empties the flow when a role is corrected all the way back', () => {
+  it('excludes roles corrected back to To apply', () => {
     const transitions: readonly JobStageTransition[] = [
       { id: '1', roleId: 'a', fromStage: 'applied', toStage: 'oa', changedAt: '2026-08-01T12:00:00.000Z' },
       { id: '2', roleId: 'a', fromStage: 'oa', toStage: 'interview_1', changedAt: '2026-08-01T12:01:00.000Z' },
-      { id: '3', roleId: 'a', fromStage: 'interview_1', toStage: 'applied', changedAt: '2026-08-01T12:02:00.000Z' }
+      { id: '3', roleId: 'a', fromStage: 'interview_1', toStage: 'to_apply', changedAt: '2026-08-01T12:02:00.000Z' }
     ]
-    expect(jobFlowData(transitions)).toEqual({ nodes: [], links: [] })
+    expect(jobFlowData([{ id: 'a', stage: 'to_apply' }], transitions)).toEqual({ appliedCount: 0, nodes: [], links: [] })
   })
 
   it('keeps the hiring cycle in the editable role fields', () => {
@@ -94,12 +97,13 @@ describe('jobs presentation model', () => {
       { id: '4', roleId: 'a', fromStage: 'oa', toStage: 'interview_1', changedAt: '2026-08-01T12:03:00.000Z' },
       { id: '5', roleId: 'b', fromStage: 'applied', toStage: 'oa', changedAt: '2026-08-02T12:00:00.000Z' }
     ]
-    const flow = jobFlowData(transitions)
+    const flow = jobFlowData([{ id: 'a', stage: 'interview_1' }, { id: 'b', stage: 'oa' }], transitions)
     expect(flow.links).toEqual(expect.arrayContaining([
-      expect.objectContaining({ sourceStage: 'applied', targetStage: 'oa', value: 2 }),
+      expect.objectContaining({ sourceStage: 'applied', targetStage: 'responded', value: 2 }),
+      expect.objectContaining({ sourceStage: 'responded', targetStage: 'oa', value: 2 }),
       expect.objectContaining({ sourceStage: 'oa', targetStage: 'interview_1', value: 1 })
     ]))
-    expect(flow.links).toHaveLength(2)
+    expect(flow.links).toHaveLength(3)
   })
 
   it('omits stage corrections that would make the Sankey cyclic', () => {
@@ -108,6 +112,28 @@ describe('jobs presentation model', () => {
       { id: '2', roleId: 'b', fromStage: 'interview_2', toStage: 'applied', changedAt: '2026-08-07T12:00:00.000Z' }
     ]
 
-    expect(jobFlowData(transitions)).toEqual({ nodes: [], links: [] })
+    const flow = jobFlowData([{ id: 'a', stage: 'rejected' }, { id: 'b', stage: 'applied' }], transitions)
+    expect(flow.links).toEqual(expect.arrayContaining([
+      expect.objectContaining({ sourceStage: 'applied', targetStage: 'responded', value: 1 }),
+      expect.objectContaining({ sourceStage: 'applied', targetStage: 'no_response', value: 1 }),
+      expect.objectContaining({ sourceStage: 'responded', targetStage: 'rejected', value: 1 })
+    ]))
+    expect(flow.links).toHaveLength(3)
+    expect(flow.nodes).not.toContainEqual(expect.objectContaining({ stage: 'offer' }))
+  })
+
+  it('includes imported applications in the full split even without transitions', () => {
+    const flow = jobFlowData([
+      { id: 'offer', stage: 'offer' },
+      { id: 'pending-1', stage: 'applied' },
+      { id: 'pending-2', stage: 'applied' }
+    ], [])
+    expect(flow.appliedCount).toBe(3)
+    expect(flow.links).toEqual(expect.arrayContaining([
+      expect.objectContaining({ sourceStage: 'applied', targetStage: 'responded', value: 1 }),
+      expect.objectContaining({ sourceStage: 'applied', targetStage: 'no_response', value: 2 }),
+      expect.objectContaining({ sourceStage: 'responded', targetStage: 'offer', value: 1 })
+    ]))
+    expect(flow.links).toHaveLength(3)
   })
 })
