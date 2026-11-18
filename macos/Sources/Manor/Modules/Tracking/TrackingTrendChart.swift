@@ -2,112 +2,186 @@ import Charts
 import ManorKit
 import SwiftUI
 
-/// The shared trend: habit completion above, mood and focus below, on one month axis with one hover. The
-/// readout above the plots names the hovered month's values, or the shown month's when nothing is hovered.
+/// Monthly trends as two charts under one range control: habit completion, and mood and focus. Each chart has its
+/// own readout (the hovered month's values, or the last month's) and its own hover, so neither crowds the other.
+/// Side by side when there's room, stacked otherwise.
 struct TrackingTrendSection: View {
   let habits: HabitsHistoryData?
   let mood: MoodFocusMonthData?
   @Binding var range: Int
   @Binding var pickedHabitId: String?
   let habitOptions: [(id: String, name: String)]
-  @State private var selected: String?
+  /// Room for the two charts side by side.
+  var wide = true
 
   private var months: [String] {
     habits?.trend.map(\.month) ?? mood?.trend.map(\.month) ?? []
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: Space.s3) {
-      header
-      readout
-      VStack(spacing: Space.s4) {
-        HabitCompletionPane(points: habits?.trendPoints ?? [], months: months, selected: $selected)
-          .frame(height: 112)
-        MoodFocusPane(points: mood?.trend ?? [], months: months, selected: $selected)
-          .frame(height: 132)
+    VStack(alignment: .leading, spacing: Space.s4) {
+      HStack(alignment: .lastTextBaseline, spacing: Space.s4) {
+        HistorySectionHead(title: "Trends", subtitle: "How each month went.")
+        Spacer(minLength: Space.s3)
+        HistoryRangeTabs(range: $range)
       }
-      .accessibilityElement(children: .ignore)
-      .accessibilityLabel(accessibilitySummary)
+      if wide {
+        HStack(alignment: .top, spacing: Space.s6) {
+          habitTrend.frame(maxWidth: .infinity)
+          Rectangle().fill(Palette.hairline).frame(width: 1).padding(.vertical, Space.s1)
+          moodTrend.frame(maxWidth: .infinity)
+        }
+      } else {
+        VStack(alignment: .leading, spacing: Space.s6) {
+          habitTrend
+          moodTrend
+        }
+      }
     }
   }
 
-  private var header: some View {
-    HStack(alignment: .lastTextBaseline, spacing: Space.s4) {
-      HistorySectionHead(title: "Trend", subtitle: "How each month went.")
-      Spacer(minLength: Space.s3)
-      HStack(spacing: Space.s2) {
+  private var habitTrend: some View {
+    HabitTrendChart(habits: habits, months: months, range: range, pickedHabitId: $pickedHabitId, habitOptions: habitOptions)
+  }
+
+  private var moodTrend: some View {
+    MoodFocusTrendChart(points: mood?.trend ?? [], months: months, range: range)
+  }
+}
+
+/// The month a chart reads out: the hovered one, or the last in range.
+private func readoutMonth(_ selected: String?, _ months: [String]) -> String {
+  selected ?? months.last ?? ""
+}
+
+/// A chart's title row: its name and, on the right, its control or legend.
+private struct TrendChartHead<Trailing: View>: View {
+  let title: String
+  @ViewBuilder let trailing: () -> Trailing
+
+  var body: some View {
+    HStack(alignment: .center, spacing: Space.s3) {
+      Text(title).font(.ui(Typography.Size.body, weight: .semibold)).foregroundStyle(Palette.ink)
+        .accessibilityAddTraits(.isHeader)
+      Spacer(minLength: Space.s2)
+      trailing()
+    }
+    .frame(minHeight: 28)
+  }
+}
+
+/// The readout under a chart's title: the month, then each value.
+private struct TrendReadout<Values: View>: View {
+  let month: String
+  @ViewBuilder let values: () -> Values
+
+  var body: some View {
+    HStack(spacing: Space.s4) {
+      Text(month.isEmpty ? " " : HabitDates.monthLabel(month))
+        .font(.ui(Typography.Size.sm, weight: .medium)).foregroundStyle(Palette.inkMuted)
+        .contentTransition(.opacity)
+      values()
+      Spacer(minLength: 0)
+    }
+    .font(.ui(Typography.Size.sm))
+    .tabular()
+    .lineLimit(1)
+    .frame(minHeight: 20)
+  }
+}
+
+private let trendChartHeight: CGFloat = 168
+
+/// Habit completion: which habits (all, or one) and how much of each month's tracked days they were done.
+private struct HabitTrendChart: View {
+  let habits: HabitsHistoryData?
+  let months: [String]
+  let range: Int
+  @Binding var pickedHabitId: String?
+  let habitOptions: [(id: String, name: String)]
+  @State private var selected: String?
+
+  var body: some View {
+    let month = readoutMonth(selected, months)
+    let value = habits?.trend.first { $0.month == month }
+    VStack(alignment: .leading, spacing: Space.s2) {
+      TrendChartHead(title: "Habit completion") {
         if !habitOptions.isEmpty {
           ManorSelect("Habits in the trend", selection: Binding(get: { habits?.trendHabitId }, set: { pickedHabitId = $0 }),
                       options: habitOptions.map { ManorSelectOption($0.id, $0.name) }, noneLabel: "All habits", style: .toolbar)
             .frame(maxWidth: 200)
             .fixedSize()
         }
-        HistoryRangeTabs(range: $range)
       }
-    }
-  }
-
-  /// The values for the hovered month, or the last month in range.
-  private var readout: some View {
-    let month = selected ?? months.last ?? ""
-    let habitMonth = habits?.trend.first { $0.month == month }
-    let point = mood?.trend.first { $0.month == month }
-    let moodWord = MoodFocusHistory.moodLabel(average: point?.mood)
-    let focusWord = MoodFocusHistory.focusLabel(average: point?.focus)
-    return HStack(spacing: Space.s5) {
-      Text(month.isEmpty ? "" : HabitDates.monthLabel(month))
-        .font(.ui(Typography.Size.sm, weight: .semibold)).foregroundStyle(Palette.ink)
-        .frame(minWidth: 112, alignment: .leading)
-        .contentTransition(.opacity)
-      readoutItem(color: Palette.completion, name: habits?.trendHabitName ?? "Habits") {
-        if let rate = habitMonth?.completionRate {
-          Text("\(rate)%").fontWeight(.semibold).foregroundStyle(Palette.ink)
-          Text("\(habitMonth?.completedDays ?? 0) of \(habitMonth?.trackedDays ?? 0) days").foregroundStyle(Palette.inkMuted)
+      TrendReadout(month: month) {
+        if let rate = value?.completionRate {
+          Text("\(rate)%").font(.ui(Typography.Size.sm, weight: .semibold)).foregroundStyle(Palette.ink)
+          Text("\(value?.completedDays ?? 0) of \(value?.trackedDays ?? 0) days").foregroundStyle(Palette.inkMuted)
         } else {
-          Text("No days").foregroundStyle(Palette.inkMuted)
+          Text("No tracked days").foregroundStyle(Palette.inkMuted)
         }
       }
-      readoutItem(color: MoodFocusSeries.mood, name: "Mood") {
-        if let value = point?.mood, let moodWord {
-          Text(moodWord.rawValue).fontWeight(.semibold).foregroundStyle(Palette.ink)
-          Text(String(format: "%.1f", value)).foregroundStyle(Palette.inkMuted)
-        } else {
-          Text("No ratings").foregroundStyle(Palette.inkMuted)
-        }
-      }
-      readoutItem(color: MoodFocusSeries.focus, name: "Focus") {
-        if let value = point?.focus, let focusWord {
-          Text(focusWord.rawValue).fontWeight(.semibold).foregroundStyle(Palette.ink)
-          Text(String(format: "%.1f", value)).foregroundStyle(Palette.inkMuted)
-        } else {
-          Text("No ratings").foregroundStyle(Palette.inkMuted)
-        }
-      }
-      Spacer(minLength: 0)
+      .animation(Motion.fast, value: selected)
+      HabitCompletionPane(points: habits?.trendPoints ?? [], months: months, selected: $selected)
+        .frame(height: trendChartHeight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(range)-month trend of \(habits?.trendHabitName ?? "habit") completion ending \(months.last.map(HabitDates.monthLabel) ?? "")")
     }
-    .font(.ui(Typography.Size.sm))
-    .tabular()
-    .lineLimit(1)
-    .frame(minHeight: 22)
-    .animation(Motion.fast, value: selected)
-  }
-
-  private func readoutItem<Value: View>(color: Color, name: String, @ViewBuilder value: () -> Value) -> some View {
-    HStack(spacing: 6) {
-      Capsule().fill(color).frame(width: 10, height: 3)
-      Text(name).foregroundStyle(Palette.inkMuted).lineLimit(1).truncationMode(.tail).frame(maxWidth: 140, alignment: .leading).fixedSize()
-      value()
-    }
-    .accessibilityElement(children: .combine)
-  }
-
-  private var accessibilitySummary: String {
-    let label = months.last.map(HabitDates.monthLabel) ?? ""
-    return "\(range)-month trend of habit completion, mood, and focus ending \(label)"
   }
 }
 
-/// Fixed-width y labels so the two plots share one plot width and their months line up.
+/// Mood and focus: each month's average on the 1 to 5 scale, as two lines.
+private struct MoodFocusTrendChart: View {
+  let points: [MoodFocusTrendPoint]
+  let months: [String]
+  let range: Int
+  @State private var selected: String?
+
+  var body: some View {
+    let month = readoutMonth(selected, months)
+    let point = points.first { $0.month == month }
+    VStack(alignment: .leading, spacing: Space.s2) {
+      TrendChartHead(title: "Mood and focus") { EmptyView() }
+      TrendReadout(month: month) {
+        signal(name: "Mood", square: true, color: MoodFocusSeries.mood, value: point?.mood,
+               word: MoodFocusHistory.moodLabel(average: point?.mood)?.rawValue)
+        signal(name: "Focus", square: false, color: MoodFocusSeries.focus, value: point?.focus,
+               word: MoodFocusHistory.focusLabel(average: point?.focus)?.rawValue)
+      }
+      .animation(Motion.fast, value: selected)
+      MoodFocusPane(points: points, months: months, selected: $selected)
+        .frame(height: trendChartHeight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(range)-month trend of mood and focus ending \(months.last.map(HabitDates.monthLabel) ?? "")")
+    }
+  }
+
+  /// The series key and its value, so the readout doubles as the legend.
+  private func signal(name: String, square: Bool, color: Color, value: Double?, word: String?) -> some View {
+    HStack(spacing: 6) {
+      MoodFocusSwatch(shape: square ? .square : .circle, color: color)
+      Text(name).foregroundStyle(Palette.inkMuted)
+      if let value, let word {
+        Text(word).font(.ui(Typography.Size.sm, weight: .semibold)).foregroundStyle(Palette.ink)
+        Text(String(format: "%.1f", value)).foregroundStyle(Palette.inkMuted)
+      } else {
+        Text("No ratings").foregroundStyle(Palette.inkMuted)
+      }
+    }
+    .accessibilityElement(children: .combine)
+  }
+}
+
+/// A month on a chart's axis, emphasized while hovered.
+@ViewBuilder
+private func trendMonthLabel(_ month: String?, selected: String?) -> some View {
+  if let month {
+    Text(HabitDates.shortMonthLabel(month)).font(.ui(Typography.Size.xs, weight: month == selected ? .semibold : .regular))
+      .foregroundStyle(month == selected ? Palette.ink : Palette.inkMuted)
+  }
+}
+
+/// Fixed-width y labels so the axis doesn't shift as values change.
 private let trendAxisWidth: CGFloat = 36
 
 private func trendAxisLabel(_ text: String) -> some View {
@@ -146,8 +220,9 @@ private struct HabitCompletionPane: View {
     .chartYScale(domain: 0...100, range: .plotDimension(startPadding: 0, endPadding: 6))
     .chartXSelection(value: $selected)
     .chartXAxis {
-      AxisMarks(values: months) { _ in
+      AxisMarks(values: months) { value in
         AxisGridLine(stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(Palette.hairline.opacity(0.6))
+        AxisValueLabel { trendMonthLabel(value.as(String.self), selected: selected) }
       }
     }
     .chartYAxis {
@@ -202,12 +277,7 @@ private struct MoodFocusPane: View {
     .chartXAxis {
       AxisMarks(values: months) { value in
         AxisGridLine(stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(Palette.hairline.opacity(0.6))
-        AxisValueLabel {
-          if let month = value.as(String.self) {
-            Text(HabitDates.shortMonthLabel(month)).font(.ui(Typography.Size.xs, weight: month == selected ? .semibold : .regular))
-              .foregroundStyle(month == selected ? Palette.ink : Palette.inkMuted)
-          }
-        }
+        AxisValueLabel { trendMonthLabel(value.as(String.self), selected: selected) }
       }
     }
     .chartYAxis {

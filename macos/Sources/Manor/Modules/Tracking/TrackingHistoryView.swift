@@ -1,8 +1,8 @@
 import ManorKit
 import SwiftUI
 
-/// History for habits, mood, and focus as one page under one month navigator: the month in numbers, a
-/// shared trend, the month as a calendar of days, and each habit's month beside the mood and focus mix.
+/// History for habits, mood, and focus as one page under one month navigator: the month in numbers, monthly
+/// trends for habits and for mood and focus, the month as a calendar of days, and each habit's month beside the mood and focus mix.
 struct TrackingHistoryView: View {
   let habits: HabitsStore
   let moodFocus: MoodFocusStore
@@ -28,7 +28,8 @@ struct TrackingHistoryView: View {
       TrackingSummaryStrip(habits: habitData, mood: moodData, dayCount: dayCount, wide: width >= 940)
       TrackingTrendSection(
         habits: habitData, mood: moodData, range: $range, pickedHabitId: $pickedHabitId,
-        habitOptions: habitData?.visibleRows.map { ($0.habit.id, $0.habit.name) } ?? []
+        habitOptions: habitData?.visibleRows.map { ($0.habit.id, $0.habit.name) } ?? [],
+        wide: width >= 760
       )
       calendarSection(habitData, moodData)
       breakdown(habitData, moodData)

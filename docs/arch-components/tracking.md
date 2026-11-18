@@ -1,6 +1,6 @@
 # Tracking and Pomodoro
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -20,7 +20,7 @@ A day is one `mood_focus_entries` row keyed by account and date, with independen
 
 ## The Tracking page
 
-`TrackingPage` has Daily and History tabs. Daily shows the day bar, the mood and focus check-in rows with their week strip, and the habit list with week strips, the freeze pool, and an Archived section. A missed row on the Yesterday view shows a Freeze control that spends or returns a freeze. History shows the habit trend chart and month grid of completion rings, then the mood and focus summary, trend, month calendar, and distributions. Sort order, the archived toggle, and the last tab are remembered on the Mac.
+`TrackingPage` has Daily and History tabs. Daily shows the day bar, the mood and focus check-in rows with their week strip, and the habit list with week strips, the freeze pool, and an Archived section. A missed row on the Yesterday view shows a Freeze control that spends or returns a freeze. History, under one month navigator, shows the month's numbers, then Trends: habit completion and mood and focus as two separate charts under one 3, 6, or 12-month range, each with its own readout and hover (side by side when the window is wide). Below them come the month calendar of days, and each habit's month beside the mood and focus distributions. Sort order, the archived toggle, and the last tab are remembered on the Mac.
 
 ## Pomodoro
 
