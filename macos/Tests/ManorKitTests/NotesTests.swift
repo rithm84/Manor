@@ -184,6 +184,26 @@ struct NoteDraftStoreTests {
     }
   }
 
+  @Test func linksUploadsToTheirBlocksUntilAcknowledgedAndHoldsSignOut() async throws {
+    let store = try NoteDraftStore()
+    let first = PendingNoteUpload(accountId: "u1", noteId: "n1", blockId: "img", uploadId: UUID(), name: "a.png")
+    let other = PendingNoteUpload(accountId: "u1", noteId: "n2", blockId: "file", uploadId: UUID(), name: "b.pdf")
+    try await store.protectUpload(first)
+    try await store.protectUpload(other)
+    #expect(try await store.uploads(accountId: "u1", noteId: "n1") == [first])
+    #expect(try await store.uploads(accountId: "u1").count == 2)
+    #expect(try await store.uploads(accountId: "u2").isEmpty)
+    #expect(try await store.hasUnsynced(accountId: "u1"))
+    await #expect(throws: ManorRequestError.self) { try await store.clear(accountId: "u1") }
+    try await store.acknowledgeUpload(accountId: "u1", uploadId: first.uploadId)
+    try await store.acknowledgeUpload(accountId: "u1", uploadId: other.uploadId)
+    #expect(try await store.hasUnsynced(accountId: "u1") == false)
+    try await store.clear(accountId: "u1")
+    await #expect(throws: ManorRequestError.self) {
+      try await store.protectUpload(PendingNoteUpload(accountId: "u1", noteId: "", blockId: "x", uploadId: UUID(), name: "c"))
+    }
+  }
+
   @Test func commitMovesNewerTypingOntoTheCommittedRevisionAndMergesForeignBlocks() async throws {
     let store = try NoteDraftStore()
     let sent = try await store.protect(accountId: "u", content: NoteContent(id: "n", title: "T", blocks: base), knownRevision: 2)

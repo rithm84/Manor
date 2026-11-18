@@ -12,6 +12,11 @@ struct NoteEditorServices {
   /// Uploads a local file as an attachment of the open note and returns its stable `manor-attachment://` URL.
   /// Without an uploader, media blocks offer only "paste a link".
   var uploadAttachment: ((URL) async throws -> String)?
+  /// Uploads into media blocks that survive a lost connection or a relaunch. When set, block uploads go through
+  /// it and a reopened note finishes the uploads its blocks were waiting for.
+  var blockUploads: (any NoteBlockUploading)?
+  /// Whether the account is online. Coming back online retries the uploads that failed.
+  var isOnline = true
   /// Pages the `@` menu offers as mentions (active notes other than the open one).
   var mentionCandidates: [NoteMentionCandidate] = []
   /// Opens another note, from a page mention or a `manor-note://` link.
@@ -40,6 +45,19 @@ struct NoteEditorServices {
     self.blockLink = blockLink
     self.openURL = openURL
   }
+}
+
+/// Block uploads linked to their blocks on this Mac (see `NoteBlockUploads`).
+@MainActor
+protocol NoteBlockUploading: AnyObject {
+  /// Uploads `file` for the block and returns its stable URL once the server has verified it.
+  func upload(_ file: URL, blockID: String) async throws -> String
+  /// The open note's uploads that have not reached their blocks.
+  func pending() async -> [PendingNoteUpload]
+  /// Continues (or recognizes as finished) a pending upload and returns its stable URL.
+  func resume(_ upload: PendingNoteUpload) async throws -> String
+  /// Drops the link, and with `cancel` the upload itself.
+  func forget(_ upload: PendingNoteUpload, cancel: Bool) async
 }
 
 struct NoteMentionCandidate: Hashable, Identifiable {
@@ -112,6 +130,7 @@ final class NoteEditorController: NSObject, NSTextViewDelegate {
       if (oldValue.resolveAttachment == nil) != (services.resolveAttachment == nil) || (oldValue.uploadAttachment == nil) != (services.uploadAttachment == nil) {
         canvas?.refreshMediaViews()
       }
+      if !oldValue.isOnline, services.isOnline { retryFailedUploads() }
     }
   }
   var onChange: (([JSONValue]) -> Void)?
@@ -129,6 +148,8 @@ final class NoteEditorController: NSObject, NSTextViewDelegate {
   private(set) var focusedRole: NoteTextRole = .block
   private var uploading: Set<String> = []
   private var uploadErrors: [String: String] = [:]
+  /// Block uploads that failed but are kept on this Mac, by block, so "Try again" resumes them.
+  private var failedUploads: [String: PendingNoteUpload] = [:]
   private var columnDragOrigin: (id: String, blocks: [NoteBlock], focus: NoteFocus)?
 
   // Typing coalescing.
@@ -197,6 +218,8 @@ final class NoteEditorController: NSObject, NSTextViewDelegate {
       selectedBlockIDs = []
       focusedBlockID = nil
       uploadErrors = [:]
+      uploading = []
+      failedUploads = [:]
       coalesceKey = nil
       suggestions.close()
       toolbar.hide()
@@ -207,6 +230,7 @@ final class NoteEditorController: NSObject, NSTextViewDelegate {
       scrollView?.contentView.scroll(to: .zero)
       scrollView?.reflectScrolledClipView(scrollView!.contentView)
       refreshFind()
+      restorePendingUploads()
       return
     }
     guard externalRevision != self.externalRevision else { return }
@@ -815,8 +839,10 @@ final class NoteEditorController: NSObject, NSTextViewDelegate {
     }
   }
 
-  /// Picks a file and uploads it into a media block.
+  /// Picks a file and uploads it into a media block. A block whose upload failed but is kept on this Mac
+  /// resumes it instead.
   func chooseAndUpload(for id: String, kind: NoteUploadKind) {
+    if failedUploads[id] != nil { resumeUpload(for: id); return }
     guard let upload = services.uploadAttachment else { return }
     let panel = NSOpenPanel()
     panel.canChooseDirectories = false
@@ -829,20 +855,75 @@ final class NoteEditorController: NSObject, NSTextViewDelegate {
   }
 
   func upload(_ file: URL, into id: String, using upload: @escaping (URL) async throws -> String) {
+    let documentID = documentID
+    let uploads = services.blockUploads
+    begin(upload: id, documentID: documentID, name: file.lastPathComponent) {
+      if let uploads { return try await uploads.upload(file, blockID: id) }
+      return try await upload(file)
+    } failed: { [weak self] in
+      // The upload is journaled on this Mac; remember it so "Try again" and reconnecting resume it.
+      guard let self, let uploads else { return }
+      if let link = await uploads.pending().first(where: { $0.blockId == id }) { self.failedUploads[id] = link }
+    }
+  }
+
+  /// Whether the block's failed upload is kept on this Mac and can resume.
+  func canResumeUpload(for id: String) -> Bool { failedUploads[id] != nil }
+
+  private func resumeUpload(for id: String) {
+    guard let link = failedUploads.removeValue(forKey: id), let uploads = services.blockUploads else { return }
+    begin(upload: id, documentID: documentID, name: link.name) { try await uploads.resume(link) } failed: { [weak self] in
+      self?.failedUploads[id] = link
+    }
+  }
+
+  private func retryFailedUploads() {
+    for id in failedUploads.keys where blocks.block(id: id) != nil { resumeUpload(for: id) }
+  }
+
+  /// Finishes, after a relaunch or a reopened note, the uploads this note's blocks were waiting for. A block
+  /// that was deleted cancels its upload; a block that already holds a file just drops the link.
+  private func restorePendingUploads() {
+    guard let uploads = services.blockUploads else { return }
+    let documentID = documentID
+    Task { [weak self] in
+      let links = await uploads.pending()
+      guard let self, self.documentID == documentID else { return }
+      for link in links {
+        guard let block = self.blocks.block(id: link.blockId) else {
+          await uploads.forget(link, cancel: true)
+          continue
+        }
+        guard (block.string("url") ?? "").isEmpty else {
+          await uploads.forget(link, cancel: false)
+          continue
+        }
+        guard !self.uploading.contains(link.blockId) else { continue }
+        self.failedUploads[link.blockId] = link
+        self.resumeUpload(for: link.blockId)
+      }
+    }
+  }
+
+  private func begin(upload id: String, documentID: String, name: String, _ work: @escaping () async throws -> String, failed: @escaping () async -> Void) {
     uploading.insert(id)
     uploadErrors[id] = nil
     refreshView(id)
     Task { [weak self] in
       do {
-        let stable = try await upload(file)
-        guard let self else { return }
+        let stable = try await work()
+        guard let self, self.documentID == documentID else { return }
         self.uploading.remove(id)
-        self.updateProps(id, ["url": .string(stable), "name": .string(file.lastPathComponent)])
+        guard self.blocks.block(id: id) != nil else { return }
+        self.updateProps(id, ["url": .string(stable), "name": .string(name)])
         self.refreshView(id)
       } catch {
-        guard let self else { return }
+        guard let self, self.documentID == documentID else { return }
         self.uploading.remove(id)
-        self.uploadErrors[id] = error.localizedDescription
+        await failed()
+        self.uploadErrors[id] = self.failedUploads[id] != nil && !self.services.isOnline
+          ? "Saved on this Mac. It uploads when you're back online."
+          : error.localizedDescription
         self.refreshView(id)
       }
     }

@@ -155,6 +155,13 @@ public final class FileService {
   /// Whether an upload is running now.
   public func isRunning(_ id: UUID) -> Bool { tasks[id] != nil }
 
+  /// The server's lifecycle state for a file (`allocated`, `ready`, `purging`), or nil when it has none. An
+  /// upload that finished while nobody was watching is recognized by its file being `ready`.
+  public func serverStatus(of id: UUID) async throws -> String? {
+    let rows = try await gateway.rowsFromServer("file_objects", where: [RowFilter("id", .string(id.uuidString.lowercased()))], columns: "id,status")
+    return rows.first?["status"]?.string
+  }
+
   /// Stops an upload and discards its local copy. A file the server already allocated stays allocated and
   /// is cleaned up by the server's abandoned-upload job.
   public func cancel(_ id: UUID) {

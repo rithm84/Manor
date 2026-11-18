@@ -29,21 +29,21 @@ public struct ProtectedNoteDraft: Hashable, Sendable {
   public var content: NoteContent { NoteContent(id: noteId, title: title, blocks: blocks) }
 }
 
-/// Attachment bytes held on this device until their upload finishes.
-public struct PendingNoteAttachment: Hashable, Sendable {
+/// A file upload started from a note's media block that has not reached the block yet. The bytes live in the
+/// Files service's journal; this record links the upload to its block, so after a lost connection or a
+/// relaunch the block finishes with the right file instead of an error.
+public struct PendingNoteUpload: Hashable, Sendable {
   public var accountId: String
   public var noteId: String
-  public var attachmentId: String
+  public var blockId: String
+  public var uploadId: UUID
   public var name: String
-  public var mimeType: String
-  public var bytes: Data
-  public init(accountId: String, noteId: String, attachmentId: String, name: String, mimeType: String, bytes: Data) {
+  public init(accountId: String, noteId: String, blockId: String, uploadId: UUID, name: String) {
     self.accountId = accountId
     self.noteId = noteId
-    self.attachmentId = attachmentId
+    self.blockId = blockId
+    self.uploadId = uploadId
     self.name = name
-    self.mimeType = mimeType
-    self.bytes = bytes
   }
 }
 
@@ -111,6 +111,19 @@ public final class NoteDraftStore: Sendable {
       try db.create(table: "note_snapshots") { table in
         table.column("account_id", .text).notNull().primaryKey()
         table.column("snapshot", .blob).notNull()
+      }
+    }
+    // v1's attachment table copied file bytes into SQLite and was never used; uploads are journaled by the
+    // Files service, and this table only links them to their blocks.
+    migrator.registerMigration("v2-note-uploads") { db in
+      try db.drop(table: "note_attachments")
+      try db.create(table: "note_uploads") { table in
+        table.column("account_id", .text).notNull()
+        table.column("upload_id", .text).notNull()
+        table.column("note_id", .text).notNull()
+        table.column("block_id", .text).notNull()
+        table.column("name", .text).notNull()
+        table.primaryKey(["account_id", "upload_id"])
       }
     }
     return migrator
@@ -252,31 +265,37 @@ public final class NoteDraftStore: Sendable {
     return try data.map { try ManorJSON.plainDecoder.decode(NotesSnapshot.self, from: $0) }
   }
 
-  // MARK: Attachments
+  // MARK: Uploads
 
-  public func protectAttachment(_ attachment: PendingNoteAttachment) async throws {
-    guard !attachment.accountId.isEmpty, !attachment.noteId.isEmpty, !attachment.attachmentId.isEmpty, !attachment.bytes.isEmpty else {
-      throw ManorRequestError(operation: "Protect attachment", code: "invalid", detail: "A pending attachment needs its note, identity, and file bytes.")
+  public func protectUpload(_ upload: PendingNoteUpload) async throws {
+    guard !upload.accountId.isEmpty, !upload.noteId.isEmpty, !upload.blockId.isEmpty else {
+      throw ManorRequestError(operation: "Protect upload", code: "invalid", detail: "A pending upload needs its account, note, and block.")
     }
     try await database.write { db in
       try db.execute(sql: """
-        INSERT OR REPLACE INTO note_attachments (account_id, attachment_id, note_id, name, mime_type, bytes) VALUES (?, ?, ?, ?, ?, ?)
-        """, arguments: [attachment.accountId, attachment.attachmentId, attachment.noteId, attachment.name, attachment.mimeType, attachment.bytes])
+        INSERT OR REPLACE INTO note_uploads (account_id, upload_id, note_id, block_id, name) VALUES (?, ?, ?, ?, ?)
+        """, arguments: [upload.accountId, upload.uploadId.uuidString.lowercased(), upload.noteId, upload.blockId, upload.name])
     }
   }
 
-  public func attachments(accountId: String) async throws -> [PendingNoteAttachment] {
+  /// The account's pending uploads, optionally only one note's, oldest first.
+  public func uploads(accountId: String, noteId: String? = nil) async throws -> [PendingNoteUpload] {
     try await database.read { db in
-      try GRDB.Row.fetchAll(db, sql: "SELECT * FROM note_attachments WHERE account_id = ?", arguments: [accountId]).map { row in
-        PendingNoteAttachment(accountId: row["account_id"], noteId: row["note_id"], attachmentId: row["attachment_id"],
-                              name: row["name"], mimeType: row["mime_type"], bytes: row["bytes"])
+      let rows = if let noteId {
+        try GRDB.Row.fetchAll(db, sql: "SELECT * FROM note_uploads WHERE account_id = ? AND note_id = ? ORDER BY rowid", arguments: [accountId, noteId])
+      } else {
+        try GRDB.Row.fetchAll(db, sql: "SELECT * FROM note_uploads WHERE account_id = ? ORDER BY rowid", arguments: [accountId])
+      }
+      return rows.compactMap { row in
+        guard let id = UUID(uuidString: row["upload_id"]) else { return nil }
+        return PendingNoteUpload(accountId: row["account_id"], noteId: row["note_id"], blockId: row["block_id"], uploadId: id, name: row["name"])
       }
     }
   }
 
-  public func acknowledgeAttachment(accountId: String, attachmentId: String) async throws {
+  public func acknowledgeUpload(accountId: String, uploadId: UUID) async throws {
     try await database.write { db in
-      try db.execute(sql: "DELETE FROM note_attachments WHERE account_id = ? AND attachment_id = ?", arguments: [accountId, attachmentId])
+      try db.execute(sql: "DELETE FROM note_uploads WHERE account_id = ? AND upload_id = ?", arguments: [accountId, uploadId.uuidString.lowercased()])
     }
   }
 
@@ -286,8 +305,8 @@ public final class NoteDraftStore: Sendable {
   public func hasUnsynced(accountId: String) async throws -> Bool {
     try await database.read { db in
       let drafts = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM note_drafts WHERE account_id = ?", arguments: [accountId]) ?? 0
-      let attachments = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM note_attachments WHERE account_id = ?", arguments: [accountId]) ?? 0
-      return drafts + attachments > 0
+      let uploads = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM note_uploads WHERE account_id = ?", arguments: [accountId]) ?? 0
+      return drafts + uploads > 0
     }
   }
 
@@ -295,8 +314,8 @@ public final class NoteDraftStore: Sendable {
   public func clear(accountId: String) async throws {
     try await database.write { db in
       let drafts = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM note_drafts WHERE account_id = ?", arguments: [accountId]) ?? 0
-      let attachments = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM note_attachments WHERE account_id = ?", arguments: [accountId]) ?? 0
-      guard drafts + attachments == 0 else {
+      let uploads = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM note_uploads WHERE account_id = ?", arguments: [accountId]) ?? 0
+      guard drafts + uploads == 0 else {
         throw ManorRequestError(operation: "Sign out", code: "pending", detail: "Notes changes are still waiting to sync.")
       }
       try db.execute(sql: "DELETE FROM note_snapshots WHERE account_id = ?", arguments: [accountId])

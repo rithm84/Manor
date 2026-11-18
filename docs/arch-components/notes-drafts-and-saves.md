@@ -22,7 +22,7 @@ Notes protects every edit on the Mac before it claims protection, then saves to 
 | Table | Holds |
 |---|---|
 | `note_drafts` | One row per account and note: title, blocks, base revision, mutation ID, protection time, and sequence |
-| `note_attachments` | Pending attachment records |
+| `note_uploads` | Links from media blocks to their pending uploads, so a reopened note finishes them |
 | `note_snapshots` | The account's offline note list, so Notes opens without a connection |
 
 The interface distinguishes protection on the Mac from saving to the cloud. A failure to protect blocks leaving the note.

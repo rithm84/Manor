@@ -193,6 +193,8 @@ struct NotesEditorPane: View {
       blockLink: { blockId in URL(string: "\(scheme)://notes/\(page.id)#block=\(blockId)") },
       openURL: { url in context.openExternal(url) }
     )
+    services.blockUploads = NoteBlockUploads(gateway: context.gateway, noteId: page.id, store: NotesRuntime.draftStore())
+    services.isOnline = context.gateway.isConnected
     services.noteTitle = { [store] in store.draft?.title ?? page.displayTitle }
     services.openAlfredSettings = { [context] in
       context.navigate(to: .settings)

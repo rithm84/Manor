@@ -232,7 +232,9 @@ class NoteMediaBlockView: NoteBlockView {
         addSubview(view)
         capture = view
       }
-      capture?.setUploadTitle(controller?.isUploading(block.id) == true ? "Uploading" : uploadTitle)
+      let title = controller?.isUploading(block.id) == true ? "Uploading"
+        : controller?.canResumeUpload(for: block.id) == true ? "Try again" : uploadTitle
+      capture?.setUploadTitle(title)
       capture?.showError(controller?.uploadError(for: block.id))
     } else if let capture {
       // Once the block has its media, the caret leaves the link field and the block stays selected.
