@@ -178,6 +178,21 @@ public struct ConfirmPanel: View {
 
 // MARK: Page anatomy
 
+public enum PageMetrics {
+  /// A centered page's width, its side padding included: a comfortable reading column on a wide window.
+  public static let readableWidth: CGFloat = 960
+}
+
+public extension View {
+  /// Lays a page's header or content in a centered column of `readableWidth` instead of across the whole window,
+  /// as a document app's default page width does. Apply it inside a scroll view so the window still scrolls
+  /// from anywhere and the scroll bar stays at the edge. `enabled: false` spans the window (for wide views).
+  func centeredColumn(_ enabled: Bool = true, maxWidth: CGFloat = PageMetrics.readableWidth) -> some View {
+    frame(maxWidth: enabled ? maxWidth : .infinity, alignment: .leading)
+      .frame(maxWidth: .infinity)
+  }
+}
+
 /// The title row at the top of a module page: title, optional subtitle, and trailing controls.
 public struct PageHeader<Trailing: View>: View {
   let title: String

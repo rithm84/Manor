@@ -342,10 +342,6 @@ struct CheckInScale<Level: CheckInLevel>: View {
   var body: some View {
     HStack(spacing: density == .regular ? 2 : 1) {
       ForEach(levels) { level in
-        if level.isRest {
-          Rectangle().fill(Palette.hairlineStrong).frame(width: 1, height: 16).padding(.horizontal, density == .regular ? Space.s1 + 2 : Space.s1)
-            .accessibilityHidden(true)
-        }
         CheckInChip(
           level: level, selected: selection == level, swatchShape: swatchShape,
           showsWord: density != .swatches || selection == level, tight: density != .regular

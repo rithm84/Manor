@@ -19,6 +19,7 @@ struct BookmarksPage: View {
         SearchField(text: $store.query, prompt: "Search bookmarks")
           .frame(width: 260)
       }
+      .centeredColumn()
       content
     }
     .onAppear { store.attach(context) }
@@ -65,6 +66,7 @@ struct BookmarksPage: View {
         .padding(.horizontal, Space.s8 - Space.s2)
         .padding(.top, Space.s1)
         .padding(.bottom, Space.s12)
+        .centeredColumn()
       }
       .scrollBounceBehavior(.basedOnSize)
     }

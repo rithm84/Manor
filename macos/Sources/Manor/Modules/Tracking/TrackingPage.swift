@@ -61,6 +61,8 @@ struct TrackingContent: View {
           .buttonStyle(.primary)
           .help("New habit (⌘N)")
       }
+      // Daily reads as a centered page; History's charts and calendar use the whole width.
+      .centeredColumn(view.wrappedValue == .daily)
       content
     }
     .background(Palette.surfaceCanvas)
@@ -148,6 +150,7 @@ struct TrackingContent: View {
         }
         .padding(.horizontal, Space.s8)
         .padding(.bottom, Space.s10)
+        .centeredColumn(view.wrappedValue == .daily)
       }
       .scrollBounceBehavior(.basedOnSize)
     }
