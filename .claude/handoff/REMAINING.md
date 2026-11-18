@@ -26,6 +26,7 @@ Linux cannot compile SwiftUI or AppKit. Build, run, and QA on the Daytona macOS 
   `showroom@example.invalid` (staging synthetic account with seeded data).
 - `dt.py shot out.png 0.5`, `click X Y`, `type`, `key`, `scroll`, `drag`, `exec` drive it. Screen 1280x800.
 - Swift 6.3 in the sandbox is older than the owner's 6.4.2: keep code compiling on both.
+- `tools/sandbox/cloud-setup.sh` is the cloud environment setup script (installs tooling; safe to rerun).
 - `tools/sandbox/staging-config.sh` writes the ignored `macos/config/staging.env` from SUPABASE_ACCESS_TOKEN.
 - Do not put the owner's Alfred API keys (OpenAI and others) into the sandbox without asking. Alfred UI states
   that need no live model (composer, empty, error, settings) can be QA'd without keys.
