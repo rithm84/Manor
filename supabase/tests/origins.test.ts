@@ -1,4 +1,4 @@
-import { DESKTOP_WEBVIEW_ORIGIN, OriginNotAllowedError, assertAllowedOrigin, settingsReturnUrl } from '../functions/_shared/origins.ts'
+import { DESKTOP_APP_ORIGIN, OriginNotAllowedError, assertAllowedOrigin, settingsReturnUrl } from '../functions/_shared/origins.ts'
 
 const WEB_ORIGIN = 'https://mymanor-staging.vercel.app'
 const CONFIGURATION_MESSAGE = 'exact HTTPS origins, local development origins, or the desktop app origin'
@@ -27,20 +27,21 @@ function rejection(run: () => void): Error {
   throw new Error('Expected a rejection but the call returned')
 }
 
-Deno.test('the desktop webview origin is allowed only while it is configured', () => {
-  withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: `${DESKTOP_WEBVIEW_ORIGIN}, http://localhost:5173`, MANOR_DESKTOP_SCHEME: null }, () => {
-    for (const origin of [WEB_ORIGIN, DESKTOP_WEBVIEW_ORIGIN, 'http://localhost:5173']) {
-      if (assertAllowedOrigin(origin) !== origin) throw new Error(`Configured origin ${origin} was not returned`)
+Deno.test('configured origins and the desktop app origin are allowed', () => {
+  withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: 'http://localhost:5173', MANOR_DESKTOP_SCHEME: null }, () => {
+    for (const origin of [WEB_ORIGIN, DESKTOP_APP_ORIGIN, 'http://localhost:5173']) {
+      if (assertAllowedOrigin(origin) !== origin) throw new Error(`Allowed origin ${origin} was not returned`)
     }
   })
   withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: null, MANOR_DESKTOP_SCHEME: 'manor-staging' }, () => {
-    const error = rejection(() => assertAllowedOrigin(DESKTOP_WEBVIEW_ORIGIN))
-    if (!(error instanceof OriginNotAllowedError)) throw new Error(`Unconfigured desktop origin failed with ${error.message}`)
+    if (assertAllowedOrigin(DESKTOP_APP_ORIGIN) !== DESKTOP_APP_ORIGIN) throw new Error('The desktop app origin was rejected without configuration')
+    const error = rejection(() => assertAllowedOrigin('https://unlisted.example'))
+    if (!(error instanceof OriginNotAllowedError)) throw new Error(`Unlisted origin failed with ${error.message}`)
   })
 })
 
 Deno.test('origins that only look like the desktop app are rejected', () => {
-  withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: DESKTOP_WEBVIEW_ORIGIN, MANOR_DESKTOP_SCHEME: 'manor-staging' }, () => {
+  withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: DESKTOP_APP_ORIGIN, MANOR_DESKTOP_SCHEME: 'manor-staging' }, () => {
     for (const origin of ['tauri://evil', 'http://tauri.localhost', 'tauri://localhost.evil.example', 'https://localhost']) {
       const error = rejection(() => assertAllowedOrigin(origin))
       if (!(error instanceof OriginNotAllowedError)) throw new Error(`Origin ${origin} failed with ${error.message}`)
@@ -60,11 +61,11 @@ Deno.test('a configured entry that is not an exact allowed origin fails as confi
 })
 
 Deno.test('settings returns to a path on the web and to the desktop scheme in the app', () => {
-  withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: DESKTOP_WEBVIEW_ORIGIN, MANOR_DESKTOP_SCHEME: 'manor-staging' }, () => {
+  withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: DESKTOP_APP_ORIGIN, MANOR_DESKTOP_SCHEME: 'manor-staging' }, () => {
     const web = settingsReturnUrl(WEB_ORIGIN)
     web.searchParams.set('connection_provider', 'google')
     if (web.toString() !== `${WEB_ORIGIN}/settings?connection_provider=google`) throw new Error(`Web return URL is ${web.toString()}`)
-    const desktop = settingsReturnUrl(DESKTOP_WEBVIEW_ORIGIN)
+    const desktop = settingsReturnUrl(DESKTOP_APP_ORIGIN)
     if (desktop.toString() !== 'manor-staging://settings') throw new Error(`Desktop return URL is ${desktop.toString()}`)
     desktop.searchParams.set('connection_provider', 'google')
     desktop.searchParams.set('connection_code', 'code/with+symbols')
@@ -75,13 +76,13 @@ Deno.test('settings returns to a path on the web and to the desktop scheme in th
 })
 
 Deno.test('the desktop return URL requires a configured scheme that is a valid URL scheme', () => {
-  withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: DESKTOP_WEBVIEW_ORIGIN, MANOR_DESKTOP_SCHEME: null }, () => {
-    const error = rejection(() => settingsReturnUrl(DESKTOP_WEBVIEW_ORIGIN))
+  withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: DESKTOP_APP_ORIGIN, MANOR_DESKTOP_SCHEME: null }, () => {
+    const error = rejection(() => settingsReturnUrl(DESKTOP_APP_ORIGIN))
     if (!error.message.includes('Missing server configuration MANOR_DESKTOP_SCHEME')) throw new Error(`Missing scheme failed with ${error.message}`)
   })
   for (const scheme of ['Manor', '1manor', 'manor staging', 'manor_staging', 'manor-staging://settings']) {
-    withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: DESKTOP_WEBVIEW_ORIGIN, MANOR_DESKTOP_SCHEME: scheme }, () => {
-      const error = rejection(() => settingsReturnUrl(DESKTOP_WEBVIEW_ORIGIN))
+    withEnvironment({ MANOR_ORIGIN: WEB_ORIGIN, MANOR_ALLOWED_ORIGINS: DESKTOP_APP_ORIGIN, MANOR_DESKTOP_SCHEME: scheme }, () => {
+      const error = rejection(() => settingsReturnUrl(DESKTOP_APP_ORIGIN))
       if (!error.message.includes('must match [a-z][a-z0-9-]*')) throw new Error(`Scheme "${scheme}" failed with ${error.message}`)
     })
   }

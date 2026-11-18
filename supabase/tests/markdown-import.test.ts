@@ -166,3 +166,10 @@ Deno.test('the tool creates through import_note at revision 0 and replaces throu
   const blocks = (second.p_input as JsonObject).content_json as JsonObject[]
   assertEquals(props(blocks[0]!).url, FILE_A)
 })
+
+Deno.test('imports Alfred diagram and view fences as visual blocks', () => {
+  const result = markdownToNoteBlocks(['```diagram', 'flow: a -> b', '```', '', '```ui', 'card "Hi"', '```', '', '```swift', 'let x = 1', '```'].join('\n'), {})
+  assertEquals(types(result.blocks), ['diagram', 'generativeUI', 'codeBlock'])
+  assertEquals((result.blocks[0] as JsonObject).props, { source: 'flow: a -> b' })
+  assertEquals((result.blocks[1] as JsonObject).props, { source: 'card "Hi"' })
+})

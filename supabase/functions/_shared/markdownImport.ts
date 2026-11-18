@@ -20,6 +20,9 @@ type Block = JsonObject
 
 const ATTACHMENT_URL = /^manor-attachment:\/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|svg|avif|bmp|heic|tiff?)$/i
+/** Fence languages Alfred writes its diagrams and views in; they import as `diagram` and `generativeUI` blocks. */
+const diagramLanguages = new Set(['diagram', 'alfred', 'dsviz'])
+const generativeUILanguages = new Set(['ui', 'genui'])
 const FILE_EXTENSIONS = /\.(pdf|zip|docx?|xlsx?|pptx?|csv|txt|json|mp3|m4a|wav|mp4|mov|webm|key|numbers|pages)$/i
 
 class Conversion {
@@ -76,8 +79,13 @@ class Conversion {
           }
           return block('bulletListItem', textProps(), content, children)
         })
-      case 'code':
+      case 'code': {
+        // Alfred's visual fences become the note's own visual blocks, as the app's import does.
+        const language = node.lang?.trim().toLowerCase() ?? ''
+        if (diagramLanguages.has(language)) return [{ id: crypto.randomUUID(), type: 'diagram', props: { source: node.value }, children: [] }]
+        if (generativeUILanguages.has(language)) return [{ id: crypto.randomUUID(), type: 'generativeUI', props: { source: node.value }, children: [] }]
         return [block('codeBlock', { language: node.lang?.trim() || 'text' }, [text(node.value, {})])]
+      }
       case 'math':
         return [{ id: crypto.randomUUID(), type: 'mathBlock', props: {}, content: node.value, children: [] }]
       case 'thematicBreak':

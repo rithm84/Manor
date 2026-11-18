@@ -3,7 +3,13 @@ import ManorKit
 
 /// `/alfred`: the composer, generation streaming into an Alfred block, refinement, and the block's actions.
 extension NoteEditorController {
-  var alfredWriter: any NoteAlfredWriting { services.alfredWriter ?? NoteAlfredWriterAdapter.shared }
+  var alfredWriter: any NoteAlfredWriting {
+    if let writer = services.alfredWriter { return writer }
+    #if DEBUG
+    if NoteAlfredDemoWriter.isEnabled { return NoteAlfredDemoWriter.shared }
+    #endif
+    return NoteAlfredWriterAdapter.shared
+  }
 
   var noteTitle: String { services.noteTitle?() ?? "" }
 

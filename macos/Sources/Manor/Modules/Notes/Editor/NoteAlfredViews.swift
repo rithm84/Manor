@@ -24,7 +24,7 @@ final class NoteAlfredBlockState {
 /// The content between is the editor's own read-only block views, laid out by the canvas.
 final class NoteAlfredBlockView: NoteBlockView {
   let state = NoteAlfredBlockState()
-  private var host: NSHostingView<NoteAlfredBlockBody>?
+  private var host: NoteAlfredHostingView<NoteAlfredBlockBody>?
   private var trackingArea: NSTrackingArea?
 
   override var handleAnchorY: CGFloat { 17 }
@@ -55,11 +55,13 @@ final class NoteAlfredBlockView: NoteBlockView {
     state.phase = controller?.alfredRun(for: block.id)?.phase
     state.selected = controller?.selectedBlockIDs.contains(block.id) ?? false
     needsDisplay = true
+    needsLayout = true
   }
 
   override func layout() {
     super.layout()
     host?.frame = bounds
+    if let content = controller?.alfredLayoutContent(block) { host?.chrome = (content.top, content.bottom) }
   }
 
   override func updateTrackingAreas() {
@@ -83,11 +85,18 @@ final class NoteAlfredBlockView: NoteBlockView {
   override func menu(for event: NSEvent) -> NSMenu? { controller?.blockMenu(for: [block.id]) }
 }
 
-/// Lets clicks between the header and footer fall through to the canvas (the content views sit there).
+/// Takes clicks in the header and footer (its controls) and lets clicks between them fall through to the canvas,
+/// where the content's own views sit. The hosting view reports itself for every point, so the split is by
+/// geometry: `chrome` is the height of the header and of the footer.
 final class NoteAlfredHostingView<Content: View>: NSHostingView<Content> {
+  var chrome: (top: CGFloat, bottom: CGFloat) = (0, 0)
+
   override func hitTest(_ point: NSPoint) -> NSView? {
-    let hit = super.hitTest(point)
-    return hit === self ? nil : hit
+    guard let hit = super.hitTest(point) else { return nil }
+    let local = superview.map { convert(point, from: $0) } ?? point
+    let y = isFlipped ? local.y : bounds.height - local.y
+    let inChrome = y <= chrome.top || y >= bounds.height - chrome.bottom
+    return inChrome ? hit : nil
   }
 }
 
@@ -220,6 +229,7 @@ struct NoteAlfredBlockBody: View {
 /// pulsing glyph. With Reduce Motion it holds still.
 struct NoteAlfredThinking: View {
   let request: String
+  var size: CGFloat = NoteTheme.bodySize
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   private var line: String {
@@ -252,10 +262,10 @@ struct NoteAlfredThinking: View {
         }
       }
     }
-    .font(.ui(NoteTheme.bodySize))
+    .font(.ui(size))
     .lineLimit(1)
     .accessibilityElement(children: .combine)
-    .accessibilityLabel("Alfred is writing")
+    .accessibilityLabel("Alfred is working")
   }
 }
 
@@ -377,7 +387,7 @@ final class NoteAlfredPreviewState {
 /// Insert below, Try again, Discard, and a follow-up. Nothing in the note changes until it is applied.
 final class NoteAlfredPreviewView: NoteBlockView {
   let state = NoteAlfredPreviewState()
-  private var host: NSHostingView<NoteAlfredPreviewBody>?
+  private var host: NoteAlfredHostingView<NoteAlfredPreviewBody>?
 
   override var handleAnchorY: CGFloat { 17 }
 
@@ -413,6 +423,7 @@ final class NoteAlfredPreviewView: NoteBlockView {
   override func layout() {
     super.layout()
     host?.frame = bounds
+    if let content = controller?.previewLayoutContent(block) { host?.chrome = (content.top, content.bottom) }
   }
 
   override func draw(_ dirtyRect: NSRect) {

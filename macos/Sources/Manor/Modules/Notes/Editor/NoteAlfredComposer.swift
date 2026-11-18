@@ -259,6 +259,19 @@ final class NoteComposerTextView: NSTextView {
   weak var composer: NoteComposerTextField.Coordinator?
   var placeholder = "" { didSet { needsDisplay = true } }
 
+  /// A plain-text view turns Paste off when the pasteboard holds no text; images (and image files) attach here.
+  override func validateUserInterfaceItem(_ item: any NSValidatedUserInterfaceItem) -> Bool {
+    if item.action == #selector(paste(_:)), Self.pasteboardHasImage { return true }
+    return super.validateUserInterfaceItem(item)
+  }
+
+  private static var pasteboardHasImage: Bool {
+    let pasteboard = NSPasteboard.general
+    return pasteboard.canReadObject(forClasses: [NSImage.self], options: nil)
+      || pasteboard.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true,
+                                                                       .urlReadingContentsConformToTypes: [UTType.image.identifier]])
+  }
+
   override func paste(_ sender: Any?) {
     let pasteboard = NSPasteboard.general
     if let files = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true,

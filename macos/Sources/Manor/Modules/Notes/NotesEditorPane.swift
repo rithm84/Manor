@@ -184,7 +184,7 @@ struct NotesEditorPane: View {
       .sorted { $0.lastOpenedAt > $1.lastOpenedAt }
       .map { NoteMentionCandidate(id: $0.id, title: $0.displayTitle) }
     let scheme = context.gateway.config.urlScheme
-    return NoteEditorServices(
+    var services = NoteEditorServices(
       resolveAttachment: NotesAttachments.resolver(gateway: context.gateway),
       uploadAttachment: NotesAttachments.uploader(gateway: context.gateway, noteId: page.id),
       mentionCandidates: mentions,
@@ -193,6 +193,12 @@ struct NotesEditorPane: View {
       blockLink: { blockId in URL(string: "\(scheme)://notes/\(page.id)#block=\(blockId)") },
       openURL: { url in context.openExternal(url) }
     )
+    services.noteTitle = { [store] in store.draft?.title ?? page.displayTitle }
+    services.openAlfredSettings = { [context] in
+      context.navigate(to: .settings)
+      context.linkTarget = (.settings, ["alfred"], [:])
+    }
+    return services
   }
 
   private var emptyEditor: some View {
