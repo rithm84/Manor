@@ -40,31 +40,31 @@ Manor brings your tasks, habits, notes, and other records together in one place 
 - **Jobs.** A Pipeline board from To apply through Offer with a flow chart of every application, and a Listings view of the SimplifyJobs internship catalog.
 - **Notes.** A block editor with columns, tabs, tables, media, equations, and a live table of contents. Drafts are protected on your Mac before they sync, concurrent edits merge by block, and seven days of versions can be restored.
 - **Bookmarks.** X bookmarks and agent-supplied captures with text and semantic search.
-- **Alfred.** A personal assistant in the notch and the menu bar. General mode answers questions about your screen; Prep mode listens to a call and prepares answers, with live diagrams and charts. Inside Manor, the same shortcut opens Alfred in the window, where it answers about the page you're on and makes changes you ask for, each with Undo. In Notes, `/alfred` writes diagrams, tables, and prose as real blocks, and Command-J rewrites a selection through a preview. It uses your own OpenAI and Deepgram keys and keeps its data on your Mac.
+- **Alfred.** A personal assistant in the notch. Ask it about anything on your screen or any question you have. Inside Manor, the same shortcut opens Alfred in the window, where it answers about the page you're on and makes changes you ask for, each with Undo. In Notes, `/alfred` writes diagrams, tables, and prose as real blocks, and Command-J rewrites a selection through a preview. It uses your own OpenAI key and keeps its data on your Mac.
 - **Weekly reviews.** A scheduled review of habits, mood, focus, and tasks, written by a hosted ChatGPT task and saved back into Manor.
 
 Light and dark modes are both first-class, and Liquid Glass draws the floating chrome on macOS 26.
 
 ## Screenshots
 
-These are captured from the staging build with the synthetic showroom account.
-
 <p align="center">
   <img src="docs/readme/home.png" width="860" alt="Home: the weekly task board with Overdue, Today, Tomorrow, and This Week columns beside today's timeline">
 </p>
 
 <p align="center">
-  <img src="docs/readme/tracking.png" width="420" alt="Tracking history: the month in numbers and separate habit completion and mood and focus trend charts">
-  <img src="docs/readme/problems.png" width="420" alt="Problems: the library of about 10,000 problems with filters, difficulty, companies, and status">
+  <img src="docs/readme/tracking.png" width="860" alt="Tracking history: October in numbers, habit completion and mood and focus trend charts, and the month's check-ins">
 </p>
 
 <p align="center">
-  <img src="docs/readme/jobs.png" width="420" alt="Jobs: the pipeline board of applications by stage">
-  <img src="docs/readme/notes.png" width="420" alt="Notes: the notes list beside a note with headings, a checklist, and a numbered list">
+  <img src="docs/readme/problems.png" width="860" alt="Problems: the library of about 10,000 problems with filters, difficulty, companies, and status">
 </p>
 
 <p align="center">
-  <img src="docs/readme/home-dark.png" width="860" alt="Home in dark mode">
+  <img src="docs/readme/jobs.png" width="860" alt="Jobs: the pipeline board of applications by stage above the application flow">
+</p>
+
+<p align="center">
+  <img src="docs/readme/notes.png" width="860" alt="Notes: the notes list beside a note with headings, a checklist, and a numbered list">
 </p>
 
 ## How it works
