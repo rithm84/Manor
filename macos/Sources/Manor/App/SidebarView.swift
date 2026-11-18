@@ -14,11 +14,10 @@ struct SidebarView: View {
         Spacer()
         IconButton("sidebar.left", label: model.sidebarDocked ? "Hide sidebar" : "Dock sidebar", size: 26) { model.toggleSidebar() }
       }
-      // The window buttons are centered 16 pt below the window's top edge; the floating panel starts 8 pt down.
-      .frame(height: 16)
+      // The window buttons are centered in the 52-point toolbar band; the floating panel starts 8 pt down.
+      .frame(height: WindowChromeMetrics.toolbarHeight - (floating || GlassSupport.isActive ? Space.s2 * 2 : 0))
       .padding(.trailing, Space.s2)
-      .padding(.top, floating || GlassSupport.isActive ? 0 : Space.s2)
-      .padding(.bottom, Space.s6)
+      .padding(.bottom, Space.s3)
 
       VStack(spacing: 2) {
         ForEach(Route.modules) { route in item(route) }

@@ -165,40 +165,6 @@ public struct Pill: View {
 
 // MARK: Checkbox
 
-/// A round completion checkbox with a small settle animation.
-public struct CompletionCheckbox: View {
-  let isOn: Bool
-  let label: String
-  let action: () -> Void
-  @State private var hovering = false
-
-  public init(isOn: Bool, label: String, action: @escaping () -> Void) {
-    self.isOn = isOn
-    self.label = label
-    self.action = action
-  }
-
-  public var body: some View {
-    Button(action: action) {
-      ZStack {
-        Circle().strokeBorder(isOn ? Palette.completion : (hovering ? Palette.ink : Palette.controlBorder), lineWidth: 1.5)
-          .background(Circle().fill(isOn ? Palette.completion : .clear))
-        if isOn {
-          Image(systemName: "checkmark").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.onPrimary)
-            .transition(.scale(scale: 0.5).combined(with: .opacity))
-        }
-      }
-      .frame(width: 18, height: 18)
-      .contentShape(Rectangle().inset(by: -4))
-    }
-    .buttonStyle(.plain)
-    .onHover { hovering = $0 }
-    .animation(Motion.settle, value: isOn)
-    .accessibilityLabel(label)
-    .accessibilityAddTraits(isOn ? .isSelected : [])
-  }
-}
-
 // MARK: Text fields
 
 /// The inset text-field treatment used in dialogs and forms.

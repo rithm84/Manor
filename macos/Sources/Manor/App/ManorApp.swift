@@ -18,6 +18,7 @@ struct ManorApp: App {
         .onOpenURL { model.handle(url: $0) }
         .task { await model.start() }
         .background(AlfredWindowHook(model: model))  // Alfred: reopen and Settings ▸ Alfred
+        .background(WindowChrome())
     }
     .windowStyle(.hiddenTitleBar)
     .defaultSize(width: 1360, height: 860)

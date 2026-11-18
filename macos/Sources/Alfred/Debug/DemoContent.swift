@@ -2,7 +2,7 @@ import Foundation
 
 /// Sample content for `ALFRED_DEMO=1` (UI review without provider keys) and the diagram test corpus.
 enum DemoContent {
-    static let heading = "Two Sum — return indices of the two numbers that add to target"
+    static let heading = "Two Sum: return indices of the two numbers that add to target"
 
     static let answer = """
     **Use one pass with a hash map: for each `x`, look up `target - x` among the values already seen.**

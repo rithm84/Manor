@@ -91,23 +91,6 @@ struct LabeledField<Content: View>: View {
   }
 }
 
-/// A bordered control body matching the text-field treatment, for menus and date buttons.
-struct ControlChrome<Content: View>: View {
-  var focused = false
-  @ViewBuilder let content: () -> Content
-  var body: some View {
-    content()
-      .padding(.horizontal, Space.s3)
-      .frame(minHeight: 32)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .background(RoundedRectangle(cornerRadius: Radius.control, style: .continuous).fill(Palette.surfaceCanvas))
-      .overlay(
-        RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
-          .strokeBorder(focused ? Palette.focusBorder : Palette.hairlineStrong, lineWidth: focused ? 1.5 : 1)
-      )
-  }
-}
-
 /// A menu-backed picker that looks like the other form controls.
 struct MenuField<Value: Hashable>: View {
   let options: [(value: Value, label: String)]
