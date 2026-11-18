@@ -18,9 +18,19 @@ struct SidebarView: View {
       .frame(height: WindowChromeMetrics.toolbarHeight - (floating || GlassSupport.isActive ? Space.s2 * 2 : 0))
       .background(WindowDragRegion())
       .padding(.trailing, Space.s2)
-      .padding(.bottom, Space.s3)
+      .padding(.bottom, Space.s2)
 
-      VStack(spacing: 2) {
+      // The brand, then a breath of space before the modules.
+      HStack(spacing: Space.s2) {
+        ManorLogo(width: 30)
+        Text("Manor").font(.display(Typography.Size.title, weight: .semibold)).tracking(-0.3).foregroundStyle(Palette.ink)
+      }
+      .padding(.horizontal, Space.s4)
+      .padding(.bottom, Space.s6)
+      .accessibilityElement(children: .combine)
+      .accessibilityLabel("Manor")
+
+      VStack(spacing: 3) {
         ForEach(Route.modules) { route in item(route) }
       }
       .padding(.horizontal, Space.s2)
@@ -80,13 +90,13 @@ struct SidebarView: View {
         Text(String(context.account.name.prefix(1)).uppercased())
           .font(.ui(Typography.Size.xs, weight: .semibold))
           .foregroundStyle(Palette.onPrimary)
-          .frame(width: 22, height: 22)
+          .frame(width: 24, height: 24)
           .background(Circle().fill(Palette.primary))
-        Text(context.account.name).font(.ui(Typography.Size.body)).foregroundStyle(Palette.inkBody).lineLimit(1)
+        Text(context.account.name).font(.ui(Typography.Size.md)).foregroundStyle(Palette.inkBody).lineLimit(1)
         Spacer(minLength: 0)
       }
       .padding(.horizontal, Space.s2)
-      .frame(height: 34)
+      .frame(height: 36)
       .contentShape(Rectangle())
       .modifier(SidebarRowFill(selected: false))
     }
@@ -107,13 +117,13 @@ private struct SidebarRow: View {
 
   var body: some View {
     Button(action: action) {
-      HStack(spacing: Space.s2 + 2) {
+      HStack(spacing: Space.s3) {
         Image(systemName: route.systemImage)
-          .font(.system(size: 15, weight: .regular))
+          .font(.system(size: 17, weight: .regular))
           .foregroundStyle(Palette.primary)
-          .frame(width: 22)
+          .frame(width: 24)
         Text(route.title)
-          .font(.ui(Typography.Size.body, weight: selected ? .semibold : .regular))
+          .font(.ui(Typography.Size.md, weight: selected ? .semibold : .regular))
           .foregroundStyle(Palette.ink)
         Spacer(minLength: 0)
         if let badge {
@@ -126,7 +136,7 @@ private struct SidebarRow: View {
         }
       }
       .padding(.horizontal, Space.s2)
-      .frame(height: 32)
+      .frame(height: 36)
       .contentShape(Rectangle())
       .modifier(SidebarRowFill(selected: selected))
     }
