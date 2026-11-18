@@ -137,8 +137,9 @@ public final class ManorSession {
     var params: [(name: String, value: String?)] = []
     if let loginHint { params.append((name: "login_hint", value: loginHint)) }
     do {
-      try await client.auth.signInWithOAuth(provider: .google, redirectTo: config.authRedirectURL, queryParams: params) { session in
-        session.prefersEphemeralWebBrowserSession = false
+      let scheme = config.authRedirectURL.scheme ?? config.urlScheme
+      try await client.auth.signInWithOAuth(provider: .google, redirectTo: config.authRedirectURL, queryParams: params) { @MainActor url in
+        try await OAuthWebSession.run(url, callbackScheme: scheme)
       }
     } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
       return
