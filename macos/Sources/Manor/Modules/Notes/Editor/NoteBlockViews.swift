@@ -416,6 +416,8 @@ final class NoteTextBlockView: NoteBlockView {
   }
 
   private func roman(_ number: Int) -> String {
+    // Roman numerals grow with the number (one "m" per thousand); large starts read as plain numbers.
+    guard number <= 3999 else { return String(number) }
     let table: [(Int, String)] = [(1000, "m"), (900, "cm"), (500, "d"), (400, "cd"), (100, "c"), (90, "xc"), (50, "l"), (40, "xl"), (10, "x"), (9, "ix"), (5, "v"), (4, "iv"), (1, "i")]
     var value = max(number, 1)
     var out = ""

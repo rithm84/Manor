@@ -29,7 +29,12 @@ final class AppModel {
     catch { configError = error.localizedDescription }
   }
 
+  /// Launch setup runs once per process; the main window's `.task` runs it again each time the window reopens.
+  private var started = false
+
   func start() async {
+    guard !started else { return }
+    started = true
     for (name, value) in [(NSWindow.didEnterFullScreenNotification, true), (NSWindow.didExitFullScreenNotification, false)] {
       fullScreenObservers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
         MainActor.assumeIsolated { self?.isFullScreen = value }

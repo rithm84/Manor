@@ -35,7 +35,11 @@ public enum JSONValue: Codable, Hashable, Sendable {
 
   public var string: String? { if case .string(let value) = self { return value }; return nil }
   public var double: Double? { if case .number(let value) = self { return value }; return nil }
-  public var int: Int? { if case .number(let value) = self, value.rounded() == value { return Int(value) }; return nil }
+  /// A whole number that fits in Int; larger or non-finite numbers read as nil instead of trapping.
+  public var int: Int? {
+    if case .number(let value) = self, value.isFinite, value.rounded() == value, abs(value) < 9.0e18 { return Int(value) }
+    return nil
+  }
   public var bool: Bool? { if case .bool(let value) = self { return value }; return nil }
   public var array: [JSONValue]? { if case .array(let value) = self { return value }; return nil }
   public var object: [String: JSONValue]? { if case .object(let value) = self { return value }; return nil }

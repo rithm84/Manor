@@ -93,6 +93,8 @@ final class NotesStore {
 
   @ObservationIgnored private var pending: NoteContent?
   @ObservationIgnored private var protection: Task<Void, Error>?
+  @ObservationIgnored private var newestDraft: NoteContent?
+  @ObservationIgnored private var lastProtectedDraft: NoteContent?
   @ObservationIgnored private var debounce: Task<Void, Never>?
   @ObservationIgnored private var saveRun: Task<[NotePage], Error>?
   @ObservationIgnored private var syncingSince: Date?
@@ -294,22 +296,28 @@ final class NotesStore {
     suppressRecompute = false
   }
 
-  /// Chains a protection after the previous one, so the latest link means the latest draft is on disk.
+  /// Chains a protection after the previous one, so the latest link means the latest draft is on disk. Links don't
+  /// hold their own copy of the note: each writes the newest draft when its turn comes and skips if that's already
+  /// on disk, so fast typing over a slow disk never queues a full document per keystroke.
   private func protect(_ content: NoteContent) {
+    newestDraft = content
     let previous = protection
     let service = self.service
-    let task = Task { @MainActor in
+    let task = Task { @MainActor [weak self] in
       _ = try? await previous?.value
-      try await service.protectDraft(content)
+      guard let self, let draft = self.newestDraft, draft != self.lastProtectedDraft else { return }
+      try await service.protectDraft(draft)
+      self.lastProtectedDraft = draft
     }
     protection = task
+    let id = content.id
     Task { [weak self] in
       do {
         try await task.value
-        if let self, self.pending == content, self.saveState == .protecting { self.setSaveState(.protected) }
+        if let self, let pending = self.pending, pending == self.lastProtectedDraft, self.saveState == .protecting { self.setSaveState(.protected) }
       } catch {
         guard let self else { return }
-        if self.pending?.id == content.id { self.setSaveState(.unprotected) }
+        if self.pending?.id == id { self.setSaveState(.unprotected) }
         self.error = error.localizedDescription
       }
     }
@@ -322,7 +330,10 @@ final class NotesStore {
       var saved: [NotePage] = []
       while let self, let current = self.pending {
         try await self.protection?.value
-        saved.append(try await self.service.updatePage(current))
+        // Only each page's newest saved version is kept; typing that refills `pending` doesn't grow the list.
+        let page = try await self.service.updatePage(current)
+        saved.removeAll { $0.id == page.id }
+        saved.append(page)
         if self.pending == current { self.pending = nil }
       }
       return saved

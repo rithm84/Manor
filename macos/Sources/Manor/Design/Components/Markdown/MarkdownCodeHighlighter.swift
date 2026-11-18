@@ -83,7 +83,9 @@ enum MarkdownCodeHighlighter {
       }
       if char.isNumber, index == 0 || !(chars[index - 1].isLetter || chars[index - 1] == "_") {
         flush()
-        var end = index
+        // Always take at least this character: a digit outside ASCII (10⁵, ½, ٣) isn't a hex digit, and a run that
+        // didn't advance would loop forever appending empty runs.
+        var end = index + 1
         while end < chars.count, chars[end].isHexDigit || chars[end] == "." || chars[end] == "_" || chars[end] == "x" { end += 1 }
         runs.append((String(chars[index..<end]), .number))
         index = end

@@ -141,7 +141,7 @@ struct NoteLayoutEngine {
     for block in blocks {
       var itemNumber: Int?
       if block.kind == .numberedListItem {
-        number = previousNumbered ? number + 1 : (block.props["start"]?.int ?? 1)
+        number = previousNumbered ? number + 1 : min(max(block.props["start"]?.int ?? 1, 0), 999_999_999)
         itemNumber = number
         previousNumbered = true
       } else {

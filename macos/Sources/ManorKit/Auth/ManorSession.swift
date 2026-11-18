@@ -52,13 +52,18 @@ public final class ManorSession {
     )
   }
 
+  private var listening = false
+
   public var account: ManorAccount? {
     if case .signedIn(let account) = state { return account }
     return nil
   }
 
-  /// Restores the stored session and follows auth changes for the rest of the run.
+  /// Restores the stored session and follows auth changes for the rest of the run. Only the first call starts the
+  /// listener; another would run every sign-in and sign-out twice.
   public func start() async {
+    guard !listening else { return }
+    listening = true
     Task { [weak self] in
       guard let self else { return }
       for await (event, session) in self.client.auth.authStateChanges {

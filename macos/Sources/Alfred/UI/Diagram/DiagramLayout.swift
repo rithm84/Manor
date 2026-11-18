@@ -912,7 +912,8 @@ enum DiagramLayout {
         b.add(DItem(id: "\(s.name).axis", shape: .polyline([CGPoint(x: -4, y: 6), CGPoint(x: x(hi) + 4, y: 6)]), stroke: .muted))
         var t = (lo / step).rounded(.down) * step
         var k = 0
-        while t <= hi + 1e-9 {
+        // At large magnitudes adding a step can leave t unchanged; the tick count is capped as well.
+        while t <= hi + 1e-9, k < 60, t + step > t {
             if t >= lo - 1e-9 {
                 b.add(DItem(id: "\(s.name).t\(k)", shape: .polyline([CGPoint(x: x(t), y: 3), CGPoint(x: x(t), y: 9)]), stroke: .muted))
                 b.add(DItem(id: "\(s.name).tl\(k)", shape: .text(trimNumber(t), at: CGPoint(x: x(t), y: -5), anchor: CGPoint(x: 0.5, y: 0.5)), font: .index, textTone: .faint))
@@ -945,7 +946,10 @@ enum DiagramLayout {
     }
 
     static func trimNumber(_ v: Double) -> String {
-        v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v)
+        guard v.isFinite else { return "–" }
+        // Int(v) traps past about 9.2e18; huge whole values print in exponent form instead.
+        if v == v.rounded() { return abs(v) < 1e15 ? String(Int(v)) : String(format: "%.3g", v) }
+        return String(format: "%.1f", v)
     }
 
     // MARK: Graph

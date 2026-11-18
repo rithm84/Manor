@@ -100,9 +100,42 @@ public enum NoteMerge {
   }
 
   /// Longest common subsequence of two id lists: the blocks that keep their relative order and need no move.
+  /// Block ids are unique within a document, so this is the longest increasing run of `right` positions taken in
+  /// `left` order: O(n log n) time and linear memory, where a full table would need N × M integers (about 800 MB
+  /// for two 10,000-block versions).
   static func stableIds(_ left: [String], _ right: [String]) -> Set<String> {
+    guard !left.isEmpty, !right.isEmpty else { return [] }
+    var position: [String: Int] = [:]
+    for (index, id) in right.enumerated() where position[id] == nil { position[id] = index }
+    let unique = Set(left).count == left.count && position.count == right.count
+    guard unique else { return tableStableIds(left, right) }
+    let sequence = left.compactMap { id in position[id].map { (id, $0) } }
+    // Patience sort: tails[k] is the index into `sequence` ending the best run of length k + 1.
+    var tails: [Int] = []
+    var previous = Array(repeating: -1, count: sequence.count)
+    for (index, item) in sequence.enumerated() {
+      var low = 0, high = tails.count
+      while low < high {
+        let middle = (low + high) / 2
+        if sequence[tails[middle]].1 < item.1 { low = middle + 1 } else { high = middle }
+      }
+      if low > 0 { previous[index] = tails[low - 1] }
+      if low == tails.count { tails.append(index) } else { tails[low] = index }
+    }
+    var kept = Set<String>()
+    var cursor = tails.last ?? -1
+    while cursor >= 0 {
+      kept.insert(sequence[cursor].0)
+      cursor = previous[cursor]
+    }
+    return kept
+  }
+
+  /// The table form, for lists with repeated ids (malformed documents); capped so it can never take unbounded memory.
+  private static func tableStableIds(_ left: [String], _ right: [String]) -> Set<String> {
     let rows = left.count, columns = right.count
     guard rows > 0, columns > 0 else { return [] }
+    guard rows * columns <= 4_000_000 else { return Set(left).intersection(right) }
     var table = Array(repeating: Array(repeating: 0, count: columns + 1), count: rows + 1)
     for i in stride(from: rows - 1, through: 0, by: -1) {
       for j in stride(from: columns - 1, through: 0, by: -1) {

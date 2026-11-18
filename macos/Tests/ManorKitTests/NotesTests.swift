@@ -25,6 +25,20 @@ private func page(_ id: String, title: String = "Note", folder: String? = nil, p
 
 @Suite("Note block merge")
 struct NoteMergeTests {
+  @Test func stableIdsKeepTheLongestRunInOrder() {
+    #expect(NoteMerge.stableIds(["a", "b", "c", "d"], ["a", "b", "c", "d"]) == ["a", "b", "c", "d"])
+    // Moving "d" to the front keeps a, b, c in place.
+    #expect(NoteMerge.stableIds(["a", "b", "c", "d"], ["d", "a", "b", "c"]) == ["a", "b", "c"])
+    let swapped = NoteMerge.stableIds(["a", "b", "c", "d"], ["b", "a", "d", "c"])
+    #expect(swapped.count == 2)
+    #expect(NoteMerge.stableIds([], ["a"]).isEmpty)
+    // Large documents finish quickly and keep everything that didn't move.
+    let ids = (0..<20_000).map { "b\($0)" }
+    var moved = ids
+    moved.swapAt(10, 19_000)
+    #expect(NoteMerge.stableIds(ids, moved).count == 19_998)
+  }
+
   @Test func mergesEditsToDifferentBlocksAndReturnsOps() throws {
     let mine = [para("a", "first, edited by me"), para("b", "second"), para("c", "third")]
     let theirs = base + [para("d", "appended elsewhere")]
