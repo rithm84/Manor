@@ -13,3 +13,9 @@ tools/recovery/.bin/
 
 __pycache__/
 /.scratch_*
+
+# Native app build configuration (Supabase URL and publishable key per environment)
+macos/config/*.env
+macos/.build/
+macos/.build-*/
+macos/build/
