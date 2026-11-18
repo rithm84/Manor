@@ -42,6 +42,9 @@ final class NoteTextView: NSTextView {
     importsGraphics = false
     allowsUndo = false
     drawsBackground = false
+    // Views don't clip by default since macOS 14; the selection fill reaches a hair past the frame, and only
+    // the frame repaints when it clears, leaving a sliver under the text.
+    clipsToBounds = true
     isVerticallyResizable = false
     isHorizontallyResizable = false
     textContainerInset = .zero

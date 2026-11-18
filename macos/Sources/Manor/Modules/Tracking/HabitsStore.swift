@@ -195,6 +195,17 @@ final class HabitsStore {
     let saved = await persist("Could not save that check-off") { try await service.setEntry(habitId: habitId, date: date, value: value) }
     guard pending[key]?.sequence == sequence else { return }
     pending[key] = nil
+    if saved != nil {
+      // Edit > Undo puts this day's box back as it was, even after moving to another day.
+      let previousValue = prior?.value ?? 0
+      UndoableAction.register(value > 0 ? "Check Off Habit" : "Clear Habit") { [weak self] in
+        guard let self else { return }
+        Task {
+          await self.persist("Could not undo that check-off") { try await self.service.setEntry(habitId: habitId, date: date, value: previousValue) }
+          await self.load()
+        }
+      }
+    }
     if saved == nil, let latest = state {
       // Only this box goes back; the streaks and pool other results brought in stay.
       let entries = latest.entries.filter { !($0.habitId == habitId && $0.date == date) } + (prior.map { [$0] } ?? [])

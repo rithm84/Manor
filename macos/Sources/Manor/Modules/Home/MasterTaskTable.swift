@@ -243,7 +243,7 @@ private struct TaskFilterPopover: View {
           state.activeViewId = nil
         }
       }
-      Menu {
+      ManorMenuButton {
         ForEach(MasterFilterProperty.allCases, id: \.self) { property in
           Button(property.label) {
             state.rules.append(MasterFilterRule.make(property, today: model.today, firstContext: model.store.contexts.first?.name ?? ""))

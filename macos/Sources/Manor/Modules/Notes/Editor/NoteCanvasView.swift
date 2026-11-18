@@ -252,7 +252,8 @@ final class NoteCanvasView: NSView {
 
   /// Keeps views for blocks within a margin of the visible rect, the focused block, and live media.
   func updateVisibleViews() {
-    guard let controller else { return }
+    // Offscreen (a page kept alive while another shows) nothing is in view; keep the views until it is back.
+    guard let controller, !visibleRect.isEmpty else { return }
     let margin: CGFloat = 900
     let visible = visibleRect.insetBy(dx: 0, dy: -margin)
     let focused = controller.focusedBlockID

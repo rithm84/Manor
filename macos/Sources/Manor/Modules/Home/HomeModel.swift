@@ -131,9 +131,16 @@ final class HomeModel {
   // MARK: Saving, duplicating, deleting
 
   func save(_ task: TaskItem) async throws {
+    let previous = store.task(task.id)
     do {
       try await store.saveTask(task)
       persistError = nil
+      // Edits to one task undo to its earlier version; series-wide changes (this and future) don't.
+      if let previous, task.recurrenceScope == nil, previous != task {
+        registerUndo("Edit Task") { model in
+          Task { try? await model.store.saveTask(previous) }
+        }
+      }
     } catch {
       reportError("Could not save task", error)
       throw error
@@ -142,7 +149,10 @@ final class HomeModel {
 
   func duplicate(_ task: TaskItem) async {
     do {
-      try await store.saveTask(TaskRules.duplicate(task))
+      let copy = try await store.saveTask(TaskRules.duplicate(task))
+      registerUndo("Duplicate Task") { model in
+        Task { _ = try? await model.store.trashTask(copy.id) }
+      }
     } catch {
       reportError("Could not duplicate task", error)
     }
@@ -174,8 +184,7 @@ final class HomeModel {
     Task {
       do {
         guard let snapshot = try await store.trashTask(id) else { return }
-        context.toasts.show("Task moved to Trash", actionLabel: "Undo") { self.restore(snapshot.id) }
-        registerUndo("Delete Task") { model in model.restore(snapshot.id) }
+        context.toasts.showUndoable("Task moved to Trash", undoName: "Delete Task", undoManager: undoManager) { self.restore(snapshot.id) }
       } catch {
         reportError("Could not delete task", error)
       }
@@ -194,8 +203,7 @@ final class HomeModel {
         do { try await model.store.saveBlock(copy) } catch { model.reportError("Could not restore time block", error) }
       }
     }
-    context.toasts.show("Time block deleted", actionLabel: "Undo") { undo(self) }
-    registerUndo("Delete Time Block", undo)
+    context.toasts.showUndoable("Time block deleted", undoName: "Delete Time Block", undoManager: undoManager) { undo(self) }
   }
 
   func restore(_ id: String) {
@@ -244,7 +252,10 @@ final class HomeModel {
         createdAt: TaskDates.isoString(Date()), expiresAt: ScratchTimeline.expiry(date: date, end: TaskDates.time(fromMinutes: end), timeZone: timeZone)
       )
       Task {
-        do { try await store.saveBlock(block) } catch { reportError("Could not create time block", error) }
+        do {
+          try await store.saveBlock(block)
+          registerUndo("Block Time") { model in Task { try? await model.store.deleteBlock(block.id) } }
+        } catch { reportError("Could not create time block", error) }
       }
     }
   }
@@ -278,11 +289,15 @@ final class HomeModel {
 
   func moveBlock(_ id: String, start: Int, end: Int) {
     guard var block = store.block(id) else { return }
+    let previous = block
     block.start = TaskDates.time(fromMinutes: start)
     block.end = TaskDates.time(fromMinutes: end)
     block.expiresAt = ScratchTimeline.expiry(date: block.date, end: block.end, timeZone: timeZone)
     Task {
-      do { try await store.saveBlock(block) } catch { reportError("Could not save time block", error) }
+      do {
+        try await store.saveBlock(block)
+        registerUndo("Move Time Block") { model in Task { try? await model.store.saveBlock(previous) } }
+      } catch { reportError("Could not save time block", error) }
     }
   }
 
@@ -297,6 +312,7 @@ final class HomeModel {
     Task {
       do {
         try await store.saveBlock(block)
+        registerUndo("New Time Block") { model in Task { try? await model.store.deleteBlock(block.id) } }
         blockDetail = IdentifiedString(value: block.id)
       } catch {
         reportError("Could not create time block", error)

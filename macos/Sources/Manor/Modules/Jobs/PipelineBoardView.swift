@@ -308,7 +308,7 @@ struct JobRoleMenu: View {
   @State private var hovering = false
 
   var body: some View {
-    Menu {
+    ManorMenuButton {
       JobRoleMenuItems(role: role, actions: actions)
     } label: {
       Image(systemName: "ellipsis")

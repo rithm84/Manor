@@ -286,7 +286,8 @@ struct ManorSelectList<Value: Hashable>: View {
         }
       }
     }
-    .frame(width: width ?? fittedWidth, alignment: .leading)
+    // Never narrower than the trigger, so a list under a wide property row has full-width rows.
+    .frame(width: max(width ?? fittedWidth, popover?.minimumWidth ?? 0), alignment: .leading)
     .onAppear {
       if searchable { searchFocused = true }
       popover?.onKey(handle)
@@ -313,6 +314,8 @@ struct ManorSelectList<Value: Hashable>: View {
       )
     }
     .buttonStyle(.plain)
+    // The row's own highlight shows keyboard position; the system ring would draw a square box over it.
+    .focusEffectDisabled()
     .disabled(!selectable(row))
     .onHover { if $0, selectable(row) { highlighted = row.id } }
     .accessibilityLabel(label)

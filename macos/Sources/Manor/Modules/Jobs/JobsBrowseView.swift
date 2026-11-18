@@ -235,7 +235,7 @@ private struct BrowseFilterPopover: View {
           rules.removeAll { $0.id == rule.id }
         }
       }
-      Menu {
+      ManorMenuButton {
         ForEach(properties) { property in
           Button(property.label) {
             if let rule = try? BrowseFilterRule.make(property, today: today, terms: terms, categories: categories) { rules.append(rule) }

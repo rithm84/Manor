@@ -266,20 +266,22 @@ struct HomePropertyMenu<Content: View, Label: View>: View {
   @ViewBuilder let label: () -> Label
   @State private var hovering = false
 
+  @State private var open = false
+
   var body: some View {
-    Menu(content: content) {
+    // Manor's own menu in a popover rather than the system menu, so it matches the other pickers in both themes.
+    Button { open.toggle() } label: {
       HStack(spacing: Space.s1) {
         label()
         Spacer(minLength: Space.s1)
-        Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(Palette.inkMuted)
+        Image(systemName: open ? "chevron.up" : "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(Palette.inkMuted)
       }
       .padding(.horizontal, Space.s2)
       .frame(height: 30)
       .contentShape(Rectangle())
     }
-    .menuStyle(.button)
     .buttonStyle(.plain)
-    .menuIndicator(.hidden)
+    .manorPopover(isPresented: $open) { ManorMenuList(content: content) }
     .frame(height: 30)
     .background(RoundedRectangle(cornerRadius: Radius.control, style: .continuous).fill(hovering ? Palette.surfaceHover : .clear))
     .onHover { hovering = $0 }

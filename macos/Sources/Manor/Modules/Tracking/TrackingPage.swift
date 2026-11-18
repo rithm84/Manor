@@ -236,9 +236,9 @@ struct TrackingContent: View {
     case .retired:
       if detailId == id { detailId = nil }
       // Retiring is reversible while the toast is up: the same-day reactivation leaves no gap.
-      context.toasts.show("\(name) moved to the archive", actionLabel: "Undo") { setStatus(id, .active) }
+      context.toasts.showUndoable("\(name) moved to the archive", undoName: "Retire Habit") { setStatus(id, .active) }
     case .paused:
-      context.toasts.show("\(name) paused", actionLabel: "Undo") { setStatus(id, .active) }
+      context.toasts.showUndoable("\(name) paused", undoName: "Pause Habit") { setStatus(id, .active) }
     case .active:
       break
     }

@@ -258,8 +258,9 @@ final class ManorPopoverPanel: NSPanel {
 /// (Escape, outside clicks, app switches), and returning focus.
 @MainActor
 final class ManorPopoverController: NSObject {
-  /// Room around the card for its shadow.
-  static let margin: CGFloat = 20
+  /// Room around the card for its whole shadow (18-point blur, 8 points down); a tighter panel cuts the shadow
+  /// off in a visible rectangle.
+  static let margin: CGFloat = 40
   private static let gap: CGFloat = 4
   /// Open popovers, oldest first, so Escape and outside clicks close the topmost and nested ones stay open.
   private static var stack: [ManorPopoverController] = []

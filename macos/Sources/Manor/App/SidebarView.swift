@@ -76,9 +76,16 @@ struct SidebarView: View {
   }
 
   private var accountRow: some View {
-    Menu {
+    ManorMenuButton {
       Text(context.account.email)
-      Divider()
+        .font(.ui(Typography.Size.xs))
+        .foregroundStyle(Palette.inkMuted)
+        .lineLimit(1)
+        .truncationMode(.middle)
+        .padding(.horizontal, Space.s2)
+        .padding(.top, Space.s1)
+        .padding(.bottom, 2)
+      Divider().padding(.vertical, 2)
       Button("Settings") { context.navigate(to: .settings) }
       Button("Sign out") {
         Task {

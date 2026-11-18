@@ -109,7 +109,7 @@ struct NotesEditorPane: View {
   }
 
   private func actionsMenu(_ page: NotePage) -> some View {
-    Menu {
+    ManorMenuButton {
       if page.status == .active {
         Button { Task { await store.createPage(parentId: page.id) } } label: { Label("Add subpage", systemImage: "doc.badge.plus") }
         Button { store.dialog = .move(page) } label: { Label("Move to…", systemImage: "folder") }

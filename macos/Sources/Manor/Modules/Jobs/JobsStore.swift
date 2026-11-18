@@ -162,11 +162,31 @@ final class JobsStore {
 
   /// Saves the role dialog: stage and every date together.
   func save(roleId: String, fields: JobRoleFields, expectedRevision: Int) async throws {
-    let previous = role(roleId)?.stage
+    let before = role(roleId)
+    let previous = before?.stage
     try await service.updateRole(id: roleId, fields: fields, expectedRevision: expectedRevision)
     persistError = nil
     await reload()
     if let previous, previous.column != fields.stage.column { flash(roleId) }
+    if let before, before.fields != fields {
+      registerRestore(roleId, to: before.fields, name: previous != fields.stage ? "Move Role" : "Edit Role")
+    }
+  }
+
+  /// Edit > Undo puts a role's fields back, against whatever revision it has by then.
+  private func registerRestore(_ roleId: String, to fields: JobRoleFields, name: String) {
+    UndoableAction.register(name) { [weak self] in
+      guard let self else { return }
+      Task {
+        guard let current = self.role(roleId) else { return }
+        do {
+          try await self.service.updateRole(id: roleId, fields: fields, expectedRevision: current.revision)
+          await self.reload()
+        } catch {
+          self.persistError = "Could not undo that change. \(error.localizedDescription)"
+        }
+      }
+    }
   }
 
   func markOaDone(_ roleId: String) async {
@@ -177,6 +197,7 @@ final class JobsStore {
       try await service.updateRole(id: roleId, fields: fields, expectedRevision: role.revision)
       persistError = nil
       await reload()
+      registerRestore(roleId, to: role.fields, name: "Mark OA Done")
     } catch {
       persistError = "Could not mark the OA done. \(error.localizedDescription)"
     }
@@ -189,8 +210,12 @@ final class JobsStore {
       let revision = try await service.trashRole(id: roleId, expectedRevision: role.revision)
       persistError = nil
       await reload()
-      toasts.show("\(role.company) moved to Trash", actionLabel: revision == nil ? nil : "Undo") { [weak self] in
-        guard let self, let revision else { return }
+      guard let revision else {
+        toasts.show("\(role.company) moved to Trash")
+        return
+      }
+      toasts.showUndoable("\(role.company) moved to Trash", undoName: "Delete Role") { [weak self] in
+        guard let self else { return }
         Task {
           do {
             try await self.service.restoreRole(id: roleId, expectedRevision: revision)

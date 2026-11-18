@@ -164,7 +164,7 @@ struct ProblemMistakesView: View {
     Task {
       do {
         try await store.deleteMistake(note)
-        context.toasts.show("Note deleted", actionLabel: "Undo") {
+        context.toasts.showUndoable("Note deleted", undoName: "Delete Note") {
           Task { try? await store.addMistake(note.text) }
         }
       } catch {

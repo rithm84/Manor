@@ -120,6 +120,7 @@ private struct NoteEditorSurface: NSViewRepresentable {
   let onFindCommand: (() -> Void)?
   let header: AnyView?
   let onChange: ([JSONValue]) -> Void
+  @Environment(\.pageIsActive) private var pageIsActive
 
   func makeNSView(context: Context) -> NoteEditorScrollView {
     NoteEditorScrollView(controller: model.controller)
@@ -134,6 +135,8 @@ private struct NoteEditorSurface: NSViewRepresentable {
     controller.load(blocks, documentID: documentID, externalRevision: externalRevision)
     controller.setExternalFind(query: findQuery, index: findIndex)
     view.setHeader(header)
+    // Coming back on screen moves the page without a scroll, so the canvas lays out the blocks now in view.
+    if pageIsActive { DispatchQueue.main.async { view.canvas.updateVisibleViews() } }
   }
 
   static func dismantleNSView(_ view: NoteEditorScrollView, coordinator: ()) {
@@ -285,7 +288,8 @@ final class NoteEditorScrollView: NSScrollView {
   /// Command-Z with nothing focused (after clicking away) still reaches the note's history.
   override func performKeyEquivalent(with event: NSEvent) -> Bool {
     let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
-    if let window, window.firstResponder === window || window.firstResponder == nil,
+    // Only while the editor is on screen: a page kept alive offscreen must not take Command-Z from the page in view.
+    if let window, !visibleRect.isEmpty, window.firstResponder === window || window.firstResponder == nil,
        event.charactersIgnoringModifiers?.lowercased() == "z", flags == .command || flags == [.command, .shift] {
       if flags.contains(.shift) { controller.redo() } else { controller.undo() }
       return true

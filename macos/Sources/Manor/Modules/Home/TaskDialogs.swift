@@ -73,20 +73,16 @@ struct TaskDeadlineControl: View {
   }
 }
 
-/// Estimate, Priority, and Status pickers.
+/// Estimate, Priority, and Status pickers: Manor's select with the value's pill, "None" clearing the optional ones.
 struct TaskEstimateMenu: View {
   let value: TaskEstimate?
   var placeholder = "None"
   let onChange: (TaskEstimate?) -> Void
   var body: some View {
-    HomePropertyMenu(accessibilityLabel: "Time estimate") {
-      ForEach(TaskEstimate.allCases, id: \.self) { option in CheckedMenuItem(option.label, selected: value == option) { onChange(option) } }
-      if value != nil {
-        Divider()
-        Button("Clear") { onChange(nil) }
-      }
-    } label: {
-      if let value { HomePill(text: value.label, tone: HomeTone(value)) } else { HomeEmptyValue(text: placeholder) }
+    ManorSelect("Time estimate", selection: Binding(get: { value }, set: { onChange($0) }),
+                options: TaskEstimate.allCases.map { ManorSelectOption($0, $0.label) }, placeholder: placeholder,
+                noneLabel: "None", style: .inline) { option in
+      HomePill(text: option.label, tone: HomeTone(option.value))
     }
   }
 }
@@ -96,14 +92,10 @@ struct TaskPriorityMenu: View {
   var placeholder = "None"
   let onChange: (TaskPriority?) -> Void
   var body: some View {
-    HomePropertyMenu(accessibilityLabel: "Priority") {
-      ForEach(TaskPriority.allCases, id: \.self) { option in CheckedMenuItem(option.label, selected: value == option) { onChange(option) } }
-      if value != nil {
-        Divider()
-        Button("Clear") { onChange(nil) }
-      }
-    } label: {
-      if let value { HomePill(text: value.label, tone: HomeTone(value)) } else { HomeEmptyValue(text: placeholder) }
+    ManorSelect("Priority", selection: Binding(get: { value }, set: { onChange($0) }),
+                options: TaskPriority.allCases.map { ManorSelectOption($0, $0.label) }, placeholder: placeholder,
+                noneLabel: "None", style: .inline) { option in
+      HomePill(text: option.label, tone: HomeTone(option.value))
     }
   }
 }
@@ -112,10 +104,9 @@ struct TaskStatusMenu: View {
   let value: TaskStatus
   let onChange: (TaskStatus) -> Void
   var body: some View {
-    HomePropertyMenu(accessibilityLabel: "Status") {
-      ForEach(TaskStatus.allCases, id: \.self) { option in CheckedMenuItem(option.label, selected: value == option) { onChange(option) } }
-    } label: {
-      HomePill(text: value.label, tone: HomeTone(value))
+    ManorSelect("Status", selection: Binding(get: { value }, set: { onChange($0) }),
+                options: TaskStatus.allCases.map { ManorSelectOption($0, $0.label) }, style: .inline) { option in
+      HomePill(text: option.label, tone: HomeTone(option.value))
     }
   }
 }
@@ -171,6 +162,7 @@ struct TaskDetailDialog: View {
   @FocusState private var titleFocused: Bool
   /// The caret lands after the title instead of selecting all of it, so a stray keystroke never replaces it.
   @State private var titleSelection: TextSelection?
+  @State private var caretPending = false
 
   var body: some View {
     VStack(spacing: 0) {
@@ -183,7 +175,18 @@ struct TaskDetailDialog: View {
               .font(.ui(21, weight: .semibold))
               .foregroundStyle(Palette.ink)
               .focused($titleFocused)
-              .onSubmit { close() }
+              // Return leaves the title first, so the field doesn't show its text selected while the task saves.
+              .onSubmit {
+                titleFocused = false
+                close()
+              }
+              // Focus arrives after the dialog appears and selects the whole title; once it lands, the caret
+              // moves to the end. Only the first focus: a click into the title keeps its own caret.
+              .onChange(of: titleFocused) { _, focused in
+                guard focused, caretPending, let title = self.draft?.title else { return }
+                caretPending = false
+                DispatchQueue.main.async { titleSelection = TextSelection(insertionPoint: title.endIndex) }
+              }
               .padding(.horizontal, Space.s5)
               .padding(.top, Space.s5)
               .padding(.bottom, Space.s3)
@@ -227,6 +230,7 @@ struct TaskDetailDialog: View {
     baseline = task
     error = nil
     repeatsOpen = false
+    caretPending = true
     titleFocused = !request.dueAttention
     if let title = task?.title {
       DispatchQueue.main.async { titleSelection = TextSelection(insertionPoint: title.endIndex) }

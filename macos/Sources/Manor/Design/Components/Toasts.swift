@@ -1,3 +1,4 @@
+import AppKit
 import Observation
 import SwiftUI
 
@@ -30,6 +31,13 @@ public final class ToastCenter {
   }
 
   public func showError(_ error: Error) { show(error.localizedDescription) }
+
+  /// Shows a notice with Undo that Edit > Undo (Command-Z) also performs, under `undoName`. Whichever runs first
+  /// undoes; the other then does nothing. `undoManager` defaults to the main window's.
+  public func showUndoable(_ message: String, undoName: String, undoManager: UndoManager? = nil, undo: @escaping () -> Void) {
+    let action = UndoableAction.register(undoName, on: undoManager, undo)
+    show(message, actionLabel: "Undo") { action.run() }
+  }
 
   public func perform(_ toast: Toast) {
     toast.action?()
@@ -68,5 +76,39 @@ struct ToastHost: View {
     .frame(maxWidth: .infinity)
     .animation(Motion.panel, value: toasts.current)
     .allowsHitTesting(toasts.current != nil)
+  }
+}
+
+/// One undo that both a toast and Edit > Undo can perform, at most once. Running it from the toast withdraws the
+/// Edit > Undo entry, so Command-Z then moves on to the change before it.
+@MainActor
+public final class UndoableAction {
+  private var undo: (() -> Void)?
+  private weak var manager: UndoManager?
+
+  private init(_ undo: @escaping () -> Void) { self.undo = undo }
+
+  /// Registers `undo` with `manager` (or the main window's) and returns the shared action.
+  @discardableResult
+  public static func register(_ name: String, on manager: UndoManager? = nil, _ undo: @escaping () -> Void) -> UndoableAction {
+    let action = UndoableAction(undo)
+    if let manager = manager ?? NSApp.mainWindow?.undoManager ?? NSApp.keyWindow?.undoManager {
+      action.manager = manager
+      manager.registerUndo(withTarget: action) { action in MainActor.assumeIsolated { action.fire() } }
+      manager.setActionName(name)
+    }
+    return action
+  }
+
+  /// Runs the undo once, withdrawing its Edit > Undo entry.
+  public func run() {
+    manager?.removeAllActions(withTarget: self)
+    fire()
+  }
+
+  private func fire() {
+    guard let undo else { return }
+    self.undo = nil
+    undo()
   }
 }

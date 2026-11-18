@@ -584,7 +584,7 @@ final class NotesStore {
     }, run: { try await service.trashPages(ids) })
     guard state != nil else { return }
     if let selectedId, ids.contains(selectedId) { select(nil) }
-    toasts.show(ids.count == 1 ? "Note moved to Trash" : "\(ids.count) notes moved to Trash", actionLabel: "Undo") { [weak self] in
+    toasts.showUndoable(ids.count == 1 ? "Note moved to Trash" : "\(ids.count) notes moved to Trash", undoName: "Move to Trash") { [weak self] in
       Task { await self?.restore(ids) }
     }
   }

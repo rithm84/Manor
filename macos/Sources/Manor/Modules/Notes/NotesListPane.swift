@@ -35,7 +35,7 @@ struct NotesListPane: View {
       Spacer()
     }
     // With the app sidebar hidden the rail sits under the window buttons, so it starts below them.
-    .padding(.top, buttonsClearance > 0 ? 40 : Space.s2)
+    .padding(.top, buttonsClearance > 0 ? WindowChromeMetrics.toolbarHeight : Space.s2)
     .frame(width: Self.railWidth)
     .frame(maxHeight: .infinity)
   }
@@ -74,7 +74,7 @@ struct NotesListPane: View {
     .padding(.horizontal, Space.s2)
     .frame(height: 46)
     // With the app sidebar hidden the pane's top-left sits under the window buttons; the header starts below them.
-    .padding(.top, buttonsClearance > 0 ? 24 : 0)
+    .padding(.top, buttonsClearance > 0 ? WindowChromeMetrics.toolbarHeight - Space.s2 : 0)
   }
 
   private var scopeTrigger: some View {
