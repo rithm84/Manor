@@ -1,6 +1,6 @@
 # Releases and updates
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -28,7 +28,7 @@ Manor Signing is a self-signed code-signing certificate in the release Mac's key
 
 ## Publishing
 
-`macos/scripts/release.sh production <version> [notes.md]` publishes a production release; `release.sh staging [notes.md]` replaces the assets of the rolling `staging` prerelease.
+`macos/scripts/release.sh production <version> [notes.md]` publishes a production release; `release.sh staging [notes.md]` replaces the assets of the rolling `staging` prerelease. `release-and-install.sh <version> [notes.md]` checks the prerequisites first (the certificate, the update key, a signed-in GitHub CLI, and the production build settings, which it writes from the project's publishable key when missing), runs the production release, and installs the new build in Applications, moving the previous copy to the Trash. A version already recorded in `VERSION` is tagged at the current commit.
 
 - It refuses a working tree with uncommitted changes, because the published build would match no commit, and refuses a production tag that already exists, because a published version is never replaced.
 - For production it writes the version to `macos/VERSION`, commits it, builds, tags `v<version>`, pushes, and creates the release marked latest.

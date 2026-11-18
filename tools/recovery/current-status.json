@@ -215,6 +215,12 @@
       "sha256": "61d2af31e15127ce9fb93cef933f04866b3700645c910799f1cc383072f861a3",
       "staging_state": "applied_and_recorded",
       "production_state": "applied_and_recorded"
+    },
+    {
+      "file": "supabase/migrations/20261117120000_remove_daily_synthesis_and_alfred.sql",
+      "sha256": "f487a98650a90ddceb774ee22db6ff188b67dfb9e02a2c8a980ca8e369e87898",
+      "staging_state": "applied_and_recorded",
+      "production_state": "applied_and_recorded"
     }
   ],
   "validation": {
@@ -426,5 +432,5 @@
     "snapshot": "output/prod-snapshot-2026-09-12 (local, gitignored)"
   },
   "journal_removed": "2026-09-12: schema, functions, package, and tooling removed; the 20260910041753 migration remains as deployed history",
-  "daily_synthesis_and_alfred_removed": "2026-11-17: 20261117120000_remove_daily_synthesis_and_alfred drops the synthesis fields, commit_debrief, and the Alfred tables; applied and recorded on staging, production pending"
+  "daily_synthesis_and_alfred_removed": "2026-11-17: 20261117120000_remove_daily_synthesis_and_alfred drops the synthesis fields, commit_debrief, and the Alfred tables; applied and recorded on staging 2026-11-17 and on production 2026-11-18 (production had no synthesis text; 28 Alfred memories and 20 Alfred actions were removed, after the 2026-11-17 daily backup)"
 }

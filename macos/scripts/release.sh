@@ -10,6 +10,7 @@
 set -euo pipefail
 
 MODE="${1:?production or staging}"
+CALLER="$PWD"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 REPO="rithm84/Manor"
@@ -24,6 +25,10 @@ else
   TAG="staging"
 fi
 
+# A relative notes path names a file from where the script was run, not from macos/.
+[[ -n "$NOTES" && "$NOTES" != /* ]] && NOTES="$CALLER/$NOTES"
+[[ -z "$NOTES" || -f "$NOTES" ]] || { echo "No release notes at $NOTES" >&2; exit 1; }
+
 if [[ -n "$(git status --porcelain)" ]]; then
   echo "The working tree has uncommitted changes; a published build must match a commit." >&2
   exit 1
@@ -37,7 +42,8 @@ fi
 if [[ "$MODE" == production ]]; then
   echo "$VERSION" > VERSION
   git add VERSION
-  git commit -m "Release Manor $VERSION" >/dev/null
+  # VERSION may already name this release; then there is nothing to commit and the tag goes on HEAD.
+  git diff --cached --quiet || git commit -m "Release Manor $VERSION" >/dev/null
 fi
 
 scripts/build-app.sh "$MODE"

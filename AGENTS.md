@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 Operational guide for coding agents working on Manor.
 
@@ -46,6 +46,7 @@ Run from the repository root unless noted:
 - `swift build --package-path macos` and `swift test --package-path macos`: build the app and run the unit tests; required after code changes.
 - `macos/scripts/build-app.sh [production|staging] [--debug] [--open]`: build, bundle, sign with the Manor Signing certificate, and register `Manor.app` or `Manor Staging.app` in `macos/build/`.
 - `macos/scripts/release.sh production <version> [notes.md]` and `macos/scripts/release.sh staging [notes.md]`: build, sign, and publish an update to GitHub Releases. Requires a clean tree and the Ed25519 key at `~/.config/manor/update_ed25519.key`.
+- `macos/scripts/release-and-install.sh <version> [notes.md]`: check the release prerequisites, publish a production release with `release.sh`, and install it in Applications on this Mac (the previous copy goes to the Trash).
 - `macos/scripts/staging-session.sh [email]`: sign the installed staging app in as a synthetic staging user without Google (`PRINT_LINK=1` prints the link). Staging only.
 - `npm --prefix supabase run typecheck` and `npm --prefix supabase test`: backend type checks and Deno tests.
 - `npm --prefix docs/diagrams ci` once, then `npm --prefix docs/diagrams run render`: render every diagram in `docs/diagrams/pele/` to `docs/diagrams/svg/` (pass names after `--` to render only those).

@@ -116,7 +116,6 @@ The production project carries the applied migrations over the preserved account
 
 Open items:
 
-- The migration that removes the daily synthesis and the old server-side assistant tables (`20261117120000_remove_daily_synthesis_and_alfred.sql`) is applied on staging; production is pending.
 - The staging Google OAuth client rejects the staging Supabase callbacks, so staging sign-in and calendar consent are verified up to Google's page; staging sessions come from `scripts/staging-session.sh`.
 - Hosted ChatGPT registration and an unattended weekly review run against production are unverified.
 - The production X account needs reconnecting; its legacy token is rejected.
