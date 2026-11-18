@@ -140,6 +140,7 @@ struct SettingsShortcutsSection: View {
         Shortcut(keys: ["⌘", "\\"], label: "Hide or dock the sidebar"),
         Shortcut(keys: ["⌘", "N"], label: "New task, habit, role, or note on Home, Tracking, Jobs, and Notes"),
         Shortcut(keys: ["⌘", ","], label: "Open Settings"),
+        Shortcut(keys: ["⌃", "⌥", "H"], label: "Ask Alfred about this page, or tell it what to change"),
         Shortcut(keys: ["Esc"], label: "Clear a search field, then close the topmost menu or dialog")
       ]),
       ("Pages", pages),
@@ -157,7 +158,9 @@ struct SettingsShortcutsSection: View {
       ]),
       ("Notes", [
         Shortcut(keys: ["⌘", "S"], label: "Save the open note now"),
-        Shortcut(keys: ["⌘", "⇧", "F"], label: "Search notes")
+        Shortcut(keys: ["⌘", "⇧", "F"], label: "Search notes"),
+        Shortcut(keys: ["⌘", "J"], label: "Edit the selection with Alfred"),
+        Shortcut(keys: ["/"], label: "Insert a block, or type /alfred to write with Alfred")
       ])
     ]
   }

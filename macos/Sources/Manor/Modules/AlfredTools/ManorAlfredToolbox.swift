@@ -17,7 +17,17 @@ final class ManorAlfredToolbox: AlfredToolbox {
 
   init(context: AppContext) {
     self.context = context
-    tools = ManorToolCatalog.all.map { AlfredTool(name: $0.name.rawValue, description: $0.description, parameters: $0.parameters) }
+    tools = ManorToolCatalog.all.map {
+      AlfredTool(name: $0.name.rawValue, description: $0.description, parameters: $0.parameters, confirmation: Self.confirmation(for: $0.name))
+    }
+  }
+
+  /// Tools without an inverse ask first, so a misread request can't end something by surprise.
+  static func confirmation(for tool: ManorToolName) -> AlfredToolConfirmation? {
+    switch tool {
+    case .stopPomodoro: AlfredToolConfirmation(question: "End the current Pomodoro session? The time so far is kept.", action: "End session")
+    default: nil
+    }
   }
 
   var gateway: Gateway { context.gateway }

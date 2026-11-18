@@ -14,11 +14,14 @@ public struct AlfredTool: @unchecked Sendable {
     /// `type` (string, integer, number, boolean, array, object), `enum`, `required`, `items`, `minimum`, `maximum`,
     /// `minItems`, `maxItems`, and `additionalProperties: false`.
     public let parameters: [String: Any]
+    /// Set for tools that can't be undone: Alfred asks the user first and runs the call only once they approve.
+    public let confirmation: AlfredToolConfirmation?
 
-    public init(name: String, description: String, parameters: [String: Any]) {
+    public init(name: String, description: String, parameters: [String: Any], confirmation: AlfredToolConfirmation? = nil) {
         self.name = name
         self.description = description
         self.parameters = parameters
+        self.confirmation = confirmation
     }
 
     /// The Responses API function-tool definition.
@@ -29,6 +32,18 @@ public struct AlfredTool: @unchecked Sendable {
     /// Checks `arguments` against `parameters`; returns a reader-facing problem, or nil when they're valid.
     public func validate(_ arguments: [String: Any]) -> String? {
         AlfredSchema.problem(in: arguments, schema: parameters, path: "")
+    }
+}
+
+/// The question Alfred asks before a tool that can't be undone ("End the focus session?") and the label of the
+/// button that approves it ("End session").
+public struct AlfredToolConfirmation: Sendable, Equatable {
+    public let question: String
+    public let action: String
+
+    public init(question: String, action: String) {
+        self.question = question
+        self.action = action
     }
 }
 

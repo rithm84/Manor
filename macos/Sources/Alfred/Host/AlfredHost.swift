@@ -23,12 +23,17 @@ public final class AlfredHost {
         public var openSettings: () -> Void
         /// Quit Manor for real, Alfred included.
         public var quitManor: () -> Void
+        /// Offered each hotkey first; returns true when Manor handled it in its own window (in-app Alfred), so the
+        /// overlay stays put.
+        public var handleInApp: (HotkeyAction) -> Bool
 
-        public init(appName: String, openManor: @escaping () -> Void, openSettings: @escaping () -> Void, quitManor: @escaping () -> Void) {
+        public init(appName: String, openManor: @escaping () -> Void, openSettings: @escaping () -> Void, quitManor: @escaping () -> Void,
+                    handleInApp: @escaping (HotkeyAction) -> Bool = { _ in false }) {
             self.appName = appName
             self.openManor = openManor
             self.openSettings = openSettings
             self.quitManor = quitManor
+            self.handleInApp = handleInApp
         }
     }
 
@@ -74,7 +79,10 @@ public final class AlfredHost {
         state.openSettings = { [weak self] in self?.actions?.openSettings() }
         state.openManor = { [weak self] in self?.actions?.openManor() }
         overlay = OverlayController(state: state)
-        let hotkeys = HotkeyCenter { [weak state] action in state?.handle(action) }
+        let hotkeys = HotkeyCenter { [weak self, weak state] action in
+            if self?.actions?.handleInApp(action) == true { return }
+            state?.handle(action)
+        }
         hotkeys.register(HotkeyAction.actions(for: mode))
         self.hotkeys = hotkeys
         statusMenu = StatusMenu(state: state, actions: { [weak self] in self?.actions })

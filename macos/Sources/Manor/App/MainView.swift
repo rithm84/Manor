@@ -37,6 +37,7 @@ struct MainView: View {
     .overlay(alignment: .leading) { floatingSidebar }
     .overlay(alignment: .leading) { sidebarScrim }
     .overlay { consentDialog }
+    .modifier(AlfredDialogHost())
     .modifier(PomodoroAppHook())
     .background(Palette.surfaceCanvas)
     .onChange(of: context.route, initial: true) { _, route in

@@ -52,6 +52,11 @@ struct Config: Equatable {
     var routerTier: String?
     var routerEffort: String?
     var answerMaxOutputTokens: Int
+    /// In-app Alfred acts in Manor through function calling on OpenAI's Responses API: the answer model when the
+    /// answer provider is OpenAI, otherwise OpenAI's default.
+    var assistantModel: String
+    var assistantTier: String?
+    var assistantEffort: String?
 
     var deepgramKey: String?
     var deepgramModel: String
@@ -160,6 +165,10 @@ struct Config: Equatable {
         answerModel = str("ALFRED_ANSWER_MODEL") ?? a.model
         answerTier = tier("ALFRED_ANSWER_TIER", a.tier)
         answerEffort = str("ALFRED_ANSWER_EFFORT") ?? a.effort
+        let o = defaults(.openai, answer: true)
+        assistantModel = answerProvider == .openai ? answerModel : o.model
+        assistantTier = answerProvider == .openai ? answerTier : o.tier
+        assistantEffort = answerProvider == .openai ? answerEffort : o.effort
         // GPT-6 Luna on the fast tier, no reasoning: ~0.7 s for the yes/no with a low-detail screenshot
         // (Terra fast was ~1.05 s).
         let router = str("ALFRED_ROUTER_MODEL") ?? "gpt-6-luna"

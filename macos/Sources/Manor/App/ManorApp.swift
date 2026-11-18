@@ -68,6 +68,10 @@ struct ManorCommands: Commands {
       Button(model.sidebarDocked ? "Hide Sidebar" : "Show Sidebar") { model.toggleSidebar() }
         .keyboardShortcut("\\")
       Divider()
+      Button("Ask Alfred") { AlfredDialogModel.shared.toggle() }
+        .keyboardShortcut("h", modifiers: [.control, .option])
+        .disabled(model.context == nil)
+      Divider()
       ForEach(Array(Route.modules.enumerated()), id: \.element) { index, route in
         Button(route.title) { model.context?.navigate(to: route) }
           .keyboardShortcut(KeyEquivalent(Character(String(index + 1))))

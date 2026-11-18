@@ -27,7 +27,8 @@ final class AlfredBridge {
       appName: name,
       openManor: { [weak self] in self?.openManor() },
       openSettings: { [weak self] in self?.openSettings() },
-      quitManor: { [weak self] in self?.quit() }
+      quitManor: { [weak self] in self?.quit() },
+      handleInApp: { action in AlfredDialogModel.shared.handleHotkey(action) }
     ))
   }
 
