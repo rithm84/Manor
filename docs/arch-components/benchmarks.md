@@ -47,6 +47,7 @@ The retired desktop shell switched routes in 180 to 750 ms before its local mirr
 | After prewarming Notes and Problems | 47 to 49 MB | 2026-11-18 |
 | After showing Home, Notes, and Problems | 104 to 105 MB | 2026-11-18 |
 | After visiting every page | about 145 MB, about 50 MB of it the Problems library | 2026-11-18 |
+| After 60 hover cards, 30 signature help cycles, 8 rounds of every page, and Notes typing and selection | 156 MB, peak 160 MB, 14 KB leaked | 2026-11-18 |
 
 ## Upload recovery
 

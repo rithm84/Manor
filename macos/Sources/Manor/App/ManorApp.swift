@@ -29,6 +29,7 @@ struct ManorApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationWillFinishLaunching(_ notification: Notification) {
+    MemoryGuard.start()
     Typography.registerFonts()
   }
 

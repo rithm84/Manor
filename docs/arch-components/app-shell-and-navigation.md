@@ -12,6 +12,8 @@ The app shell is the `Manor` executable target in `macos/Sources/Manor/`. It own
 
 `AppDelegate` registers the bundled fonts before launch and returns `false` from `applicationShouldTerminateAfterLastWindowClosed`, so closing the window keeps Manor running and the Dock icon reopens it at once with the account loaded. Termination, reopen, and launch callbacks pass through `AlfredBridge`, which implements the Prep-mode quit rule described in the [Alfred](alfred.md#quitting-and-reopening) slice.
 
+`MemoryGuard` starts before the fonts register and checks the process's physical footprint, the number Activity Monitor shows as Memory, once a second on a background queue. Manor's heaviest measured state is under 400 MB ([benchmarks](benchmarks.md#memory)); past a 4 GB ceiling, a runaway loop is assumed and the process ends at once with a fatal error, so the Mac never reaches swap. The crash report macOS writes for it holds every thread's stack, including the main thread's, which names the loop.
+
 ## State objects
 
 | Object | Lifetime | Owns |
