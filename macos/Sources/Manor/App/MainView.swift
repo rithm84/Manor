@@ -10,26 +10,12 @@ struct MainView: View {
   @State private var overlaySidebar = false
 
   var body: some View {
-    HStack(spacing: 0) {
-      if model.sidebarDocked {
-        if GlassSupport.isActive {
-          // macOS 26: the sidebar floats as a glass panel. It starts below the window buttons, which sit on the
-          // window background above it, so the panel's rounded corner never runs through them.
-          SidebarView(floating: true)
-            .frame(width: ShellMetrics.sidebarWidth)
-            .glassSurface(RoundedRectangle(cornerRadius: 18, style: .continuous), fallback: Palette.sidebarBackground)
-            .padding([.leading, .bottom, .top], Space.s2)
-            .transition(.move(edge: .leading))
-        } else {
-          SidebarView()
-            .frame(width: ShellMetrics.sidebarWidth)
-            .transition(.move(edge: .leading))
-          Rectangle().fill(Palette.sidebarBorder).frame(width: 1).ignoresSafeArea()
-        }
-      }
-      pages
-        .environment(\.windowButtonsClearance, !model.sidebarDocked && !model.isFullScreen ? WindowButtonsMetrics.collapsedClearance : 0)
-    }
+    // The docked sidebar is an overlay beside the inset pages, not a stack sibling: its selection changes on every
+    // page switch, and as a sibling that re-laid out every kept-alive page.
+    pages
+      .environment(\.windowButtonsClearance, !model.sidebarDocked && !model.isFullScreen ? WindowButtonsMetrics.collapsedClearance : 0)
+      .padding(.leading, model.sidebarDocked ? dockedSidebarWidth : 0)
+      .overlay(alignment: .leading) { dockedSidebar }
     // The title bar is hidden, so content runs to the window's top edge; the sidebar clears the window
     // buttons itself and pages start with their own header padding.
     .ignoresSafeArea(.container, edges: .top)
@@ -54,37 +40,40 @@ struct MainView: View {
     }
   }
 
-  private var pages: some View {
-    ZStack {
-      ForEach(visited) { route in
-        let active = route == context.route
-        page(for: route)
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-          .opacity(active ? 1 : 0)
-          .allowsHitTesting(active)
-          // AppKit-backed controls (text fields, the code editor, tables) ignore SwiftUI's hit-testing flag and
-          // would take clicks meant for the visible page or a toast; a hidden page also moves out of the window.
-          .offset(x: active ? 0 : 40_000)
-          .accessibilityHidden(!active)
-          .zIndex(active ? 1 : 0)
-      }
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .clipped()
+  /// The room the docked sidebar takes at the leading edge.
+  private var dockedSidebarWidth: CGFloat {
+    ShellMetrics.sidebarWidth + (GlassSupport.isActive ? Space.s2 : 1)
   }
 
   @ViewBuilder
-  private func page(for route: Route) -> some View {
-    switch route {
-    case .home: HomePage()
-    case .tracking: TrackingPage()
-    case .pomodoro: PomodoroPage()
-    case .problems: ProblemsPage()
-    case .jobs: JobsPage()
-    case .notes: NotesPage()
-    case .bookmarks: BookmarksPage()
-    case .settings: SettingsPage()
+  private var dockedSidebar: some View {
+    if model.sidebarDocked {
+      Group {
+        if GlassSupport.isActive {
+          // macOS 26: the sidebar floats as a glass panel, inset from the window edge, with the window buttons inside
+          // its top corner.
+          SidebarView(floating: true)
+            .frame(width: ShellMetrics.sidebarWidth)
+            .glassBackground(RoundedRectangle(cornerRadius: 18, style: .continuous), fallback: Palette.sidebarBackground)
+            .padding([.leading, .bottom, .top], Space.s2)
+        } else {
+          HStack(spacing: 0) {
+            SidebarView().frame(width: ShellMetrics.sidebarWidth)
+            Rectangle().fill(Palette.sidebarBorder).frame(width: 1)
+          }
+        }
+      }
+      .frame(maxHeight: .infinity)
+      .transition(.move(edge: .leading))
     }
+  }
+
+  private var pages: some View {
+    ZStack {
+      ForEach(visited) { route in PageSlot(route: route) }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .clipped()
   }
 
   /// While a centered dialog is open the page dims behind it; the docked sidebar dims with it and takes no clicks,
@@ -126,7 +115,7 @@ struct MainView: View {
           SidebarView(floating: true)
             .frame(width: ShellMetrics.sidebarWidth)
             .frame(maxHeight: .infinity)
-            .glassSurface(RoundedRectangle(cornerRadius: 18, style: .continuous), fallback: Palette.sidebarBackground)
+            .glassBackground(RoundedRectangle(cornerRadius: 18, style: .continuous), fallback: Palette.sidebarBackground)
             // Over the page (not beside it), clear glass lets the page's title read through; a canvas tint behind keeps
             // the rows legible.
             .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Palette.surfaceCanvas.opacity(0.78)))
@@ -159,4 +148,43 @@ struct MainView: View {
 struct IdentifiedString: Identifiable, Hashable {
   let value: String
   var id: String { value }
+}
+
+/// One kept-alive page. The slot alone reads the route, so switching pages updates only the slots' visibility; the
+/// page itself is an equatable view keyed by its route, so its tree isn't rebuilt and diffed on every switch.
+private struct PageSlot: View {
+  let route: Route
+  @Environment(AppContext.self) private var context
+
+  var body: some View {
+    let active = route == context.route
+    PageContent(route: route)
+      .equatable()
+      .environment(\.pageIsActive, active)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      .opacity(active ? 1 : 0)
+      .allowsHitTesting(active)
+      // AppKit-backed controls (text fields, the code editor, tables) ignore SwiftUI's hit-testing flag and
+      // would take clicks meant for the visible page or a toast; a hidden page also moves out of the window.
+      .offset(x: active ? 0 : 40_000)
+      .accessibilityHidden(!active)
+      .zIndex(active ? 1 : 0)
+  }
+}
+
+private struct PageContent: View, Equatable {
+  let route: Route
+
+  var body: some View {
+    switch route {
+    case .home: HomePage()
+    case .tracking: TrackingPage()
+    case .pomodoro: PomodoroPage()
+    case .problems: ProblemsPage()
+    case .jobs: JobsPage()
+    case .notes: NotesPage()
+    case .bookmarks: BookmarksPage()
+    case .settings: SettingsPage()
+    }
+  }
 }

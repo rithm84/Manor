@@ -1,6 +1,6 @@
 # App shell and navigation
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -28,7 +28,7 @@ The app shell is the `Manor` executable target in `macos/Sources/Manor/`. It own
 
 `Route` lists the pages in sidebar order: Home, Tracking, Pomodoro, Problems, Jobs, Notes, Bookmarks, and Settings. Command-1 through Command-7 follow that order, Command-comma opens Settings, Command-backslash toggles the sidebar, and Command-N sends a create request to the current page when it supports one (`Route.supportsCreate`).
 
-`MainView` keeps every page you visit alive for the session. Hidden pages stay in the view tree with zero opacity, no hit testing, hidden accessibility, and an offset far outside the window, because AppKit-backed controls such as text views and tables ignore SwiftUI's hit-testing flag. Returning to a page restores its scroll position, selection, open dialog, and unfinished controls. When the route changes, the shell clears first responder if it sits in a page that just moved out of view, so keystrokes never land in a hidden field.
+`MainView` keeps every page you visit alive for the session. Hidden pages stay in the view tree with zero opacity, no hit testing, hidden accessibility, and an offset far outside the window, because AppKit-backed controls such as text views and tables ignore SwiftUI's hit-testing flag. Returning to a page restores its scroll position, selection, open dialog, and unfinished controls. When the route changes, the shell clears first responder if it sits in a page that just moved out of view, so keystrokes never land in a hidden field. Each page sits in its own slot that alone reads the route, so a switch changes only the visibility of the two pages involved, and the docked sidebar is an overlay beside the pages rather than a stack sibling, so its selection change never re-lays out the kept-alive pages. Pages that need to know whether they're on screen read `pageIsActive` from the environment instead of the route.
 
 ## Sidebar
 

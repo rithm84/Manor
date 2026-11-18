@@ -10,6 +10,7 @@ struct ProblemLibraryView: View {
   let covered: Bool
   let open: (String) -> Void
   @Environment(AppContext.self) private var context
+  @Environment(\.pageIsActive) private var isActive
   @AppStorage("problems.view") private var tab: ProblemsTab = .library
   @State private var showingAdvanced = false
   @State private var savingView = false
@@ -85,7 +86,7 @@ struct ProblemLibraryView: View {
       searchFocused = true
     }
     .keyboardShortcut("f", modifiers: .command)
-    .disabled(context.route != .problems || covered)
+    .disabled(!isActive || covered)
     .opacity(0)
     .accessibilityHidden(true)
   }

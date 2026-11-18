@@ -37,10 +37,10 @@ struct NotesPage: View {
 
 private struct NotesWorkspace: View {
   @Environment(AppContext.self) private var context
+  @Environment(\.pageIsActive) private var isActive
   @Bindable var store: NotesStore
   @FocusState private var searchFocused: Bool
 
-  private var isActive: Bool { context.route == .notes }
   private var linkKey: String? {
     guard let target = context.linkTarget, target.route == .notes else { return nil }
     return target.path.first ?? target.query["note"]

@@ -29,7 +29,7 @@ enum PerfLog {
     guard path != nil, marked.insert(label).inserted else { return }
     let elapsed = sinceLaunch
     // The frame that shows it is committed on the next turn of the run loop.
-    DispatchQueue.main.async { write(String(format: "launch %@ %.0f", label, elapsed)) }
+    DispatchQueue.main.async { write(String(format: "launch %@ %.0f ms, footprint %.0f MB", label, elapsed, footprintMB)) }
   }
 
   static func beginSwitch(to route: String) {
@@ -42,8 +42,18 @@ enum PerfLog {
     guard path != nil, let start = switchStart, start.route == route else { return }
     switchStart = nil
     DispatchQueue.main.async {
-      write(String(format: "switch %@ %.1f", route, (CACurrentMediaTime() - start.time) * 1000))
+      write(String(format: "switch %@ %.1f ms, footprint %.0f MB", route, (CACurrentMediaTime() - start.time) * 1000, footprintMB))
     }
+  }
+
+  /// The process's physical footprint, as Activity Monitor's Memory column reports it.
+  static var footprintMB: Double {
+    var info = task_vm_info_data_t()
+    var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
+    let result = withUnsafeMutablePointer(to: &info) {
+      $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count) }
+    }
+    return result == KERN_SUCCESS ? Double(info.phys_footprint) / 1_048_576 : -1
   }
 
   private static func write(_ line: String) {

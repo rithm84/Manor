@@ -6,7 +6,17 @@ private struct WindowButtonsClearanceKey: EnvironmentKey {
   static let defaultValue: CGFloat = 0
 }
 
+/// Whether the page this view belongs to is the one on screen (kept-alive pages stay in the window while hidden).
+private struct PageIsActiveKey: EnvironmentKey {
+  static let defaultValue = true
+}
+
 extension EnvironmentValues {
+  var pageIsActive: Bool {
+    get { self[PageIsActiveKey.self] }
+    set { self[PageIsActiveKey.self] = newValue }
+  }
+
   var windowButtonsClearance: CGFloat {
     get { self[WindowButtonsClearanceKey.self] }
     set { self[WindowButtonsClearanceKey.self] = newValue }

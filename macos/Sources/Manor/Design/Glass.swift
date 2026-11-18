@@ -8,6 +8,12 @@ public extension View {
     modifier(GlassSurface(shape: shape, fallback: fallback, interactive: interactive, tint: tint))
   }
 
+  /// Glass as a layer behind content that changes often (the sidebar's selection): the content draws above the
+  /// glass instead of inside it, so a change to the content doesn't re-render the glass.
+  func glassBackground<S: Shape>(_ shape: S, fallback: Color) -> some View {
+    background(Color.clear.glassSurface(shape, fallback: fallback))
+  }
+
 }
 
 /// Whether this build draws Liquid Glass on the running system. The `manor.solidChrome` default turns it off so

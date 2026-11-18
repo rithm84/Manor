@@ -43,6 +43,7 @@ private struct ProblemWorkspaceContent: View {
   @Bindable var model: ProblemWorkspaceModel
   let onClose: () -> Void
   @Environment(AppContext.self) private var context
+  @Environment(\.pageIsActive) private var isActive
   @Environment(\.windowButtonsClearance) private var buttonsClearance
 
   var body: some View {
@@ -52,7 +53,7 @@ private struct ProblemWorkspaceContent: View {
       Group {
         if let detail = model.detail {
           if detail.canExecute {
-            ProblemSolvingLayout(model: model, detail: detail, active: context.route == .problems)
+            ProblemSolvingLayout(model: model, detail: detail, active: isActive)
           } else {
             WorkspaceReader(model: model, detail: detail)
           }
