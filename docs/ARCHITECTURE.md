@@ -45,7 +45,7 @@ Agents never reach Postgres directly. They call the `manor-mcp` Edge Function wi
 | Data path | [Gateway and commands](arch-components/gateway-and-commands.md), [local mirror and sync](arch-components/local-mirror-and-sync.md), [data and lifecycle](arch-components/data-and-lifecycle.md), [files and uploads](arch-components/files-and-uploads.md) |
 | Modules | [Notes editor and document format](arch-components/notes-editor.md), [Notes drafts and saves](arch-components/notes-drafts-and-saves.md), [problems library and execution](arch-components/problems.md), [Tracking and Pomodoro](arch-components/tracking.md), [Jobs](arch-components/jobs.md) |
 | Assistants and agents | [Alfred](arch-components/alfred.md), [agents and MCP tools](arch-components/agents-and-mcp-tools.md) |
-| Operations | [Background jobs and integrations](arch-components/background-jobs-and-integrations.md), [backups and recovery](arch-components/backups-and-recovery.md), [releases and updates](arch-components/releases-and-updates.md), [testing and QA](arch-components/testing-and-qa.md) |
+| Operations | [Background jobs and integrations](arch-components/background-jobs-and-integrations.md), [backups and recovery](arch-components/backups-and-recovery.md), [releases and updates](arch-components/releases-and-updates.md), [testing and QA](arch-components/testing-and-qa.md), [benchmarks](arch-components/benchmarks.md) |
 
 ## Component relationships
 

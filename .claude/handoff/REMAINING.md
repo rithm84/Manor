@@ -45,12 +45,13 @@ What remains:
    (notes in `NOTES.md`). Production is untouched. Delete `.claude/handoff/` and `.claude/release-0.2.0/` after.
 2. **Verify with a real OpenAI key** (owner's Mac): in-app Alfred and /alfred were exercised only with the
    scripted demo writer (`ALFRED_NOTES_DEMO=1`), never against the live model.
-3. **Open QA items not fixed** (lower severity): Alfred diagram index labels render below 12 pt; typing
-   `/alfred` very quickly can skip the slash menu; date formats differ between pages ("Fri, 20 Nov" vs
-   "Nov 16, 2026"); offline uploads of note attachments are not protected locally (`NoteDraftStore`'s
-   attachment API is unwired); first visits to Notes and Problems take about 200 to 290 ms on the VM; the
-   floating hover sidebar and the image block options dialog, Bookmarks, Pomodoro controls, and habit
-   create/edit/delete were not re-tested in the last QA pass.
+3. **Open QA items** from the cloud session were fixed on 2026-11-18 and verified in the sandbox: diagram
+   text at 12 pt with 4.5:1 contrast, the slash menu for fast-typed `/alfred`, region date formats on every
+   page, note uploads that resume after a lost connection or relaunch, and Notes and Problems prewarmed
+   (first visits 31 ms and 85 ms). The re-test pass also covered the hover sidebar, the image options dialog
+   (now capped to the window, dimming all of it), Bookmarks, Pomodoro controls, and habit create, edit, and
+   retire, and fixed focus falling onto the sidebar when one dialog replaces another. Measurements are in
+   `docs/arch-components/benchmarks.md`.
 
 ## Known gaps
 

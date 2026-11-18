@@ -486,8 +486,8 @@ final class NoteDialogPresenter {
     panel.allowsKey = true
     panel.hasShadow = false
     panel.level = .floating
-    let frame = window.convertToScreen(window.contentLayoutRect)
-    panel.setFrame(frame, display: false)
+    // The whole window, title bar strip included, dims like the app's other dialogs.
+    panel.setFrame(window.frame, display: false)
     let chrome = NoteDialogChrome(width: width, dismiss: { [weak self] in self?.cancel() }, content: content())
     let host = NSHostingView(rootView: chrome)
     // The panel covers the window's content so the backdrop dims all of it; the dialog never resizes the panel.
@@ -525,6 +525,8 @@ private struct NoteDialogChrome<Content: View>: View {
   var body: some View {
     ZStack {
       Palette.overlayBackdrop
+        // Matches the window's rounded corners, so the dim never shows past them.
+        .clipShape(RoundedRectangle(cornerRadius: GlassSupport.isActive ? 16 : 10, style: .continuous))
         .ignoresSafeArea()
         .onTapGesture { dismiss() }
         .opacity(shown ? 1 : 0)

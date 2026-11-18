@@ -344,8 +344,9 @@ enum DiagramPainter {
     static func textColor(_ tone: DItem.Tone) -> Color {
         switch tone {
         case .neutral: text
-        case .muted: Theme.ink.opacity(0.56)
-        case .faint: Theme.ink.opacity(0.34)
+        // Text keeps 4.5:1 on the diagram card in both themes; faint and muted differ by a step, not by legibility.
+        case .muted: Theme.ink.opacity(0.74)
+        case .faint: Theme.ink.opacity(0.68)
         case .accent(let c): palette(c).mix(with: Theme.ink, by: 0.38)
         }
     }

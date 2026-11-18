@@ -1,6 +1,6 @@
 # Files and uploads
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -30,6 +30,8 @@ Uploads resume automatically after sign-in (`FileService.resumePending`). Sign-o
 ## Note attachments
 
 A note references a file as `manor-attachment://<file id>` in a media block's URL. Attachments are uploaded with the note as their parent and follow its lifecycle.
+
+A media block's upload is linked to the block on the Mac (in the Notes draft store) from the moment the file is staged until the block holds the file. When the note opens again, after a lost connection or a relaunch, each linked upload resumes, or is recognized as finished when the server already holds the file as `ready`, and fills in its block. "Try again" resumes the same upload instead of asking for the file again, failed uploads retry when the connection returns, and deleting the block cancels its upload.
 
 ## Cleanup
 
