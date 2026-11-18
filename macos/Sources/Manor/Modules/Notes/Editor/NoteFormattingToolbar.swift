@@ -11,6 +11,9 @@ final class NoteToolbarState {
   var linkDraft = ""
   var linkError = false
   var canTurnInto = true
+  /// The buttons' natural width, reported by the view so the panel hugs them.
+  var contentWidth: CGFloat = 0
+  @ObservationIgnored var onResize: (() -> Void)?
 }
 
 /// The floating formatting toolbar over a text selection: block type, inline styles, link, equation, and color.
@@ -24,7 +27,10 @@ final class NoteFormattingToolbar {
   private var panel: NoteFloatingPanel {
     if let panelStorage { return panelStorage }
     let panel = NoteFloatingPanel()
-    panel.contentView = NSHostingView(rootView: NoteToolbarView(state: state, perform: { [weak self] action in self?.perform(action) }))
+    let host = NSHostingView(rootView: NoteToolbarView(state: state, perform: { [weak self] action in self?.perform(action) }))
+    host.sizingOptions = []
+    panel.contentView = host
+    state.onResize = { [weak self] in self?.reposition() }
     panelStorage = panel
     return panel
   }
@@ -93,7 +99,9 @@ final class NoteFormattingToolbar {
     let range = textView.selectedRange()
     let local = textView.rect(for: range.length > 0 ? range : NSRange(location: range.location, length: 0))
     let onScreen = window.convertToScreen(textView.convert(local, to: nil))
-    let size = NSSize(width: state.editingLink ? 380 : 568, height: 40)
+    // The bar hugs its buttons (the block type and the table-cell case change its width); the link editor is fixed.
+    let fitted = state.contentWidth > 0 ? state.contentWidth + Space.s1 * 2 : 568
+    let size = NSSize(width: state.editingLink ? 380 : ceil(fitted), height: 40)
     var origin = NSPoint(x: onScreen.midX - size.width / 2, y: onScreen.maxY + 8)
     if let screen = window.screen?.visibleFrame {
       if origin.y + size.height > screen.maxY - 8 { origin.y = onScreen.minY - size.height - 8 }
@@ -204,6 +212,16 @@ struct NoteToolbarView: View {
   }
 
   private var buttons: some View {
+    buttonRow
+      .fixedSize()
+      .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
+        guard abs(width - state.contentWidth) > 0.5 else { return }
+        state.contentWidth = width
+        DispatchQueue.main.async { state.onResize?() }
+      }
+  }
+
+  private var buttonRow: some View {
     HStack(spacing: 2) {
       Button { perform(.askAlfred) } label: {
         HStack(spacing: 4) {

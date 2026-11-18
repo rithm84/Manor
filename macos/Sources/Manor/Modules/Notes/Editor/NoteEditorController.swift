@@ -581,9 +581,15 @@ final class NoteEditorController: NSObject, NSTextViewDelegate {
         self.setMathEditing(id, false)
       }
     }
-    DispatchQueue.main.async { [weak self] in
+    DispatchQueue.main.async { [weak self, weak textView] in
       guard let self else { return }
       let responder = self.canvas?.window?.firstResponder
+      // A block you leave for another block, the page, or nothing doesn't keep drawing its old selection. The
+      // formatting bar, link fields, and an Alfred edit of the selection live in other windows and keep it.
+      if let textView, textView.selectedRange().length > 0, self.selectionEdit == nil, responder !== textView,
+         responder == nil || responder is NoteTextView || responder === self.canvas || responder === self.canvas?.window {
+        textView.setSelectedRange(NSRange(location: NSMaxRange(textView.selectedRange()), length: 0))
+      }
       if !(responder is NoteTextView) {
         if !self.toolbar.ownsFocus { self.toolbar.hide() }
         if !self.suggestions.isOpen || !(responder is NSTextView) { self.suggestions.close() }
