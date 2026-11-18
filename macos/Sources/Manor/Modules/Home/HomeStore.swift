@@ -268,10 +268,12 @@ final class CalendarDayStore {
   private(set) var error: String?
   @ObservationIgnored private var loadedKey: String?
 
-  func load(date: String, gateway: Gateway, timeZone: TimeZone) async {
+  /// Reads every day the timeline can show (today and tomorrow) in one pass, so switching between them is instant.
+  func load(dates: [String], gateway: Gateway, timeZone: TimeZone) async {
+    let key = dates.joined(separator: ",")
     do {
       let calendars = try await gateway.rows("calendars").filter { $0["enabled"]?.bool == true }
-      guard !calendars.isEmpty, let window = try? CalendarWindow(days: [date]) else {
+      guard !calendars.isEmpty, let window = try? CalendarWindow(days: dates) else {
         events = []
         error = nil
         return
@@ -293,16 +295,16 @@ final class CalendarDayStore {
       }
       events = stored.compactMap(StoredCalendarEvent.init(row:)).flatMap { event -> [CalendarDayEvent] in
         guard let color = colors["\(event.accountId)\u{1F}\(event.calendarId)"] else { return [] }
-        return CalendarDays.days(event, dates: [date], timeZone: timeZone, color: color.isEmpty ? nil : color)
+        return CalendarDays.days(event, dates: dates, timeZone: timeZone, color: color.isEmpty ? nil : color)
       }
       error = nil
-      loadedKey = date
+      loadedKey = key
     } catch is CancellationError {
       // The timeline moved or redrew mid-read; the next read fills it, so nothing failed.
       return
     } catch {
       if Task.isCancelled { return }
-      if loadedKey != date { events = [] }
+      if loadedKey != key { events = [] }
       self.error = "Calendar events could not be loaded. \(error.localizedDescription)"
     }
   }

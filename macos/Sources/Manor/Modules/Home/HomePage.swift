@@ -87,7 +87,6 @@ private struct HomeContent: View {
   private func updateBusy() {
     let store = model.store
     let model = self.model
-    model.drag.hourHeight = TodayTimelineView.hourHeight
     model.drag.busy = { [weak model] date in
       guard let model else { return [] }
       return ScratchTimeline.busy(on: date, blocks: store.blocks, events: model.eventSpans(on: date))

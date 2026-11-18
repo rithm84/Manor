@@ -9,6 +9,7 @@ struct TodayTimelineView: View {
   @Environment(HomeModel.self) private var model
   @Environment(AppContext.self) private var context
 
+  /// The smallest hour row; a taller column stretches the hours so 6 AM to midnight fills it.
   static let hourHeight: CGFloat = 44
   static let gutter: CGFloat = 48
   private static let space = "timeline"
@@ -22,6 +23,13 @@ struct TodayTimelineView: View {
   @State private var pointer: PointerDrag?
   @State private var scrolledToNow = false
   @State private var scroll = ScrollPosition(edge: .top)
+  @State private var viewportHeight: CGFloat = 0
+  @State private var scrolledDown = false
+
+  private var hourHeight: CGFloat {
+    let hours = CGFloat(ScratchTimeline.endMinutes - ScratchTimeline.startMinutes) / 60
+    return max(Self.hourHeight, ((viewportHeight - 12) / hours).rounded(.down))
+  }
 
   private struct Entry: Identifiable {
     let id: String
@@ -54,11 +62,12 @@ struct TodayTimelineView: View {
     .frame(maxHeight: .infinity, alignment: .top)
     .background(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(Palette.surfaceCard))
     .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).strokeBorder(Palette.hairline))
-    .task(id: model.scheduleDate) { await loadEvents() }
-    .task(id: model.scheduleDate) {
+    // Today and tomorrow load together, so the day toggle only changes which one shows.
+    .task(id: model.today) { await loadEvents() }
+    .task(id: model.today) {
       for await _ in context.gateway.changes(of: ["calendar_events", "calendars"]) { await loadEvents() }
     }
-    .task(id: model.scheduleDate) {
+    .task(id: model.today) {
       while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(60))
         await loadEvents()
@@ -73,13 +82,14 @@ struct TodayTimelineView: View {
   }
 
   private func loadEvents() async {
-    await model.calendarDay.load(date: model.scheduleDate, gateway: context.gateway, timeZone: model.timeZone)
+    let today = model.today
+    await model.calendarDay.load(dates: [today, TaskDates.adding(1, to: today)], gateway: context.gateway, timeZone: model.timeZone)
   }
 
   // MARK: Axis
 
   private var axisHeight: CGFloat { y(ScratchTimeline.endMinutes) }
-  private func y(_ minutes: Int) -> CGFloat { CGFloat(minutes - ScratchTimeline.startMinutes) / 60 * Self.hourHeight }
+  private func y(_ minutes: Int) -> CGFloat { CGFloat(minutes - ScratchTimeline.startMinutes) / 60 * hourHeight }
 
   private var entries: [Entry] {
     let date = model.scheduleDate
@@ -160,12 +170,22 @@ struct TodayTimelineView: View {
         .padding(.vertical, 6)
       }
       .scrollIndicators(.never)
-      .overlay(alignment: .top) {
-        // Hour labels slide under the header instead of being cut by the scroll edge.
-        LinearGradient(colors: [Palette.surfaceCard, Palette.surfaceCard.opacity(0)], startPoint: .top, endPoint: .bottom)
-          .frame(height: Space.s5)
-          .allowsHitTesting(false)
+      .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y > 1 } action: { _, down in scrolledDown = down }
+      .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+        viewportHeight = height
+        model.drag.hourHeight = hourHeight
       }
+      .overlay(alignment: .top) {
+        // Once scrolled, hour labels slide under the header instead of being cut by the scroll edge; at rest the
+        // first hour shows in full.
+        if scrolledDown {
+          LinearGradient(colors: [Palette.surfaceCard, Palette.surfaceCard.opacity(0)], startPoint: .top, endPoint: .bottom)
+            .frame(height: Space.s5)
+            .allowsHitTesting(false)
+            .transition(.opacity)
+        }
+      }
+      .animation(Motion.fast, value: scrolledDown)
       .overlay(alignment: .top) {
         if isTimelineTarget, let error = model.drag.preview?.error {
           Text(error)
@@ -246,7 +266,7 @@ struct TodayTimelineView: View {
   }
 
   private func minute(at y: CGFloat) -> Int {
-    let raw = Double(ScratchTimeline.startMinutes) + Double(y / Self.hourHeight) * 60
+    let raw = Double(ScratchTimeline.startMinutes) + Double(y / hourHeight) * 60
     return ScratchTimeline.clamp(ScratchTimeline.snapped(raw), ScratchTimeline.startMinutes, ScratchTimeline.endMinutes)
   }
 
