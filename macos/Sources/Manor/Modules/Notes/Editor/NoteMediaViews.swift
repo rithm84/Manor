@@ -104,11 +104,6 @@ final class NoteMediaCaptureView: NSView, NSTextFieldDelegate {
   @available(*, unavailable)
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-  func setBusy(_ busy: Bool) {
-    uploadButton.isEnabled = !busy
-    uploadButton.title = busy ? "Uploading" : uploadButton.title
-  }
-
   func setUploadTitle(_ title: String) { uploadButton.title = title }
 
   /// Puts the caret in the link field, right after the block is inserted.
@@ -216,9 +211,6 @@ class NoteMediaBlockView: NoteBlockView {
       }
     }
   }
-
-  /// Forces the next `resolveIfNeeded` to resolve again (retry).
-  func resetResolution() { resolvedFor = nil }
 
   func mediaDidResolve() { needsDisplay = true; needsLayout = true }
 

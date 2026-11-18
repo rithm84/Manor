@@ -117,8 +117,6 @@ public enum NoteBlockKind: Hashable, Sendable {
     }
   }
 
-  /// Blocks that can be converted into one another through Turn into, keeping their text.
-  public var isConvertibleText: Bool { hasInlineContent }
 }
 
 /// Factories for new blocks, with the props Manor's block document format gives each type so new blocks match what the
@@ -176,9 +174,6 @@ public enum NoteSchema {
       block(.documentTab, props: ["title": "Tab 2"], children: [paragraph()])
     ])
   }
-
-  /// The format's text and background color names.
-  public static let colorNames = ["default", "gray", "brown", "red", "orange", "yellow", "green", "blue", "purple", "pink"]
 
   public static let calloutTones = ["plum", "info", "warning", "success"]
 

@@ -28,7 +28,7 @@ enum ProblemWorkspaceWarmup {
     return services
   }
 
-  /// Call after the library first paints.
+  /// Call once the library has loaded.
   static func libraryLoaded(gateway: Gateway) {
     services(gateway).warmEditorSandbox(language: ProblemWorkspacePreferences.language)
   }

@@ -39,8 +39,10 @@ struct MainView: View {
     .modifier(AlfredDialogHost())
     .modifier(PomodoroAppHook())
     .background(Palette.surfaceCanvas)
+    .onAppear { PerfLog.launch("signed-in-window") }
     .onChange(of: context.route, initial: true) { _, route in
       if !visited.contains(route) { visited.append(route) }
+      DispatchQueue.main.async { PerfLog.endSwitch(to: route.rawValue) }
       // Keystrokes never land in a field on a page that just went out of view.
       DispatchQueue.main.async {
         guard let window = NSApp.keyWindow, let responder = window.firstResponder as? NSView, responder.window == window else { return }

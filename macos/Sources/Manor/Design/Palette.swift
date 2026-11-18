@@ -33,11 +33,7 @@ public enum Palette {
   public static let surfaceSelected = Color.manor((0.8941, 0.8588, 0.9176, 1.000), (0.2667, 0.2000, 0.3098, 1.000))
   public static let surfaceSelectedHover = Color.manor((0.8784, 0.8431, 0.9098, 1.000), (0.2863, 0.2157, 0.3255, 1.000))
   public static let surfaceCard = Color.manor((1.0000, 1.0000, 1.0000, 1.000), (0.1412, 0.1333, 0.1647, 1.000))
-  public static let surfaceCardWarm = Color.manor((0.9451, 0.9451, 0.9569, 1.000), (0.1608, 0.1529, 0.1843, 1.000))
   public static let surfaceStrong = Color.manor((0.8667, 0.8471, 0.8902, 1.000), (0.2745, 0.2510, 0.3098, 1.000))
-  public static let brandSurfaceLight = Color.manor((1.0000, 1.0000, 1.0000, 1.000), (1.0000, 1.0000, 1.0000, 1.000))
-  public static let brandEdgeLight = Color.manor((0.9098, 0.9020, 0.9294, 1.000), (0.9098, 0.9020, 0.9294, 1.000))
-  public static let brandInkLight = Color.manor((0.1451, 0.1333, 0.1647, 1.000), (0.1451, 0.1333, 0.1647, 1.000))
   public static let ink = Color.manor((0.1451, 0.1333, 0.1647, 1.000), (0.9529, 0.9373, 0.9686, 1.000))
   public static let inkBody = Color.manor((0.2745, 0.2588, 0.3020, 1.000), (0.8314, 0.8078, 0.8627, 1.000), contrastBoost: 0.35)
   public static let inkMuted = Color.manor((0.3843, 0.3529, 0.4235, 1.000), (0.7255, 0.6863, 0.7686, 1.000), contrastBoost: 0.4)
@@ -119,8 +115,6 @@ public enum Palette {
   public static let pillText = Color.manor((1.0000, 1.0000, 1.0000, 1.000), (0.1294, 0.0980, 0.1373, 1.000))
   public static let sidebarBackground = Color.manor((0.9647, 0.9647, 0.9725, 1.000), (0.1255, 0.1216, 0.1451, 1.000))
   public static let sidebarBorder = Color.manor((0.9098, 0.9020, 0.9294, 1.000), (0.2118, 0.1922, 0.2431, 1.000), contrastBoost: 0.3)
-  public static let sidebarHover = Color.manor((0.9176, 0.9020, 0.9373, 1.000), (0.2235, 0.1961, 0.2510, 1.000))
-  public static let sidebarSelected = Color.manor((0.8941, 0.8588, 0.9176, 1.000), (0.2667, 0.2000, 0.3098, 1.000))
   /// The selected sidebar row: a neutral pill like the system sidebar's, so the plum symbol carries the accent.
   public static let sidebarSelection = Color.manor((0.0, 0.0, 0.0, 0.085), (1.0, 1.0, 1.0, 0.11), contrastBoost: 0.5)
   /// A hovered sidebar row, quieter than the selection.

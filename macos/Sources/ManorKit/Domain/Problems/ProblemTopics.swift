@@ -178,8 +178,6 @@ public enum ProblemTopics {
     categories.flatMap { $0.topics.map { ($0.label, $0.rubric) } }, uniquingKeysWith: { first, _ in first })
   private static let labelSet = Set(labels)
 
-  public static func isTopic(_ label: String) -> Bool { labelSet.contains(label) }
-
   /// The category a pattern belongs to, or nil for a label outside the vocabulary.
   public static func category(of label: String) -> String? { categoryOfTopic[label] }
 

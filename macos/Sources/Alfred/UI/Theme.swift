@@ -6,7 +6,6 @@ import SwiftUI
 /// dark-theme roles for status colors. Values mirror Manor's `Palette` dark roles, since the card is always dark.
 enum Theme {
     // Surfaces
-    static let glassBase = Color(red: 24 / 255, green: 23 / 255, blue: 28 / 255)
 
     // Text and icons. The notch card is always dark; embedded views (Notes) follow the surrounding appearance,
     // so every role has a light value too (Manor's light Palette roles).
@@ -22,8 +21,6 @@ enum Theme {
     static let fillHover = text.opacity(0.10)
     /// The surface diagrams and panels are drawn on: near-black in the card, white in a light document.
     static let surface = Color.adaptive(dark: (0.11, 0.11, 0.11), light: (1, 1, 1))
-    /// Shadows and inset wells.
-    static let shade = Color.adaptive(dark: (0, 0, 0), light: (0.36, 0.32, 0.42))
     /// The diagram backdrop's gradient: a dark well in the card, a whisper of plum-gray on a light page.
     static let paperTop = Color.adaptive(dark: (0, 0, 0, 0.16), light: (0.36, 0.32, 0.42, 0.05))
     static let paperBottom = Color.adaptive(dark: (0, 0, 0, 0.24), light: (0.36, 0.32, 0.42, 0.08))
@@ -45,7 +42,6 @@ enum Theme {
     static let warning = Color.adaptive(dark: (0.8902, 0.7412, 0.4235), light: (0.4667, 0.3333, 0.0235))
 
     // Metrics
-    static let cardRadius: CGFloat = 16
     static let cardWidth: CGFloat = 540
     static let answerSize: CGFloat = 13
 

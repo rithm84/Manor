@@ -42,13 +42,6 @@ public struct JobsService {
     try await gateway.command("update_application", input)
   }
 
-  /// Moves a role without touching its other fields.
-  public func setStage(id: String, stage: JobStage, expectedRevision: Int) async throws {
-    try await gateway.command("change_application_stage", [
-      "id": .string(id), "stage": .string(stage.rawValue), "expected_revision": .number(Double(expectedRevision))
-    ])
-  }
-
   /// Moves a role to Trash. Returns the trashed record's revision, which `restoreRole` needs.
   @discardableResult
   public func trashRole(id: String, expectedRevision: Int) async throws -> Int? {

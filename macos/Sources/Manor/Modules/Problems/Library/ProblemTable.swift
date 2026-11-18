@@ -7,6 +7,8 @@ struct ProblemRowActions {
   var open: (ProblemRecord) -> Void
   var details: (ProblemRecord, _ logging: Bool) -> Void
   var openURL: (URL) -> Void
+  /// The pointer came to rest on a problem row, so its editor can warm up before it opens.
+  var pointing: () -> Void = {}
 }
 
 /// The library index: an `NSTableView` that only builds the rows on screen, so ten thousand problems scroll and
@@ -210,7 +212,10 @@ final class ProblemNSTableView: NSTableView {
     guard row != hoveredRow else { return }
     if hoveredRow >= 0, hoveredRow < numberOfRows { (rowView(atRow: hoveredRow, makeIfNecessary: false) as? ProblemNSRowView)?.isHovered = false }
     hoveredRow = row
-    if row >= 0 { (rowView(atRow: row, makeIfNecessary: false) as? ProblemNSRowView)?.isHovered = true }
+    if row >= 0 {
+      (rowView(atRow: row, makeIfNecessary: false) as? ProblemNSRowView)?.isHovered = true
+      coordinator?.actions.pointing()
+    }
   }
 
   override func keyDown(with event: NSEvent) {

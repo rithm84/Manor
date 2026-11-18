@@ -113,9 +113,6 @@ public final class AlfredHost {
         if state.listener.isActive { state.stopListening() }
     }
 
-    /// Opens the card ready to type, as ⌃⌥H does.
-    public func openAsk() { state?.beginAsk() }
-
     /// Hotkeys that failed to register (another app owns them), for Settings.
     public var unavailableShortcuts: [HotkeyAction] { hotkeys?.failed ?? [] }
 

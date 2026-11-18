@@ -17,7 +17,6 @@ public enum PomodoroKind: String, CaseIterable, Codable, Sendable, Hashable {
     }
   }
 
-  public var isBreak: Bool { self != .focus }
 }
 
 public enum PomodoroStatus: String, CaseIterable, Codable, Sendable, Hashable {

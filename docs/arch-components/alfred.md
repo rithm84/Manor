@@ -80,7 +80,7 @@ The overlay renders Markdown with a small streaming parser and a syntax highligh
 
 ## Hosting inside Manor
 
-`AlfredHost.shared` is the host API: `start(_:)` with the app's actions (open Manor, open Settings, quit, and `handleInApp`, which sees each hot key first), `stop()`, `mode`, `keepsRunningWhenManorQuits`, preferences, knowledge, settings, and `openAsk()`. `AppDelegate` starts it through `AlfredBridge` when launch finishes and stops it when Manor terminates, which saves the session, unregisters hot keys, and stops listening. Listening starts at launch only when Prep mode and **Listen when Manor opens** are both on.
+`AlfredHost.shared` is the host API: `start(_:)` with the app's actions (open Manor, open Settings, quit, and `handleInApp`, which sees each hot key first), `stop()`, `mode`, `keepsRunningWhenManorQuits`, preferences, knowledge, and settings. `AppDelegate` starts it through `AlfredBridge` when launch finishes and stops it when Manor terminates, which saves the session, unregisters hot keys, and stops listening. Listening starts at launch only when Prep mode and **Listen when Manor opens** are both on.
 
 ### Quitting and reopening
 

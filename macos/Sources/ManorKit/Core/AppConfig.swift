@@ -12,7 +12,6 @@ public struct AppConfig: Sendable {
   public let environment: Environment
 
   public var authRedirectURL: URL { URL(string: "\(urlScheme)://auth/callback")! }
-  public var functionsURL: URL { supabaseURL.appendingPathComponent("functions/v1") }
 
   public init(supabaseURL: URL, supabaseKey: String, urlScheme: String, environment: Environment) {
     self.supabaseURL = supabaseURL

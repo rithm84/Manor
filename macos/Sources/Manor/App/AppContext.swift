@@ -42,7 +42,10 @@ public final class AppContext {
   /// Today's account-local date as `YYYY-MM-DD`.
   public var today: String { LocalDate.string(from: Date(), in: account.timeZone) }
 
-  public func navigate(to route: Route) { self.route = route }
+  public func navigate(to route: Route) {
+    if route != self.route { PerfLog.beginSwitch(to: route.rawValue) }
+    self.route = route
+  }
 
   public func requestCreate(on route: Route) { createRequests[route, default: 0] += 1 }
 

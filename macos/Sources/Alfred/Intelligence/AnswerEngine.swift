@@ -97,7 +97,6 @@ final class AnswerEngine: ObservableObject {
     /// The active chat's exchanges.
     var answers: [Answer] { threads[active].answers }
     var current: Answer? { answers.last }
-    var isBusy: Bool { answers.last?.isActive ?? false }
 
     private var task: Task<Void, Never>?
     private var speculativeTask: Task<Void, Never>?

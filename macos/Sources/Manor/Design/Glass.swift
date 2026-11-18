@@ -8,19 +8,6 @@ public extension View {
     modifier(GlassSurface(shape: shape, fallback: fallback, interactive: interactive, tint: tint))
   }
 
-  /// Groups nearby glass shapes so they blend and morph together on macOS 26.
-  @ViewBuilder
-  func glassGroup(spacing: CGFloat = Space.s2) -> some View {
-    #if compiler(>=6.2)
-    if #available(macOS 26.0, *), GlassSupport.isActive {
-      GlassEffectContainer(spacing: spacing) { self }
-    } else {
-      self
-    }
-    #else
-    self
-    #endif
-  }
 }
 
 /// Whether this build draws Liquid Glass on the running system. The `manor.solidChrome` default turns it off so

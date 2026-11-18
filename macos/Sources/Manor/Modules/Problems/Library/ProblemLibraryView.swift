@@ -235,7 +235,8 @@ struct ProblemLibraryView: View {
             actions: ProblemRowActions(
               open: { open($0.id) },
               details: { problem, logging in record = ProblemRecordRequest(problemId: problem.id, logging: logging) },
-              openURL: { context.openExternal($0) }
+              openURL: { context.openExternal($0) },
+              pointing: { ProblemWorkspaceWarmup.pointing(gateway: context.gateway) }
             )
           )
         }

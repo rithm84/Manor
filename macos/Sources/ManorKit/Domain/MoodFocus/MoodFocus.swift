@@ -267,7 +267,6 @@ public struct MoodFocusDistributionRow<Level: Hashable & Sendable>: Equatable, S
 }
 
 public enum MoodFocusHistory {
-  public static let trendRanges = [3, 6, 12]
 
   static func average(_ values: [Int]) -> Double? {
     guard !values.isEmpty else { return nil }

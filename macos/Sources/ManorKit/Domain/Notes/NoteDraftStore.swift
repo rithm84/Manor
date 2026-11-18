@@ -188,24 +188,6 @@ public final class NoteDraftStore: Sendable {
     }
   }
 
-  /// After a save commits: the sent draft is cleared, or newer typing built on the same base moves to the new revision.
-  /// Returns the draft that remains, if any.
-  @discardableResult
-  public func commitRevision(sent: ProtectedNoteDraft, revision: Int) async throws -> ProtectedNoteDraft? {
-    try await database.write { db in
-      guard var current = try Self.read(db, sent.accountId, sent.noteId) else { return nil }
-      if current.mutationId == sent.mutationId {
-        try db.execute(sql: "DELETE FROM note_drafts WHERE account_id = ? AND note_id = ?", arguments: [sent.accountId, sent.noteId])
-        return nil
-      }
-      if current.baseRevision == sent.baseRevision {
-        current.baseRevision = revision
-        try db.execute(sql: "UPDATE note_drafts SET base_revision = ? WHERE account_id = ? AND note_id = ?", arguments: [revision, sent.accountId, sent.noteId])
-      }
-      return current
-    }
-  }
-
   public enum CommitOutcome: Hashable, Sendable {
     /// The sent draft was the latest; nothing remains.
     case cleared

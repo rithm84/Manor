@@ -298,10 +298,6 @@ final class RevealClock {
         return 1 - pow(1 - raw, 3)  // ease-out cubic
     }
 
-    func isAnimating(at now: Date) -> Bool {
-        lastScheduled.addingTimeInterval(Self.duration + 0.05) > now
-    }
-
     /// When the last scheduled entrance finishes.
     var busyUntil: Date { lastScheduled.addingTimeInterval(Self.duration + 0.05) }
 }

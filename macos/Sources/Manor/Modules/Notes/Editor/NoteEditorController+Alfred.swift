@@ -15,8 +15,6 @@ extension NoteEditorController {
 
   func alfredRun(for id: String) -> NoteAlfredRun? { alfredRuns[id] }
 
-  var isAlfredRunning: Bool { alfredRuns.values.contains { $0.isActive } }
-
   // MARK: Rendering
 
   /// Chrome heights of an Alfred block, shared by layout and its view.
@@ -324,12 +322,6 @@ extension NoteEditorController {
     let running = alfredRuns.values.filter(\.isActive).map(\.blockID)
     for id in running { stopAlfred(id) }
     return !running.isEmpty
-  }
-
-  func dismissAlfredError(_ id: String) {
-    guard let run = alfredRuns[id], !run.isActive else { return }
-    alfredRuns[id] = nil
-    refreshAlfredView(id)
   }
 
   /// Re-renders an Alfred block after its run changed: its chrome, and its content (which converts with

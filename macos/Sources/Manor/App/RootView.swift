@@ -18,6 +18,7 @@ struct RootView: View {
     .font(.ui())
     .foregroundStyle(Palette.ink)
     .tint(Palette.primary)
+    .onAppear { PerfLog.launch("first-window") }
   }
 
   @ViewBuilder

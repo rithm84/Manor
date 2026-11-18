@@ -38,7 +38,6 @@ final class Updater {
   }
 
   static var currentBuild: Int { Int(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "") ?? 0 }
-  static var currentVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?" }
 
   func start() {
     guard Self.isAvailable, timer == nil else { return }

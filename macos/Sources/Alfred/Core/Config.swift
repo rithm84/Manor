@@ -88,13 +88,6 @@ struct Config: Equatable {
     }
     /// The answer path is the one that must work for Alfred to be useful.
     var answerReady: Bool { hasKey(for: answerProvider) }
-    var missingAnswerKey: String {
-        switch answerProvider {
-        case .openai: "OPENAI_API_KEY"
-        case .nebius: "NEBIUS_TOKEN_FACTORY_API_KEY"
-        case .fireworks: "FIREWORKS_API_KEY"
-        }
-    }
 
     static let nebiusDefaultModel = "deepseek-ai/DeepSeek-V4.1-Flash-1017"
     static let fireworksDefaultModel = "accounts/fireworks/routers/deepseek-v4p1-flash-1017-ultrafast"
@@ -235,8 +228,4 @@ enum Paths {
         return FileManager.default.fileExists(atPath: url.appendingPathComponent("Package.swift").path) ? url : nil
     }()
 
-    /// Where "Open .env.local" should point: the repo file in dev builds, otherwise Application Support.
-    static var preferredEnvFile: URL {
-        repoRoot?.appendingPathComponent(".env.local") ?? userEnvFile
-    }
 }

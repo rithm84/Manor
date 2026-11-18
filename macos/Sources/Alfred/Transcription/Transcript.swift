@@ -211,11 +211,6 @@ final class Transcript: ObservableObject {
         return sentences.suffix(2).joined(separator: " ")
     }
 
-    /// Last finalized THEM turn + whatever THEM is still saying: what an answer would respond to.
-    var latestThemText: String {
-        [turns.last(where: { $0.speaker == .them })?.text, live[.them]?.text].compactMap { $0 }.joined(separator: " ")
-    }
-
     /// What THEM is saying now, or said last.
     var currentThemUtterance: String {
         live[.them]?.text ?? turns.last(where: { $0.speaker == .them })?.text ?? ""

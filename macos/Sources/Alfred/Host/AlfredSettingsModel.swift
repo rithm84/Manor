@@ -56,7 +56,6 @@ public final class AlfredSettingsModel: ObservableObject {
     public var deepgramKey: KeyStatus { status(Self.deepgramKeyName, config.deepgramKey) }
     /// Answers need an OpenAI key; Prep mode's listening also needs Deepgram.
     public var isReady: Bool { config.answerReady }
-    public var canListen: Bool { config.hasDeepgram }
     public var hasSavedKeys: Bool { !config.appKeys.isEmpty }
 
     private func status(_ name: String, _ value: String?) -> KeyStatus {

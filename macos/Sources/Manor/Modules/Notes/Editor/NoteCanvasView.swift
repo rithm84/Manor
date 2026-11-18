@@ -391,11 +391,6 @@ final class NoteCanvasView: NSView {
     }
   }
 
-  func hideHandle() {
-    hoveredID = nil
-    positionHandle()
-  }
-
   private func positionHandle() {
     guard let id = hoveredID, let item = item(id), controller?.isEditable == true else {
       handle.isHidden = true

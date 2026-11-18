@@ -32,6 +32,7 @@ struct ProblemsPage: View {
         let created = ProblemLibraryStore(gateway: context.gateway)
         store = created
         created.start()
+        ProblemWorkspaceWarmup.libraryLoaded(gateway: context.gateway)
       }
     }
     .onChange(of: linkedProblem, initial: true) { _, id in

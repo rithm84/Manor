@@ -41,5 +41,4 @@ public enum Motion {
 
 public enum ShellMetrics {
   public static let sidebarWidth: CGFloat = 224
-  public static let topbarHeight: CGFloat = 52
 }

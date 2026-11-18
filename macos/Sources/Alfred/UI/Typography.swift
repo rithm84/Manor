@@ -11,7 +11,4 @@ extension Font {
         .system(size: size, weight: weight, design: .monospaced)
     }
 
-    static func alfredDisplay(_ size: CGFloat, _ weight: Font.Weight = .semibold) -> Font {
-        .custom("Outfit", size: size).weight(weight)
-    }
 }
