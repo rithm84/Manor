@@ -1,0 +1,37 @@
+---
+title: Local mirror · one pull of the change feed
+---
+flowchart TB
+  poke(["`**Poke**
+  Launch · own command · realtime insert
+  Focus · network back · one-minute timer`"]):::people
+  queue{{"`**One pull at a time**
+  Pokes during a pull collapse into one follow-up`"}}:::gate
+  ready{"`Copy ready and
+  cursor at or behind the head?`"}:::gate
+  boot["`**Bootstrap**
+  Read the head cursor first
+  Replace every account table, four at a time`"]:::local
+  page["`**Read a feed page**
+  manor_workspace_changes after the cursor`"]:::backend
+  fold["`**Fold by key**
+  Last change per row wins
+  Deletes and purges remove by key`"]:::local
+  skip{"`Local revision
+  already current?`"}:::gate
+  reread["`**Re-read by identity**
+  Upsert returned rows
+  Delete rows Postgres no longer returns`"]:::backend
+  commit[("`**Commit page + cursor**
+  One SQLite transaction`")]:::local
+  publish(["`**Publish touched tables**
+  Pages that show them reload from disk`"]):::app
+
+  poke --> queue --> ready
+  ready -->|no| boot --> page
+  ready -->|yes| page
+  page --> fold --> skip
+  skip -->|yes| commit
+  skip -->|no| reread --> commit
+  commit --> publish
+  commit async_1@-.->|more pages| page

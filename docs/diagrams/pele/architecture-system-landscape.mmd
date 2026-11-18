@@ -1,0 +1,69 @@
+---
+title: Manor · system landscape
+---
+flowchart TB
+  subgraph row_1 [" "]
+    direction LR
+    you(["`**You**
+    Manor window · menu bar · notch`"]):::people
+    hosts(["`**Agent hosts**
+    Codex · ChatGPT · Claude`"]):::agent
+    you ~~~ hosts
+  end
+
+  subgraph row_2 [" "]
+    direction LR
+    alfred["`**Alfred**
+    Notch overlay · menu bar
+    Screen · audio · answers`"]:::agent
+    shell["`**Manor app**
+    SwiftUI + AppKit
+    Modules · design system`"]:::app
+    disk[("`**On-device storage**
+    Account mirror · drafts
+    Upload journals`")]:::local
+    alfred ~~~|same process| shell <-->|reads · protects| disk
+  end
+
+  subgraph row_3 [" "]
+    direction LR
+    auth["`**Supabase Auth**
+    Google sign-in
+    OAuth 2.1 server`"]:::backend
+    pg[("`**Postgres + Storage**
+    manor_command · change feeds
+    Private files`")]:::backend
+    edge["`**Edge Functions**
+    manor-mcp · problem-runner
+    files · integrations`"]:::backend
+    cron["`**Cron workers**
+    Calendar · X · jobs
+    Embeddings · maintenance`"]:::async
+    auth ~~~ pg ~~~ edge ~~~ cron
+  end
+
+  subgraph row_4 [" "]
+    direction LR
+    models["`**Model APIs**
+    OpenAI · Deepgram`"]:::external
+    gh["`**GitHub Releases**
+    Signed update feed`"]:::external
+    blaxel["`**Blaxel sandboxes**
+    Language servers · grading`"]:::external
+    sources["`**Sources**
+    Google · X · SimplifyJobs`"]:::external
+    models ~~~ gh ~~~ blaxel ~~~ sources
+  end
+
+  you --> alfred
+  you --> shell
+  shell -->|sign-in| auth
+  shell -->|commands · reads · feed pulls| pg
+  shell -->|Run · Submit · uploads| edge
+  hosts -->|remote MCP| edge
+  edge --> pg
+  cron --> pg
+  alfred -->|your own keys| models
+  shell -->|update checks| gh
+  edge -->|jailed runs · LSP| blaxel
+  cron async_1@-.->|scheduled pulls| sources

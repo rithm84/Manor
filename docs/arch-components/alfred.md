@@ -1,0 +1,118 @@
+# Alfred
+
+_Last updated: 2026-11-17_
+
+[Back to Manor architecture](../ARCHITECTURE.md)
+
+Alfred is Manor's personal assistant: a notch overlay and a menu bar item that run inside Manor's process. The product behavior is in the PRD's [Alfred](../PRD.md#alfred) section. This slice covers how it is built and hosted.
+
+## Target and boundaries
+
+Alfred is the `Alfred` Swift target in `macos/Sources/Alfred/`. It has no package dependencies and doesn't depend on `ManorKit`; it links AVFoundation, Carbon, and ScreenCaptureKit. The Manor app depends on it, never the other way round.
+
+| Folder | Holds |
+|---|---|
+| `Host` | `AlfredHost`, the state model, the menu bar item, settings models, and `AlfredWriter` |
+| `Audio`, `Capture` | Microphone and system-audio capture, PCM conversion, and screenshots |
+| `Transcription` | Deepgram Flux streaming, the listener, and the transcript |
+| `Intelligence` | The answer and context engines, prompts, and the OpenAI and chat-completions clients |
+| `Core` | Configuration, hot keys, the Keychain store, knowledge, preferences, and logging |
+| `UI` | The overlay, Markdown, the diagram language, generative UI, theme, and the embeddable views |
+| `Debug` | Demo content and snapshot rendering, enabled only by environment variables |
+
+Alfred never reads or writes Manor's account data or calls Manor's backend. Its only shared surfaces with the app are the host API, the Settings section, and the Notes writer.
+
+## Runtime
+
+The following diagram shows how one answer is produced.
+
+![Alfred's runtime inside Manor's process: a hot key, the menu bar, or the notch starts an answer; in Prep mode, system audio (the other side) and the microphone (you) stream to Deepgram Flux, whose transcript feeds the context engine's rolling memory and open question; the answer engine combines that with a screenshot of the display under the pointer and your knowledge documents, streams from the OpenAI Responses API with your own key using GPT-6.1 Terra and a GPT-6 Luna topic router, and renders in the notch overlay as Markdown, diagrams, and generative UI; AlfredWriter streams an /alfred block into a note from the note's title and nearby text only.](../diagrams/svg/alfred-runtime.svg)
+
+<details><summary>Diagram key</summary>
+
+![Diagram key of the nine node roles: people and surfaces, the Manor Mac app, local storage and sync, Supabase and durable data, agents and AI models, external providers, background and async work, checks and gates, and neutral or closed.](../diagrams/svg/_key.svg)
+
+</details>
+<p></p>
+
+### Modes
+
+The mode is saved per Mac (`manor.alfred.mode`).
+
+- **General** never listens. An answer always includes a screenshot when Screen Recording is allowed and opens a typed question otherwise. Quick actions are Answer, Explain, Summarize, and Visualize over the screen and the chat. The background context pass is off.
+- **Prep** runs live listening. Switching to it starts listening when a Deepgram key exists. Quick actions are Answer, Diagram, Follow-ups, and Recap, with answer styles for interview, coding, system design, and meeting, and DSA-focused prompts.
+
+### Capture
+
+- **Screen.** `ScreenCapture` takes one `SCScreenshotManager` capture of the display under the pointer, leaving out every window of Manor's process, and sends it as a JPEG of at most 2048 pixels on its longest edge.
+- **System audio** comes from a ScreenCaptureKit stream with audio capture on and the current process excluded, at 16 kHz mono; it is labeled as the other side.
+- **Microphone** is an `AVAudioEngine` input tap, read-only, with no voice processing, rebuilt when the input device changes; it is labeled as you. Speakers come from the source, not from diarization, and an interviewer's voice that leaks into the microphone is removed from your side of the transcript.
+
+### Transcription and context
+
+`DeepgramFlux` streams 80-millisecond linear PCM chunks over WebSocket to Deepgram's Flux model (`flux-general-en` by default) and reconnects with up to about 15 seconds of buffered audio replayed. `ContextEngine` runs shortly after each finished turn, folds older turns into a rolling memory while keeping a verbatim tail, and detects the open question as a brief. When an interviewer's question ends, the answer engine starts a speculative answer in a hidden lane, so pressing Answer often shows it at once in the visible lane.
+
+### Answers
+
+`AnswerEngine` keeps up to five chat tabs, each sending its last 15 exchanges as history. A topic router decides when the conversation or screen has moved to a new problem and opens a new tab for it. Every prompt includes the enabled knowledge documents, up to 60,000 characters, plus your role context and extra instructions.
+
+| Use | Default model |
+|---|---|
+| Answers, conversation memory, and the Notes writer | GPT-6.1 Terra on OpenAI's fast tier, low reasoning effort |
+| New-topic router | GPT-6 Luna without reasoning; it can be turned off |
+
+`OpenAIClient` streams the OpenAI Responses API with server-sent events and `store: false`. A chat-completions client serves compatible providers configured by environment variables. Answers are capped at 6,000 output tokens.
+
+## Rendering
+
+The overlay renders Markdown with a small streaming parser and a syntax highlighter, and two fenced languages that Alfred draws natively as they stream:
+
+- **` ```diagram `** is Alfred's line-oriented diagram language for data structures (arrays, strings, sets, stacks, queues, lists, trees, heaps, tries, grids, maps, bars, intervals, and graphs) and flowcharts, with pointers, highlights, windows, arrows, paths, and `step` lines that make step-throughs. It runs as a pure parser, a pure layout pass, and a Canvas view, with an audit that checks for collisions.
+- **` ```ui `** is Alfred's generative UI language: layout, text, data, and chart components drawn with SwiftUI and Swift Charts. Finished statements keep their identity while the tail streams, and a final pass matches a whole-text parse.
+
+`UI/Embedding.swift` exposes `AlfredContentView`, `AlfredDiagramView`, and `AlfredGenerativeView`, which render on a normal document background in light and dark for embedding in notes.
+
+## Overlay and menu bar
+
+- **Overlay.** `OverlayController` owns a borderless, non-activating `NSPanel` above the menu bar level that joins every Space and works beside full-screen apps. It ignores the mouse except inside registered hit regions, so it never blocks the app beneath. A black, hardware-style card springs from the notch and folds back; on a Mac without a notch, it hangs from the top center and fades when hidden.
+- **Menu bar.** `StatusMenu` shows a template Manor mark with a dot while listening. Its menu holds the mode, Ask, Answer, listening and microphone controls (Interview only), New Session, the mode submenu, **Alfred Settings…**, **Open Manor**, and **Quit Manor**.
+- **Hot keys.** `HotkeyCenter` registers Carbon hot keys, which need no Accessibility permission. All use Control-Option: Space answers, L and M toggle listening and the microphone, H opens or folds the overlay, N starts a new session, T and W open and close chat tabs, the arrow keys scroll and switch tabs, brackets step through diagrams, and comma opens Settings. A shortcut that another app already holds is flagged in Settings.
+
+## Hosting inside Manor
+
+`AlfredHost.shared` is the host API: `start(_:)` with the app's actions (open Manor, open Settings, quit), `stop()`, `mode`, `keepsRunningWhenManorQuits`, preferences, knowledge, settings, and `openAsk()`. `AppDelegate` starts it through `AlfredBridge` when launch finishes and stops it when Manor terminates, which saves the session, unregisters hot keys, and stops listening. Listening starts at launch only when Prep mode and **Listen when Manor opens** are both on.
+
+### Quitting and reopening
+
+`AlfredBridge` (`Manor/App/AlfredBridge.swift`) implements the Prep-mode quit rule:
+
+- **Dock Quit or Command-Q in Prep mode** cancels termination, orders out Manor's windows, and switches to the accessory activation policy, so the Dock icon disappears while the menu bar item keeps Alfred running.
+- **Open Manor**, a Dock reopen, or reopening from Finder restores the regular activation policy and the window.
+- **Quit Manor** from Alfred's menu quits for real.
+- **Logout, restart, and shutdown**, detected from the Apple event's quit reason, always quit.
+- **Installing an update** allows the quit before the updater relaunches (see [releases and updates](releases-and-updates.md)).
+
+In General mode, quitting behaves normally.
+
+## Keys, data, and logs
+
+- **Keys.** `KeyStore` keeps `OPENAI_API_KEY` and `DEEPGRAM_API_KEY` as generic passwords under the Keychain service `app.manor.alfred.api-keys`. **Check and Save** validates each with its provider before storing it. Precedence is the process environment, then the Keychain, then `~/Library/Application Support/Manor/Alfred/.env.local`, then, in a development checkout only, `macos/.env.local`. Keys go only to their own provider.
+- **Data on this Mac** lives under `~/Library/Application Support/Manor/Alfred/`: `knowledge.json` for personal context (résumé, experience, job descriptions, and notes, imported from PDF, Word, RTF, HTML, Markdown, or text) and `Sessions/` for saved Markdown sessions.
+- **Preferences** are `UserDefaults` keys under `manor.alfred.`: mode, interview style, coding language, role context, extra instructions, text scale, microphone capture, listen on launch, save sessions, prepare answers early, and include screen.
+- **Logs** use the subsystem `app.manor` and category `alfred` and never contain keys, transcripts, or screenshots.
+
+## Permissions
+
+Permissions belong to Manor's bundle. The build script writes `NSMicrophoneUsageDescription` and `NSScreenCaptureUsageDescription` into `Info.plist` and signs with `Resources/Manor.entitlements`, whose `com.apple.security.device.audio-input` entitlement lets the hardened runtime read the microphone. Each permission is requested the first time Alfred needs it, and Settings links to the matching System Settings pane for each permission. Screenshots exclude Manor's own windows.
+
+## Settings
+
+**Settings > Alfred** (`Manor/Modules/Alfred/`) covers the mode, including the screen, answer text size, interview options, personal context (`AlfredKnowledgeCard`), keys (`AlfredKeysCard`), the models in use, permissions, shortcuts, and saved sessions. `manor://settings/alfred` and Alfred's own **Alfred Settings…** item open it.
+
+## Notes writer
+
+`AlfredWriter.shared.write(_:in:)` takes a request and a `DocumentContext` (the note's title, the text before and after the cursor, any selection, the block's request history, and its current source) and returns a stream of Markdown deltas. It uses the answer model and your knowledge and instructions, never captures the screen or audio, and trims context to a few thousand characters. A refinement returns the full revised block rather than a patch. The Notes editor turns the stream into an `alfred` block, described in [Notes editor](notes-editor.md#alfred-blocks); that command is in progress.
+
+## Tests
+
+`Tests/AlfredTests` covers configuration parsing and defaults, Markdown, server-sent events and request bodies, transcript echo removal, the context engine, the knowledge budget, the diagram parser, layout, readability, step-throughs and flowcharts, prefetch matching, overlay edit shortcuts, chat tabs, the router, and generative UI parsing and streaming. Host wiring, capture, and the Keychain are verified by running the app (see [testing and QA](testing-and-qa.md)).

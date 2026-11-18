@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="pele-doc" viewBox="0 0 1201 693" width="1201" height="693" style="max-width:100%;height:auto" role="img" aria-label="Problems · editor language servers and graded runs"><title>Problems · editor language servers and graded runs</title><style><![CDATA[
+/*
+  Shared Manor diagram theme. docs/diagrams/render.mjs embeds this file in every
+  exported SVG, so a diagram source names roles (`:::app`) and edge kinds
+  (`async_1@-.->`) and never sets a color itself. Pick a role by what a node is,
+  never by how it should look. Colors follow the reader's light or dark scheme.
+*/
+
+.pele-doc {
+  --pele-bg: #ffffff;
+  --pele-fg: #25222a;
+  --pele-muted: #625a6c;
+  --pele-line: #5f5869;
+  --pele-surface: #f4f3f6;
+  --pele-surface-alt: #f8f7fa;
+  --pele-border: #625a6c;
+  --pele-accent: #75508f;
+  --pele-critical: #c44d41;
+  --pele-radius: 6px;
+
+  --people-fill: #e7f5ff;   --people-stroke: #1971c2;
+  --app-fill: #f3ecf8;      --app-stroke: #75508f;
+  --local-fill: #e3fafc;    --local-stroke: #0c8599;
+  --backend-fill: #e5f5e8;  --backend-stroke: #2f9e44;
+  --agent-fill: #edf2ff;    --agent-stroke: #4263eb;
+  --external-fill: #fff0ed; --external-stroke: #c44d41;
+  --async-fill: #ffe8cc;    --async-stroke: #e8590c;
+  --gate-fill: #fff4d6;     --gate-stroke: #b37c00;
+  --neutral-fill: #f4f3f6;  --neutral-stroke: #625a6c;
+
+  --edge-async: #e8590c;   --edge-async-text: #b3470a;
+  --edge-blocked: #c44d41; --edge-blocked-text: #a13a2f;
+  --edge-ok: #2f9e44;      --edge-ok-text: #23783a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pele-doc {
+    --pele-bg: #19181d;
+    --pele-fg: #f3eff7;
+    --pele-muted: #b9afc4;
+    --pele-line: #b9afc4;
+    --pele-surface: #201f25;
+    --pele-surface-alt: #1c1b21;
+    --pele-border: #887b94;
+    --pele-accent: #c29bdc;
+    --pele-critical: #ff8787;
+
+    --people-fill: #0c2a43;   --people-stroke: #4dabf7;
+    --app-fill: #2c2136;      --app-stroke: #c29bdc;
+    --local-fill: #0b3338;    --local-stroke: #3bc9db;
+    --backend-fill: #11321b;  --backend-stroke: #51cf66;
+    --agent-fill: #1b2349;    --agent-stroke: #91a7ff;
+    --external-fill: #3d1714; --external-stroke: #ff8787;
+    --async-fill: #4a2508;    --async-stroke: #ff922b;
+    --gate-fill: #3d2e05;     --gate-stroke: #fcc419;
+    --neutral-fill: #26242c;  --neutral-stroke: #9d93a8;
+
+    --edge-async: #ff922b;   --edge-async-text: #ffa94d;
+    --edge-blocked: #ff8787; --edge-blocked-text: #ffa8a8;
+    --edge-ok: #51cf66;      --edge-ok-text: #69db7c;
+  }
+}
+
+.pele-doc > .pele-doc-bg { fill: var(--pele-bg); }
+
+/* Roles: fill and stroke only; text stays the ink color. */
+.pele-node.people > :is(rect, path, polygon, circle, ellipse),
+.pele-node.people > g > path { fill: var(--people-fill); stroke: var(--people-stroke); }
+.pele-node.app > :is(rect, path, polygon, circle, ellipse),
+.pele-node.app > g > path { fill: var(--app-fill); stroke: var(--app-stroke); }
+.pele-node.local > :is(rect, path, polygon, circle, ellipse),
+.pele-node.local > g > path { fill: var(--local-fill); stroke: var(--local-stroke); }
+.pele-node.backend > :is(rect, path, polygon, circle, ellipse),
+.pele-node.backend > g > path { fill: var(--backend-fill); stroke: var(--backend-stroke); }
+.pele-node.agent > :is(rect, path, polygon, circle, ellipse),
+.pele-node.agent > g > path { fill: var(--agent-fill); stroke: var(--agent-stroke); }
+.pele-node.external > :is(rect, path, polygon, circle, ellipse),
+.pele-node.external > g > path { fill: var(--external-fill); stroke: var(--external-stroke); }
+.pele-node.async > :is(rect, path, polygon, circle, ellipse),
+.pele-node.async > g > path { fill: var(--async-fill); stroke: var(--async-stroke); }
+.pele-node.gate > :is(rect, path, polygon, circle, ellipse),
+.pele-node.gate > g > path { fill: var(--gate-fill); stroke: var(--gate-stroke); }
+.pele-node.neutral > :is(rect, path, polygon, circle, ellipse),
+.pele-node.neutral > g > path { fill: var(--neutral-fill); stroke: var(--neutral-stroke); }
+
+/* Subgraphs are boundaries: a dashed outline, like a zone. Swimlanes share
+   their borders, so theirs stay solid; a sequence box is a shaded region with no
+   outline, because message labels have no background to hide a line behind. */
+.pele-cluster > rect { stroke-dasharray: 5 4; }
+.pele-lane > rect { stroke-dasharray: none; }
+.pele-box > rect { stroke: none; fill: var(--pele-surface); fill-opacity: 1; }
+
+/* A `row_*` subgraph only arranges its nodes into a row; it draws nothing. */
+.pele-cluster[data-id^="row_"] { display: none; }
+
+/* Edge kinds, selected by the edge id prefix the source gives the edge. */
+.pele-edge[data-id^="async_"] > path { stroke: var(--edge-async); }
+.pele-edge[data-id^="async_"] > path.pele-marker { fill: var(--edge-async); stroke: none; }
+.pele-edge-label[data-id^="async_"] text { fill: var(--edge-async-text); }
+.pele-edge[data-id^="blocked_"] > path { stroke: var(--edge-blocked); }
+.pele-edge[data-id^="blocked_"] > path.pele-marker { fill: var(--edge-blocked); stroke: none; }
+.pele-edge-label[data-id^="blocked_"] text { fill: var(--edge-blocked-text); }
+.pele-edge[data-id^="ok_"] > path { stroke: var(--edge-ok); }
+.pele-edge[data-id^="ok_"] > path.pele-marker { fill: var(--edge-ok); stroke: none; }
+.pele-edge-label[data-id^="ok_"] text { fill: var(--edge-ok-text); }
+]]></style><rect class="pele-doc-bg" width="1201" height="693" rx="8"/><svg x="0" y="0" class="pele pele-flowchart" viewBox="0 0 1201 693" width="1201" height="693" style="--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_r:var(--pele-radius,4px);--_w:var(--pele-bold-weight,bold);--_fm:var(--pele-font-mono,monospace);font:16px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="flowchart"><g class="pele-clusters"><g class="pele-cluster" data-id="blaxel"><rect x="24" y="521.5" width="793.06" height="147" fill="var(--_a)" fill-opacity="0.5" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-cluster-label" fill="var(--_m)" x="746.6" y="547.1" text-anchor="middle">Blaxel us-was-1</text></g><g class="pele-cluster" data-id="mac"><rect x="431.22" y="24" width="689.61" height="150" fill="var(--_a)" fill-opacity="0.5" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-cluster-label" fill="var(--_m)" x="483.46" y="49.6" text-anchor="middle">Manor app</text></g></g><g class="pele-edges" fill="none" stroke="var(--_l)" stroke-linecap="round"><g class="pele-edge" data-id="L_editor_drafts_0"><path d="M724.54,109L875.56,109"/><path class="pele-marker" d="M882.56,109L874.56,112.36L874.56,105.64Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_editor_runner_0"><path d="M587.88,152.5L587.88,174C587.88,191.36 537.85,202 456.21,202C374.57,202 324.54,217.2 324.54,242L324.54,267C324.54,294.5 539.52,294.5 539.52,322L539.52,328"/><path class="pele-marker" d="M539.52,335L536.16,327L542.88,327Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_runner_editor_0"><path d="M587.88,335L587.88,159.5"/><path class="pele-marker" d="M587.88,152.5L591.24,160.5L584.52,160.5Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_editor_lsp_0"><path d="M587.88,159.5L587.88,174C587.88,211.13 146.93,211.13 146.93,248.25L146.93,554.5"/><path class="pele-marker" d="M587.88,152.5L591.24,160.5L584.52,160.5Z" fill="var(--_l)" stroke="none"/><path class="pele-marker" d="M146.93,561.5L143.57,553.5L150.29,553.5Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_editor_runner_2"><path d="M587.88,152.5L587.88,174C587.88,198.8 624.38,214 683.94,214C743.5,214 780,224.64 780,242L780,267C780,284.36 756.2,295 717.36,295C678.53,295 654.72,305.26 654.72,322L654.72,328"/><path class="pele-marker" d="M654.72,335L651.36,327L658.08,327Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_runner_pg_0"><path d="M679.31,401C679.31,418.36 728.21,429 808,429C887.79,429 936.69,444.2 936.69,469L936.69,516.12"/><path class="pele-marker" d="M936.69,523.12L933.33,515.12L940.05,515.12Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_runner_grade_0"><path d="M539.52,401C539.52,435 406.3,435 406.3,469L406.3,554.5"/><path class="pele-marker" d="M406.3,561.5L402.94,553.5L409.66,553.5Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_runner_judge_0"><path d="M663.31,401L663.31,429C663.31,449 679.9,449 679.9,469L679.9,554.5"/><path class="pele-marker" d="M679.9,561.5L676.54,553.5L683.26,553.5Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="async_1"><path d="M587.88,152.5L587.88,174C587.88,191.36 652.72,202 758.52,202C864.32,202 929.16,217.2 929.16,242L929.16,267C929.16,291.8 880.06,307 799.94,307C719.83,307 670.72,312.99 670.72,322.75L670.72,328" stroke-dasharray="3 4"/><path class="pele-marker" d="M670.72,335L667.36,327L674.08,327Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="async_2"><path d="M991.7,154L991.7,514.65" stroke-dasharray="3 4"/><path class="pele-marker" d="M991.7,521.65L988.34,513.65L995.06,513.65Z" fill="var(--_l)" stroke="none"/></g></g><g class="pele-edge-labels" font-size="14"><g class="pele-edge-label" data-id="L_editor_drafts_0"><rect x="747.04" y="98.5" width="106.03" height="21" rx="3" fill="var(--_bg)"/><text x="800.05" y="113.9" text-anchor="middle">every keystroke</text></g><g class="pele-edge-label" data-id="L_editor_runner_0"><rect x="276.97" y="244" width="95.14" height="21" rx="3" fill="var(--_bg)"/><text x="324.54" y="259.4" text-anchor="middle">editor-session</text></g><g class="pele-edge-label" data-id="L_runner_editor_0"><rect x="493.07" y="244" width="189.62" height="21" rx="3" fill="var(--_bg)"/><text x="587.88" y="259.4" text-anchor="middle">preview token · socket URLs</text></g><g class="pele-edge-label" data-id="L_editor_lsp_0"><rect x="76.4" y="357.5" width="141.06" height="21" rx="3" fill="var(--_bg)"/><text x="146.93" y="372.9" text-anchor="middle">LSP over WebSocket</text></g><g class="pele-edge-label" data-id="L_editor_runner_2"><rect x="702.69" y="244" width="154.62" height="21" rx="3" fill="var(--_bg)"/><text x="780" y="259.4" text-anchor="middle">execute · run or submit</text></g><g class="pele-edge-label" data-id="L_runner_pg_0"><rect x="891.67" y="471" width="90.03" height="21" rx="3" fill="var(--_bg)"/><text x="936.69" y="486.4" text-anchor="middle">claim · settle</text></g><g class="pele-edge-label" data-id="L_runner_grade_0"><rect x="349.59" y="471" width="113.43" height="21" rx="3" fill="var(--_bg)"/><text x="406.3" y="486.4" text-anchor="middle">program + inputs</text></g><g class="pele-edge-label" data-id="L_runner_judge_0"><rect x="588.55" y="471" width="182.71" height="21" rx="3" fill="var(--_bg)"/><text x="679.9" y="486.4" text-anchor="middle">outputs + expected answers</text></g><g class="pele-edge-label" data-id="async_1"><rect x="877.31" y="244" width="103.69" height="21" rx="3" fill="var(--_bg)"/><text x="929.16" y="259.4" text-anchor="middle">poll submission</text></g><g class="pele-edge-label" data-id="async_2"><rect x="925.84" y="357.5" width="131.72" height="21" rx="3" fill="var(--_bg)"/><text x="991.7" y="372.9" text-anchor="middle">save_problem_draft</text></g></g><g class="pele-nodes"><g class="pele-node pele-shape-rect app" data-id="editor" transform="translate(587.88,109)"><rect x="-136.66" y="-43.5" width="273.31" height="87" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">Code editor</tspan><tspan x="0" y="5.6">TextKit · local highlighting</tspan><tspan x="0" y="26.6">Completion · hover · diagnostics</tspan></text></g><g class="pele-node pele-shape-cyl local" data-id="drafts" transform="translate(991.7,109)"><path d="M-109.14,-33A109.14,12 0 0 1 109.14,-33V33A109.14,12 0 0 1 -109.14,33Z" fill="var(--_s)" stroke="var(--_b)"/><path d="M-109.14,-33A109.14,12 0 0 0 109.14,-33" fill="none" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="1.1" font-weight="var(--_w)">Code drafts</tspan><tspan x="0" y="22.1">ProblemCodeDrafts.sqlite</tspan></text></g><g class="pele-node pele-shape-rect backend" data-id="runner" transform="translate(601.12,368)"><rect x="-113.6" y="-33" width="227.2" height="66" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9" font-weight="var(--_w)">problem-runner</tspan><tspan x="0" y="16.1">Edge Function in us-east-1</tspan></text></g><g class="pele-node pele-shape-cyl backend" data-id="pg" transform="translate(1016.83,566.5)"><path d="M-159.78,-33A159.78,12 0 0 1 159.78,-33V33A159.78,12 0 0 1 -159.78,33Z" fill="var(--_s)" stroke="var(--_b)"/><path d="M-159.78,-33A159.78,12 0 0 0 159.78,-33" fill="none" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="1.1" font-weight="var(--_w)">Postgres</tspan><tspan x="0" y="22.1">Leases · submissions · private testsets</tspan></text></g><g class="pele-node pele-shape-rect external" data-id="lsp" transform="translate(146.93,605)"><rect x="-102.93" y="-43.5" width="205.86" height="87" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">Editor sandbox</tspan><tspan x="0" y="5.6">One per account</tspan><tspan x="0" y="26.6">Language-server bridge</tspan></text></g><g class="pele-node pele-shape-rect external" data-id="grade" transform="translate(406.3,605)"><rect x="-108.45" y="-43.5" width="216.9" height="87" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">Grading sandbox</tspan><tspan x="0" y="5.6">Bubblewrap jail per case</tspan><tspan x="0" y="26.6">No network · no answers</tspan></text></g><g class="pele-node pele-shape-rect external" data-id="judge" transform="translate(679.9,605)"><rect x="-117.15" y="-43.5" width="234.3" height="87" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">Judge sandbox</tspan><tspan x="0" y="5.6">Special checkers</tspan><tspan x="0" y="26.6">Never holds submitted code</tspan></text></g></g></svg></svg>

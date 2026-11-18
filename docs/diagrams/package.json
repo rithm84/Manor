@@ -1,0 +1,11 @@
+{
+  "name": "manor-diagrams",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "devDependencies": {
+    "pele": "1.10.0"
+  }
+}

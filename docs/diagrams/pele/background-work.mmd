@@ -1,0 +1,42 @@
+---
+title: Background work · what each schedule touches
+---
+flowchart TB
+  subgraph cron ["Supabase Cron"]
+    direction LR
+    minute["`**Every minute**
+    manor-integrations · manor-embeddings
+    manor-problem-runner`"]:::async
+    hourly["`**Hourly at :17**
+    manor-maintenance`"]:::async
+    six["`**Every six hours at :15**
+    manor-jobs`"]:::async
+  end
+  subgraph work ["Workers"]
+    direction LR
+    integ["`**integration-worker**
+    Google Calendar sync · X bookmarks`"]:::backend
+    embed["`**embedding-worker**
+    Changed notes and captures`"]:::backend
+    recover["`**problem-runner recovery**
+    Unfinished runs · expired editor leases`"]:::backend
+    maint["`**Maintenance**
+    Recurrences · streaks · purge · cleanup`"]:::backend
+    jobs["`**jobs-ingest**
+    SimplifyJobs listings`"]:::backend
+  end
+  review(["`**Weekly review**
+  ChatGPT scheduled task · Sunday 10 PM
+  Saved through remote MCP`"]):::agent
+  pg[("`**Postgres**`")]:::backend
+  minute --> integ
+  minute --> embed
+  minute --> recover
+  hourly --> maint
+  six --> jobs
+  integ --> pg
+  embed --> pg
+  recover --> pg
+  maint --> pg
+  jobs --> pg
+  review async_1@-.-> pg

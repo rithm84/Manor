@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="pele-doc" viewBox="0 0 791 529" width="791" height="529" style="max-width:100%;height:auto" role="img" aria-label="Streaks · how one habit's day resolves"><title>Streaks · how one habit's day resolves</title><style><![CDATA[
+/*
+  Shared Manor diagram theme. docs/diagrams/render.mjs embeds this file in every
+  exported SVG, so a diagram source names roles (`:::app`) and edge kinds
+  (`async_1@-.->`) and never sets a color itself. Pick a role by what a node is,
+  never by how it should look. Colors follow the reader's light or dark scheme.
+*/
+
+.pele-doc {
+  --pele-bg: #ffffff;
+  --pele-fg: #25222a;
+  --pele-muted: #625a6c;
+  --pele-line: #5f5869;
+  --pele-surface: #f4f3f6;
+  --pele-surface-alt: #f8f7fa;
+  --pele-border: #625a6c;
+  --pele-accent: #75508f;
+  --pele-critical: #c44d41;
+  --pele-radius: 6px;
+
+  --people-fill: #e7f5ff;   --people-stroke: #1971c2;
+  --app-fill: #f3ecf8;      --app-stroke: #75508f;
+  --local-fill: #e3fafc;    --local-stroke: #0c8599;
+  --backend-fill: #e5f5e8;  --backend-stroke: #2f9e44;
+  --agent-fill: #edf2ff;    --agent-stroke: #4263eb;
+  --external-fill: #fff0ed; --external-stroke: #c44d41;
+  --async-fill: #ffe8cc;    --async-stroke: #e8590c;
+  --gate-fill: #fff4d6;     --gate-stroke: #b37c00;
+  --neutral-fill: #f4f3f6;  --neutral-stroke: #625a6c;
+
+  --edge-async: #e8590c;   --edge-async-text: #b3470a;
+  --edge-blocked: #c44d41; --edge-blocked-text: #a13a2f;
+  --edge-ok: #2f9e44;      --edge-ok-text: #23783a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pele-doc {
+    --pele-bg: #19181d;
+    --pele-fg: #f3eff7;
+    --pele-muted: #b9afc4;
+    --pele-line: #b9afc4;
+    --pele-surface: #201f25;
+    --pele-surface-alt: #1c1b21;
+    --pele-border: #887b94;
+    --pele-accent: #c29bdc;
+    --pele-critical: #ff8787;
+
+    --people-fill: #0c2a43;   --people-stroke: #4dabf7;
+    --app-fill: #2c2136;      --app-stroke: #c29bdc;
+    --local-fill: #0b3338;    --local-stroke: #3bc9db;
+    --backend-fill: #11321b;  --backend-stroke: #51cf66;
+    --agent-fill: #1b2349;    --agent-stroke: #91a7ff;
+    --external-fill: #3d1714; --external-stroke: #ff8787;
+    --async-fill: #4a2508;    --async-stroke: #ff922b;
+    --gate-fill: #3d2e05;     --gate-stroke: #fcc419;
+    --neutral-fill: #26242c;  --neutral-stroke: #9d93a8;
+
+    --edge-async: #ff922b;   --edge-async-text: #ffa94d;
+    --edge-blocked: #ff8787; --edge-blocked-text: #ffa8a8;
+    --edge-ok: #51cf66;      --edge-ok-text: #69db7c;
+  }
+}
+
+.pele-doc > .pele-doc-bg { fill: var(--pele-bg); }
+
+/* Roles: fill and stroke only; text stays the ink color. */
+.pele-node.people > :is(rect, path, polygon, circle, ellipse),
+.pele-node.people > g > path { fill: var(--people-fill); stroke: var(--people-stroke); }
+.pele-node.app > :is(rect, path, polygon, circle, ellipse),
+.pele-node.app > g > path { fill: var(--app-fill); stroke: var(--app-stroke); }
+.pele-node.local > :is(rect, path, polygon, circle, ellipse),
+.pele-node.local > g > path { fill: var(--local-fill); stroke: var(--local-stroke); }
+.pele-node.backend > :is(rect, path, polygon, circle, ellipse),
+.pele-node.backend > g > path { fill: var(--backend-fill); stroke: var(--backend-stroke); }
+.pele-node.agent > :is(rect, path, polygon, circle, ellipse),
+.pele-node.agent > g > path { fill: var(--agent-fill); stroke: var(--agent-stroke); }
+.pele-node.external > :is(rect, path, polygon, circle, ellipse),
+.pele-node.external > g > path { fill: var(--external-fill); stroke: var(--external-stroke); }
+.pele-node.async > :is(rect, path, polygon, circle, ellipse),
+.pele-node.async > g > path { fill: var(--async-fill); stroke: var(--async-stroke); }
+.pele-node.gate > :is(rect, path, polygon, circle, ellipse),
+.pele-node.gate > g > path { fill: var(--gate-fill); stroke: var(--gate-stroke); }
+.pele-node.neutral > :is(rect, path, polygon, circle, ellipse),
+.pele-node.neutral > g > path { fill: var(--neutral-fill); stroke: var(--neutral-stroke); }
+
+/* Subgraphs are boundaries: a dashed outline, like a zone. Swimlanes share
+   their borders, so theirs stay solid; a sequence box is a shaded region with no
+   outline, because message labels have no background to hide a line behind. */
+.pele-cluster > rect { stroke-dasharray: 5 4; }
+.pele-lane > rect { stroke-dasharray: none; }
+.pele-box > rect { stroke: none; fill: var(--pele-surface); fill-opacity: 1; }
+
+/* A `row_*` subgraph only arranges its nodes into a row; it draws nothing. */
+.pele-cluster[data-id^="row_"] { display: none; }
+
+/* Edge kinds, selected by the edge id prefix the source gives the edge. */
+.pele-edge[data-id^="async_"] > path { stroke: var(--edge-async); }
+.pele-edge[data-id^="async_"] > path.pele-marker { fill: var(--edge-async); stroke: none; }
+.pele-edge-label[data-id^="async_"] text { fill: var(--edge-async-text); }
+.pele-edge[data-id^="blocked_"] > path { stroke: var(--edge-blocked); }
+.pele-edge[data-id^="blocked_"] > path.pele-marker { fill: var(--edge-blocked); stroke: none; }
+.pele-edge-label[data-id^="blocked_"] text { fill: var(--edge-blocked-text); }
+.pele-edge[data-id^="ok_"] > path { stroke: var(--edge-ok); }
+.pele-edge[data-id^="ok_"] > path.pele-marker { fill: var(--edge-ok); stroke: none; }
+.pele-edge-label[data-id^="ok_"] text { fill: var(--edge-ok-text); }
+]]></style><rect class="pele-doc-bg" width="791" height="529" rx="8"/><svg x="0" y="0" class="pele pele-state" viewBox="0 0 791 529" width="791" height="529" style="--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_fm:var(--pele-font-mono,monospace);font:16px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="state"><g class="pele-edges" fill="none" stroke="var(--_l)" stroke-linecap="round"><g class="pele-edge pele-transition" data-id="edge0"><path d="M247.93,38L247.93,100"/><path class="pele-marker" d="M247.93,107L244.57,99L251.29,99Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge1"><path d="M239.93,151C239.93,185.5 112.5,185.5 112.5,220L112.5,326"/><path class="pele-marker" d="M112.5,333L109.14,325L115.86,325Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge2"><path d="M255.93,151C255.93,160.25 388.08,160.25 388.08,169.5L388.08,213"/><path class="pele-marker" d="M388.08,220L384.72,212L391.44,212Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge3"><path d="M375.37,264C375.37,271.62 195.75,274.88 195.75,282.5L195.75,326"/><path class="pele-marker" d="M195.75,333L192.39,325L199.11,325Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge4"><path d="M391.37,264L391.37,326"/><path class="pele-marker" d="M391.37,333L388.01,325L394.73,325Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge5"><path d="M407.37,264C407.37,269.88 640.15,276.62 640.15,282.5L640.15,326"/><path class="pele-marker" d="M640.15,333L636.79,325L643.51,325Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge6"><path d="M626.35,377C626.35,386.25 533.07,386.25 533.07,395.5L533.07,454"/><path class="pele-marker" d="M533.07,461L529.71,453L536.43,453Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge7"><path d="M653.95,377C653.95,386.25 696.66,386.25 696.66,395.5L696.66,454"/><path class="pele-marker" d="M696.66,461L693.3,453L700.02,453Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge8"><path d="M150.12,377C150.12,412.5 251.93,412.5 251.93,448L251.93,454"/><path class="pele-marker" d="M251.93,461L248.57,453L255.29,453Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge9"><path d="M391.37,377C391.37,412.5 251.93,412.5 251.93,448L251.93,454"/><path class="pele-marker" d="M251.93,461L248.57,453L255.29,453Z" fill="var(--_l)" stroke="none"/></g></g><g class="pele-edge-labels" font-size="14"><g class="pele-edge-label" data-id="edge0"><rect x="180.73" y="58.5" width="134.41" height="21" rx="3" fill="var(--_bg)"/><text x="247.93" y="73.9" text-anchor="middle">an active habit's day</text></g><g class="pele-edge-label" data-id="edge1"><rect x="26" y="231.5" width="172.99" height="21" rx="3" fill="var(--_bg)"/><text x="112.5" y="246.9" text-anchor="middle">checked off at 100 percent</text></g><g class="pele-edge-label" data-id="edge2"><rect x="319.88" y="171.5" width="136.39" height="21" rx="3" fill="var(--_bg)"/><text x="388.08" y="186.9" text-anchor="middle">day ends incomplete</text></g><g class="pele-edge-label" data-id="edge3"><rect x="122.49" y="284.5" width="146.52" height="21" rx="3" fill="var(--_bg)"/><text x="195.75" y="299.9" text-anchor="middle">backfilled the next day</text></g><g class="pele-edge-label" data-id="edge4"><rect x="308.77" y="284.5" width="165.21" height="21" rx="3" fill="var(--_bg)"/><text x="391.37" y="299.9" text-anchor="middle">freeze spent the next day</text></g><g class="pele-edge-label" data-id="edge5"><rect x="567.89" y="284.5" width="144.51" height="21" rx="3" fill="var(--_bg)"/><text x="640.15" y="299.9" text-anchor="middle">no backfill · no freeze</text></g><g class="pele-edge-label" data-id="edge6"><rect x="433.75" y="397.5" width="198.64" height="36" rx="3" fill="var(--_bg)"/><text text-anchor="middle" xml:space="preserve"><tspan x="533.07" y="411.4">two clean days within 48 hours</tspan><tspan x="533.07" y="429.4">· once a month</tspan></text></g><g class="pele-edge-label" data-id="edge7"><rect x="662.71" y="405" width="67.91" height="21" rx="3" fill="var(--_bg)"/><text x="696.66" y="420.4" text-anchor="middle">otherwise</text></g></g><g class="pele-nodes"><g class="pele-node pele-state-start" data-id="root_start" transform="translate(247.93,31)"><circle r="7" fill="var(--_l)"/></g><g class="pele-node pele-state" data-id="open" transform="translate(247.93,129)"><rect x="-33.79" y="-22" width="67.58" height="44" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.6" text-anchor="middle">open</text></g><g class="pele-node pele-state backend" data-id="done" transform="translate(150.12,355)"><rect x="-75.58" y="-22" width="151.17" height="44" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.6" text-anchor="middle">Streak continues</text></g><g class="pele-node pele-state" data-id="missed" transform="translate(388.08,242)"><rect x="-41.34" y="-22" width="82.67" height="44" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.6" text-anchor="middle">missed</text></g><g class="pele-node pele-state local" data-id="frozen" transform="translate(391.37,355)"><rect x="-88.03" y="-22" width="176.06" height="44" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.6" text-anchor="middle">Covered by a freeze</text></g><g class="pele-node pele-state external" data-id="broken" transform="translate(640.15,355)"><rect x="-65.8" y="-22" width="131.6" height="44" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.6" text-anchor="middle">Streak broken</text></g><g class="pele-node pele-state gate" data-id="restored" transform="translate(533.07,483)"><rect x="-53.34" y="-22" width="106.69" height="44" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.6" text-anchor="middle">Earn-Back</text></g><g class="pele-node pele-state neutral" data-id="reset" transform="translate(696.66,483)"><rect x="-70.25" y="-22" width="140.5" height="44" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.6" text-anchor="middle">Starts over at 0</text></g><g class="pele-node pele-state-end" data-id="root_end" transform="translate(251.93,470)"><circle r="8.5" fill="var(--_bg)" stroke="var(--_l)"/><circle r="5" fill="var(--_l)"/></g></g></svg></svg>

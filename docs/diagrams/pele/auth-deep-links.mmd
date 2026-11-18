@@ -1,0 +1,23 @@
+---
+title: Sign-in and agent consent · leaving the app and coming back
+---
+sequenceDiagram
+  autonumber
+  participant you as You
+  participant app as Manor app
+  participant web as Auth session window
+  participant auth as Supabase Auth + Google
+  participant bridge as Consent bridge page
+  participant agent as Agent host
+  you->>app: Sign in with Google
+  app->>web: PKCE sign-in · return to manor://auth/callback
+  web->>auth: Google consent · signup gate grant
+  auth-->>app: manor://auth/callback?code=
+  app->>auth: exchange code · session saved on disk
+  agent->>auth: OAuth 2.1 authorization request
+  auth->>bridge: site URL in the agent's window
+  bridge->>app: manor://oauth/consent?authorization_id=
+  you->>app: Allow access
+  app->>auth: approve · manor_oauth_handoff_save
+  bridge->>auth: manor_oauth_handoff_take
+  bridge-->>agent: continue to the agent's callback with the code

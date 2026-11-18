@@ -1,0 +1,44 @@
+---
+title: Alfred · how one answer is produced inside Manor's process
+---
+flowchart TB
+  subgraph row_in [" "]
+    direction LR
+    hotkey(["`**Hotkey · menu bar · notch**
+    Control-Option shortcuts`"]):::people
+    screen["`**Screen capture**
+    Display under the pointer
+    Manor's own windows left out`"]:::app
+    sys["`**System audio**
+    Prep mode · them`"]:::app
+    mic["`**Microphone**
+    Prep mode · me`"]:::app
+    hotkey ~~~ screen ~~~ sys ~~~ mic
+  end
+  flux["`**Deepgram Flux**
+  Streaming transcript · turn ends`"]:::external
+  context["`**Context engine**
+  Rolling memory · open question`"]:::agent
+  knowledge[("`**Knowledge**
+  Resume · experience · notes
+  On this Mac`")]:::local
+  answer["`**Answer engine**
+  Chat tabs · speculative + visible lanes`"]:::agent
+  model["`**OpenAI Responses API**
+  GPT-6.1 Terra answers · GPT-6 Luna router
+  Your own key`"]:::external
+  overlay(["`**Notch overlay**
+  Markdown · diagrams · generative UI`"]):::app
+  writer(["`**AlfredWriter**
+  /alfred block in a note
+  Title + nearby text only`"]):::app
+
+  sys --> flux
+  mic --> flux
+  flux --> context --> answer
+  hotkey --> answer
+  screen --> answer
+  knowledge --> answer
+  answer <-->|streamed| model
+  answer --> overlay
+  writer <-->|streamed| model

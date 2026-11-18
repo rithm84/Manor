@@ -1,83 +1,93 @@
 # Manor design charter
 
-_Last updated: 2026-09-15_
+_Last updated: 2026-11-17_
 
-This page defines Manor's visual and interaction direction. Product behavior is in the [PRD](PRD.md), and the [redesign report](REDESIGN-REPORT.md) holds the Mobbin evidence, component analysis, and proposals still awaiting selection. Shared theme tokens and components implement the selected baseline; complete workflow verification is still required.
+This page defines Manor's visual and interaction direction for the native Mac app. Product behavior is in the [PRD](PRD.md); the tokens and components that implement this charter are in the [design system](arch-components/design-system.md) slice.
 
 ## Direction
 
-Mixpanel's smooth, restrained product UI is the aesthetic baseline; document editing uses contextual controls. Manor has its own color scheme. The paper-and-ink identity, grain overlays, handwritten display typography, sketched decoration, and literal sticky-note styling are retired. The visual reference does not extend Manor into analytics workflows or shared workspaces.
+Manor is a smooth, restrained, native Mac product. It looks and behaves like a well-made macOS app first: system type, standard controls tinted with Manor's accent, real menus and shortcuts, and materials that follow the platform. Document editing and contextual controls prioritize direct manipulation, and the day's timeline presents a clear view of the schedule. Manor has its own palette, and the earlier paper-and-ink identity, grain, handwritten type, sketched marks, and sticky-note styling are retired.
 
-Manor's high-level layout stays, especially Home's task kanban beside a single-column calendar timeline, while Mood and Focus and the module history views are redesigned comprehensively. The tool-only action history stays outside the UI. Navigation and centered object details follow the PRD's [surfaces](PRD.md#surfaces) section.
+The high-level layout stays: Home's task board beside a single-column day timeline, Tracking's daily list and history, and two-pane Notes. Content uses the window directly. There is no padded card around a whole page, and no page inside a page.
 
-Home's calendar matches the width of one kanban column. All five columns grow and shrink together until their shared readable minimum; below that, the board scrolls horizontally. Narrow layouts stack the board and calendar.
+## Type
 
-Light and dark modes are both required, and each mode's surfaces, contrast, controls, charts, editor selection, media presentation, and overlays are designed deliberately. The theme preference is system, light, dark, or day and night, which is light from 6 AM to 6 PM local time and dark otherwise, switching at each boundary. Plum and neutral gray are the palette. Muted teal is the working secondary accent for supporting highlights and chart differentiation; its exact treatment is still under review on populated screens, and the theme tokens still need contrast and interaction checks.
+- **SF Pro**, the system font, is the face for interface text, body copy, controls, and note reading text. Its optical sizes keep it crisp beside Liquid Glass.
+- **Outfit** is the face for page titles and headings, used sparingly so it reads as a voice rather than decoration.
+- **SF Mono** is for code and code-like values only. Monospace elsewhere in the interface reads as unfinished.
+- Comparable statistics, times, and counts use tabular numerals.
+- No product text is smaller than 12 points. The one exception is the 11-point gutter of the dense time grid.
 
-## Manor mark
+Note reading text has its own comfortable scale and line length; compact controls don't justify cramped prose. Hierarchy comes from weight, size, and spacing, not from more colors.
 
-The logo is the **Flowing M**: a continuous, rounded monogram with a restrained plum treatment. The canonical standalone asset is `app/public/brand/manor-mark.svg`, and `app/src/ui/components/brand/ManorLogo.tsx` renders the same SVG geometry inline for the app sidebar and account surface, at its established proportions and theme-aware color. The desktop app's icon (`desktop/icons/`) is the same mark in white on the plum tile; macOS applies its own rounded mask. There are no alternate marks, sketched treatments, or character imagery.
+## Color
 
-## Typography and density
+Plum and neutral gray are the palette, with a muted teal as the secondary accent for supporting highlights, breaks, and chart differentiation. Every color is a named role with independently tuned light and dark values, and every text and control pairing is checked for contrast in both themes: 4.5:1 for text and 3:1 for meaningful control edges.
 
-Outfit is the heading face and DM Sans the face for body text, navigation, forms, and other interface controls, with a clear hierarchy of weight, size, and spacing. Both use the SIL Open Font License; the font files are self-hosted with their license notices. They are Manor's chosen fonts, not a reproduction of Mixpanel's proprietary typeface. Handwriting has no role in the interface. Monospace is for code, and comparable statistics and times use tabular numerals.
+- Canvas, sidebar, inset controls, raised surfaces, and overlays have distinct roles in each theme. A darker surface is not automatically a disabled one.
+- Hover, selected, and selected-hover fills are distinct, and selection stays distinguishable from keyboard focus.
+- Every semantic family (completion, warning, error, frozen, due buckets, and the mood and focus scales) defines its text separately from its subtle and strong fills. Text and fill are never one color at two opacities.
+- Completion marks are green; the streak flame alone carries achievement, in its own orange tones. Gold state is a gilded flame and number.
+- Chart series keep their identity across themes, tuned for readability in each, and labels, shapes, or strokes carry meaning where color alone can't. Missing data stays distinct from zero and from an explicitly logged rest day.
+- Photographs, embeds, code highlighting, selection, and transparent images have their own theme behavior, never a blanket inversion.
 
-Product UI text is at least 12px, with an 11px exception only for dense time-grid gutters. Note reading text and line length have their own comfortable scale; compact controls don't justify cramped prose. Growing collections use compact rows or tables, and content uses the page directly without a padded card around an entire page.
+## Light and dark
 
-Font sizes, spacing, radii, and color values come from the reference study and are tested together. Approved values live in the shared token system in `app/src/ui/styles/tokens.css`; page CSS doesn't carry literal values.
+Both modes are designed deliberately and verified with realistic dense and empty states. The theme preference is system, light, dark, or day and night, which is light from 6 AM to 6 PM local time and switches at each boundary.
 
-## Light and dark modes
+## Materials
 
-Canvas, navigation, inset controls, raised surfaces, and overlays have distinct roles in each theme, and disabled, hovered, pressed, selected, focused, loading, and error states are checked independently. A darker surface is not automatically a disabled surface, and selected content stays distinguishable from hover and keyboard focus.
+On macOS 26, Liquid Glass is for chrome that floats over content: the sidebar, segmented controls, toasts, and floating notices. Reading surfaces, editors, tables, and dialogs stay solid. On earlier systems, and whenever Reduce Transparency is on, the same chrome uses Manor's solid surfaces, so the layout and hierarchy never depend on glass.
 
-Shared controls use distinct hover and selected fills, with a stronger selected-hover state. Input and checkbox boundaries use the control-border role rather than decorative divider colors. Tinted tags retain a subtle edge derived from their foreground so they remain distinct inside selected rows.
+## Window and sidebar
 
-Every semantic family defines its foreground independently from its subtle and strong fills in each theme. Duration, status, priority, completion, warning, and danger pills keep readable text at the 12px minimum; text and fill are never both derived by changing the opacity of one source color. Text and meaningful control boundaries are verified in both themes at their rendered sizes, including hover, selected, disabled, and focus states.
+The window has a hidden, unified title bar; the system window buttons sit inside the sidebar's top corner, and content runs to the top edge. Manor draws no fake window controls or OS chrome.
 
-Semantic and categorical chart colors are independent from the primary action accent. Each series keeps its identity between themes while its lightness and saturation are tuned for readability, and labels, shapes, strokes, or patterns carry meaning where color alone can't. Missing data stays distinct from zero and from an explicitly logged rest day.
+The sidebar docks by default and floats as a glass panel on macOS 26. Collapsed, it appears when you point at the left edge. Selected items use a background fill with weight and color emphasis, never a left-edge accent bar.
 
-Photographs, embedded content, code highlighting, selection highlights, and transparent images are content with their own theme behavior, never a blanket inversion. Both modes are designed and verified with realistic dense and empty states, keyboard focus, and reduced-motion preferences.
+## Accessibility
+
+Manor follows the system's accessibility settings throughout: Increase Contrast strengthens text, borders, and hairlines; Reduce Transparency replaces glass with solid fills; and Reduce Motion replaces movement with near-instant fades. Every icon-only control has an accessible name and a tooltip, charts expose their values to assistive technology, keyboard focus is always visible, and every flow works from the keyboard.
+
+## Components
+
+Each button, menu row, property editor, tooltip, date picker, dialog, filter, table, chart legend, empty state, and focus treatment has one shared recipe.
+
+- **Object details are centered dialogs.** Side peeks, drawers, sheets, right-edge panels, and detail rails are not used for object details. Page layouts, the sidebar, inline popovers, menus, and tooltips are separate purposes.
+- **Dialogs** use compact property rows with the label in a stable column and the control beside it. Common properties stay visible; conditional ones expand in place inside a scrolling body. Each dialog has a plain title, a close control at the top right, a neutral Cancel, and one primary action. Dismissing unsaved changes asks first, a failed save keeps the draft with an actionable error, and destructive actions confirm when Undo isn't available.
+- **Undo over confirmation.** Reversible destructive actions, such as completing or deleting a task or archiving a habit, act at once and offer Undo; confirmations are for actions that can't be undone.
+- **Popovers** are their own dismissal layer: Escape and an outside click close the topmost popover first and return focus to its trigger without discarding the parent's draft. Popovers stay on screen and anchor next to the object they edit.
+- **Icons** are SF Symbols with accessible names. No emoji as icons, no mascots or characters.
+- **Density matches data volume.** Collections that grow, such as bookmarks, logs, and the problem index, are compact lists or tables, never large card grids. Text never overflows or touches its container; if a label can't fit at 12 points, it moves.
+
+Module history views share one structure: a month navigator (Left and Right step months while it has focus, and the month name returns to the current month), a hairline summary strip, a 3, 6, or 12-month trend, and a month breakdown. Every module page uses the same segmented view tabs in its header.
 
 ## Notes editing
 
-Note-taking fundamentals and rich media are the target defined in the PRD's [Notes](PRD.md#notes) section. The BlockNote-facing controls match the reference interaction anatomy: block handles, slash menus, selection formatting, nested menus, link editors, media controls, and tooltips. Recolored default controls don't satisfy that target.
+Notes targets rich document editing in Manor's visual language: block handles, slash menus, selection formatting, nested menus, link editors, media controls, and tooltips suited to the content. Recolored default controls don't meet that bar.
 
-Selection and caret positions survive opening controls. Menus stay anchored to their object and within the viewport, and keyboard access and pointer movement between nested menus are dependable. Block spacing, list indentation, headings, code, tables, and adjacent media form one document rhythm, and hover controls never shift text or cover the content being edited.
+Selection and caret survive opening controls. Menus stay anchored to their object and within the screen, and moving between nested menus is dependable by pointer and keyboard. Contextual rows use a stable icon column, a label with an optional description, and a muted trailing shortcut or submenu mark. Block spacing, list indentation, headings, code, tables, and media form one document rhythm, and hover controls never shift text or cover what you're editing. Typing, selection, and repeated editor actions respond immediately.
 
-Contextual editor rows use a stable icon column, a label with optional description, and a muted trailing shortcut or submenu affordance. Groups have visible breathing room, and hover, keyboard-active, and selected states use neutral semantic surfaces rather than browser-default blue. A nested color, link, or property popup owns Escape first; closing it preserves the text selection and returns control to its parent surface.
+Alfred blocks in notes render in the document's own typography and colors, and their working state is quiet and honors Reduce Motion.
 
-Typing, keyboard navigation, selection, and repeated editor actions respond immediately. Dragging has explicit insertion targets and a keyboard-accessible alternative. Durable saving, conflict behavior, and agent editing are specified in the architecture's [Notes drafts and editing](ARCHITECTURE.md#notes-drafts-and-editing) section, not inferred from a save indicator.
+## Alfred
 
-## Shared components and motion
+Alfred's notch card is the one deliberately dark surface in Manor: a black, hardware-style card that springs from the notch and folds back, so it reads as part of the Mac rather than a window. Its type follows Manor's scale, its answer text size is adjustable, and its diagrams and generative UI use the same contrast rules as the rest of the app.
 
-Each button, menu row, property editor, tooltip, date picker, dialog, filter, table, chart legend, empty state, and focus treatment has one shared recipe, using contextual controls in Manor's aesthetic. Object details are centered dialogs; sidebar navigation and small anchored controls keep their separate purposes.
+## Motion
 
-The desktop app draws its own title bar: the window controls sit at the top left over the sidebar's top space, that space and the top bar act as drag handles, and the controls inside them keep their clicks. The window opens hidden and appears once the saved theme is applied, so neither theme flashes on launch.
+Motion explains state and preserves orientation: brief, interruptible transitions for overlays and feedback, springs for panels and for layout that settles after a drag, and no animation delays on typing, keyboard commands, or frequently repeated actions. Streak and freeze indicators may animate briefly when their state changes; they don't loop at rest, and the static and reduced-motion states carry the same meaning.
 
-Create and detail dialogs use compact property rows with the label in a stable column and the control beside it. Common properties stay visible; conditional or advanced properties expand in place inside a scrolling body. Each dialog has a plain DM Sans title, an obvious top-right close control, a neutral Cancel action, and one primary save action. Dirty dismissal asks before discarding, failed saves keep the draft and show an actionable error, and destructive actions use a separate confirmation when reversal is not immediate.
-
-An anchored popup is a separate dismissal layer from its parent dialog. Escape and outside press close the topmost popup first and restore focus to its trigger; they do not discard the parent draft. Popup content stays within the viewport and may scroll independently when its option set is long.
-
-Every interactive component has hover where applicable, press, focus, disabled, and error treatment. Icons are consistent Lucide icons with meaningful accessible names; there are no emoji as interface icons, no mascots, and no fake OS chrome. Selected sidebar items use a fill and text emphasis, without a left-edge accent bar.
-
-Motion explains state and preserves orientation: brief, interruptible transitions for occasional overlays and feedback, with reduced-motion treatment, and no animation delays on typing, keyboard-driven commands, or frequently repeated editing actions. Screenshot sequences don't establish exact animation timings.
-
-Streak and freeze indicators may animate briefly when their state changes or an achievement is earned. They do not loop continuously at rest. Both the static resting state and the reduced-motion state must communicate the same meaning.
-
-Module history views share one structure, set by Habits: a topline with the shared month navigator (Left and Right step months while it has focus, and the month name is a button back to the current month whenever another month is shown), a hairline summary strip whose primary values carry the module's semantic color, a Recharts trend with a 3, 6, and 12-month range, and a month breakdown. Habits breaks the month down as a hairline grid of tiles, one per habit: a ring of the tracked days in the completion, partial, freeze, and missed tones carries the completion rate in its center, with the habit name and day counts beneath, and the tile opens the habit's details. Tiles follow your saved habit order by default, the same order the daily list uses, and a grip in the tile corner drags a tile into a new place (its arrow keys move it too); a sort control offers completion rate and name instead, and an Archived toggle shows or hides retired habits. Sort and the toggle are remembered on the device, as is each module's last view. Mood and Focus uses a month calendar instead: each day names its mood and focus in words beside toned swatches (square for mood, round for focus, named in a legend by the title), the mood tint fills the cell, a small mark shows a saved synthesis, and the day opens its editor; narrow cells keep the swatch and the level word. Per-level distributions sit in a column beside the calendar, and averages read as scale words first and numbers second.
-
-The Pomodoro timer is a single ring: plum for focus and teal for breaks, the remaining time in Outfit tabular numerals at its center, and small dots for the position in the cycle. The arc moves once a second without easing so it reads as a clock rather than a progress animation. Completion blooms once from the ring and settles; the ring never pulses at rest, and the sidebar countdown is plain text. The timer is centered on the page, and the month statistics and session log form a separate History view chosen from the Timer and History tabs in the page header; the page reopens on the view you left. Every module page uses the same segmented view tabs in its header, and Left and Right arrows move between them.
+The Pomodoro timer is a single ring, plum for focus and teal for breaks, with the remaining time in Outfit tabular numerals at its center and small dots for the position in the cycle. The arc moves once a second without easing, like a clock. Completion blooms once and settles.
 
 ## Sound and copy
 
-The optional, quiet completion sounds and their appearance setting stay. Sound is reserved for task and habit completion, the end of a Pomodoro session, and rare achievements, never navigation, hover, typing, or errors.
+Optional completion sounds are quiet and tactile, reserved for task and habit completion, the end of a Pomodoro session, and rare achievements; never navigation, hover, typing, or errors. Settings has a switch for them.
 
-Keyboard shortcuts follow the platform's habits: Command with a digit switches pages in sidebar order, Command and backslash toggles the sidebar, Command and N creates on pages that create things, Escape clears a search field before it closes anything, and Space drives the Pomodoro timer. Settings lists them. Every icon-only control carries a tooltip with its name.
+Product copy is concise and human. It never leaks implementation or specification language, uses no em dashes, and avoids exclamation marks. Mechanics are explained in Settings or contextual help where they inform a decision, and states show through color, weight, and emphasis rather than explanatory text chips.
 
-Product copy is concise and human, with no implementation or brainstorming captions, no em dashes, and no excessive exclamation marks. Mechanics are explained in Settings or contextual help where they inform a decision, and status labels never substitute for a legible visual hierarchy.
+Keyboard shortcuts follow the platform: Command with a digit switches pages, Command-backslash toggles the sidebar, Command-N creates on pages that create, Command-comma opens Settings, Escape clears a search field before it closes anything, and Space drives the Pomodoro timer. Settings lists every shortcut.
 
-## Verification and references
+## Verification
 
-The Mobbin flows and crops in the [redesign report](REDESIGN-REPORT.md) are the reference set, extended with additional flows for interactions the archive doesn't show, and screenshot observations are kept distinct from proposed behavior and implementation findings.
-
-Complete workflows are verified, including empty, loading, failure, long-content, keyboard, and both-theme states. The [mock data](../app/src/ui/data/mock.ts) is the canonical showroom story, and signed-in surfaces use real account data. The charter defines the target; completed components still need workflow and accessibility verification.
+A surface ships with its workflows, not only its layout: create and edit paths, property controls, empty, loading, and failure states, long content, keyboard use, and both themes. Signed-in surfaces use real account data and honest empty states. Each change is checked in the running app against Apple's Human Interface Guidelines, as the [testing and QA](arch-components/testing-and-qa.md) slice describes.

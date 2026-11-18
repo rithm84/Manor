@@ -1,0 +1,34 @@
+---
+title: Notes · from a keystroke to a committed revision
+---
+flowchart TB
+  edit(["`**Edit in the note**
+  Block model updated once per run-loop turn`"]):::people
+  protect[("`**Protect the draft**
+  NotesDrafts.sqlite · base revision · mutation id`")]:::local
+  queue{{"`**Per-note save queue**
+  650 ms debounce · one save in flight`"}}:::gate
+  send["`**update_note**
+  command id = mutation id
+  expected_revision = base`"]:::backend
+  ok(["`**Committed**
+  Draft re-based or cleared
+  Newer typing kept on top`"]):::backend
+  moved{"`Revision moved?`"}:::gate
+  merge["`**Block merge**
+  Base version from note_versions
+  Combine edits to different blocks`"]:::app
+  same{"`Same block changed
+  on both sides?`"}:::gate
+  compare(["`**Compare versions**
+  Save my version or keep the cloud's`"]):::external
+  offline(["`**Offline or failed**
+  Draft stays protected · retried on reconnect`"]):::async
+
+  edit --> protect --> queue --> send --> moved
+  moved -->|no| ok
+  moved -->|yes| merge --> same
+  same -->|no| send
+  same -->|yes| compare
+  send async_1@-.->|no answer| offline
+  offline async_2@-.->|connection back| queue

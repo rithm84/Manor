@@ -1,0 +1,24 @@
+---
+title: Command path · one write from a page or an agent, with a retry
+---
+sequenceDiagram
+  autonumber
+  participant caller as Page or MCP tool
+  participant gw as Gateway
+  participant pg as manor_command
+  participant mirror as Local mirror
+  caller->>gw: operation · input · expected_revision
+  gw->>pg: command_id · operation · input
+  pg->>pg: authorize · validate · check revision
+  alt revision current
+    pg->>pg: rows + action events + receipt · one transaction
+    pg-->>gw: receipt · committed record · revision
+  else revision moved
+    pg-->>gw: conflict with current state
+  end
+  opt no answer, or a serialization failure
+    gw->>pg: same command_id
+    pg-->>gw: stored receipt · replayed
+  end
+  gw->>mirror: pull after the command
+  gw-->>caller: receipt · touched tables published

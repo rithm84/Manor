@@ -1,0 +1,32 @@
+---
+title: Releases · from a clean commit to an installed update
+---
+flowchart TB
+  subgraph publish ["scripts/release.sh on the release Mac"]
+    direction TB
+    clean{{"`**Clean tree and unused tag**
+    A published build matches a commit`"}}:::gate
+    build["`**build-app.sh**
+    swift build · bundle · Info.plist
+    Signed by the Manor Signing certificate`"]:::app
+    sign["`**Sign the archive**
+    Ed25519 key in ~/.config/manor`"]:::gate
+    release[("`**GitHub release**
+    App zip + manor-update.json`")]:::external
+    clean --> build --> sign --> release
+  end
+  subgraph installed ["Installed Manor"]
+    direction TB
+    check["`**Check the feed**
+    Launch · hourly · active after an idle hour`"]:::app
+    verify{{"`**Verify**
+    Ed25519 signature · bundle id · build
+    Same signing certificate`"}}:::gate
+    offer(["`**Update ready**
+    Restart waits for unsaved work`"]):::app
+    swap["`**Swap and relaunch**
+    Helper script replaces the bundle`"]:::app
+    check --> verify --> offer --> swap
+  end
+  release -->|latest or staging feed| check
+  verify blocked_1@-->|mismatch · stays quiet| check

@@ -1,0 +1,24 @@
+---
+title: Streaks · how one habit's day resolves
+---
+stateDiagram-v2
+  [*] --> open: an active habit's day
+  open --> done: checked off at 100 percent
+  open --> missed: day ends incomplete
+  missed --> done: backfilled the next day
+  missed --> frozen: freeze spent the next day
+  missed --> broken: no backfill · no freeze
+  broken --> restored: two clean days within 48 hours · once a month
+  broken --> reset: otherwise
+  state "Streak continues" as done
+  state "Covered by a freeze" as frozen
+  state "Streak broken" as broken
+  state "Earn-Back" as restored
+  state "Starts over at 0" as reset
+  done --> [*]
+  frozen --> [*]
+  class done backend
+  class frozen local
+  class broken external
+  class restored gate
+  class reset neutral

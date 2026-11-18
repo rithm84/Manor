@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="pele-doc" viewBox="0 0 558 1489" width="558" height="1489" style="max-width:100%;height:auto" role="img" aria-label="Local mirror · one pull of the change feed"><title>Local mirror · one pull of the change feed</title><style><![CDATA[
+/*
+  Shared Manor diagram theme. docs/diagrams/render.mjs embeds this file in every
+  exported SVG, so a diagram source names roles (`:::app`) and edge kinds
+  (`async_1@-.->`) and never sets a color itself. Pick a role by what a node is,
+  never by how it should look. Colors follow the reader's light or dark scheme.
+*/
+
+.pele-doc {
+  --pele-bg: #ffffff;
+  --pele-fg: #25222a;
+  --pele-muted: #625a6c;
+  --pele-line: #5f5869;
+  --pele-surface: #f4f3f6;
+  --pele-surface-alt: #f8f7fa;
+  --pele-border: #625a6c;
+  --pele-accent: #75508f;
+  --pele-critical: #c44d41;
+  --pele-radius: 6px;
+
+  --people-fill: #e7f5ff;   --people-stroke: #1971c2;
+  --app-fill: #f3ecf8;      --app-stroke: #75508f;
+  --local-fill: #e3fafc;    --local-stroke: #0c8599;
+  --backend-fill: #e5f5e8;  --backend-stroke: #2f9e44;
+  --agent-fill: #edf2ff;    --agent-stroke: #4263eb;
+  --external-fill: #fff0ed; --external-stroke: #c44d41;
+  --async-fill: #ffe8cc;    --async-stroke: #e8590c;
+  --gate-fill: #fff4d6;     --gate-stroke: #b37c00;
+  --neutral-fill: #f4f3f6;  --neutral-stroke: #625a6c;
+
+  --edge-async: #e8590c;   --edge-async-text: #b3470a;
+  --edge-blocked: #c44d41; --edge-blocked-text: #a13a2f;
+  --edge-ok: #2f9e44;      --edge-ok-text: #23783a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pele-doc {
+    --pele-bg: #19181d;
+    --pele-fg: #f3eff7;
+    --pele-muted: #b9afc4;
+    --pele-line: #b9afc4;
+    --pele-surface: #201f25;
+    --pele-surface-alt: #1c1b21;
+    --pele-border: #887b94;
+    --pele-accent: #c29bdc;
+    --pele-critical: #ff8787;
+
+    --people-fill: #0c2a43;   --people-stroke: #4dabf7;
+    --app-fill: #2c2136;      --app-stroke: #c29bdc;
+    --local-fill: #0b3338;    --local-stroke: #3bc9db;
+    --backend-fill: #11321b;  --backend-stroke: #51cf66;
+    --agent-fill: #1b2349;    --agent-stroke: #91a7ff;
+    --external-fill: #3d1714; --external-stroke: #ff8787;
+    --async-fill: #4a2508;    --async-stroke: #ff922b;
+    --gate-fill: #3d2e05;     --gate-stroke: #fcc419;
+    --neutral-fill: #26242c;  --neutral-stroke: #9d93a8;
+
+    --edge-async: #ff922b;   --edge-async-text: #ffa94d;
+    --edge-blocked: #ff8787; --edge-blocked-text: #ffa8a8;
+    --edge-ok: #51cf66;      --edge-ok-text: #69db7c;
+  }
+}
+
+.pele-doc > .pele-doc-bg { fill: var(--pele-bg); }
+
+/* Roles: fill and stroke only; text stays the ink color. */
+.pele-node.people > :is(rect, path, polygon, circle, ellipse),
+.pele-node.people > g > path { fill: var(--people-fill); stroke: var(--people-stroke); }
+.pele-node.app > :is(rect, path, polygon, circle, ellipse),
+.pele-node.app > g > path { fill: var(--app-fill); stroke: var(--app-stroke); }
+.pele-node.local > :is(rect, path, polygon, circle, ellipse),
+.pele-node.local > g > path { fill: var(--local-fill); stroke: var(--local-stroke); }
+.pele-node.backend > :is(rect, path, polygon, circle, ellipse),
+.pele-node.backend > g > path { fill: var(--backend-fill); stroke: var(--backend-stroke); }
+.pele-node.agent > :is(rect, path, polygon, circle, ellipse),
+.pele-node.agent > g > path { fill: var(--agent-fill); stroke: var(--agent-stroke); }
+.pele-node.external > :is(rect, path, polygon, circle, ellipse),
+.pele-node.external > g > path { fill: var(--external-fill); stroke: var(--external-stroke); }
+.pele-node.async > :is(rect, path, polygon, circle, ellipse),
+.pele-node.async > g > path { fill: var(--async-fill); stroke: var(--async-stroke); }
+.pele-node.gate > :is(rect, path, polygon, circle, ellipse),
+.pele-node.gate > g > path { fill: var(--gate-fill); stroke: var(--gate-stroke); }
+.pele-node.neutral > :is(rect, path, polygon, circle, ellipse),
+.pele-node.neutral > g > path { fill: var(--neutral-fill); stroke: var(--neutral-stroke); }
+
+/* Subgraphs are boundaries: a dashed outline, like a zone. Swimlanes share
+   their borders, so theirs stay solid; a sequence box is a shaded region with no
+   outline, because message labels have no background to hide a line behind. */
+.pele-cluster > rect { stroke-dasharray: 5 4; }
+.pele-lane > rect { stroke-dasharray: none; }
+.pele-box > rect { stroke: none; fill: var(--pele-surface); fill-opacity: 1; }
+
+/* A `row_*` subgraph only arranges its nodes into a row; it draws nothing. */
+.pele-cluster[data-id^="row_"] { display: none; }
+
+/* Edge kinds, selected by the edge id prefix the source gives the edge. */
+.pele-edge[data-id^="async_"] > path { stroke: var(--edge-async); }
+.pele-edge[data-id^="async_"] > path.pele-marker { fill: var(--edge-async); stroke: none; }
+.pele-edge-label[data-id^="async_"] text { fill: var(--edge-async-text); }
+.pele-edge[data-id^="blocked_"] > path { stroke: var(--edge-blocked); }
+.pele-edge[data-id^="blocked_"] > path.pele-marker { fill: var(--edge-blocked); stroke: none; }
+.pele-edge-label[data-id^="blocked_"] text { fill: var(--edge-blocked-text); }
+.pele-edge[data-id^="ok_"] > path { stroke: var(--edge-ok); }
+.pele-edge[data-id^="ok_"] > path.pele-marker { fill: var(--edge-ok); stroke: none; }
+.pele-edge-label[data-id^="ok_"] text { fill: var(--edge-ok-text); }
+]]></style><rect class="pele-doc-bg" width="558" height="1489" rx="8"/><svg x="0" y="0" class="pele pele-flowchart" viewBox="0 0 558 1489" width="558" height="1489" style="--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_r:var(--pele-radius,4px);--_w:var(--pele-bold-weight,bold);--_fm:var(--pele-font-mono,monospace);font:16px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="flowchart"><g class="pele-edges" fill="none" stroke="var(--_l)" stroke-linecap="round"><g class="pele-edge" data-id="L_poke_queue_0"><path d="M301.55,111L301.55,152"/><path class="pele-marker" d="M301.55,159L298.19,151L304.91,151Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_queue_ready_0"><path d="M301.55,225L301.55,266"/><path class="pele-marker" d="M301.55,273L298.19,265L304.91,265Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_ready_boot_0"><path d="M250.05,431.44C250.05,457.79 194.07,457.79 194.07,484.13L194.07,529.63"/><path class="pele-marker" d="M194.07,536.63L190.71,528.63L197.43,528.63Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_boot_page_0"><path d="M194.07,623.63L194.07,664.63"/><path class="pele-marker" d="M194.07,671.63L190.71,663.63L197.43,663.63Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_ready_page_0"><path d="M353.06,431.44C353.06,484.04 409.04,484.04 409.04,536.63L409.04,664.63"/><path class="pele-marker" d="M409.04,671.63L405.68,663.63L412.4,663.63Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_page_fold_0"><path d="M205.19,737.63L205.19,778.63"/><path class="pele-marker" d="M205.19,785.63L201.83,777.63L208.55,777.63Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_fold_skip_0"><path d="M205.19,872.63L205.19,913.63"/><path class="pele-marker" d="M205.19,920.63L201.83,912.63L208.55,912.63Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_skip_commit_0"><path d="M181.71,1038.21C181.71,1082.04 104.39,1082.04 104.39,1125.88L104.39,1212.88C104.39,1230.51 284.39,1230.51 284.39,1248.15L284.39,1254.15"/><path class="pele-marker" d="M284.39,1261.15L281.03,1253.15L287.75,1253.15Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_skip_reread_0"><path d="M228.67,1038.21C228.67,1055.79 306,1055.79 306,1073.38L306,1118.88"/><path class="pele-marker" d="M306,1125.88L302.64,1117.88L309.36,1117.88Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_reread_commit_0"><path d="M306,1212.88L306,1253.88"/><path class="pele-marker" d="M306,1260.88L302.64,1252.88L309.36,1252.88Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_commit_publish_0"><path d="M306,1350.88L306,1391.88"/><path class="pele-marker" d="M306,1398.88L302.64,1390.88L309.36,1390.88Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="async_1"><path d="M327.61,1261.15L327.61,1248.15C327.61,1230.51 490.72,1230.51 490.72,1212.88L490.72,785.63C490.72,768.13 423.62,768.13 423.62,750.63L423.62,744.63" stroke-dasharray="3 4"/><path class="pele-marker" d="M423.62,737.63L426.98,745.63L420.26,745.63Z" fill="var(--_l)" stroke="none"/></g></g><g class="pele-edge-labels" font-size="14"><g class="pele-edge-label" data-id="L_ready_boot_0"><rect x="182.29" y="486.13" width="23.57" height="21" rx="3" fill="var(--_bg)"/><text x="194.07" y="501.53" text-anchor="middle">no</text></g><g class="pele-edge-label" data-id="L_ready_page_0"><rect x="394.14" y="569.63" width="29.78" height="21" rx="3" fill="var(--_bg)"/><text x="409.04" y="585.03" text-anchor="middle">yes</text></g><g class="pele-edge-label" data-id="L_skip_commit_0"><rect x="89.5" y="1158.88" width="29.78" height="21" rx="3" fill="var(--_bg)"/><text x="104.39" y="1174.28" text-anchor="middle">yes</text></g><g class="pele-edge-label" data-id="L_skip_reread_0"><rect x="294.22" y="1075.38" width="23.57" height="21" rx="3" fill="var(--_bg)"/><text x="306" y="1090.78" text-anchor="middle">no</text></g><g class="pele-edge-label" data-id="async_1"><rect x="449.76" y="976.26" width="81.92" height="21" rx="3" fill="var(--_bg)"/><text x="490.72" y="991.66" text-anchor="middle">more pages</text></g></g><g class="pele-nodes"><g class="pele-node pele-shape-stadium people" data-id="poke" transform="translate(301.55,67.5)"><rect x="-182.85" y="-43.5" width="365.71" height="87" rx="43.5" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">Poke</tspan><tspan x="0" y="5.6">Launch · own command · realtime insert</tspan><tspan x="0" y="26.6">Focus · network back · one-minute timer</tspan></text></g><g class="pele-node pele-shape-hex gate" data-id="queue" transform="translate(301.55,192)"><polygon points="-182.52,-33 182.52,-33 199.02,0 182.52,33 -182.52,33 -199.02,0" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9" font-weight="var(--_w)">One pull at a time</tspan><tspan x="0" y="16.1">Pokes during a pull collapse into one follow-up</tspan></text></g><g class="pele-node pele-shape-diam gate" data-id="ready" transform="translate(301.55,368.32)"><polygon points="0,-95.31 152.5,0 0,95.32 -152.5,0" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9">Copy ready and</tspan><tspan x="0" y="16.1">cursor at or behind the head?</tspan></text></g><g class="pele-node pele-shape-rect local" data-id="boot" transform="translate(194.07,580.13)"><rect x="-170.07" y="-43.5" width="340.14" height="87" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">Bootstrap</tspan><tspan x="0" y="5.6">Read the head cursor first</tspan><tspan x="0" y="26.6">Replace every account table, four at a time</tspan></text></g><g class="pele-node pele-shape-rect backend" data-id="page" transform="translate(301.55,704.63)"><rect x="-174.06" y="-33" width="348.13" height="66" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9" font-weight="var(--_w)">Read a feed page</tspan><tspan x="0" y="16.1">manor_workspace_changes after the cursor</tspan></text></g><g class="pele-node pele-shape-rect local" data-id="fold" transform="translate(205.19,829.13)"><rect x="-141.61" y="-43.5" width="283.22" height="87" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">Fold by key</tspan><tspan x="0" y="5.6">Last change per row wins</tspan><tspan x="0" y="26.6">Deletes and purges remove by key</tspan></text></g><g class="pele-node pele-shape-diam gate" data-id="skip" transform="translate(205.19,986.76)"><polygon points="0,-66.12 105.8,0 0,66.13 -105.8,0" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9">Local revision</tspan><tspan x="0" y="16.1">already current?</tspan></text></g><g class="pele-node pele-shape-rect backend" data-id="reread" transform="translate(306,1169.38)"><rect x="-156.72" y="-43.5" width="313.44" height="87" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">Re-read by identity</tspan><tspan x="0" y="5.6">Upsert returned rows</tspan><tspan x="0" y="26.6">Delete rows Postgres no longer returns</tspan></text></g><g class="pele-node pele-shape-cyl local" data-id="commit" transform="translate(306,1305.88)"><path d="M-102.69,-33A102.69,12 0 0 1 102.69,-33V33A102.69,12 0 0 1 -102.69,33Z" fill="var(--_s)" stroke="var(--_b)"/><path d="M-102.69,-33A102.69,12 0 0 0 102.69,-33" fill="none" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="1.1" font-weight="var(--_w)">Commit page + cursor</tspan><tspan x="0" y="22.1">One SQLite transaction</tspan></text></g><g class="pele-node pele-shape-stadium app" data-id="publish" transform="translate(306,1431.88)"><rect x="-168.78" y="-33" width="337.56" height="66" rx="33" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9" font-weight="var(--_w)">Publish touched tables</tspan><tspan x="0" y="16.1">Pages that show them reload from disk</tspan></text></g></g></svg></svg>

@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="pele-doc" viewBox="0 0 437 1188" width="437" height="1188" style="max-width:100%;height:auto" role="img" aria-label="Releases · from a clean commit to an installed update"><title>Releases · from a clean commit to an installed update</title><style><![CDATA[
+/*
+  Shared Manor diagram theme. docs/diagrams/render.mjs embeds this file in every
+  exported SVG, so a diagram source names roles (`:::app`) and edge kinds
+  (`async_1@-.->`) and never sets a color itself. Pick a role by what a node is,
+  never by how it should look. Colors follow the reader's light or dark scheme.
+*/
+
+.pele-doc {
+  --pele-bg: #ffffff;
+  --pele-fg: #25222a;
+  --pele-muted: #625a6c;
+  --pele-line: #5f5869;
+  --pele-surface: #f4f3f6;
+  --pele-surface-alt: #f8f7fa;
+  --pele-border: #625a6c;
+  --pele-accent: #75508f;
+  --pele-critical: #c44d41;
+  --pele-radius: 6px;
+
+  --people-fill: #e7f5ff;   --people-stroke: #1971c2;
+  --app-fill: #f3ecf8;      --app-stroke: #75508f;
+  --local-fill: #e3fafc;    --local-stroke: #0c8599;
+  --backend-fill: #e5f5e8;  --backend-stroke: #2f9e44;
+  --agent-fill: #edf2ff;    --agent-stroke: #4263eb;
+  --external-fill: #fff0ed; --external-stroke: #c44d41;
+  --async-fill: #ffe8cc;    --async-stroke: #e8590c;
+  --gate-fill: #fff4d6;     --gate-stroke: #b37c00;
+  --neutral-fill: #f4f3f6;  --neutral-stroke: #625a6c;
+
+  --edge-async: #e8590c;   --edge-async-text: #b3470a;
+  --edge-blocked: #c44d41; --edge-blocked-text: #a13a2f;
+  --edge-ok: #2f9e44;      --edge-ok-text: #23783a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pele-doc {
+    --pele-bg: #19181d;
+    --pele-fg: #f3eff7;
+    --pele-muted: #b9afc4;
+    --pele-line: #b9afc4;
+    --pele-surface: #201f25;
+    --pele-surface-alt: #1c1b21;
+    --pele-border: #887b94;
+    --pele-accent: #c29bdc;
+    --pele-critical: #ff8787;
+
+    --people-fill: #0c2a43;   --people-stroke: #4dabf7;
+    --app-fill: #2c2136;      --app-stroke: #c29bdc;
+    --local-fill: #0b3338;    --local-stroke: #3bc9db;
+    --backend-fill: #11321b;  --backend-stroke: #51cf66;
+    --agent-fill: #1b2349;    --agent-stroke: #91a7ff;
+    --external-fill: #3d1714; --external-stroke: #ff8787;
+    --async-fill: #4a2508;    --async-stroke: #ff922b;
+    --gate-fill: #3d2e05;     --gate-stroke: #fcc419;
+    --neutral-fill: #26242c;  --neutral-stroke: #9d93a8;
+
+    --edge-async: #ff922b;   --edge-async-text: #ffa94d;
+    --edge-blocked: #ff8787; --edge-blocked-text: #ffa8a8;
+    --edge-ok: #51cf66;      --edge-ok-text: #69db7c;
+  }
+}
+
+.pele-doc > .pele-doc-bg { fill: var(--pele-bg); }
+
+/* Roles: fill and stroke only; text stays the ink color. */
+.pele-node.people > :is(rect, path, polygon, circle, ellipse),
+.pele-node.people > g > path { fill: var(--people-fill); stroke: var(--people-stroke); }
+.pele-node.app > :is(rect, path, polygon, circle, ellipse),
+.pele-node.app > g > path { fill: var(--app-fill); stroke: var(--app-stroke); }
+.pele-node.local > :is(rect, path, polygon, circle, ellipse),
+.pele-node.local > g > path { fill: var(--local-fill); stroke: var(--local-stroke); }
+.pele-node.backend > :is(rect, path, polygon, circle, ellipse),
+.pele-node.backend > g > path { fill: var(--backend-fill); stroke: var(--backend-stroke); }
+.pele-node.agent > :is(rect, path, polygon, circle, ellipse),
+.pele-node.agent > g > path { fill: var(--agent-fill); stroke: var(--agent-stroke); }
+.pele-node.external > :is(rect, path, polygon, circle, ellipse),
+.pele-node.external > g > path { fill: var(--external-fill); stroke: var(--external-stroke); }
+.pele-node.async > :is(rect, path, polygon, circle, ellipse),
+.pele-node.async > g > path { fill: var(--async-fill); stroke: var(--async-stroke); }
+.pele-node.gate > :is(rect, path, polygon, circle, ellipse),
+.pele-node.gate > g > path { fill: var(--gate-fill); stroke: var(--gate-stroke); }
+.pele-node.neutral > :is(rect, path, polygon, circle, ellipse),
+.pele-node.neutral > g > path { fill: var(--neutral-fill); stroke: var(--neutral-stroke); }
+
+/* Subgraphs are boundaries: a dashed outline, like a zone. Swimlanes share
+   their borders, so theirs stay solid; a sequence box is a shaded region with no
+   outline, because message labels have no background to hide a line behind. */
+.pele-cluster > rect { stroke-dasharray: 5 4; }
+.pele-lane > rect { stroke-dasharray: none; }
+.pele-box > rect { stroke: none; fill: var(--pele-surface); fill-opacity: 1; }
+
+/* A `row_*` subgraph only arranges its nodes into a row; it draws nothing. */
+.pele-cluster[data-id^="row_"] { display: none; }
+
+/* Edge kinds, selected by the edge id prefix the source gives the edge. */
+.pele-edge[data-id^="async_"] > path { stroke: var(--edge-async); }
+.pele-edge[data-id^="async_"] > path.pele-marker { fill: var(--edge-async); stroke: none; }
+.pele-edge-label[data-id^="async_"] text { fill: var(--edge-async-text); }
+.pele-edge[data-id^="blocked_"] > path { stroke: var(--edge-blocked); }
+.pele-edge[data-id^="blocked_"] > path.pele-marker { fill: var(--edge-blocked); stroke: none; }
+.pele-edge-label[data-id^="blocked_"] text { fill: var(--edge-blocked-text); }
+.pele-edge[data-id^="ok_"] > path { stroke: var(--edge-ok); }
+.pele-edge[data-id^="ok_"] > path.pele-marker { fill: var(--edge-ok); stroke: none; }
+.pele-edge-label[data-id^="ok_"] text { fill: var(--edge-ok-text); }
+]]></style><rect class="pele-doc-bg" width="437" height="1188" rx="8"/><svg x="0" y="0" class="pele pele-flowchart" viewBox="0 0 437 1188" width="437" height="1188" style="--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_r:var(--pele-radius,4px);--_w:var(--pele-bold-weight,bold);--_fm:var(--pele-font-mono,monospace);font:16px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="flowchart"><g class="pele-clusters"><g class="pele-cluster" data-id="installed"><rect x="24" y="630" width="388.88" height="534" fill="var(--_a)" fill-opacity="0.5" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-cluster-label" fill="var(--_m)" x="92.69" y="655.6" text-anchor="middle">Installed Manor</text></g><g class="pele-cluster" data-id="publish"><rect x="35.89" y="24" width="365.1" height="533" fill="var(--_a)" fill-opacity="0.5" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-cluster-label" fill="var(--_m)" x="182.39" y="49.6" text-anchor="middle">scripts/release.sh on the release Mac</text></g></g><g class="pele-edges" fill="none" stroke="var(--_l)" stroke-linecap="round"><g class="pele-edge" data-id="L_clean_build_0"><path d="M218.44,130L218.44,171"/><path class="pele-marker" d="M218.44,178L215.08,170L221.8,170Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_build_sign_0"><path d="M218.44,265L218.44,306"/><path class="pele-marker" d="M218.44,313L215.08,305L221.8,305Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_sign_release_0"><path d="M218.44,379L218.44,420"/><path class="pele-marker" d="M218.44,427L215.08,419L221.8,419Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_check_verify_0"><path d="M179.76,756L179.76,822"/><path class="pele-marker" d="M179.76,829L176.4,821L183.12,821Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_verify_offer_0"><path d="M218.44,916L218.44,957"/><path class="pele-marker" d="M218.44,964L215.08,956L221.8,956Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_offer_swap_0"><path d="M218.44,1030L218.44,1071"/><path class="pele-marker" d="M218.44,1078L215.08,1070L221.8,1070Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_release_check_0"><path d="M218.44,517L218.44,683"/><path class="pele-marker" d="M218.44,690L215.08,682L221.8,682Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="blocked_1"><path d="M265.12,829L265.12,763"/><path class="pele-marker" d="M265.12,756L268.48,764L261.76,764Z" fill="var(--_l)" stroke="none"/></g></g><g class="pele-edge-labels" font-size="14"><g class="pele-edge-label" data-id="L_release_check_0"><rect x="149.46" y="579.5" width="137.96" height="21" rx="3" fill="var(--_bg)"/><text x="218.44" y="594.9" text-anchor="middle">latest or staging feed</text></g><g class="pele-edge-label" data-id="blocked_1"><rect x="189.76" y="785.5" width="150.72" height="21" rx="3" fill="var(--_bg)"/><text x="265.12" y="800.9" text-anchor="middle">mismatch · stays quiet</text></g></g><g class="pele-nodes"><g class="pele-node pele-shape-hex gate" data-id="clean" transform="translate(218.44,97)"><polygon points="-146.05,-33 146.05,-33 162.55,0 146.05,33 -146.05,33 -162.55,0" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9" font-weight="var(--_w)">Clean tree and unused tag</tspan><tspan x="0" y="16.1">A published build matches a commit</tspan></text></g><g class="pele-node pele-shape-rect app" data-id="build" transform="translate(218.44,221.5)"><rect x="-157.18" y="-43.5" width="314.35" height="87" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">build-app.sh</tspan><tspan x="0" y="5.6">swift build · bundle · Info.plist</tspan><tspan x="0" y="26.6">Signed by the Manor Signing certificate</tspan></text></g><g class="pele-node pele-shape-rect gate" data-id="sign" transform="translate(218.44,346)"><rect x="-130.73" y="-33" width="261.46" height="66" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9" font-weight="var(--_w)">Sign the archive</tspan><tspan x="0" y="16.1">Ed25519 key in ~/.config/manor</tspan></text></g><g class="pele-node pele-shape-cyl external" data-id="release" transform="translate(218.44,472)"><path d="M-120.5,-33A120.5,12 0 0 1 120.5,-33V33A120.5,12 0 0 1 -120.5,33Z" fill="var(--_s)" stroke="var(--_b)"/><path d="M-120.5,-33A120.5,12 0 0 0 120.5,-33" fill="none" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="1.1" font-weight="var(--_w)">GitHub release</tspan><tspan x="0" y="22.1">App zip + manor-update.json</tspan></text></g><g class="pele-node pele-shape-rect app" data-id="check" transform="translate(218.44,723)"><rect x="-167.35" y="-33" width="334.7" height="66" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9" font-weight="var(--_w)">Check the feed</tspan><tspan x="0" y="16.1">Launch · hourly · active after an idle hour</tspan></text></g><g class="pele-node pele-shape-hex gate" data-id="verify" transform="translate(218.44,872.5)"><polygon points="-152.69,-43.5 152.69,-43.5 174.44,0 152.69,43.5 -152.69,43.5 -174.44,0" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-15.4" font-weight="var(--_w)">Verify</tspan><tspan x="0" y="5.6">Ed25519 signature · bundle id · build</tspan><tspan x="0" y="26.6">Same signing certificate</tspan></text></g><g class="pele-node pele-shape-stadium app" data-id="offer" transform="translate(218.44,997)"><rect x="-139.87" y="-33" width="279.74" height="66" rx="33" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9" font-weight="var(--_w)">Update ready</tspan><tspan x="0" y="16.1">Restart waits for unsaved work</tspan></text></g><g class="pele-node pele-shape-rect app" data-id="swap" transform="translate(218.44,1111)"><rect x="-134.94" y="-33" width="269.87" height="66" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" text-anchor="middle" xml:space="preserve"><tspan x="0" y="-4.9" font-weight="var(--_w)">Swap and relaunch</tspan><tspan x="0" y="16.1">Helper script replaces the bundle</tspan></text></g></g></svg></svg>

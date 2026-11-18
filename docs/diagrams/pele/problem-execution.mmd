@@ -1,0 +1,40 @@
+---
+title: Problems · editor language servers and graded runs
+---
+flowchart TB
+  subgraph mac ["Manor app"]
+    direction LR
+    editor["`**Code editor**
+    TextKit · local highlighting
+    Completion · hover · diagnostics`"]:::app
+    drafts[("`**Code drafts**
+    ProblemCodeDrafts.sqlite`")]:::local
+    editor -->|every keystroke| drafts
+  end
+  runner["`**problem-runner**
+  Edge Function in us-east-1`"]:::backend
+  pg[("`**Postgres**
+  Leases · submissions · private testsets`")]:::backend
+  subgraph blaxel ["Blaxel us-was-1"]
+    direction LR
+    lsp["`**Editor sandbox**
+    One per account
+    Language-server bridge`"]:::external
+    grade["`**Grading sandbox**
+    Bubblewrap jail per case
+    No network · no answers`"]:::external
+    judge["`**Judge sandbox**
+    Special checkers
+    Never holds submitted code`"]:::external
+    lsp ~~~ grade ~~~ judge
+  end
+
+  editor -->|editor-session| runner
+  runner -->|preview token · socket URLs| editor
+  editor <-->|LSP over WebSocket| lsp
+  editor -->|execute · run or submit| runner
+  runner -->|claim · settle| pg
+  runner -->|program + inputs| grade
+  runner -->|outputs + expected answers| judge
+  editor async_1@-.->|poll submission| runner
+  drafts async_2@-.->|save_problem_draft| pg

@@ -417,8 +417,6 @@
     "legacy_functions_removed": [
       "normalize-capture",
       "x-ingest",
-      "alfred-session",
-      "alfred-consult",
       "x-connect"
     ],
     "legacy_schedules_removed": [
@@ -427,5 +425,6 @@
     ],
     "snapshot": "output/prod-snapshot-2026-09-12 (local, gitignored)"
   },
-  "journal_removed": "2026-09-12: schema, functions, package, and tooling removed; the 20260910041753 migration remains as deployed history"
+  "journal_removed": "2026-09-12: schema, functions, package, and tooling removed; the 20260910041753 migration remains as deployed history",
+  "daily_synthesis_and_alfred_removed": "2026-11-17: 20261117120000_remove_daily_synthesis_and_alfred drops the synthesis fields, commit_debrief, and the Alfred tables; applied and recorded on staging, production pending"
 }
