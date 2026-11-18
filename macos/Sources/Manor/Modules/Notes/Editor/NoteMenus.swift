@@ -808,20 +808,25 @@ struct NoteInlineMathForm: View {
         .frame(width: 280)
       Group {
         if let image = NoteMath.render(value, fontSize: 17, color: NoteTheme.ink, display: false)?.image {
-          Image(nsImage: image)
+          // A long equation scrolls rather than widening the popover as you type.
+          ScrollView(.horizontal, showsIndicators: false) { Image(nsImage: image) }
+            .frame(height: image.size.height)
         } else {
           Text(value.trimmingCharacters(in: .whitespaces).isEmpty ? "Preview" : "Check the LaTeX")
             .font(.ui(Typography.Size.xs))
             .foregroundStyle(value.isEmpty ? Palette.inkMuted : Palette.overdueError)
         }
       }
-      .frame(maxWidth: .infinity, minHeight: 28)
+      .frame(width: 280, alignment: .center)
+      .frame(minHeight: 28)
       HStack {
         Spacer()
         Button("Cancel", action: onCancel).buttonStyle(.manor(.ghost, size: .small))
         Button("Done") { onCommit(value) }.buttonStyle(.manor(.primary, size: .small)).keyboardShortcut(.defaultAction)
       }
     }
+    // A fixed width: the popover sizes itself from this content, so nothing in it may follow its own size.
+    .frame(width: 280)
     .padding(Space.s3)
     .onAppear { focused = true }
   }

@@ -625,6 +625,11 @@ final class WorkspaceEditorCoordinator: NSObject, NSTextViewDelegate, NSTextStor
       if selection.location < start || selection.length > 0 { completion.hide() }
     }
     signature?.selectionChanged()
+    #if DEBUG
+    if ProcessInfo.processInfo.environment["MANOR_QA_HOVER"] != nil, textView.selectedRange().length == 0 {
+      hover?.qaShow(at: textView.selectedRange().location)
+    }
+    #endif
   }
 
   func noteUse() { servers.noteUse(language, session: session(bound: true)) }

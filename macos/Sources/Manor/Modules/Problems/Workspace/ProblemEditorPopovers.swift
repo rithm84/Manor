@@ -3,14 +3,17 @@ import ManorKit
 import SwiftUI
 
 /// Hover: resting the pointer on a symbol shows its type and documentation from the language server, together with
-/// any diagnostic under the pointer.
+/// any diagnostic under the pointer. The card is a hand-placed panel, not an `NSPopover`: a popover sizes itself from
+/// its SwiftUI content on every layout, and content that can't settle (wrapping text, nested scroll views) kept it
+/// resizing and allocating inside one run-loop turn, so memory grew without bound. Here the width is fixed, the
+/// height is measured once, and the panel's own host never resizes the window.
 @MainActor
 final class WorkspaceHover: NSResponder {
   private weak var coordinator: WorkspaceEditorCoordinator?
   private weak var textView: NSTextView?
   private var trackingArea: NSTrackingArea?
   private var pending: Task<Void, Never>?
-  private var popover: NSPopover?
+  private var panel: NSPanel?
   private var shownRange: NSRange?
   private var keyMonitor: Any?
 
@@ -21,15 +24,19 @@ final class WorkspaceHover: NSResponder {
 
   required init?(coder: NSCoder) { nil }
 
-  var isVisible: Bool { popover?.isShown == true }
+  var isVisible: Bool { panel?.isVisible == true }
 
   func install(on textView: NSTextView) {
     self.textView = textView
     let area = NSTrackingArea(rect: .zero, options: [.mouseMoved, .mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect], owner: self, userInfo: nil)
     textView.addTrackingArea(area)
     trackingArea = area
-    keyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown]) { [weak self] event in
-      MainActor.assumeIsolated { self?.close() }
+    keyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown, .scrollWheel]) { [weak self] event in
+      MainActor.assumeIsolated {
+        // Scrolling or selecting inside the card keeps it; anything else (typing, a click, scrolling the code) closes it.
+        guard let self, event.window == nil || event.window !== self.panel else { return }
+        self.close()
+      }
       return event
     }
   }
@@ -58,11 +65,26 @@ final class WorkspaceHover: NSResponder {
 
   override func mouseExited(with event: NSEvent) { pending?.cancel() }
 
+  #if DEBUG
+  /// QA only (debug builds launched with MANOR_QA_HOVER=1): shows the hover for a caret position, as resting the
+  /// pointer there would, so remote test sessions without real pointer events can exercise it.
+  func qaShow(at offset: Int) {
+    close()
+    pending = Task { [weak self] in
+      try? await Task.sleep(for: .milliseconds(450))
+      guard !Task.isCancelled else { return }
+      await self?.show(at: offset)
+    }
+  }
+  #endif
+
   func close() {
     pending?.cancel()
     pending = nil
-    popover?.performClose(nil)
-    popover = nil
+    if let panel, panel.isVisible {
+      panel.parent?.removeChildWindow(panel)
+      panel.orderOut(nil)
+    }
     shownRange = nil
   }
 
@@ -83,14 +105,43 @@ final class WorkspaceHover: NSResponder {
     }
     guard !Task.isCancelled, markdown != nil || !diagnostics.isEmpty else { return }
     if range.length == 0 { range = NSRange(location: offset, length: 1) }
-    guard let anchor = coordinator.rect(for: range) else { return }
-    let popover = NSPopover()
-    popover.behavior = .semitransient
-    popover.animates = false
-    popover.contentViewController = NSHostingController(rootView: WorkspaceHoverContent(diagnostics: diagnostics, markdown: markdown, language: coordinator.language))
-    popover.show(relativeTo: anchor, of: textView, preferredEdge: .minY)
-    self.popover = popover
+    guard let anchor = coordinator.rect(for: range), let window = textView.window else { return }
+    let content = WorkspaceHoverContent(diagnostics: diagnostics, markdown: markdown, language: coordinator.language)
+    let width = WorkspacePopoverSizing.hoverWidth
+    // Measured once at the fixed width with a throwaway controller; the panel's host never sizes the window.
+    let measured = NSHostingController(rootView: content).sizeThatFits(in: CGSize(width: width, height: WorkspacePopoverSizing.maxHeight))
+    let height = ceil(min(max(measured.height, 24), WorkspacePopoverSizing.maxHeight))
+    let word = window.convertToScreen(textView.convert(anchor, to: nil))
+    // Below the word, or above it when the screen runs out.
+    var origin = NSPoint(x: word.minX - 12, y: word.minY - height - 4)
+    if let visible = window.screen?.visibleFrame {
+      if origin.y < visible.minY { origin.y = word.maxY + 4 }
+      origin.x = min(max(visible.minX + 4, origin.x), visible.maxX - width - 4)
+    }
+    let panel = self.panel ?? Self.makePanel()
+    self.panel = panel
+    panel.appearance = window.effectiveAppearance
+    let host = NSHostingView(rootView: content)
+    host.sizingOptions = []
+    panel.contentView = host
+    panel.setFrame(NSRect(x: origin.x, y: origin.y, width: width, height: height), display: true)
+    if panel.parent !== window {
+      panel.parent?.removeChildWindow(panel)
+      window.addChildWindow(panel, ordered: .above)
+    }
+    panel.orderFront(nil)
     shownRange = range
+  }
+
+  private static func makePanel() -> NSPanel {
+    let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: WorkspacePopoverSizing.hoverWidth, height: 40), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
+    panel.isFloatingPanel = true
+    panel.becomesKeyOnlyIfNeeded = true
+    panel.hidesOnDeactivate = true
+    panel.hasShadow = true
+    panel.isOpaque = false
+    panel.backgroundColor = .clear
+    return panel
   }
 }
 
@@ -146,6 +197,7 @@ final class WorkspaceSignatureHelp {
     state.help = help
     let panel = self.panel ?? makePanel()
     self.panel = panel
+    panel.appearance = window.effectiveAppearance
     let width = WorkspaceSignatureContent.width(for: help.signatures[help.activeSignature])
     // Measured once at the pinned width with a throwaway host; the panel's own host never sizes the window.
     let measured = NSHostingController(rootView: WorkspaceSignatureContent(state: state))
@@ -227,6 +279,9 @@ struct WorkspaceHoverContent: View {
     .frame(width: WorkspacePopoverSizing.hoverWidth)
     .frame(maxHeight: WorkspacePopoverSizing.maxHeight)
     .fixedSize(horizontal: false, vertical: true)
+    .background(Palette.surfaceCard, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+    .overlay(RoundedRectangle(cornerRadius: Radius.control, style: .continuous).strokeBorder(Palette.hairlineStrong))
+    .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
   }
 }
 
@@ -307,9 +362,9 @@ struct WorkspaceSignatureContent: View {
   }
 }
 
-/// The editor popovers' sizes. Their content always has a fixed width: content whose width and height both
-/// follow each other (wrapping text sized to its own ideal) never settles in an `NSPopover`, which keeps resizing and
-/// allocating; with the width pinned, the height follows and the popover's preferred size is stable.
+/// The editor's floating cards' sizes. Their content always has a fixed width: content whose width and height both
+/// follow each other (wrapping text sized to its own ideal) never settles in a window that sizes itself from it,
+/// which keeps resizing and allocating; with the width pinned, the height follows and is measured once.
 enum WorkspacePopoverSizing {
   static let maxWidth: CGFloat = 520
   static let hoverWidth: CGFloat = 440

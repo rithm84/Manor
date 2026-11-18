@@ -1,6 +1,6 @@
 # Problems library and execution
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -56,7 +56,7 @@ The editor is native: `WorkspaceCodeEditor` wraps an `NSTextView` subclass on an
 
 - **Highlighting** is a hand-written incremental lexer per language (`ProblemSyntax`) that keeps per-line state and stops re-lexing once a line's end state matches its old value. Sources up to 60,000 UTF-16 units lex on the main thread; longer ones lex in the background.
 - **Completion** is a non-activating panel that filters by prefix, then subsequence, and opens on the server's trigger characters or Option-Escape and Control-Space. Before a server connects, it offers language keywords and words from the document.
-- **Hover and signature help** show in popovers after 450 and 120 milliseconds. **Diagnostics** draw as dotted underlines for errors, warnings, and information, and are dropped when their document version is stale.
+- **Hover and signature help** show in floating cards after 450 and 120 milliseconds. Each card is a hand-placed panel with a fixed width and a height measured once, never a window that sizes itself from its SwiftUI content: content whose width and height follow each other can keep such a window resizing inside one run-loop turn, allocating without bound. **Diagnostics** draw as dotted underlines for errors, warnings, and information, and are dropped when their document version is stale.
 
 ### Language servers
 
