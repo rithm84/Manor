@@ -31,46 +31,26 @@ Linux cannot compile SwiftUI or AppKit. Build, run, and QA on the Daytona macOS 
 - Do not put the owner's Alfred API keys (OpenAI and others) into the sandbox without asking. Alfred UI states
   that need no live model (composer, empty, error, settings) can be QA'd without keys.
 
-## Remaining work, in order
+## Status after the 2026-11-18 session
 
-1. **/alfred in Notes** (spec: `ALFRED-IN-NOTES.md`). Partial code exists in
-   `macos/Sources/Manor/Modules/Notes/Editor/NoteAlfred*.swift`, `NoteEditorController+Alfred*.swift`, and
-   `macos/Sources/ManorKit/Domain/NoteDocument/NoteAlfred.swift`; the agent writing it stopped mid-way. Audit
-   against the spec and finish: composer with images, Alfred block rendered with native block views,
-   thinking animation, refine, Try again/Copy/Delete/Turn into regular blocks, selection editing (Command-J,
-   toolbar, block menu, chips, preview Replace/Insert below/Try again/Discard). Check `supabase/functions`
-   note text extraction and Markdown export handle the `alfred`, `diagram`, and `generativeUI` blocks; deploy
-   any backend change to staging only.
-2. **In-app Alfred** (owner request): when Manor is the frontmost key window, the Alfred shortcut opens a
-   centered Manor dialog instead of the notch overlay, and Alfred can act on Manor ("check these things
-   off"). Partial code: `macos/Sources/ManorKit/Domain/AlfredTools/`, `macos/Sources/Manor/Modules/AlfredTools/`
-   (`ManorAlfredToolbox+*.swift`), `AlfredToolCatalogTests`. Audit, finish, wire through
-   `macos/Sources/Manor/App/AlfredBridge.swift`, and confirm destructive actions confirm or offer Undo.
-3. **Manor-themed pickers**: replace every system `DatePicker` and `Picker` (still in HomeStyle,
-   ProblemViewDialogs, DayEditorDialog, JobsBrowseView, JobsComponents, NotesDialogs, NoteEditor,
-   TrackingHistoryView, TrackingTrendChart, AlfredSettingsSection, AlfredKnowledgeCard) with custom Manor
-   date, time, and select pickers in `macos/Sources/Manor/Design/Components/Pickers/` (partial; math in
-   `ManorKit/Domain/Pickers`, tests in `PickerMathTests`). Light and dark, keyboard operable. Then remove
-   `Design/Components/CalendarFocus.swift` if nothing uses it.
-4. **Sandbox QA** of 1 to 3 plus a regression pass with `QA-MATRIX.md` (both themes, windowed and full
-   screen, Reduce Motion, Increase Contrast, Reduce Transparency). Alfred: notch overlay and menu bar with
-   other apps frontmost, General and Prep modes, quitting Manor from the Dock in Prep mode keeps
-   the menu bar item and Alfred working.
-5. **Performance**: measure launch (old Tauri baseline about 300 ms to first paint), page switches, scrolling
-   long lists and long notes, and memory at idle and after visiting every page; fix hot spots. Native over
-   heavy dependencies.
-6. **Repo hygiene**: remove root `tmp/` and the stray root `node_modules/` (ask first; both are local junk
-   only on the owner's Mac and may not exist in a clone). Never touch `output/` (private, ignored). Dead code
-   sweep (unused types, files, assets), final grep that BlockNote, OpenUI, OpenCluely, Mixpanel, and Blitz
-   appear nowhere except applied migrations.
-7. **Docs**: update PRD, ARCHITECTURE, `docs/arch-components/alfred.md` and `notes-editor.md` for in-app
-   Alfred and /alfred; native screenshots for the README (from the sandbox, showroom account).
-8. **Release 0.2.0** (owner's Mac only; needs the signing certificate and the update key, so a cloud session
-   prepares and the owner runs): `macos/scripts/release.sh production 0.2.0 notes.md`. Production cutover,
-   each step confirmed with the owner first: count production synthesis text and assistant rows, apply
-   migration `20261117120000` to production, deploy manor-mcp, integrations, and integration-callback to
-   production, update `tools/recovery/current-status.json`. Tauri 0.1.x installs cannot read the new update
-   feed, so the owner installs 0.2.0 by hand once.
+Steps 1 to 7 of the earlier plan are done on `native-macos` (see `git log`): /alfred in Notes, in-app Alfred
+with Manor tools, Manor-themed pickers (and the popover sizing fix), a full sandbox QA pass with its fixes,
+page-switch performance (about 80 ms to about 30 ms on the VM), the dead-code sweep, docs, and native README
+screenshots. The sidebar now matches the system sidebar (window buttons inside it, unified toolbar), and the
+Tracking History trend is two charts.
+
+What remains:
+
+1. **Release 0.2.0 and the production cutover** on the owner's Mac: `.claude/release-0.2.0/CHECKLIST.md`
+   (notes in `NOTES.md`). Production is untouched. Delete `.claude/handoff/` and `.claude/release-0.2.0/` after.
+2. **Verify with a real OpenAI key** (owner's Mac): in-app Alfred and /alfred were exercised only with the
+   scripted demo writer (`ALFRED_NOTES_DEMO=1`), never against the live model.
+3. **Open QA items not fixed** (lower severity): Alfred diagram index labels render below 12 pt; typing
+   `/alfred` very quickly can skip the slash menu; date formats differ between pages ("Fri, 20 Nov" vs
+   "Nov 16, 2026"); offline uploads of note attachments are not protected locally (`NoteDraftStore`'s
+   attachment API is unwired); first visits to Notes and Problems take about 200 to 290 ms on the VM; the
+   floating hover sidebar and the image block options dialog, Bookmarks, Pomodoro controls, and habit
+   create/edit/delete were not re-tested in the last QA pass.
 
 ## Known gaps
 

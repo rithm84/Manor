@@ -8,7 +8,7 @@ been run against production. Confirm each production step before running it.
 
 1. `git fetch origin && git switch native-macos && git pull`
 2. `swift build --package-path macos` and `swift test --package-path macos` on Swift 6.4.2 (the sandbox verified
-   Swift 6.3: all Swift Testing suites and 86 XCTests passed).
+   Swift 6.3: 371 Swift Testing tests in 77 suites and 84 XCTests passed).
 3. `macos/scripts/build-app.sh staging --open`, sign in with `macos/scripts/staging-session.sh`, and spot-check:
    Control-Option-H in Manor (in-app Alfred), `/alfred` in a note, a date picker, and the sidebar in both themes.
    With your OpenAI key in Settings > Alfred, try one real in-app request ("what's due today?") and one action
