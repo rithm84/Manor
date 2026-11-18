@@ -42,5 +42,12 @@ if [[ -d /Applications/Manor.app ]]; then
   echo "✓ Moved the previous Manor to the Trash"
 fi
 ditto build/Manor.app /Applications/Manor.app
-open /Applications/Manor.app
-echo "✓ Installed Manor $VERSION in Applications"
+if pgrep -xq Manor; then
+  # Alfred's Prep mode keeps Manor running when asked to quit, so the old version is still open.
+  echo "✓ Installed Manor $VERSION in Applications"
+  echo "! Manor is still running the previous version (Prep mode keeps it open on Quit)."
+  echo "  Choose Quit Manor from Manor's menu bar item, then open Manor to start $VERSION."
+else
+  open /Applications/Manor.app
+  echo "✓ Installed and opened Manor $VERSION"
+fi
