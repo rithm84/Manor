@@ -22,7 +22,7 @@ const EXCLUDES = ['work/bundles', '*.log', '.DS_Store', '__pycache__', 'work/.re
 const [command, rawDirectory, flag, projectRef] = process.argv.slice(2)
 if (!['push', 'pull'].includes(command) || !rawDirectory || flag !== '--project-ref' || !/^[a-z]{20}$/.test(projectRef ?? '')) throw new TypeError('Usage: node workdata.mjs push|pull <data-dir> --project-ref <ref>')
 const root = resolve(rawDirectory)
-const cli = resolve(dirname(fileURLToPath(import.meta.url)), '../../app/node_modules/.bin/supabase')
+const cli = resolve(dirname(fileURLToPath(import.meta.url)), 'node_modules/.bin/supabase')
 const keys = JSON.parse(execFileSync(cli, ['projects', 'api-keys', '--project-ref', projectRef, '-o', 'json'], { cwd: tmpdir(), stdio: ['ignore', 'pipe', 'inherit'] }).toString())
 const serviceKey = keys.find(key => key.name === 'service_role')?.api_key
 if (!serviceKey) throw new Error(`The Supabase CLI returned no service key for ${projectRef}; run supabase login first`)

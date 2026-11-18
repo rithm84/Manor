@@ -1,18 +1,21 @@
 /**
- * The Tauri desktop shell serves the built frontend from its own protocol handler, so requests
- * from that window carry the literal origin `tauri://localhost` instead of an HTTPS origin.
- * Deno parses the value but reports `new URL('tauri://localhost').origin` as the string "null",
- * so every check compares this constant literally before falling back to URL parsing.
+ * The identity the desktop app's requests stand for. The native app sends no Origin header, so a
+ * request without one is treated as coming from it; the value keeps the literal the earlier webview
+ * shell sent, which stored connection rows and the `MANOR_ORIGIN` setting already carry. Deno reports
+ * `new URL('tauri://localhost').origin` as the string "null", so every check compares this constant
+ * literally before falling back to URL parsing. Its return address is always the configured desktop
+ * scheme, never something the caller chooses.
  */
-export const DESKTOP_WEBVIEW_ORIGIN = 'tauri://localhost'
+export const DESKTOP_APP_ORIGIN = 'tauri://localhost'
 
 export class OriginNotAllowedError extends Error {
   constructor() { super('Origin is not allowed'); this.name = 'OriginNotAllowedError' }
 }
 
 /**
- * Validates the configured allowlist, then confirms the caller's origin is on it. A configured
- * entry is an exact HTTPS origin, a local development http origin, or the desktop app origin.
+ * Validates the configured allowlist, then confirms the caller's origin is on it or is the desktop
+ * app. A configured entry is an exact HTTPS origin, a local development http origin, or the desktop
+ * app origin.
  */
 export function assertAllowedOrigin(origin: string): string {
   const canonical = Deno.env.get('MANOR_ORIGIN')
@@ -20,13 +23,13 @@ export function assertAllowedOrigin(origin: string): string {
   const additional = Deno.env.get('MANOR_ALLOWED_ORIGINS')
   const configured = [canonical, ...(additional ? additional.split(',').map(value => value.trim()) : [])]
   for (const value of configured) {
-    if (value === DESKTOP_WEBVIEW_ORIGIN) continue
+    if (value === DESKTOP_APP_ORIGIN) continue
     const url = URL.parse(value)
     if (url === null || url.origin !== value || (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)))) {
       throw new Error(`Manor origins must be exact HTTPS origins, local development origins, or the desktop app origin; received "${value}"`)
     }
   }
-  if (!configured.includes(origin)) throw new OriginNotAllowedError()
+  if (origin !== DESKTOP_APP_ORIGIN && !configured.includes(origin)) throw new OriginNotAllowedError()
   return origin
 }
 
@@ -48,7 +51,7 @@ export function desktopScheme(): string {
  * origin to redirect to, so it receives a deep link on its own URL scheme instead.
  */
 export function settingsReturnUrl(origin: string): URL {
-  if (origin !== DESKTOP_WEBVIEW_ORIGIN) return new URL('/settings', origin)
+  if (origin !== DESKTOP_APP_ORIGIN) return new URL('/settings', origin)
   return new URL(`${desktopScheme()}://settings`)
 }
 

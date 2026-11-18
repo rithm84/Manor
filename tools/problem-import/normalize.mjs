@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { bundleSchema, hash, stableUuid } from './bundle.mjs'
-import { problemSourceMetadataSchema } from '../../app/src/shared/problemSourceMetadata.ts'
+import { problemSourceMetadataSchema } from './shared/problemSourceMetadata.ts'
 
 const catalogRecord = z.object({
   id: z.string().min(1).optional(), originalHref: z.string().optional(), href: z.string().min(1), title: z.string().min(1), kind: z.enum(['Coding', 'System Design', 'Behavioral', 'Other']),

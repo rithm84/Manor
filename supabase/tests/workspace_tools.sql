@@ -28,7 +28,7 @@ do $$ declare r jsonb; day date; cmd uuid:=gen_random_uuid(); head text; begin
  if (r->>'habit_eligible_days')::int<>1 or (r->>'habits_completed')::int<>1 or (r->>'observed_days')::int<>2 or (r->>'mood_missing')::int<>2 then raise exception 'Metrics counted pre-creation/future days or lost missingness: %',r; end if;
  r:=public.manor_workspace_query('query_habit_history',jsonb_build_object('from',day-1,'to',day+1,'limit',1));
  if jsonb_array_length(r->'items')<>1 or (r->'items'->0->>'entry_revision')::int<>1 then raise exception 'Habit history lost entry revisions'; end if;
- perform public.manor_command(gen_random_uuid(),'commit_debrief',jsonb_build_object('date',day,'focus','Resting','expected_revision',0));
+ perform public.manor_command(gen_random_uuid(),'log_daily_ratings',jsonb_build_object('date',day,'focus','Resting','expected_revision',0));
  r:=public.manor_workspace_query('get_metrics',jsonb_build_object('from',day,'to',day,'group_by','total'));
  if (r->>'focus_samples')::int<>1 or (r->>'focus_missing')::int<>0 or r->'focus_distribution'->>'Resting'<>'1' then raise exception 'Resting was treated as missing'; end if;
  perform public.manor_command(gen_random_uuid(),'save_task_view','{"id":"workspace-view","name":"Saved","rules":[],"expected_revision":0}');

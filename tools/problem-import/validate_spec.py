@@ -49,7 +49,7 @@ class Taxonomy(set):
 
 
 def taxonomy() -> Taxonomy:
-    script = "import('" + str(ROOT / "app/src/shared/problemTopics.ts") + "').then(m => console.log(JSON.stringify([m.PROBLEM_TOPICS, m.RETIRED_PROBLEM_TOPICS ?? {}])))"
+    script = "import('" + str(ROOT / "tools/problem-import/shared/problemTopics.ts") + "').then(m => console.log(JSON.stringify([m.PROBLEM_TOPICS, m.RETIRED_PROBLEM_TOPICS ?? {}])))"
     current, retired = json.loads(subprocess.run(["node", "-e", script], check=True, capture_output=True, text=True).stdout)
     labels = Taxonomy(current)
     labels.retired = retired

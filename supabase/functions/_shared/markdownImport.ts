@@ -1,6 +1,6 @@
 /**
  * Markdown to native note blocks for the `import_markdown_note` tool. The conversion runs on the MCP host,
- * so an agent hands over the Markdown it found on disk and Manor produces the BlockNote document the app
+ * so an agent hands over the Markdown it found on disk and Manor produces the block document the app
  * edits, with fresh stable ids on every block. Images and file links that point at local paths become
  * attachment references when the caller maps them, and are reported back when it has not yet uploaded them.
  */

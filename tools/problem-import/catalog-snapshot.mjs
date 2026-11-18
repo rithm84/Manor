@@ -102,7 +102,7 @@ async function digest(path) {
 /** Storage REST client authenticated with the project's service key, retrying throttling, server errors, and network failures. */
 class CatalogStorage {
   constructor(projectRef) {
-    const cli = resolve(dirname(fileURLToPath(import.meta.url)), '../../app/node_modules/.bin/supabase')
+    const cli = resolve(dirname(fileURLToPath(import.meta.url)), 'node_modules/.bin/supabase')
     const keys = JSON.parse(execFileSync(cli, ['projects', 'api-keys', '--project-ref', projectRef, '-o', 'json'], { cwd: tmpdir(), stdio: ['ignore', 'pipe', 'inherit'] }).toString())
     const serviceKey = keys.find(key => key.name === 'service_role')?.api_key
     if (!serviceKey) throw new Error(`The Supabase CLI returned no service key for ${projectRef}; run supabase login first`)

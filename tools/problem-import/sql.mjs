@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
 const execute = promisify(execFile)
-const cli = resolve(dirname(fileURLToPath(import.meta.url)), '../../app/node_modules/.bin/supabase')
+const cli = resolve(dirname(fileURLToPath(import.meta.url)), 'node_modules/.bin/supabase')
 
 export class SqlError extends Error {
   constructor(message, reason) { super(message); this.reason = reason }

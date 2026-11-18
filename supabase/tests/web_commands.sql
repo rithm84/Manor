@@ -33,7 +33,7 @@ select public.manor_command('10000000-0000-4000-8000-000000000020','create_habit
 select public.manor_command('10000000-0000-4000-8000-000000000021','log_habit',jsonb_build_object('id','habit-a','date',(now() at time zone 'America/Los_Angeles')::date,'value',100,'expected_revision',0));
 select public.manor_habits_state();
 select public.manor_leetcode_summary();
-select public.manor_command('10000000-0000-4000-8000-000000000022','commit_debrief',jsonb_build_object('date',(now() at time zone 'America/Los_Angeles')::date,'note','Synthetic synthesis','expected_revision',0));
+select public.manor_command('10000000-0000-4000-8000-000000000022','log_daily_ratings',jsonb_build_object('date',(now() at time zone 'America/Los_Angeles')::date,'mood','Good','expected_revision',0));
 select public.manor_command('10000000-0000-4000-8000-000000000023','create_recurring_task',jsonb_build_object('id','repeat-a','due',(now() at time zone 'America/Los_Angeles')::date,'recurrence','FREQ=WEEKLY;INTERVAL=1','title','Synthetic repeat','context_id','ctx-a','estimate_minutes',null,'priority','High','tags','[]'::jsonb,'expected_revision',0));
 do $$begin
  if (select count(*) from public.tasks where series_id='repeat-a')<12 then raise exception 'Recurrence was not materialized'; end if;

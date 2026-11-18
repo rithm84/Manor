@@ -8,7 +8,7 @@
  */
 import { z } from 'zod'
 import { bundleSchema, hash, stableUuid } from './bundle.mjs'
-import { isProblemTopic } from '../../app/src/shared/problemTopics.ts'
+import { isProblemTopic } from './shared/problemTopics.ts'
 import { runSqlTextWithRetries } from './sql.mjs'
 import { readFile, writeFile, rename } from 'node:fs/promises'
 import { resolve } from 'node:path'

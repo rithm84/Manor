@@ -1,6 +1,7 @@
 import {adminClient,corsHeaders,identity,authorizeConnection,store,z,credentialsSchema,type Json} from '../_shared/integrationRuntime.ts'
 import {beginOAuth,finishOAuth} from '../_shared/integrationOAuth.ts'
 import {syncX} from '../_shared/integrationSync.ts'
+import {DESKTOP_APP_ORIGIN} from '../_shared/origins.ts'
 
 Deno.serve(async(request:Request):Promise<Response>=>{
  let headers:HeadersInit
@@ -17,7 +18,7 @@ Deno.serve(async(request:Request):Promise<Response>=>{
   const input=z.record(z.string(),z.json()).parse(JSON.parse(raw))
   const action=z.string().parse(input.action)
   await authorizeConnection(request,true)
-  if(action==='oauth_start') return reply(200,await beginOAuth(client,owner,z.enum(['google','x']).parse(input.provider),z.string().regex(/^[A-Za-z0-9_-]{43}$/).parse(input.codeChallenge),z.string().parse(request.headers.get('origin'))))
+  if(action==='oauth_start') return reply(200,await beginOAuth(client,owner,z.enum(['google','x']).parse(input.provider),z.string().regex(/^[A-Za-z0-9_-]{43}$/).parse(input.codeChallenge),request.headers.get('origin') ?? DESKTOP_APP_ORIGIN))
   if(action==='oauth_complete') {
    await finishOAuth(client,owner,z.string().min(1).max(4096).parse(input.code),z.string().min(32).max(200).parse(input.state),z.string().min(43).max(128).parse(input.verifier))
    return reply(200,{committed:true})

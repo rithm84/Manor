@@ -1,7 +1,7 @@
 /** Runtime validation and deterministic identities for source-independent problem bundles. */
 import { z } from 'zod'
 import { createHash } from 'node:crypto'
-import { problemSourceMetadataSchema } from '../../app/src/shared/problemSourceMetadata.ts'
+import { problemSourceMetadataSchema } from './shared/problemSourceMetadata.ts'
 
 const identifier = z.string().min(1).max(200)
 const label = z.string().trim().min(1).max(100)

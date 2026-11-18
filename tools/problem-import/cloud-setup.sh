@@ -32,7 +32,7 @@ npm ci --prefix "$REPO/tools/problem-runner" --no-audit --no-fund
 npm ci --prefix "$REPO/tools/diagrams" --no-audit --no-fund
 
 step "Logging in to Supabase"
-"$REPO/app/node_modules/.bin/supabase" login --token "$SUPABASE_ACCESS_TOKEN" >/dev/null
+"$REPO/tools/problem-import/node_modules/.bin/supabase" login --token "$SUPABASE_ACCESS_TOKEN" >/dev/null
 umask 077
 printf '%s\n' "BLAXEL_API_KEY=$BLAXEL_API_KEY" "BLAXEL_WORKSPACE=$BLAXEL_WORKSPACE" "MANOR_STAGING_WORKER_SECRET=$MANOR_STAGING_WORKER_SECRET" "TYPESAFE_AI_API_KEY=$TYPESAFE_AI_API_KEY" > "$REPO/.env.local"
 

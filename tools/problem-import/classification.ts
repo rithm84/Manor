@@ -1,7 +1,7 @@
 /** Validated, source-independent metadata decisions and full-context preparation. */
 import { z } from 'zod'
 import { createHash } from 'node:crypto'
-import { PROBLEM_TOPIC_CATEGORIES, PROBLEM_TOPICS } from '../../app/src/shared/problemTopics.ts'
+import { PROBLEM_TOPIC_CATEGORIES, PROBLEM_TOPICS } from './shared/problemTopics.ts'
 
 export const difficultySchema = z.enum(['Easy', 'Medium', 'Hard'])
 export const kindSchema = z.enum(['coding', 'system_design', 'behavioral', 'other'])
