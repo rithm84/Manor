@@ -25,15 +25,17 @@ enum DemoContent {
 
     ```python
     def two_sum(nums: list[int], target: int) -> list[int]:
-        # 1. Map each value seen so far to its index.
-        seen = {}
-        for i, x in enumerate(nums):
+        # 1. Map each value seen so far to its index, so a partner
+        #    lookup is O(1) instead of rescanning the array.
+        seen = {}  # value -> index
+        for i, x in enumerate(nums):  # one left-to-right pass
             # 2. The partner this number needs to reach target.
             need = target - x
             # 3. Partner already seen: that's the pair.
-            if need in seen:
+            if need in seen:  # only earlier indices are stored
                 return [seen[need], i]  # earlier index first
             # 4. Otherwise remember this number for later ones.
+            #    Storing after the check keeps x from pairing with itself.
             seen[x] = i
         return []
     ```

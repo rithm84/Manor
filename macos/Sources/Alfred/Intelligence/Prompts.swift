@@ -101,11 +101,14 @@ enum Prompts {
         - <point, ≤ 20 words, concrete: names, numbers, trade-offs>
         - <2–4 points total>
 
-        <one ```<language> code block — ONLY if the question needs code. Walk through it with numbered
-         plain-English comments, one above each logical step: `# 1. Map each value to its index.`, `# 2. …`
-         (3–7 steps, using the code's variable names) — reading only the comments explains the algorithm. Also add
-         short trailing comments at the end of lines whose purpose isn't obvious (`seen.add(node)  # mark before
-         queueing`), a few words each, on a handful of lines, never every line>
+        <one ```<language> code block — ONLY if the question needs code. Comment it generously: someone reading
+         only the comments should understand the algorithm and why each part is there. Numbered plain-English
+         comments above each logical step: `# 1. Map each value to its index.`, `# 2. …` (4–9 steps, using the
+         code's variable names), each saying what the step does and, when it isn't obvious, why — a second comment
+         line for the invariant or reason is fine. Also add short trailing comments (under 8 words) at the end of
+         most meaningful lines — conditions, pointer and index moves, state updates, early returns
+         (`seen.add(node)  # mark before queueing`, `if r < 0 or r >= rows:  # off the grid`); skip only lines that
+         explain themselves, like `return []` or a bare `else:`>
 
         **Complexity:** <time> time, <auxiliary space> space   ← coding questions only
 
@@ -498,9 +501,12 @@ enum Prompts {
             - Coding / data-structure questions: use \(p.language) unless the conversation or screen specifies another
               language. Trace a small example in a ```diagram step-through (input + working state) unless the problem is
               trivial — it's the fastest way to see the algorithm; place it where it reads best. Comment
-              the code with numbered plain-English steps (`# 1. …`, 3–7 of them, the code's variable names), one above
-              each logical step, so reading just the comments explains the algorithm, plus short trailing comments on
-              the few lines whose purpose isn't obvious (`left += 1  # shrink past the duplicate`).
+              the code generously, so reading just the comments explains the algorithm and why each part is there:
+              numbered plain-English steps (`# 1. …`, 4–9 of them, the code's variable names), one above each logical
+              step, saying what it does and, when it isn't obvious, why (a second line for the invariant is fine),
+              plus short trailing comments (under 8 words) on most meaningful lines: conditions, pointer and index
+              moves, state updates, early returns (`left += 1  # shrink past the duplicate`). Skip only lines that
+              explain themselves.
               When the problem has more than one standard approach of similar complexity (BFS or DFS, a heap or
               quickselect), name them at the top and say which one you show and why in a few words; the diagram and
               code use that one.
@@ -521,11 +527,13 @@ enum Prompts {
             2. Bullets: why it works (the invariant, or why a pointer move / greedy choice / skipped state is safe),
                and brute force only if it's a useful stepping stone.
             3. One fenced code block: optimal, correct, idiomatic, interview-ready; keep any starter template/signature
-               shown (from the screen if there is one). Walk through it with numbered plain-English comments, one above
-               each logical step (`# 1. Map each value to its index.`, `# 2. …`; 3–7 steps, the code's variable names)
-               — reading only the comments should explain the algorithm. Add short trailing comments at the end of
-               lines whose purpose isn't obvious (`seen.add(nxt)  # mark when queued, not when popped`), a few words
-               each and only where they help.
+               shown (from the screen if there is one). Comment it generously: reading only the comments should
+               explain the algorithm and why each part is there. Numbered plain-English comments, one above each
+               logical step (`# 1. Map each value to its index.`, `# 2. …`; 4–9 steps, the code's variable names),
+               each saying what the step does and, when it isn't obvious, why (a second line for the invariant is
+               fine). Add short trailing comments (under 8 words) at the end of most meaningful lines: conditions,
+               pointer and index moves, state updates, early returns (`seen.add(nxt)  # mark when queued, not when
+               popped`). Skip only lines that explain themselves.
             4. **Complexity** — time and space; separate auxiliary space from stored/output space when they differ.
             5. **Edge cases:** last, 2–4 short bullets: each an edge case an interviewer would check and, in
                parentheses, where the code handles it (`An empty grid returns 0 (the size check before the loop).`).
