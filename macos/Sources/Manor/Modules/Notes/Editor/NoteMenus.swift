@@ -67,7 +67,10 @@ final class NoteSuggestionMenu {
   private var panel: NoteFloatingPanel {
     if let panelStorage { return panelStorage }
     let panel = NoteFloatingPanel()
-    panel.contentView = NSHostingView(rootView: NoteSuggestionList(state: state, choose: { [weak self] index in self?.choose(index) }))
+    let host = NSHostingView(rootView: NoteSuggestionList(state: state, choose: { [weak self] index in self?.choose(index) }))
+    // Sized by hand in `position`; the list never resizes its window.
+    host.sizingOptions = []
+    panel.contentView = host
     panelStorage = panel
     return panel
   }

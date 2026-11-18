@@ -1002,11 +1002,14 @@ final class WorkspaceCompletion {
     panel.hasShadow = true
     panel.isOpaque = false
     panel.backgroundColor = .clear
-    panel.contentView = NSHostingView(rootView: WorkspaceCompletionList(state: state) { [weak self] index in
+    let host = NSHostingView(rootView: WorkspaceCompletionList(state: state) { [weak self] index in
       guard let self, self.state.items.indices.contains(index) else { return }
       self.state.selected = index
       if let item = self.selectedItem { self.onPick?(item) }
     })
+    // The panel's frame is set by hand; the list never resizes the window (that pair can fight in a layout loop).
+    host.sizingOptions = []
+    panel.contentView = host
     return panel
   }
 }

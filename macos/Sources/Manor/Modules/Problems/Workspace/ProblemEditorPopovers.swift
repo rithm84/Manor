@@ -99,13 +99,13 @@ final class WorkspaceHover: NSResponder {
 @MainActor
 final class WorkspaceSignatureHelp {
   private weak var coordinator: WorkspaceEditorCoordinator?
-  private var popover: NSPopover?
+  private var panel: NSPanel?
   private var pending: Task<Void, Never>?
   private let state = WorkspaceSignatureState()
 
   init(coordinator: WorkspaceEditorCoordinator) { self.coordinator = coordinator }
 
-  var isVisible: Bool { popover?.isShown == true }
+  var isVisible: Bool { panel?.isVisible == true }
 
   func textChanged() {
     guard let coordinator, let textView = coordinator.textView else { return }
@@ -130,28 +130,61 @@ final class WorkspaceSignatureHelp {
       let caret = textView.selectedRange().location
       guard let connection = await coordinator.syncNow() else { self.close(); return }
       let help = try? await connection.signatureHelp(at: coordinator.position(of: caret), trigger: trigger)
-      guard !Task.isCancelled else { return }
+      guard !Task.isCancelled, textView.selectedRange().location == caret else { return }
       guard let help else { self.close(); return }
       self.show(help, at: caret)
     }
   }
 
+  /// A plain floating panel sized and placed by hand: its width is the signature's (capped), its height is measured
+  /// once at that width, and it sits just above the caret's line. Nothing sizes itself from its content, so layout
+  /// can't loop.
   private func show(_ help: LSPSignatureHelp, at caret: Int) {
+    guard let coordinator, let textView = coordinator.textView, let window = textView.window,
+          help.signatures.indices.contains(help.activeSignature),
+          let caretRect = coordinator.rect(for: NSRange(location: caret, length: 0)) else { close(); return }
     state.help = help
-    if isVisible { return }
-    guard let coordinator, let textView = coordinator.textView, let rect = coordinator.rect(for: NSRange(location: caret, length: 0)) else { return }
-    let popover = NSPopover()
-    popover.behavior = .applicationDefined
-    popover.animates = false
-    popover.contentViewController = NSHostingController(rootView: WorkspaceSignatureContent(state: state))
-    popover.show(relativeTo: rect, of: textView, preferredEdge: .minY)
-    self.popover = popover
+    let panel = self.panel ?? makePanel()
+    self.panel = panel
+    let width = WorkspaceSignatureContent.width(for: help.signatures[help.activeSignature])
+    // Measured once at the pinned width with a throwaway host; the panel's own host never sizes the window.
+    let measured = NSHostingController(rootView: WorkspaceSignatureContent(state: state))
+      .sizeThatFits(in: CGSize(width: width, height: WorkspacePopoverSizing.maxHeight))
+    let height = min(max(measured.height, 24), WorkspacePopoverSizing.maxHeight)
+    let line = window.convertToScreen(textView.convert(caretRect, to: nil))
+    var origin = NSPoint(x: line.minX - 12, y: line.maxY + 4)
+    if let visible = window.screen?.visibleFrame {
+      if origin.y + height > visible.maxY { origin.y = line.minY - height - 4 }
+      origin.x = min(max(visible.minX + 4, origin.x), visible.maxX - width - 4)
+    }
+    panel.setFrame(NSRect(x: origin.x, y: origin.y, width: width, height: ceil(height)), display: true)
+    if panel.parent !== window {
+      panel.parent?.removeChildWindow(panel)
+      window.addChildWindow(panel, ordered: .above)
+    }
+    panel.orderFront(nil)
+  }
+
+  private func makePanel() -> NSPanel {
+    let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 300, height: 40), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
+    panel.isFloatingPanel = true
+    panel.becomesKeyOnlyIfNeeded = true
+    panel.hidesOnDeactivate = true
+    panel.hasShadow = true
+    panel.isOpaque = false
+    panel.backgroundColor = .clear
+    panel.ignoresMouseEvents = true
+    let host = NSHostingView(rootView: WorkspaceSignatureContent(state: state))
+    host.sizingOptions = []
+    panel.contentView = host
+    return panel
   }
 
   func close() {
     pending?.cancel()
-    popover?.performClose(nil)
-    popover = nil
+    guard let panel, panel.isVisible else { return }
+    panel.parent?.removeChildWindow(panel)
+    panel.orderOut(nil)
   }
 }
 
@@ -187,11 +220,13 @@ struct WorkspaceHoverContent: View {
       }
       .padding(.horizontal, Space.s3)
       .padding(.vertical, Space.s2)
-      .frame(maxWidth: 520, alignment: .leading)
+      .frame(width: WorkspacePopoverSizing.hoverWidth, alignment: .leading)
       .textSelection(.enabled)
     }
-    .frame(maxWidth: 520, maxHeight: 320)
-    .fixedSize(horizontal: true, vertical: true)
+    // A fixed width, so wrapped text sets the height without feeding back into the width; tall content scrolls.
+    .frame(width: WorkspacePopoverSizing.hoverWidth)
+    .frame(maxHeight: WorkspacePopoverSizing.maxHeight)
+    .fixedSize(horizontal: false, vertical: true)
   }
 }
 
@@ -233,13 +268,22 @@ struct WorkspaceSignatureContent: View {
             .font(.ui(Typography.Size.xs))
             .foregroundStyle(Palette.inkMuted)
             .lineLimit(4)
+            .fixedSize(horizontal: false, vertical: true)
         }
       }
       .padding(.horizontal, Space.s3)
       .padding(.vertical, Space.s2)
-      .frame(maxWidth: 520, alignment: .leading)
-      .fixedSize(horizontal: true, vertical: true)
+      // A fixed width (the signature's own, capped): the height follows from it and can't feed back into it.
+      .frame(width: Self.width(for: signature), alignment: .leading)
+      .background(Palette.surfaceCard, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+      .overlay(RoundedRectangle(cornerRadius: Radius.control, style: .continuous).strokeBorder(Palette.hairlineStrong))
     }
+  }
+
+  static func width(for signature: LSPSignatureHelp.Signature) -> CGFloat {
+    let font = NSFont.monospacedSystemFont(ofSize: Typography.Size.xs, weight: .semibold)
+    let text = ceil((signature.label as NSString).size(withAttributes: [.font: font]).width)
+    return min(max(text + Space.s3 * 2 + 2, 160), WorkspacePopoverSizing.maxWidth)
   }
 
   static func label(_ signature: LSPSignatureHelp.Signature, active: Int) -> AttributedString {
@@ -261,4 +305,13 @@ struct WorkspaceSignatureContent: View {
     text.append(piece(label[end...], active: false))
     return text
   }
+}
+
+/// The editor popovers' sizes. Their content always has a fixed width: content whose width and height both
+/// follow each other (wrapping text sized to its own ideal) never settles in an `NSPopover`, which keeps resizing and
+/// allocating; with the width pinned, the height follows and the popover's preferred size is stable.
+enum WorkspacePopoverSizing {
+  static let maxWidth: CGFloat = 520
+  static let hoverWidth: CGFloat = 440
+  static let maxHeight: CGFloat = 320
 }
