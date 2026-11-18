@@ -191,7 +191,8 @@ struct ProblemRecordPanel: View {
     VStack(alignment: .leading, spacing: Space.s2) {
       HStack(spacing: Space.s2) {
         Text("Solved or reviewed").font(.ui(Typography.Size.sm)).foregroundStyle(Palette.inkBody)
-        ProblemDayPicker(label: "Solved or reviewed", value: Binding(get: { date.wrappedValue }, set: { date.wrappedValue = $0 ?? today }), maximum: today, start: today)
+        ProblemDayPicker(label: "Solved or reviewed", value: Binding(get: { date.wrappedValue }, set: { date.wrappedValue = $0 ?? today }), maximum: today,
+                         clearable: false, quickPicks: [.today, .yesterday])
       }
       Text("Solution").font(.ui(Typography.Size.sm)).foregroundStyle(Palette.inkBody)
       ProblemSolutionEditor(text: solution, autofocus: autofocus)

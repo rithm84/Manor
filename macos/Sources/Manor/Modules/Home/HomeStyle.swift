@@ -356,7 +356,7 @@ struct HomeEmptyValue: View {
   var body: some View { Text(text).font(.ui(Typography.Size.sm)).foregroundStyle(Palette.inkMuted) }
 }
 
-/// A date button that opens a native calendar in a popover, for account-local `YYYY-MM-DD` dates.
+/// A property-row date for account-local `YYYY-MM-DD` dates: Manor's calendar with Today, Tomorrow, and Next week.
 struct HomeDateField: View {
   let date: String?
   var placeholder = "Choose a date"
@@ -364,102 +364,22 @@ struct HomeDateField: View {
   let today: String
   var accessibilityLabel = "Date"
   let onChange: (String) -> Void
-  @State private var open = false
-  @State private var hovering = false
-
-  private static let utc = TimeZone(identifier: "UTC")!
 
   var body: some View {
-    Button { open.toggle() } label: {
-      HStack(spacing: Space.s2) {
-        Image(systemName: "calendar").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.inkMuted)
-        if let date {
-          Text(label(for: date)).font(.ui(Typography.Size.sm)).foregroundStyle(Palette.ink).tabular()
-        } else {
-          HomeEmptyValue(text: placeholder)
-        }
-      }
-      .padding(.horizontal, Space.s2)
-      .frame(height: 30)
-      .background(RoundedRectangle(cornerRadius: Radius.control, style: .continuous).fill(hovering || open ? Palette.surfaceHover : .clear))
-      .contentShape(Rectangle())
-    }
-    .buttonStyle(.plain)
-    .onHover { hovering = $0 }
-    .accessibilityLabel(date.map { "\(accessibilityLabel), \(TaskDates.longDayLabel($0))" } ?? accessibilityLabel)
-    .popover(isPresented: $open, arrowEdge: .bottom) {
-      VStack(alignment: .leading, spacing: Space.s2) {
-        HStack(spacing: Space.s1) {
-          quick("Today", today)
-          quick("Tomorrow", TaskDates.adding(1, to: today))
-          quick("Next week", TaskDates.adding(7, to: today))
-        }
-        DatePicker("", selection: selection, in: range, displayedComponents: .date)
-          .datePickerStyle(.graphical)
-          .labelsHidden()
-          .calendarFocusRingHidden()
-          .environment(\.timeZone, Self.utc)
-          .environment(\.calendar, Self.calendar)
-      }
-      .padding(Space.s3)
-    }
-  }
-
-  private func label(for date: String) -> String {
-    if date == today { return "Today" }
-    if date == TaskDates.adding(1, to: today) { return "Tomorrow" }
-    if date == TaskDates.adding(-1, to: today) { return "Yesterday" }
-    let base = TaskDates.dayLabel(date)
-    return TaskDates.parse(date)?.year == TaskDates.parse(today)?.year ? base : "\(base), \(TaskDates.parse(date)?.year ?? 0)"
-  }
-
-  private func quick(_ title: String, _ value: String) -> some View {
-    Button(title) {
-      onChange(value)
-      open = false
-    }
-    .buttonStyle(.manor(.secondary, size: .small))
-    .disabled(minimum.map { value < $0 } ?? false)
-  }
-
-  private static var calendar: Calendar {
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = utc
-    calendar.firstWeekday = 2
-    return calendar
-  }
-
-  private var range: PartialRangeFrom<Date> {
-    (minimum.flatMap { TaskDates.instant(date: $0, time: "12:00", in: Self.utc) }.map { $0.addingTimeInterval(-12 * 3600) } ?? .distantPast)...
-  }
-
-  private var selection: Binding<Date> {
-    Binding(
-      get: { TaskDates.instant(date: date ?? today, time: "12:00", in: Self.utc) ?? Date() },
-      set: { newValue in
-        onChange(TaskDates.local(newValue, in: Self.utc).date)
-        open = false
-      }
-    )
+    ManorDatePicker(accessibilityLabel, selection: Binding(get: { date }, set: { if let value = $0 { onChange(value) } }), today: today,
+                    minimum: minimum, placeholder: placeholder, clearable: false, style: .inline)
+      .fixedSize()
   }
 }
 
-/// The native time field (hours and minutes in the system's 12- or 24-hour style) for an `HH:MM` value.
+/// A property-row time for an `HH:MM` value, on the system's 12- or 24-hour clock.
 struct HomeTimeField: View {
   let time: String
   let onChange: (String) -> Void
-  private static let utc = TimeZone(identifier: "UTC")!
 
   var body: some View {
-    DatePicker("", selection: Binding(
-      get: { TaskDates.instant(date: "2001-01-01", time: time, in: Self.utc) ?? Date() },
-      set: { onChange(TaskDates.local($0, in: Self.utc).time) }
-    ), displayedComponents: .hourAndMinute)
-    .datePickerStyle(.field)
-    .labelsHidden()
-    .environment(\.timeZone, Self.utc)
-    .font(.ui(Typography.Size.sm))
-    .fixedSize()
+    ManorTimePicker("Due time", selection: Binding(get: { time }, set: { onChange($0) }), style: .inline)
+      .fixedSize()
   }
 }
 

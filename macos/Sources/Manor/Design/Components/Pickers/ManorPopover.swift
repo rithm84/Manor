@@ -280,7 +280,13 @@ final class ManorPopoverController: NSObject {
     let host = PopoverHostingView(rootView: root)
     host.sizingOptions = [.intrinsicContentSize]
     host.onSizeChange = { [weak self] in self?.reposition() }
-    panel.contentView = host
+    // A hosting view that is a window's content view resizes that window on every layout, overriding the size
+    // measured here (a list's scroll view collapsed the panel to the trigger's width); a plain container keeps
+    // the panel's size the controller's.
+    let container = NSView()
+    host.autoresizingMask = [.width, .height]
+    container.addSubview(host)
+    panel.contentView = container
     panel.keyHandler = { [weak self] event in self?.handle(event) ?? false }
     self.panel = panel
     self.host = host
@@ -357,6 +363,7 @@ final class ManorPopoverController: NSObject {
     y = min(max(y, screen.minY + 8), screen.maxY - card.height - 8)
     let frame = NSRect(x: x - margin, y: y - margin, width: size.width, height: size.height)
     if panel.frame != frame { panel.setFrame(frame, display: true) }
+    if host.frame.size != size { host.frame = NSRect(origin: .zero, size: size) }
   }
 
   // MARK: Dismissal

@@ -90,7 +90,7 @@ struct ProblemFilterMenu: View {
     .onHover { hovering = $0 }
     .animation(Motion.fast, value: hovering)
     .accessibilityLabel(active ? "\(label): \(selected.count) selected" : label)
-    .popover(isPresented: $open, arrowEdge: .bottom) {
+    .manorPopover(isPresented: $open) {
       ProblemFilterOptions(label: label, selected: selected, searchable: searchable, options: options(), tone: tone, help: help, onChange: onChange)
     }
   }

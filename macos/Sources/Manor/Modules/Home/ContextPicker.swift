@@ -46,7 +46,7 @@ struct TaskContextPicker: View {
       }
     }
     .accessibilityLabel(value.map { "Context: \($0)" } ?? "Context")
-    .popover(isPresented: $open, arrowEdge: .bottom) {
+    .manorPopover(isPresented: $open) {
       TaskContextMenuPanel(value: value, onPick: { name in
         onChange(name)
         open = false

@@ -73,7 +73,7 @@ public struct ManorTimePicker: View {
       }
       .onDisappear { typedSeed = nil }
     }
-    .help(title)
+    .help(open ? "" : title)
   }
 }
 

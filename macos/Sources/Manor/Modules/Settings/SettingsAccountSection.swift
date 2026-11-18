@@ -187,56 +187,21 @@ struct IdentifiedImage: Identifiable {
 
 // MARK: Time zone picker
 
-/// A button showing the saved zone that opens a searchable list of zones.
+/// The saved zone, and a searchable list of zones grouped by region.
 struct TimeZonePicker: View {
   let selection: String
   let onPick: (String) -> Void
-  @State private var open = false
-  @State private var query = ""
 
-  private var matches: [String] {
-    let all = SettingsDomain.timeZoneChoices(including: selection)
-    let needle = query.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: " ", with: "_")
-    guard !needle.isEmpty else { return all }
-    return all.filter { $0.lowercased().contains(needle) || SettingsDomain.timeZoneLabel($0).lowercased().contains(query.lowercased()) }
+  private var options: [ManorSelectOption<String>] {
+    SettingsDomain.timeZoneChoices(including: selection).map { zone in
+      ManorSelectOption(zone, SettingsDomain.timeZoneLabel(zone), section: zone.split(separator: "/").first.map(String.init),
+                        keywords: zone.replacingOccurrences(of: "_", with: " "))
+    }
   }
 
   var body: some View {
-    Button { open.toggle() } label: {
-      HStack(spacing: Space.s2) {
-        Text(SettingsDomain.timeZoneLabel(selection)).font(.ui(Typography.Size.sm, weight: .medium)).tabular()
-        Image(systemName: "chevron.up.chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(Palette.inkMuted)
-      }
-    }
-    .buttonStyle(.manor(.secondary, size: .small))
-    .popover(isPresented: $open, arrowEdge: .bottom) {
-      VStack(spacing: Space.s2) {
-        SearchField(text: $query, prompt: "Search cities")
-        ScrollViewReader { proxy in
-          List(matches, id: \.self) { zone in
-            Button {
-              open = false
-              query = ""
-              onPick(zone)
-            } label: {
-              HStack {
-                Text(SettingsDomain.timeZoneLabel(zone)).font(.ui(Typography.Size.body)).foregroundStyle(Palette.ink)
-                Spacer()
-                Text(zone.split(separator: "/").first.map(String.init) ?? "").font(.ui(Typography.Size.xs)).foregroundStyle(Palette.inkMuted)
-                if zone == selection { Image(systemName: "checkmark").foregroundStyle(Palette.primary) }
-              }
-              .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .id(zone)
-          }
-          .listStyle(.plain)
-          .scrollContentBackground(.hidden)
-          .onAppear { proxy.scrollTo(selection, anchor: .center) }
-        }
-      }
-      .padding(Space.s3)
-      .frame(width: 320, height: 360)
-    }
+    ManorSelect("Time zone", selection: Binding(get: { selection }, set: { onPick($0) }), options: options,
+                searchable: true, searchPrompt: "Search cities", width: 320)
+      .fixedSize()
   }
 }

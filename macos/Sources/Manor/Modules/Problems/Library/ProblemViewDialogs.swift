@@ -1,34 +1,19 @@
 import ManorKit
 import SwiftUI
 
-/// A plain calendar date (`YYYY-MM-DD`) edited with the native picker. Pure dates live in UTC so they never shift.
+/// A plain calendar date (`YYYY-MM-DD`) edited with Manor's calendar; cleared means any date.
 struct ProblemDayPicker: View {
   let label: String
   @Binding var value: String?
   var minimum: String?
   var maximum: String?
-  /// The date a cleared picker starts from.
-  var start: String
-
-  private static let utc = TimeZone(identifier: "UTC")!
-
-  private func date(_ day: String?) -> Date? { day.flatMap { LocalDate.date(from: $0, in: Self.utc) } }
+  var clearable = true
+  var quickPicks: [ManorDateQuickPick] = [.today, .yesterday, .custom("90 days ago", days: -90)]
 
   var body: some View {
-    HStack(spacing: Space.s1) {
-      if let current = value, let date = date(current) {
-        DatePicker(label, selection: Binding(get: { date }, set: { value = LocalDate.string(from: $0, in: Self.utc) }),
-                   in: (self.date(minimum) ?? .distantPast)...(self.date(maximum) ?? .distantFuture), displayedComponents: .date)
-          .labelsHidden()
-          .datePickerStyle(.stepperField)
-          .environment(\.timeZone, Self.utc)
-        IconButton("xmark.circle.fill", label: "Clear \(label.lowercased())", size: 22) { value = nil }
-      } else {
-        Button("Any date") { value = minimum.map { max($0, start) } ?? start }
-          .buttonStyle(.manor(.secondary, size: .small))
-          .accessibilityLabel("\(label): any date")
-      }
-    }
+    ManorDatePicker(label, selection: $value, minimum: minimum, maximum: maximum, placeholder: "Any date",
+                    clearable: clearable, quickPicks: quickPicks)
+      .fixedSize()
   }
 }
 
@@ -51,10 +36,10 @@ struct ProblemAdvancedPanel: View {
         section("Last asked") {
           HStack(spacing: Space.s4) {
             labeled("From") {
-              ProblemDayPicker(label: "Last asked from", value: binding(\.lastAskedSince), maximum: filters.lastAskedUntil, start: LocalDate.adding(-90, to: today))
+              ProblemDayPicker(label: "Last asked from", value: binding(\.lastAskedSince), maximum: filters.lastAskedUntil)
             }
             labeled("Through") {
-              ProblemDayPicker(label: "Last asked through", value: binding(\.lastAskedUntil), minimum: filters.lastAskedSince, start: today)
+              ProblemDayPicker(label: "Last asked through", value: binding(\.lastAskedUntil), minimum: filters.lastAskedSince)
             }
           }
           Text(filters.invalidDateRange ? "The start date must be on or before the end date." : "Problems without a reported date are left out. Month and year reports keep their precision.")
@@ -80,13 +65,9 @@ struct ProblemAdvancedPanel: View {
           }
           HStack(spacing: Space.s2) {
             Text("Statement").font(.ui(Typography.Size.sm)).foregroundStyle(Palette.inkBody)
-            Picker("Statement", selection: Binding(get: { filters.hasContent }, set: { value in store.update { $0.filters.hasContent = value } })) {
-              Text("Any").tag(Bool?.none)
-              Text("Written out").tag(Bool?.some(true))
-              Text("Details only").tag(Bool?.some(false))
-            }
-            .labelsHidden()
-            .fixedSize()
+            ManorSelect("Statement", selection: Binding(get: { filters.hasContent }, set: { value in store.update { $0.filters.hasContent = value } }),
+                        options: [ManorSelectOption(true, "Written out"), ManorSelectOption(false, "Details only")], noneLabel: "Any")
+              .fixedSize()
           }
         }
         tagSections
@@ -102,28 +83,22 @@ struct ProblemAdvancedPanel: View {
   private var arrangement: some View {
     HStack(spacing: Space.s4) {
       labeled("Sort") {
-        Picker("Sort", selection: Binding(get: { settings.sort.first?.field ?? .name }, set: { field in
+        ManorSelect("Sort", selection: Binding(get: { settings.sort.first?.field ?? .name }, set: { field in
           store.update { $0.sort = [ProblemSort(field, $0.sort.first?.direction ?? .asc)] }
-        })) {
-          ForEach([ProblemSort.Field.name, .difficulty, .kind, .lastAsked, .createdAt, .updatedAt], id: \.self) { Text($0.label).tag($0) }
-        }
-        .labelsHidden().fixedSize()
+        }), options: [ProblemSort.Field.name, .difficulty, .kind, .lastAsked, .createdAt, .updatedAt].map { ManorSelectOption($0, $0.label) })
+        .fixedSize()
       }
       labeled("Direction") {
-        Picker("Direction", selection: Binding(get: { settings.sort.first?.direction ?? .asc }, set: { direction in
+        ManorSelect("Direction", selection: Binding(get: { settings.sort.first?.direction ?? .asc }, set: { direction in
           store.update { $0.sort = [ProblemSort($0.sort.first?.field ?? .name, direction)] }
-        })) {
-          Text("Ascending").tag(ProblemSort.Direction.asc)
-          Text("Descending").tag(ProblemSort.Direction.desc)
-        }
-        .labelsHidden().fixedSize()
+        }), options: [ManorSelectOption(ProblemSort.Direction.asc, "Ascending", systemImage: "arrow.up"),
+                      ManorSelectOption(ProblemSort.Direction.desc, "Descending", systemImage: "arrow.down")])
+        .fixedSize()
       }
       labeled("Group by") {
-        Picker("Group by", selection: Binding(get: { settings.groupBy }, set: { value in store.update { $0.groupBy = value } })) {
-          Text("None").tag(ProblemGroupBy?.none)
-          ForEach(ProblemGroupBy.allCases, id: \.self) { Text($0.label).tag(ProblemGroupBy?.some($0)) }
-        }
-        .labelsHidden().fixedSize()
+        ManorSelect("Group by", selection: Binding(get: { settings.groupBy }, set: { value in store.update { $0.groupBy = value } }),
+                    options: ProblemGroupBy.allCases.map { ManorSelectOption($0, $0.label) }, noneLabel: "None")
+        .fixedSize()
       }
       Spacer(minLength: 0)
     }

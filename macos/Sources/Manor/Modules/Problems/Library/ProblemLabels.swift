@@ -152,7 +152,7 @@ struct ProblemChipRow: View {
         .fixedSize()
         .help(ordered.suffix(hidden).map { problemChipText(property, $0) }.joined(separator: ", "))
         .accessibilityLabel("Show \(hidden) more")
-        .popover(isPresented: $showingAll, arrowEdge: .bottom) {
+        .manorPopover(isPresented: $showingAll) {
           ProblemChipWrap(property: property, labels: ordered)
             .padding(Space.s3)
             .frame(width: 320)

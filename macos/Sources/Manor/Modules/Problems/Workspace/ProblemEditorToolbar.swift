@@ -8,23 +8,8 @@ struct WorkspaceEditorToolbar: View {
 
   var body: some View {
     HStack(spacing: Space.s3) {
-      Menu {
-        ForEach(model.languages) { language in
-          Button {
-            model.chooseLanguage(language)
-          } label: {
-            if language == model.language { Label(language.label, systemImage: "checkmark") } else { Text(language.label) }
-          }
-        }
-      } label: {
-        HStack(spacing: Space.s1) {
-          Text(model.language?.label ?? "Language").font(.ui(Typography.Size.sm, weight: .semibold))
-          Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
-        }
-        .foregroundStyle(model.busy ? Palette.inkMuted : Palette.ink)
-      }
-      .menuStyle(.borderlessButton)
-      .menuIndicator(.hidden)
+      ManorSelect("Solution language", selection: Binding(get: { model.language }, set: { if let language = $0 { model.chooseLanguage(language) } }),
+                  options: model.languages.map { ManorSelectOption($0, $0.label) }, placeholder: "Language", style: .toolbar)
       .fixedSize()
       .disabled(model.busy || model.language == nil)
       .help("Solution language")
@@ -36,7 +21,7 @@ struct WorkspaceEditorToolbar: View {
       IconButton("arrow.counterclockwise", label: "Reset to starter code") { model.confirmReset = true }
         .disabled(model.busy || !model.hasCode)
       IconButton("textformat.size", label: "Editor settings") { showSettings.toggle() }
-        .popover(isPresented: $showSettings, arrowEdge: .bottom) { EditorSettingsPanel(model: model) }
+        .manorPopover(isPresented: $showSettings) { EditorSettingsPanel(model: model) }
       IconButton(model.fullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right", label: model.fullscreen ? "Exit full screen (Esc)" : "Full screen") {
         withAnimation(Motion.panel) { model.fullscreen.toggle() }
       }

@@ -153,7 +153,7 @@ public struct ManorDatePicker: View {
       }
       .onDisappear { typedSeed = nil }
     }
-    .help(title)
+    .help(open ? "" : title)
   }
 }
 

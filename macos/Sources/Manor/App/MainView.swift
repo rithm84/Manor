@@ -18,8 +18,7 @@ struct MainView: View {
           SidebarView(floating: true)
             .frame(width: ShellMetrics.sidebarWidth)
             .glassSurface(RoundedRectangle(cornerRadius: 18, style: .continuous), fallback: Palette.sidebarBackground)
-            .padding([.leading, .bottom], Space.s2)
-            .padding(.top, model.isFullScreen ? Space.s2 : ShellMetrics.glassSidebarTop)
+            .padding([.leading, .bottom, .top], Space.s2)
             .transition(.move(edge: .leading))
         } else {
           SidebarView()
@@ -126,8 +125,7 @@ struct MainView: View {
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(GlassSupport.isActive ? .clear : Palette.hairline))
             .shadow(color: .black.opacity(0.16), radius: 24, x: 4)
-            .padding(.top, model.isFullScreen ? Space.s2 : ShellMetrics.glassSidebarTop)
-            .padding([.leading, .bottom], Space.s2)
+            .padding([.leading, .bottom, .top], Space.s2)
             .onHover { if !$0 { withAnimation(Motion.panel) { overlaySidebar = false } } }
             .transition(.move(edge: .leading).combined(with: .opacity))
         }

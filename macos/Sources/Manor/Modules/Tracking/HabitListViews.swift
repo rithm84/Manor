@@ -258,7 +258,7 @@ struct HabitsStatusRail: View {
         }
         Spacer()
         IconButton("info.circle", label: "About streak freezes", size: 24) { showInfo.toggle() }
-          .popover(isPresented: $showInfo, arrowEdge: .bottom) {
+          .manorPopover(isPresented: $showInfo) {
             VStack(alignment: .leading, spacing: Space.s2) {
               Text("Keep a streak going").font(.ui(Typography.Size.body, weight: .semibold)).foregroundStyle(Palette.ink)
               Text("One freeze covers one habit missed yesterday. Checking it off later returns the freeze.")

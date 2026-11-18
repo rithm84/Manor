@@ -91,7 +91,7 @@ struct NotesListPane: View {
     .buttonStyle(NotesHoverButtonStyle())
     .help("Choose what the list shows")
     .accessibilityLabel("Showing \(store.listTitle). Choose what the list shows")
-    .popover(isPresented: $scopeMenuOpen, arrowEdge: .bottom) {
+    .manorPopover(isPresented: $scopeMenuOpen) {
       NotesScopeMenu(store: store) { scopeMenuOpen = false }
     }
   }

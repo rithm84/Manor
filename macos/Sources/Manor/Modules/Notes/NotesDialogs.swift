@@ -79,17 +79,13 @@ struct NoteMoveDialog: View {
     DialogPanel("Move note", onClose: close) {
       VStack(alignment: .leading, spacing: Space.s4) {
         field("Folder") {
-          Picker("Folder", selection: $folderId) {
-            Text("Notes").tag(String?.none)
-            ForEach(store.data.folders) { folder in Text(folder.name).tag(Optional(folder.id)) }
-          }
-          .onChange(of: folderId) { parentPageId = nil }
+          ManorSelect("Folder", selection: $folderId,
+                      options: store.data.folders.map { ManorSelectOption($0.id, $0.name, systemImage: "folder") }, noneLabel: "Notes")
+            .onChange(of: folderId) { parentPageId = nil }
         }
         field("Parent page") {
-          Picker("Parent page", selection: $parentPageId) {
-            Text("No parent page").tag(String?.none)
-            ForEach(parents) { candidate in Text(candidate.displayTitle).tag(Optional(candidate.id)) }
-          }
+          ManorSelect("Parent page", selection: $parentPageId,
+                      options: parents.map { ManorSelectOption($0.id, $0.displayTitle, systemImage: "doc.text") }, noneLabel: "No parent page")
         }
         if let error { Text(error).font(.ui(Typography.Size.sm)).foregroundStyle(Palette.overdueError) }
       }

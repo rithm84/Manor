@@ -40,8 +40,6 @@ public enum Motion {
 }
 
 public enum ShellMetrics {
-  /// Where the floating glass sidebar starts: just below the window buttons (they end about 21 pt down).
-  public static let glassSidebarTop: CGFloat = 34
   public static let sidebarWidth: CGFloat = 224
   public static let topbarHeight: CGFloat = 52
 }

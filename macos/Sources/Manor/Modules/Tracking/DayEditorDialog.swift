@@ -33,7 +33,6 @@ struct DayEditorHabit: Identifiable {
 }
 
 struct DayEditorPanel: View {
-  @Environment(AppContext.self) private var context
   @Binding var draft: DayEditorDraft
   let store: MoodFocusStore
   let habits: [DayEditorHabit]
@@ -47,11 +46,9 @@ struct DayEditorPanel: View {
           HStack {
             Text("Day").font(.ui(Typography.Size.sm, weight: .medium)).foregroundStyle(Palette.inkMuted)
             Spacer()
-            DatePicker("Day", selection: dateBinding, in: ...latestDate, displayedComponents: .date)
-              .labelsHidden()
-              .datePickerStyle(.field)
-              .environment(\.timeZone, context.timeZone)
-              .environment(\.calendar, context.calendar)
+            ManorDatePicker("Day", selection: dayBinding, maximum: HabitDates.addDays(store.today, -1),
+                            quickPicks: [.yesterday, .custom("2 days ago", days: -2), .custom("A week ago", days: -7)])
+              .fixedSize()
           }
         }
         HabitListCard {
@@ -105,16 +102,12 @@ struct DayEditorPanel: View {
   }
 
   /// The latest day a correction accepts: yesterday, in the account's time zone. Today logs from Daily.
-  private var latestDate: Date {
-    LocalDate.date(from: HabitDates.addDays(store.today, -1), in: context.timeZone) ?? Date()
-  }
-
   /// Picking another day reloads its committed ratings; the draft follows the new day.
-  private var dateBinding: Binding<Date> {
+  private var dayBinding: Binding<String> {
     Binding(
-      get: { LocalDate.date(from: draft.date, in: context.timeZone) ?? latestDate },
+      get: { draft.date },
       set: { picked in
-        let date = min(LocalDate.string(from: picked, in: context.timeZone), HabitDates.addDays(store.today, -1))
+        let date = min(picked, HabitDates.addDays(store.today, -1))
         guard date != draft.date else { return }
         draft = DayEditorDraft(date: date, adding: true, baseline: store.committedEntry(on: date))
       }

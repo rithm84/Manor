@@ -70,7 +70,7 @@ struct JobsBrowseView: View {
         .foregroundStyle(store.browseRules.isEmpty ? Palette.ink : Palette.primary)
       }
       .buttonStyle(.manor(store.browseRules.isEmpty ? .ghost : .secondary, size: .small))
-      .popover(isPresented: $filtersOpen, arrowEdge: .bottom) {
+      .manorPopover(isPresented: $filtersOpen) {
         BrowseFilterPopover(rules: $store.browseRules, today: today, terms: feed.terms, categories: feed.categories) { filtersOpen = false }
       }
       .accessibilityLabel(store.browseRules.isEmpty ? "Filter" : "Filter, \(store.browseRules.count) active")
@@ -311,11 +311,7 @@ private struct RuleRow: View {
   }
 
   private func dateField(_ value: String, label: String, set: @escaping (String) -> Void) -> some View {
-    DatePicker(label, selection: Binding(get: { JobDates.date(value) ?? Date() }, set: { set(JobDates.string($0)) }), displayedComponents: .date)
-      .datePickerStyle(.field)
-      .labelsHidden()
-      .environment(\.timeZone, TimeZone(identifier: "UTC")!)
-      .font(.ui(Typography.Size.sm))
-      .accessibilityLabel(label)
+    ManorDatePicker(label, selection: Binding(get: { value }, set: { set($0) }), quickPicks: [.today, .custom("A week ago", days: -7), .custom("30 days ago", days: -30)])
+      .fixedSize()
   }
 }

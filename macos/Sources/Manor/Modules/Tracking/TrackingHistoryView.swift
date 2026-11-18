@@ -120,12 +120,10 @@ struct TrackingHistoryView: View {
             if data.archivedCount > 0 || showArchived {
               ArchivedToggle(isOn: $showArchived, count: data.archivedCount)
             }
-            Picker("Sort habits", selection: $sortRaw) {
-              ForEach(HabitTileSort.allCases) { option in Text(option.label).tag(option.rawValue) }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .fixedSize()
+            ManorSelect("Sort habits", selection: $sortRaw,
+                        options: HabitTileSort.allCases.map { ManorSelectOption($0.rawValue, $0.label, systemImage: "arrow.up.arrow.down") },
+                        style: .toolbar)
+              .fixedSize()
           }
         }
       }

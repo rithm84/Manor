@@ -415,27 +415,18 @@ struct NoteImageDialog: View {
           }
         }
         row("Crop") {
-          Picker("Crop", selection: Binding(get: { crop }, set: { draft.props["crop"] = .string($0) })) {
-            Text("Original").tag("original")
-            Text("Square").tag("square")
-            Text("Landscape").tag("landscape")
-            Text("Portrait").tag("portrait")
-          }
-          .pickerStyle(.segmented)
-          .labelsHidden()
+          SegmentedTabs([("original", "Original"), ("square", "Square"), ("landscape", "Landscape"), ("portrait", "Portrait")],
+                        selection: Binding(get: { crop }, set: { draft.props["crop"] = .string($0) }))
+            .accessibilityLabel("Crop")
         }
         if crop != "original" {
           row("Horizontal position") { Slider(value: number("focalX", default: 50), in: 0...100) }
           row("Vertical position") { Slider(value: number("focalY", default: 50), in: 0...100) }
         }
         row("Alignment") {
-          Picker("Alignment", selection: Binding(get: { draft.props["textAlignment"]?.string ?? "left" }, set: { draft.props["textAlignment"] = .string($0) })) {
-            Text("Left").tag("left")
-            Text("Center").tag("center")
-            Text("Right").tag("right")
-          }
-          .pickerStyle(.segmented)
-          .labelsHidden()
+          SegmentedTabs([("left", "Left"), ("center", "Center"), ("right", "Right")],
+                        selection: Binding(get: { draft.props["textAlignment"]?.string ?? "left" }, set: { draft.props["textAlignment"] = .string($0) }))
+            .accessibilityLabel("Alignment")
         }
         if canReplace {
           Button("Replace image", action: onReplace).buttonStyle(.manor(.secondary, size: .small))

@@ -88,7 +88,7 @@ public struct ManorSelect<Value: Hashable, ValueLabel: View>: View {
         return true
       }
     }
-    .help(title)
+    .help(open ? "" : title)
   }
 }
 
@@ -187,7 +187,7 @@ public struct ManorMultiSelect<Value: Hashable>: View {
         return false
       }
     }
-    .help(title)
+    .help(open ? "" : title)
   }
 }
 

@@ -117,105 +117,20 @@ struct MenuField<Value: Hashable>: View {
   var accessibilityLabel: String
 
   var body: some View {
-    Menu {
-      ForEach(options, id: \.value) { option in
-        Button {
-          selection = option.value
-        } label: {
-          if option.value == selection { Label(option.label, systemImage: "checkmark") } else { Text(option.label) }
-        }
-      }
-    } label: {
-      ControlChrome {
-        HStack(spacing: Space.s2) {
-          if let selection, let option = options.first(where: { $0.value == selection }) {
-            if let tone { Circle().fill(tone(selection).foreground).frame(width: 7, height: 7) }
-            Text(option.label).foregroundStyle(Palette.ink)
-          } else {
-            Text(placeholder).foregroundStyle(Palette.inkMuted)
-          }
-          Spacer(minLength: 0)
-          Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .semibold)).foregroundStyle(Palette.inkMuted)
-        }
-        .font(.ui(Typography.Size.body))
-        .lineLimit(1)
-      }
-      .contentShape(Rectangle())
-    }
-    .menuStyle(.button)
-    .buttonStyle(.plain)
-    .menuIndicator(.hidden)
-    .accessibilityLabel(accessibilityLabel)
-    .accessibilityValue(selection.flatMap { value in options.first { $0.value == value }?.label } ?? placeholder)
+    ManorSelect(accessibilityLabel, selection: $selection,
+                options: options.map { option in ManorSelectOption(option.value, option.label, swatch: tone.map { $0(option.value).foreground }) },
+                placeholder: placeholder)
   }
 }
 
-/// A date that may stay unset. Unset reads "Not set" and a click opens a calendar; a set date can be typed,
-/// picked, or cleared.
+/// A date that may stay unset: "Not set" until picked, then typed, picked, or cleared in Manor's calendar.
 struct OptionalDateField: View {
   @Binding var value: String?
   let label: String
   /// Seeds the calendar when the date is unset, usually account today.
   let suggested: String
-  @State private var open = false
-
-  private static let utc = TimeZone(identifier: "UTC")!
-
-  private var dateBinding: Binding<Date> {
-    Binding(
-      get: { value.flatMap(JobDates.date) ?? JobDates.date(suggested) ?? Date() },
-      set: { value = JobDates.string($0) }
-    )
-  }
 
   var body: some View {
-    ControlChrome(focused: open) {
-      HStack(spacing: Space.s2) {
-        Button { open.toggle() } label: {
-          HStack(spacing: Space.s2) {
-            Image(systemName: "calendar").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.inkMuted)
-            Text(value.map(JobDates.long) ?? "Not set")
-              .font(.ui(Typography.Size.body))
-              .foregroundStyle(value == nil ? Palette.inkMuted : Palette.ink)
-              .tabular()
-            Spacer(minLength: 0)
-          }
-          .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .popover(isPresented: $open, arrowEdge: .bottom) {
-          VStack(alignment: .leading, spacing: Space.s2) {
-            DatePicker(label, selection: dateBinding, displayedComponents: .date)
-              .datePickerStyle(.graphical)
-              .labelsHidden()
-              .calendarFocusRingHidden()
-              .environment(\.timeZone, Self.utc)
-            HStack {
-              Button("Today") { value = suggested; open = false }.buttonStyle(.manor(.ghost, size: .small))
-              Spacer()
-              if value != nil {
-                Button("Clear") { value = nil; open = false }.buttonStyle(.manor(.ghost, size: .small))
-              }
-              Button("Done") { if value == nil { value = JobDates.string(dateBinding.wrappedValue) }; open = false }
-                .buttonStyle(.manor(.secondary, size: .small))
-                .keyboardShortcut(.defaultAction)
-            }
-          }
-          .padding(Space.s3)
-          .frame(width: 260)
-        }
-        if value != nil {
-          Button { value = nil } label: {
-            Image(systemName: "xmark.circle.fill").font(.system(size: 12)).foregroundStyle(Palette.inkMuted)
-          }
-          .buttonStyle(.plain)
-          .help("Clear \(label.lowercased())")
-          .accessibilityLabel("Clear \(label.lowercased())")
-        }
-      }
-    }
-    .accessibilityElement(children: .contain)
-    .accessibilityLabel(label)
-    .accessibilityValue(value.map(JobDates.long) ?? "Not set")
+    ManorDatePicker(label, selection: $value, today: suggested, placeholder: "Not set", format: { JobDates.long($0.string) })
   }
 }

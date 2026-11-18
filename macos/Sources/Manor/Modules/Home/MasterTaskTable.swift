@@ -69,7 +69,7 @@ struct MasterTaskTable: View {
       toolButton("Filter", systemImage: "line.3.horizontal.decrease", active: !state.rules.isEmpty, badge: state.rules.isEmpty ? nil : state.rules.count) {
         filterOpen.toggle()
       }
-      .popover(isPresented: $filterOpen, arrowEdge: .bottom) {
+      .manorPopover(isPresented: $filterOpen) {
         TaskFilterPopover(state: state).environment(model)
       }
       if !state.rules.isEmpty {
@@ -85,7 +85,7 @@ struct MasterTaskTable: View {
       toolButton("By context", systemImage: "square.stack.3d.up", active: state.grouped) { withAnimation(Motion.base) { state.grouped.toggle() } }
       toolButton("Completed", systemImage: "checkmark.circle", active: state.completed) { withAnimation(Motion.base) { state.completed.toggle() } }
       toolButton("Saved views", systemImage: "bookmark", active: state.activeViewId != nil) { viewsOpen.toggle() }
-        .popover(isPresented: $viewsOpen, arrowEdge: .bottom) {
+        .manorPopover(isPresented: $viewsOpen) {
           TaskSavedViewsPopover(state: state) { viewsOpen = false }.environment(model)
         }
       Spacer()

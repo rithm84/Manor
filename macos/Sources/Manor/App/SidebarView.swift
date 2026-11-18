@@ -2,26 +2,23 @@ import ManorKit
 import SwiftUI
 
 struct SidebarView: View {
-  /// A floating panel (glass, or the hover overlay) starts below the window buttons, so its content sits near its top.
+  /// A floating panel (glass, or the hover overlay) is inset from the window's top edge, so its first row sits at its top.
   var floating = false
   @Environment(AppModel.self) private var model
   @Environment(AppContext.self) private var context
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      HStack(spacing: Space.s2) {
-        ManorLogo(width: 22)
-        Text("Manor").font(.display(Typography.Size.lg)).foregroundStyle(Palette.ink)
+      // The window buttons sit in this row, as in the system sidebar; the toggle lines up with them.
+      HStack {
         Spacer()
         IconButton("sidebar.left", label: model.sidebarDocked ? "Hide sidebar" : "Dock sidebar", size: 26) { model.toggleSidebar() }
       }
-      .padding(.leading, Space.s3)
+      // The window buttons are centered 16 pt below the window's top edge; the floating panel starts 8 pt down.
+      .frame(height: 16)
       .padding(.trailing, Space.s2)
-      // Clears the window buttons; in full screen they are hidden, so the brand moves up.
-      // Inside the glass panel the brand sits near its top edge; the solid sidebar clears the window buttons.
-      .padding(.top, model.isFullScreen || floating ? Space.s3 : 38)
-      .animation(Motion.base, value: model.isFullScreen)
-      .padding(.bottom, Space.s4)
+      .padding(.top, floating || GlassSupport.isActive ? 0 : Space.s2)
+      .padding(.bottom, Space.s6)
 
       VStack(spacing: 2) {
         ForEach(Route.modules) { route in item(route) }
@@ -63,33 +60,9 @@ struct SidebarView: View {
   }
 
   private func item(_ route: Route) -> some View {
-    let selected = context.route == route
-    return Button { context.navigate(to: route) } label: {
-      HStack(spacing: Space.s2 + 2) {
-        Image(systemName: route.systemImage)
-          .font(.system(size: 13, weight: selected ? .semibold : .regular))
-          .frame(width: 18)
-          .foregroundStyle(selected ? Palette.primary : Palette.inkMuted)
-        Text(route.title)
-          .font(.ui(Typography.Size.body, weight: selected ? .semibold : .regular))
-          .foregroundStyle(selected ? Palette.ink : Palette.inkBody)
-        Spacer(minLength: 0)
-        if route == .pomodoro, let badge = context.pomodoroBadge {
-          Text(badge.text)
-            .font(.ui(Typography.Size.xs, weight: .semibold)).tabular()
-            .foregroundStyle(badge.paused ? Palette.inkMuted : Palette.primary)
-            .padding(.horizontal, 6).frame(height: 20)
-            .background(Capsule().fill(badge.paused ? Palette.surfaceSoft : Palette.primaryTint))
-            .accessibilityLabel("\(badge.text) \(badge.paused ? "paused" : "remaining")")
-        }
-      }
-      .padding(.horizontal, Space.s2)
-      .frame(height: 30)
-      .contentShape(Rectangle())
-      .rowBackground(selected: selected)
+    SidebarRow(route: route, selected: context.route == route, badge: route == .pomodoro ? context.pomodoroBadge : nil) {
+      context.navigate(to: route)
     }
-    .buttonStyle(.plain)
-    .accessibilityAddTraits(selected ? .isSelected : [])
   }
 
   private var accountRow: some View {
@@ -115,11 +88,64 @@ struct SidebarView: View {
       .padding(.horizontal, Space.s2)
       .frame(height: 34)
       .contentShape(Rectangle())
-      .rowBackground()
+      .modifier(SidebarRowFill(selected: false))
     }
     .menuStyle(.button)
     .buttonStyle(.plain)
     .menuIndicator(.hidden)
     .accessibilityLabel("Account")
+  }
+}
+
+/// A sidebar row in the system sidebar's anatomy: an accent-tinted symbol, the title, and a neutral pill when
+/// selected (hovered rows get a quieter one).
+private struct SidebarRow: View {
+  let route: Route
+  let selected: Bool
+  let badge: (text: String, paused: Bool)?
+  let action: () -> Void
+
+  var body: some View {
+    Button(action: action) {
+      HStack(spacing: Space.s2 + 2) {
+        Image(systemName: route.systemImage)
+          .font(.system(size: 15, weight: .regular))
+          .foregroundStyle(Palette.primary)
+          .frame(width: 22)
+        Text(route.title)
+          .font(.ui(Typography.Size.body, weight: selected ? .semibold : .regular))
+          .foregroundStyle(Palette.ink)
+        Spacer(minLength: 0)
+        if let badge {
+          Text(badge.text)
+            .font(.ui(Typography.Size.xs, weight: .semibold)).tabular()
+            .foregroundStyle(badge.paused ? Palette.inkMuted : Palette.primary)
+            .padding(.horizontal, 6).frame(height: 20)
+            .background(Capsule().fill(badge.paused ? Palette.surfaceSoft : Palette.primaryTint))
+            .accessibilityLabel("\(badge.text) \(badge.paused ? "paused" : "remaining")")
+        }
+      }
+      .padding(.horizontal, Space.s2)
+      .frame(height: 32)
+      .contentShape(Rectangle())
+      .modifier(SidebarRowFill(selected: selected))
+    }
+    .buttonStyle(.plain)
+    .accessibilityAddTraits(selected ? .isSelected : [])
+  }
+}
+
+private struct SidebarRowFill: ViewModifier {
+  let selected: Bool
+  @State private var hovering = false
+
+  func body(content: Content) -> some View {
+    content
+      .background(
+        RoundedRectangle(cornerRadius: Radius.control + 2, style: .continuous)
+          .fill(selected ? Palette.sidebarSelection : hovering ? Palette.sidebarRowHover : .clear)
+      )
+      .onHover { hovering = $0 }
+      .animation(Motion.fast, value: hovering)
   }
 }

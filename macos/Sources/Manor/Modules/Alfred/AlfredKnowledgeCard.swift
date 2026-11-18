@@ -170,10 +170,9 @@ struct AlfredDocumentDialog: View {
       VStack(alignment: .leading, spacing: Space.s3) {
         TextField("Title", text: $draft.title).textFieldStyle(.manor)
         HStack(spacing: Space.s3) {
-          Picker("Kind", selection: $draft.kind) {
-            ForEach(KnowledgeDoc.Kind.allCases) { Label($0.title, systemImage: $0.icon).tag($0) }
-          }
-          .labelsHidden().fixedSize()
+          ManorSelect("Kind", selection: $draft.kind,
+                      options: KnowledgeDoc.Kind.allCases.map { ManorSelectOption($0, $0.title, systemImage: $0.icon) })
+            .fixedSize()
           Toggle("Use in answers", isOn: $draft.enabled).toggleStyle(.switch).controlSize(.small).tint(Palette.primary)
           Spacer()
           Text("\(draft.text.count.formatted()) characters").font(.ui(Typography.Size.sm)).foregroundStyle(Palette.inkMuted).tabular()

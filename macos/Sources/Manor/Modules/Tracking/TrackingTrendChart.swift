@@ -37,15 +37,10 @@ struct TrackingTrendSection: View {
       Spacer(minLength: Space.s3)
       HStack(spacing: Space.s2) {
         if !habitOptions.isEmpty {
-          Picker("Habits in the trend", selection: Binding(get: { habits?.trendHabitId ?? "all" }, set: { pickedHabitId = $0 == "all" ? nil : $0 })) {
-            Text("All habits").tag("all")
-            Divider()
-            ForEach(habitOptions, id: \.id) { option in Text(option.name).tag(option.id) }
-          }
-          .labelsHidden()
-          .pickerStyle(.menu)
-          .fixedSize()
-          .frame(maxWidth: 200)
+          ManorSelect("Habits in the trend", selection: Binding(get: { habits?.trendHabitId }, set: { pickedHabitId = $0 }),
+                      options: habitOptions.map { ManorSelectOption($0.id, $0.name) }, noneLabel: "All habits", style: .toolbar)
+            .frame(maxWidth: 200)
+            .fixedSize()
         }
         HistoryRangeTabs(range: $range)
       }

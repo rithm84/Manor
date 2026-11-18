@@ -62,16 +62,12 @@ struct AlfredSettingsSection: View {
   private var interviewCard: some View {
     SettingsCard("Prep") {
       SettingsRow("Answer style") {
-        Picker("Answer style", selection: $prefs.mode) {
-          ForEach(AssistMode.allCases) { Text($0.title).tag($0) }
-        }
-        .labelsHidden().fixedSize()
+        ManorSelect("Answer style", selection: $prefs.mode, options: AssistMode.allCases.map { ManorSelectOption($0, $0.title) })
+          .fixedSize()
       }
       SettingsRow("Coding language") {
-        Picker("Coding language", selection: $prefs.codingLanguage) {
-          ForEach(Preferences.languages, id: \.self) { Text($0).tag($0) }
-        }
-        .labelsHidden().fixedSize()
+        ManorSelect("Coding language", selection: $prefs.codingLanguage, options: Preferences.languages.map { ManorSelectOption($0, $0) })
+          .fixedSize()
       }
       SettingsRow("Use your microphone", description: "Alfred hears you as well as the call, so answers pick up where you are.") {
         toggle("Use your microphone", $prefs.captureMic)
