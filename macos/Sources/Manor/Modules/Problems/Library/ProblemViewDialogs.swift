@@ -42,7 +42,7 @@ struct ProblemAdvancedPanel: View {
               ProblemDayPicker(label: "Last asked through", value: binding(\.lastAskedUntil), minimum: filters.lastAskedSince)
             }
           }
-          Text(filters.invalidDateRange ? "The start date must be on or before the end date." : "Problems without a reported date are left out. Month and year reports keep their precision.")
+          Text(filters.invalidDateRange ? "The start date must be on or before the end date." : "Problems without a reported date are left out.")
             .font(.ui(Typography.Size.xs))
             .foregroundStyle(filters.invalidDateRange ? Palette.overdueError : Palette.inkMuted)
         }

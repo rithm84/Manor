@@ -57,6 +57,7 @@ public struct ManorPopoverKeyPress {
 public final class ManorPopoverContext {
   fileprivate var handler: ((ManorPopoverKeyPress) -> Bool)?
   fileprivate var closeAction: () -> Void = {}
+  fileprivate var resizeAction: () -> Void = {}
   /// Where the card sits relative to the trigger, so the entrance grows from the trigger's side.
   public fileprivate(set) var opensBelow = true
   /// The trigger's width when the popover matches it, as a select's list does.
@@ -66,6 +67,9 @@ public final class ManorPopoverContext {
 
   /// Closes the popover and returns focus to its trigger.
   public func close() { closeAction() }
+
+  /// Measures the content again after it changed size, such as a list narrowed by a search.
+  public func contentChanged() { resizeAction() }
 
   /// Installs the key handler for the popover's content.
   public func onKey(_ handler: @escaping (ManorPopoverKeyPress) -> Bool) { self.handler = handler }
@@ -153,6 +157,9 @@ private struct ManorPopoverRoot<Content: View>: View {
 
   var body: some View {
     ManorPopoverSurface { content().frame(minWidth: context.minimumWidth, alignment: .leading) }
+      // At its ideal size, so content that grows or shrinks (a new filter rule, a filtered list) resizes the panel.
+      .fixedSize()
+      .onGeometryChange(for: CGSize.self) { $0.size } action: { _ in context.contentChanged() }
       .environment(\.manorPopover, context)
       .scaleEffect(shown || Motion.isReduced ? 1 : 0.97, anchor: context.opensBelow ? .top : .bottom)
       .offset(y: shown || Motion.isReduced ? 0 : (context.opensBelow ? -4 : 4))
@@ -205,6 +212,17 @@ private struct ManorPopoverAnchor: NSViewRepresentable {
     override func viewDidMoveToWindow() {
       super.viewDidMoveToWindow()
       if window == nil { controller?.close(refocus: false) }
+    }
+
+    // The trigger moved or resized (a toolbar reflowed around it): the open popover follows.
+    override func setFrameOrigin(_ newOrigin: NSPoint) {
+      super.setFrameOrigin(newOrigin)
+      controller?.anchorMoved()
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+      super.setFrameSize(newSize)
+      controller?.anchorMoved()
     }
   }
 }
@@ -266,6 +284,7 @@ final class ManorPopoverController: NSObject {
   override init() {
     super.init()
     context.closeAction = { [weak self] in self?.close(refocus: true) }
+    context.resizeAction = { [weak self] in self?.contentChanged() }
   }
 
   func present(_ root: AnyView) {
@@ -276,7 +295,8 @@ final class ManorPopoverController: NSObject {
     guard let anchor, let window = anchor.window else { return }
     let panel = ManorPopoverPanel()
     panel.appearance = window.effectiveAppearance
-    panel.level = window.level
+    // Above tooltip windows: a tooltip from the trigger otherwise draws over the popover it just opened.
+    panel.level = NSWindow.Level(rawValue: max(window.level.rawValue, Int(CGWindowLevelForKey(.helpWindow)) + 1))
     let host = PopoverHostingView(rootView: root)
     host.sizingOptions = [.intrinsicContentSize]
     host.onSizeChange = { [weak self] in self?.reposition() }
@@ -332,6 +352,17 @@ final class ManorPopoverController: NSObject {
 
   // MARK: Placement
 
+  func anchorMoved() {
+    guard panel != nil else { return }
+    DispatchQueue.main.async { [weak self] in self?.reposition() }
+  }
+
+  /// Content changed size without changing its intrinsic size (a filtered list): measure again.
+  func contentChanged() {
+    guard panel != nil else { return }
+    DispatchQueue.main.async { [weak self] in self?.reposition() }
+  }
+
   private func reposition(choosingSide: Bool = false) {
     guard let panel, let host, let anchor, let window = anchor.window else { return }
     let anchorRect = window.convertToScreen(anchor.convert(anchor.bounds, to: nil))
@@ -358,7 +389,9 @@ final class ManorPopoverController: NSObject {
     case .center: x = anchorRect.midX - card.width / 2
     default: x = anchorRect.minX
     }
-    x = min(max(x, screen.minX + 8), screen.maxX - card.width - 8)
+    // Stay inside the window (with the same margin as the screen edge) so a popover never sits flush on its edge.
+    let bounds = window.frame.intersection(screen).insetBy(dx: Space.s3, dy: 0)
+    x = min(max(x, bounds.minX), bounds.maxX - card.width)
     var y = opensBelow ? anchorRect.minY - Self.gap - card.height : anchorRect.maxY + Self.gap
     y = min(max(y, screen.minY + 8), screen.maxY - card.height - 8)
     let frame = NSRect(x: x - margin, y: y - margin, width: size.width, height: size.height)

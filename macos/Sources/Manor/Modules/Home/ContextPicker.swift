@@ -74,7 +74,10 @@ private struct TaskContextMenuPanel: View {
   @State private var busy = false
   @State private var error: String?
   @State private var confirmingRemoval: TaskContext?
+  /// The row Up and Down move through and Return picks while the search field has focus.
+  @State private var highlighted: String?
   @FocusState private var searchFocused: Bool
+  @Environment(\.manorPopover) private var popover
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -92,7 +95,32 @@ private struct TaskContextMenuPanel: View {
       }
     }
     .frame(width: 300)
-    .onAppear { searchFocused = true }
+    .onAppear {
+      searchFocused = true
+      highlighted = matches.first { $0.name == value }?.id ?? matches.first?.id
+      popover?.onKey(handle)
+    }
+    .onChange(of: query) { _, _ in highlighted = matches.first?.id }
+  }
+
+  /// Arrow keys move the highlight and Return picks it, from the search field; the composer keeps its own keys.
+  private func handle(_ press: ManorPopoverKeyPress) -> Bool {
+    guard sheet == nil, confirmingRemoval == nil, searchFocused else { return false }
+    let ids = matches.map(\.id)
+    switch press.key {
+    case .down, .up:
+      guard !ids.isEmpty else { return true }
+      let index = highlighted.flatMap { ids.firstIndex(of: $0) }
+      let next = press.key == .down ? (index.map { min($0 + 1, ids.count - 1) } ?? 0) : (index.map { max($0 - 1, 0) } ?? ids.count - 1)
+      highlighted = ids[next]
+      return true
+    case .returnKey:
+      guard let id = highlighted, let context = matches.first(where: { $0.id == id }) else { return false }
+      onPick(context.name)
+      return true
+    default:
+      return false
+    }
   }
 
   private var matches: [TaskContext] {
@@ -116,7 +144,7 @@ private struct TaskContextMenuPanel: View {
               .padding(.horizontal, Space.s2)
               .frame(height: 32)
             } else {
-              TaskContextRow(context: context, selected: context.name == value, pick: { onPick(context.name) }, edit: { beginEdit(context) }, remove: {
+              TaskContextRow(context: context, selected: context.name == value, highlighted: highlighted == context.id, pick: { onPick(context.name) }, edit: { beginEdit(context) }, remove: {
                 error = nil
                 confirmingRemoval = context
               })
@@ -301,6 +329,7 @@ private struct TaskContextMenuPanel: View {
 private struct TaskContextRow: View {
   let context: TaskContext
   let selected: Bool
+  var highlighted = false
   let pick: () -> Void
   let edit: () -> Void
   let remove: () -> Void
@@ -324,6 +353,7 @@ private struct TaskContextRow: View {
     .padding(.horizontal, Space.s2)
     .frame(height: 32)
     .rowBackground(selected: selected)
+    .background(RoundedRectangle(cornerRadius: Radius.control, style: .continuous).fill(highlighted && !selected ? Palette.surfaceHover : .clear))
     .onHover { hovering = $0 }
   }
 }

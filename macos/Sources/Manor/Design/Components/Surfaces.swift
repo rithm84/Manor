@@ -199,9 +199,7 @@ public struct PageHeader<Trailing: View>: View {
       Spacer(minLength: Space.s4)
       HStack(spacing: Space.s2) { trailing() }
     }
-    .padding(.horizontal, Space.s8)
-    .padding(.top, Space.s6)
-    .padding(.bottom, Space.s4)
+    .modifier(PageHeaderInsets())
   }
 }
 

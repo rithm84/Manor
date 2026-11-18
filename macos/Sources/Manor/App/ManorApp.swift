@@ -21,6 +21,7 @@ struct ManorApp: App {
         .background(WindowChrome())
     }
     .windowStyle(.hiddenTitleBar)
+    .windowBackgroundDragBehavior(.disabled)
     .defaultSize(width: 1360, height: 860)
     .commands { ManorCommands(model: model) }
   }

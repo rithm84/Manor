@@ -157,8 +157,9 @@ struct AlfredDialog: View {
 
   private static let bottom = "alfred-bottom"
 
+  /// After the new row has laid out, so a tall one (a confirmation) ends above the composer.
   private func scroll(_ proxy: ScrollViewProxy) {
-    proxy.scrollTo(Self.bottom, anchor: .bottom)
+    DispatchQueue.main.async { withAnimation(Motion.fast) { proxy.scrollTo(Self.bottom, anchor: .bottom) } }
   }
 
   private var showsWorking: Bool {
@@ -382,7 +383,10 @@ enum AlfredDialogScript {
       return .init(calls: [("open_page", ["page": String(lower.dropFirst(5))])], reply: "")
     }
     let page = snapshot?.page ?? "Manor"
-    return .init(reply: "You're on **\(page)**. Here is what I can see:\n\n\(snapshot?.details.split(separator: "\n").prefix(4).map { "- \($0)" }.joined(separator: "\n") ?? "")")
+    // The snapshot is written for the model; the demo shows its lines without record IDs.
+    let lines = (snapshot?.details.split(separator: "\n").dropFirst().prefix(4) ?? [])
+      .map { $0.replacingOccurrences(of: #"\s*\[[^\]]*\]"#, with: "", options: .regularExpression) }
+    return .init(reply: "You're on **\(page)**.\n\n" + lines.map { "- \($0)" }.joined(separator: "\n"))
   }
 }
 #endif

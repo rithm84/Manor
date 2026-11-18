@@ -1,3 +1,4 @@
+import AppKit
 import ManorKit
 import SwiftUI
 
@@ -234,6 +235,19 @@ struct ManorSelectList<Value: Hashable>: View {
 
   private func selectable(_ row: Row) -> Bool { !(row.option?.isDisabled ?? false) }
 
+  /// Wide enough for the longest label (a lazy list reports no width of its own), from 180 to 360 points.
+  private var fittedWidth: CGFloat {
+    let font = NSFont.systemFont(ofSize: Typography.Size.sm, weight: .semibold)
+    let small = NSFont.systemFont(ofSize: Typography.Size.xs)
+    func width(_ text: String, _ font: NSFont) -> CGFloat { ceil((text as NSString).size(withAttributes: [.font: font]).width) }
+    let widest = (options.map { width($0.label, font) + ($0.detail.map { width($0, small) + Space.s2 } ?? 0) }
+                  + [noneLabel.map { width($0, font) } ?? 0]).max() ?? 0
+    let marker: CGFloat = options.contains { $0.systemImage != nil || $0.swatch != nil } || multiple ? 16 + Space.s2 : 0
+    // Row padding, the checkmark column, the list's inset, and the scroller.
+    let chrome = Space.s2 * 2 + 14 + Space.s2 + Space.s1 * 2 + 8
+    return min(360, max(180, widest + marker + chrome))
+  }
+
   var body: some View {
     let rows = rows
     VStack(spacing: 0) {
@@ -264,20 +278,23 @@ struct ManorSelectList<Value: Hashable>: View {
         .onAppear {
           let start = selected.first.map { Row.ID.value($0) } ?? rows.first(where: selectable)?.id
           highlighted = start
-          if let start { proxy.scrollTo(start, anchor: .center) }
+          // After the first layout, or the list has no rows to scroll to yet.
+          if let start { DispatchQueue.main.async { proxy.scrollTo(start, anchor: .center) } }
         }
         .onChange(of: keyboardScroll) { _, _ in
           if let highlighted { proxy.scrollTo(highlighted) }
         }
       }
     }
-    .frame(width: width, alignment: .leading)
-    .frame(minWidth: 180, maxWidth: width ?? 360)
+    .frame(width: width ?? fittedWidth, alignment: .leading)
     .onAppear {
       if searchable { searchFocused = true }
       popover?.onKey(handle)
     }
-    .onChange(of: query) { _, _ in highlighted = self.rows.first(where: selectable)?.id }
+    .onChange(of: query) { _, _ in
+      highlighted = self.rows.first(where: selectable)?.id
+      popover?.contentChanged()
+    }
     .accessibilityElement(children: .contain)
   }
 

@@ -205,7 +205,9 @@ struct RoleDialog: View {
 
   private func dateField(_ field: JobDateField) -> some View {
     LabeledField(field.label) {
-      OptionalDateField(value: Binding(get: { fields[date: field] }, set: { fields[date: field] = $0 }), label: field.label, suggested: today)
+      OptionalDateField(value: Binding(get: { fields[date: field] }, set: { fields[date: field] = $0 }), label: field.label, suggested: today,
+                        quickPicks: [.datePosted, .appliedDate, .oaCompletedDate].contains(field)
+                          ? [.today, .yesterday, .custom("A week ago", days: -7)] : [.today, .tomorrow, .nextWeek])
     }
   }
 

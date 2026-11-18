@@ -36,7 +36,8 @@ final class NoteFormattingToolbar {
   init() {}
 
   func show(for textView: NoteTextView, editingLink: Bool = false) {
-    guard let controller, controller.isEditable, !textView.isPlain else { return }
+    // A centered dialog over the page owns the window; the toolbar would float above its backdrop.
+    guard let controller, controller.isEditable, !textView.isPlain, !DialogPresence.shared.isAnyOpen else { return }
     self.textView = textView
     refresh()
     if editingLink {

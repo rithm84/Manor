@@ -291,12 +291,23 @@ struct ManorCalendarPanel: View {
     .accessibilityAddTraits(selected ? .isSelected : [])
   }
 
+  /// Quick picks on one line; when they don't all fit beside Clear, the later ones drop rather than wrap.
   private var footer: some View {
+    ViewThatFits(in: .horizontal) {
+      ForEach(Array(stride(from: quickPicks.count, through: 0, by: -1)), id: \.self) { count in
+        footerRow(Array(quickPicks.prefix(count)))
+      }
+    }
+  }
+
+  private func footerRow(_ picks: [ManorDateQuickPick]) -> some View {
     HStack(spacing: Space.s1) {
-      ForEach(quickPicks, id: \.self) { quick in
+      ForEach(picks, id: \.self) { quick in
         let date = quick.date(from: today)
         Button(quick.label) { pick(date) }
           .buttonStyle(.manor(.ghost, size: .small))
+          .lineLimit(1)
+          .fixedSize()
           .disabled(!bounds.contains(date))
       }
       Spacer(minLength: 0)
@@ -307,6 +318,8 @@ struct ManorCalendarPanel: View {
         }
         .buttonStyle(.manor(.ghost, size: .small))
         .foregroundStyle(Palette.inkMuted)
+        .lineLimit(1)
+        .fixedSize()
       }
     }
   }

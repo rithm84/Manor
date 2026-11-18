@@ -60,12 +60,22 @@ public struct RecurrenceError: LocalizedError, Equatable, Sendable {
 
 public enum Recurrence {
   /// The quick choices the repeat editor offers before Custom.
-  public static let presets: [(label: String, value: String?)] = [
-    ("Doesn't repeat", nil),
-    ("Every day", "FREQ=DAILY;INTERVAL=1"),
-    ("Every week", "FREQ=WEEKLY;INTERVAL=1"),
-    ("Every Sunday", "FREQ=WEEKLY;INTERVAL=1;BYDAY=SU")
-  ]
+  public static let presets: [(label: String, value: String?)] = presets(on: .sunday)
+
+  /// The quick choices for a task due on `weekday`: the weekly one names that day ("Every Tuesday").
+  public static func presets(on weekday: RecurrenceWeekday) -> [(label: String, value: String?)] {
+    [
+      ("Doesn't repeat", nil),
+      ("Every day", "FREQ=DAILY;INTERVAL=1"),
+      ("Every week", "FREQ=WEEKLY;INTERVAL=1"),
+      ("Every \(weekday.long)", "FREQ=WEEKLY;INTERVAL=1;BYDAY=\(weekday.code)")
+    ]
+  }
+
+  /// The weekday of an ISO date (`YYYY-MM-DD`).
+  public static func weekday(of iso: String) -> RecurrenceWeekday {
+    RecurrenceWeekday(rawValue: (TaskDates.weekday(iso) + 6) % 7) ?? .sunday
+  }
 
   /// The stored form, field order FREQ, INTERVAL, BYDAY, UNTIL, as rrule.js writes it.
   public static func serialize(_ rule: RecurrenceRule) throws -> String {

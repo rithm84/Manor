@@ -47,7 +47,7 @@ struct DayEditorPanel: View {
             Text("Day").font(.ui(Typography.Size.sm, weight: .medium)).foregroundStyle(Palette.inkMuted)
             Spacer()
             ManorDatePicker("Day", selection: dayBinding, maximum: HabitDates.addDays(store.today, -1),
-                            quickPicks: [.yesterday, .custom("2 days ago", days: -2), .custom("A week ago", days: -7)])
+                            quickPicks: [.yesterday, .custom("A week ago", days: -7)])
               .fixedSize()
           }
         }

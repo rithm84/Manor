@@ -16,6 +16,7 @@ struct SidebarView: View {
       }
       // The window buttons are centered in the 52-point toolbar band; the floating panel starts 8 pt down.
       .frame(height: WindowChromeMetrics.toolbarHeight - (floating || GlassSupport.isActive ? Space.s2 * 2 : 0))
+      .background(WindowDragRegion())
       .padding(.trailing, Space.s2)
       .padding(.bottom, Space.s3)
 
@@ -137,13 +138,16 @@ private struct SidebarRow: View {
 private struct SidebarRowFill: ViewModifier {
   let selected: Bool
   @State private var hovering = false
+  @Environment(\.colorSchemeContrast) private var contrast
 
   func body(content: Content) -> some View {
+    let shape = RoundedRectangle(cornerRadius: Radius.control + 2, style: .continuous)
+    // Increase Contrast swaps the translucent pill for the solid selected surface with an edge.
+    let increased = contrast == .increased
     content
-      .background(
-        RoundedRectangle(cornerRadius: Radius.control + 2, style: .continuous)
-          .fill(selected ? Palette.sidebarSelection : hovering ? Palette.sidebarRowHover : .clear)
-      )
+      .background(shape.fill(selected ? (increased ? Palette.surfaceSelected : Palette.sidebarSelection)
+                                      : hovering ? Palette.sidebarRowHover : .clear))
+      .overlay { if selected && increased { shape.strokeBorder(Palette.hairlineStrong, lineWidth: 1) } }
       .onHover { hovering = $0 }
       .animation(Motion.fast, value: hovering)
   }

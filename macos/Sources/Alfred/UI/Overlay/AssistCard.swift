@@ -406,7 +406,12 @@ private struct AskBox: View {
         .contentShape(Rectangle())
         .onTapGesture { focused = true }
         .animation(Theme.snappy, value: focused)
-        .onChange(of: state.askActive) { _, active in focused = active }
+        .onChange(of: state.askActive) { _, active in
+            focused = active
+            // The panel becomes key a moment after the shortcut; focus again once it has, or typing goes nowhere.
+            if active { DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { if state.askActive { focused = true } } }
+        }
+        .onAppear { if state.askActive { DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { focused = true } } }
         .onChange(of: focused) { _, isFocused in if isFocused && !state.askActive { state.askActive = true } }
     }
 }

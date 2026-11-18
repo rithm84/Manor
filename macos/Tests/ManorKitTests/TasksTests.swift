@@ -221,6 +221,15 @@ struct RecurrenceTests {
     #expect(try Recurrence.parse("FREQ=DAILY;INTERVAL=2;UNTIL=20261231").until == "2026-12-31")
   }
 
+  @Test func theWeeklyPresetFollowsTheDueDatesWeekday() throws {
+    #expect(Recurrence.weekday(of: "2026-11-24") == .tuesday)
+    #expect(Recurrence.weekday(of: "2026-11-22") == .sunday)
+    let weekly = try #require(Recurrence.presets(on: .tuesday).last)
+    #expect(weekly.label == "Every Tuesday")
+    #expect(weekly.value == "FREQ=WEEKLY;INTERVAL=1;BYDAY=TU")
+    #expect(Recurrence.label(weekly.value!) == "Every week on Tuesday")
+  }
+
   @Test func labelsReadLikeTheWebApp() {
     #expect(Recurrence.label("FREQ=DAILY;INTERVAL=1") == "Every day")
     #expect(Recurrence.label("FREQ=DAILY;INTERVAL=3") == "Every 3 days")

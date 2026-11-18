@@ -5,7 +5,11 @@ import SwiftUI
 struct TaskRecurrenceEditor: View {
   let value: String?
   let today: String
+  /// The task's due date; the weekly preset and a new custom rule use its weekday.
+  var anchor: String?
   let onChange: (String?) -> Void
+
+  private var anchorWeekday: RecurrenceWeekday { Recurrence.weekday(of: anchor ?? today) }
 
   @State private var custom = false
   @State private var rule = RecurrenceRule.customDefault
@@ -15,7 +19,7 @@ struct TaskRecurrenceEditor: View {
   var body: some View {
     VStack(alignment: .leading, spacing: Space.s3) {
       HomeFlowLayout(spacing: Space.s1, lineSpacing: Space.s1) {
-        ForEach(Recurrence.presets, id: \.label) { preset in
+        ForEach(Recurrence.presets(on: anchorWeekday), id: \.label) { preset in
           chip(preset.label, active: !custom && value == preset.value) {
             custom = false
             onChange(preset.value)
@@ -122,9 +126,16 @@ struct TaskRecurrenceEditor: View {
   /// Shows the saved custom rule rather than the default; nothing commits until something changes.
   private func openCustom() {
     let saved = value.flatMap { $0.hasPrefix("FREQ=") ? try? Recurrence.parse($0) : nil }
-    rule = saved ?? .customDefault
-    everyText = String(rule.every)
     custom = true
+    if let saved {
+      rule = saved
+      everyText = String(saved.every)
+    } else {
+      // A new custom rule starts on the due date's weekday and applies at once, so the row reads what's chosen.
+      var start = RecurrenceRule.customDefault
+      start.weekdays = [anchorWeekday]
+      apply(start)
+    }
   }
 
   private func apply(_ next: RecurrenceRule) {

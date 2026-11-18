@@ -10,10 +10,12 @@ import ManorKit
 final class ManorAlfredToolbox: AlfredToolbox {
   let context: AppContext
   let tools: [AlfredTool]
-  /// Habit check-offs run through the same service the Tracking page uses, so they carry its revisions.
-  private(set) lazy var habits: HabitsService = HabitsService(gateway: context.gateway, today: { [weak context] in
-    MainActor.assumeIsolated { context?.today ?? "" }
-  })
+  /// Habit check-offs run through the same service the Tracking page uses, so they carry its revisions. The
+  /// service asks for today off the main actor, so it reads the account's zone captured for this call.
+  var habits: HabitsService {
+    let zone = context.timeZone
+    return HabitsService(gateway: context.gateway, today: { LocalDate.string(from: Date(), in: zone) })
+  }
 
   init(context: AppContext) {
     self.context = context

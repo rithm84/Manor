@@ -124,6 +124,7 @@ struct TaskStatusMenu: View {
 struct TaskRepeatsRow: View {
   let value: String?
   let today: String
+  var anchor: String?
   @Binding var expanded: Bool
   let onChange: (String?) -> Void
 
@@ -145,7 +146,7 @@ struct TaskRepeatsRow: View {
         .accessibilityValue(expanded ? "Expanded" : "Collapsed")
       }
       if expanded {
-        TaskRecurrenceEditor(value: value, today: today, onChange: onChange)
+        TaskRecurrenceEditor(value: value, today: today, anchor: anchor, onChange: onChange)
           .padding(.leading, 20 + 92 + Space.s2 * 3)
           .padding(.vertical, Space.s2)
           .transition(.opacity)
@@ -270,7 +271,7 @@ struct TaskDetailDialog: View {
       HomePropertyRow(systemImage: "flag", label: "Priority") {
         TaskPriorityMenu(value: draft.wrappedValue.priority) { draft.wrappedValue.priority = $0 }
       }
-      TaskRepeatsRow(value: draft.wrappedValue.recurrence, today: today, expanded: $repeatsOpen) { draft.wrappedValue.recurrence = $0 }
+      TaskRepeatsRow(value: draft.wrappedValue.recurrence, today: today, anchor: draft.wrappedValue.due, expanded: $repeatsOpen) { draft.wrappedValue.recurrence = $0 }
     }
   }
 
@@ -410,7 +411,7 @@ struct TaskCreateDialog: View {
             HomePropertyRow(systemImage: "flag", label: "Priority") {
               TaskPriorityMenu(value: draft.priority, placeholder: "None") { draft.priority = $0 }
             }
-            TaskRepeatsRow(value: draft.recurrence, today: today, expanded: $repeatsOpen) { draft.recurrence = $0 }
+            TaskRepeatsRow(value: draft.recurrence, today: today, anchor: draft.due, expanded: $repeatsOpen) { draft.recurrence = $0 }
           }
           .padding(.horizontal, Space.s3)
           if request.bucket == .week && draft.due == nil {

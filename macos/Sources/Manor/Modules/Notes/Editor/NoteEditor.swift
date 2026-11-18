@@ -88,6 +88,7 @@ struct NoteEditor: View {
       }
       .animation(Motion.fast, value: model.findVisible)
       .animation(Motion.fast, value: model.notice)
+      .onChange(of: DialogPresence.shared.isAnyOpen) { _, open in if open { model.controller.toolbar.hide() } }
       .manorDialog(item: $model.alfredComposer, width: 620, onDismiss: {
         if let request = model.alfredComposer { model.controller.closeAlfredComposer(request) }
       }) { request in

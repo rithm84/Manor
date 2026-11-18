@@ -109,17 +109,11 @@ private struct ProblemFilterOptions: View {
   @FocusState private var searchFocused: Bool
   /// Keyboard focus reads as the row's highlight, like a menu, instead of a ring the scroll view clips.
   @FocusState private var focusedRow: String?
+  @Environment(\.manorPopover) private var popover
 
   var body: some View {
-    let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
-    let hit: (ProblemFacetOption) -> Bool = { needle.isEmpty || $0.label.lowercased().contains(needle) }
-    let shown: [ProblemFacetOption] = needle.isEmpty ? options : options.compactMap { option in
-      let children = option.children.filter(hit)
-      guard hit(option) || !children.isEmpty else { return nil }
-      var copy = option
-      if !hit(option) { copy.children = children }
-      return copy
-    }
+    let needle = self.needle
+    let shown = self.shown
     VStack(spacing: 0) {
       if searchable {
         HStack(spacing: 6) {
@@ -160,7 +154,54 @@ private struct ProblemFilterOptions: View {
       .frame(height: 32)
     }
     .frame(width: 280)
-    .onAppear { if searchable { searchFocused = true } }
+    .onAppear {
+      if searchable { searchFocused = true }
+      popover?.onKey(handle)
+    }
+  }
+
+  private var needle: String { query.trimmingCharacters(in: .whitespaces).lowercased() }
+
+  private func hit(_ option: ProblemFacetOption) -> Bool { needle.isEmpty || option.label.lowercased().contains(needle) }
+
+  private var shown: [ProblemFacetOption] {
+    needle.isEmpty ? options : options.compactMap { option in
+      let children = option.children.filter(hit)
+      guard hit(option) || !children.isEmpty else { return nil }
+      var copy = option
+      if !hit(option) { copy.children = children }
+      return copy
+    }
+  }
+
+  /// The rows on screen in order, children under their open parents.
+  private var visibleValues: [String] {
+    shown.flatMap { option -> [String] in
+      let isOpen = !option.children.isEmpty && (expanded.contains(option.value) || (!needle.isEmpty && !hit(option)))
+      return [option.value] + (isOpen ? option.children.map(\.value) : [])
+    }
+  }
+
+  /// Up and Down walk the rows (from the search field too); Return toggles the focused row, or the first match
+  /// while typing.
+  private func handle(_ press: ManorPopoverKeyPress) -> Bool {
+    let values = visibleValues
+    switch press.key {
+    case .down, .up:
+      guard !values.isEmpty else { return true }
+      let index = focusedRow.flatMap { values.firstIndex(of: $0) }
+      if index == nil, press.key == .up { searchFocused = searchable; return true }
+      let next = press.key == .down ? (index.map { min($0 + 1, values.count - 1) } ?? 0) : max((index ?? 0) - 1, 0)
+      if press.key == .up, index == 0, searchable { focusedRow = nil; searchFocused = true; return true }
+      focusedRow = values[next]
+      return true
+    case .returnKey:
+      guard let value = focusedRow ?? (searchFocused ? values.first : nil) else { return false }
+      onChange(selected.contains(value) ? selected.filter { $0 != value } : selected + [value])
+      return true
+    default:
+      return false
+    }
   }
 
   private func row(_ option: ProblemFacetOption, expandable: Bool, isOpen: Bool) -> some View {

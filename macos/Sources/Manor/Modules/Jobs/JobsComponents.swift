@@ -112,8 +112,9 @@ struct OptionalDateField: View {
   let label: String
   /// Seeds the calendar when the date is unset, usually account today.
   let suggested: String
+  var quickPicks: [ManorDateQuickPick] = [.today, .tomorrow, .nextWeek]
 
   var body: some View {
-    ManorDatePicker(label, selection: $value, today: suggested, placeholder: "Not set", format: { JobDates.long($0.string) })
+    ManorDatePicker(label, selection: $value, today: suggested, placeholder: "Not set", quickPicks: quickPicks, format: { JobDates.long($0.string) })
   }
 }

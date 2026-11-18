@@ -116,7 +116,7 @@ public enum Palette {
   public static let sidebarBackground = Color.manor((0.9647, 0.9647, 0.9725, 1.000), (0.1255, 0.1216, 0.1451, 1.000))
   public static let sidebarBorder = Color.manor((0.9098, 0.9020, 0.9294, 1.000), (0.2118, 0.1922, 0.2431, 1.000), contrastBoost: 0.3)
   /// The selected sidebar row: a neutral pill like the system sidebar's, so the plum symbol carries the accent.
-  public static let sidebarSelection = Color.manor((0.0, 0.0, 0.0, 0.085), (1.0, 1.0, 1.0, 0.11), contrastBoost: 0.5)
+  public static let sidebarSelection = Color.manor((0.0, 0.0, 0.0, 0.085), (1.0, 1.0, 1.0, 0.11))
   /// A hovered sidebar row, quieter than the selection.
   public static let sidebarRowHover = Color.manor((0.0, 0.0, 0.0, 0.045), (1.0, 1.0, 1.0, 0.06))
 }

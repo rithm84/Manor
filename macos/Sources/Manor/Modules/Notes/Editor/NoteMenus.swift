@@ -277,7 +277,7 @@ extension NoteEditorController {
       }
     }
     var items: [NoteSuggestionItem] = [
-      NoteSuggestionItem(id: "alfred", title: "Alfred", subtitle: "Write with Alfred: text, diagrams, and views", symbol: "sparkles", group: "Alfred",
+      NoteSuggestionItem(id: "alfred", title: "Alfred", subtitle: "Write with Alfred", symbol: "sparkles", group: "Alfred",
                          aliases: ["alfred", "ai", "ask", "write", "generate"]) { controller, textView in
         controller.openAlfredComposer(insertingAt: textView.blockID)
       },

@@ -38,6 +38,9 @@ struct MainView: View {
     .overlay { consentDialog }
     .modifier(AlfredDialogHost())
     .modifier(PomodoroAppHook())
+    .background(alignment: .top) {
+      WindowDragRegion().frame(height: model.isFullScreen ? 0 : WindowChromeMetrics.toolbarHeight).ignoresSafeArea()
+    }
     .background(Palette.surfaceCanvas)
     .onAppear { PerfLog.launch("signed-in-window") }
     .onChange(of: context.route, initial: true) { _, route in
@@ -115,8 +118,8 @@ struct MainView: View {
           // With the sidebar hidden, a toggle beside the window buttons brings it back (Command-backslash too).
           IconButton("sidebar.left", label: "Show sidebar", size: 26) { model.toggleSidebar() }
             .disabled(DialogPresence.shared.isAnyOpen)
-            .padding(.leading, model.isFullScreen ? Space.s3 : 76)
-            .padding(.top, model.isFullScreen ? Space.s2 : 2)
+            .padding(.leading, model.isFullScreen ? Space.s3 : WindowButtonsMetrics.toggleLeading)
+            .padding(.top, model.isFullScreen ? Space.s2 : (WindowChromeMetrics.toolbarHeight - 26) / 2)
             .frame(maxHeight: .infinity, alignment: .top)
         }
         if overlaySidebar {
@@ -124,6 +127,9 @@ struct MainView: View {
             .frame(width: ShellMetrics.sidebarWidth)
             .frame(maxHeight: .infinity)
             .glassSurface(RoundedRectangle(cornerRadius: 18, style: .continuous), fallback: Palette.sidebarBackground)
+            // Over the page (not beside it), clear glass lets the page's title read through; a canvas tint behind keeps
+            // the rows legible.
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Palette.surfaceCanvas.opacity(0.78)))
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(GlassSupport.isActive ? .clear : Palette.hairline))
             .shadow(color: .black.opacity(0.16), radius: 24, x: 4)

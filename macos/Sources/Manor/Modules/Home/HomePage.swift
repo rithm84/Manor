@@ -109,9 +109,7 @@ private struct HomeContent: View {
         controls
       }
     }
-    .padding(.horizontal, Space.s8)
-    .padding(.top, Space.s6)
-    .padding(.bottom, Space.s4)
+    .modifier(PageHeaderInsets())
   }
 
   private func greeting(date: String) -> some View {

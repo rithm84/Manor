@@ -88,7 +88,8 @@ struct PickerTrigger<Label: View, Popover: View>: View {
     .animation(Motion.fast, value: hovering)
     .animation(Motion.fast, value: isOpen)
     .manorPopover(isPresented: $isOpen, placement: placement, matchTriggerWidth: matchTriggerWidth, onClose: { returnFocus in
-      guard returnFocus else { return }
+      // Focus (and its ring) comes back only after a keyboard close; a mouse choice leaves no ring behind.
+      guard returnFocus, NSApp.currentEvent?.type == .keyDown else { return }
       // Keyboard focus comes back to the trigger after Escape or a choice.
       DispatchQueue.main.async {
         focused = true
