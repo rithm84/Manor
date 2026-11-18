@@ -56,6 +56,8 @@ The mode is saved per Mac (`manor.alfred.mode`).
 
 `AnswerEngine` keeps up to five chat tabs, each sending its last 15 exchanges as history. A topic router decides when the conversation or screen has moved to a new problem and opens a new tab for it. Every prompt includes the enabled knowledge documents, up to 60,000 characters, plus your role context and extra instructions.
 
+In Prep mode, the interview, coding, and system design answer styles share a clarify-first rule (`Prompts.clarifyFirst`). The answering model applies it itself, from the transcript, memory, screen, and chat history, so a prepared answer follows it too. When the interviewer has just posed a problem that leaves open something that changes the solution, which nobody has settled or asked about, the reply is two to four questions to ask, each with why it matters, and the assumption to state if they stay open. The next answer, after the interviewer replies or you ask again, solves the problem. A typed request or quick action never gets the questions.
+
 | Use | Default model |
 |---|---|
 | Answers, conversation memory, and the Notes writer | GPT-6.1 Terra on OpenAI's fast tier, low reasoning effort |

@@ -90,7 +90,7 @@ enum Prompts {
         Answer the most recent unanswered question from THEM (or the typed request). If ME already started answering,
         build on where they are. Guidance, not a script: no first-person role-play, no preamble.
 
-        OUTPUT TEMPLATE — follow exactly, nothing before or after:
+        OUTPUT TEMPLATE — follow exactly, nothing before or after (unless CLARIFY FIRST below applies):
         **<the answer itself in one sentence, not an instruction; the whole sentence in bold>**
         <when the problem has more than one standard approach of similar complexity (BFS or DFS for reachability, a heap
          or quickselect for top-k), one short line right after it naming them and the one shown: `Also works: DFS.
@@ -488,6 +488,26 @@ enum Prompts {
 
     // MARK: - Shared
 
+    /// Practice for asking good questions: when the interviewer has just posed a problem that leaves open something
+    /// that changes the solution, Alfred shows the questions to ask instead of the answer. Every condition must hold.
+    static let clarifyFirst = """
+    CLARIFY FIRST — only when ALL of these hold; otherwise answer normally:
+    - THEM (system audio) just posed a new coding, technical, or design problem, and nobody has started solving it.
+    - It leaves open something that would change the approach or the code: input size or limits, sorted or not,
+      duplicates, negatives or zero, empty input, directed or weighted edges, what to return when there's no
+      answer, in place or not, scale and read/write mix for a design. Never for details that don't change the
+      solution, and never for behavioral questions.
+    - THEM hasn't already settled it (in the transcript, memory, or the problem on screen), and ME hasn't asked it.
+    - This chat doesn't already show clarifying questions for this problem, and there's no typed request.
+    Then reply with ONLY this, no answer, diagram, or code:
+    **Ask before solving.**
+    - "<the question, worded the way ME would say it>" (<why it matters, ≤ 10 words>)
+    - <2–4 questions, the one that changes the solution most first>
+    If they leave it open: <the assumption ME should state out loud, one line>
+    Once THEM answers, or the user asks again after these questions, solve it: use what THEM said, and state any
+    assumption still open in one line right after the bold opening sentence.
+    """
+
     static func modeInstructions(_ p: Profile) -> String {
         switch p.mode {
         case .interview:
@@ -514,6 +534,7 @@ enum Prompts {
               check and, in parentheses, where the code handles it (`Don't count a minute for the last rotten batch
               (the loop runs only while fresh oranges remain).`). Problem-specific cases come first; conventional ones
               (bounds checks, empty input) only when the code handles them deliberately.
+            \(clarifyFirst)
             """
         case .coding:
             """
@@ -540,6 +561,7 @@ enum Prompts {
                Problem-specific cases first; conventional ones (bounds checks, empty input) only when the code handles
                them deliberately.
             For follow-ups (optimize, test cases, a bug on screen) answer just the follow-up.
+            \(clarifyFirst)
             """
         case .systemDesign:
             """
@@ -547,6 +569,7 @@ enum Prompts {
             Structure: requirements & scale assumptions (with numbers) → API / data model → high-level components →
             the deep-dive that matters for this prompt → bottlenecks and trade-offs. Use short bullets; name concrete
             technologies and why. For follow-ups, answer only the follow-up.
+            \(clarifyFirst)
             """
         case .meeting:
             """

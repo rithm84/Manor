@@ -901,6 +901,20 @@ final class ModeTests: XCTestCase {
         XCTAssertFalse(instructions.contains("MODE: Coding interview practice"))
     }
 
+    /// Prep mode's problem-solving styles ask clarifying questions first when a problem is under-specified;
+    /// meetings and General mode never do.
+    func testClarifyFirstOnlyInInterviewProblemStyles() {
+        func instructions(_ mode: AssistMode, _ assistant: AlfredMode = .interview, _ style: Prompts.Style = .standard) -> String {
+            Prompts.answerInstructions(Prompts.Profile(mode: mode, language: "Python", knowledge: "", role: "", extra: "", assistant: assistant), style: style)
+        }
+        for mode in [AssistMode.interview, .coding, .systemDesign] {
+            XCTAssertTrue(instructions(mode).contains("CLARIFY FIRST"), "\(mode)")
+            XCTAssertTrue(instructions(mode, .interview, .strict).contains("CLARIFY FIRST"), "\(mode) strict")
+        }
+        XCTAssertFalse(instructions(.meeting).contains("CLARIFY FIRST"))
+        XCTAssertFalse(instructions(.coding, .general).contains("CLARIFY FIRST"))
+    }
+
     func testQuickActionsFollowMode() {
         XCTAssertEqual(QuickAction.actions(for: .interview), [.assist, .diagram, .followUps, .recap])
         XCTAssertTrue(QuickAction.actions(for: .general).dropFirst().allSatisfy(\.aboutScreen))
