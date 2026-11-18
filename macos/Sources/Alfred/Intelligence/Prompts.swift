@@ -92,6 +92,9 @@ enum Prompts {
 
         GenUITPUT TEMPLATE — follow exactly, nothing before or after:
         **<the answer itself in one sentence, not an instruction; the whole sentence in bold>**
+        <when the problem has more than one standard approach of similar complexity (BFS or DFS for reachability, a heap
+         or quickselect for top-k), one short line right after it naming them and the one shown: `Also works: DFS.
+         Showing BFS (iterative, no recursion limit).` The diagram and code follow the one shown>
 
         <a ```diagram block — ONLY for a data-structure or algorithm question; see DIAGRAMS>
 
@@ -100,7 +103,9 @@ enum Prompts {
 
         <one ```<language> code block — ONLY if the question needs code. Walk through it with numbered
          plain-English comments, one above each logical step: `# 1. Map each value to its index.`, `# 2. …`
-         (3–7 steps, using the code's variable names) — reading only the comments explains the algorithm>
+         (3–7 steps, using the code's variable names) — reading only the comments explains the algorithm. Also add
+         short trailing comments at the end of lines whose purpose isn't obvious (`seen.add(node)  # mark before
+         queueing`), a few words each, on a handful of lines, never every line>
 
         **Complexity:** <time> time, <auxiliary space> space   ← coding questions only
 
@@ -488,7 +493,11 @@ enum Prompts {
               language. Trace a small example in a ```diagram step-through (input + working state) unless the problem is
               trivial — it's the fastest way to see the algorithm; place it where it reads best. Comment
               the code with numbered plain-English steps (`# 1. …`, 3–7 of them, the code's variable names), one above
-              each logical step, so reading just the comments explains the algorithm.
+              each logical step, so reading just the comments explains the algorithm, plus short trailing comments on
+              the few lines whose purpose isn't obvious (`left += 1  # shrink past the duplicate`).
+              When the problem has more than one standard approach of similar complexity (BFS or DFS, a heap or
+              quickselect), name them at the top and say which one you show and why in a few words; the diagram and
+              code use that one.
             """
         case .coding:
             """
@@ -496,12 +505,17 @@ enum Prompts {
             For a fresh coding problem this shape works well (adapt it when something else fits better):
             1. One bold sentence: the approach, pattern named (two pointers, BFS, DP…) plus the key insight, and a
                diagram or step-through when a data structure is involved — explain around it as much as it needs.
+               When there are several standard approaches of similar complexity (LeetCode 1971: BFS or DFS; top-k: a
+               heap or quickselect), say so right after it in one short line, naming the one shown and why; the
+               diagram and code follow that one.
             2. Bullets: why it works (the invariant, or why a pointer move / greedy choice / skipped state is safe),
                brute force only if it's a useful stepping stone, and edge cases the code actually handles.
             3. One fenced code block: optimal, correct, idiomatic, interview-ready; keep any starter template/signature
                shown (from the screen if there is one). Walk through it with numbered plain-English comments, one above
                each logical step (`# 1. Map each value to its index.`, `# 2. …`; 3–7 steps, the code's variable names)
-               — reading only the comments should explain the algorithm.
+               — reading only the comments should explain the algorithm. Add short trailing comments at the end of
+               lines whose purpose isn't obvious (`seen.add(nxt)  # mark when queued, not when popped`), a few words
+               each and only where they help.
             4. **Complexity** — time and space; separate auxiliary space from stored/output space when they differ.
             For follow-ups (optimize, test cases, a bug on screen) answer just the follow-up.
             """
