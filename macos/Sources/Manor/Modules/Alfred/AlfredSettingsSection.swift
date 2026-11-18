@@ -5,6 +5,7 @@ import SwiftUI
 /// Settings ▸ Alfred: the mode, what answers can see, interview preferences, personal context, keys,
 /// permissions, and the ⌃⌥ shortcuts. Everything here is kept on this Mac.
 struct AlfredSettingsSection: View {
+  @State private var windowTextTrusted = WindowText.isTrusted
   @ObservedObject private var prefs = AlfredHost.shared.preferences
   @ObservedObject private var model = AlfredHost.shared.settings
   @State private var editing: KnowledgeDoc?
@@ -40,8 +41,23 @@ struct AlfredSettingsSection: View {
         : "Listens to your call and helps with interview questions as they come.") {
         SegmentedTabs(AlfredMode.allCases.map { ($0, $0.title) }, selection: $prefs.alfredMode)
       }
-      SettingsRow("Include your screen", description: "Answers see the display you're working on. Alfred's panel and Manor's windows are left out.") {
+      SettingsRow("Include your screen", description: "Answers see the window you're working in. Alfred's panel, other windows, and the desktop are left out.") {
         toggle("Include your screen", $prefs.includeScreen)
+      }
+      if prefs.includeScreen {
+        SettingsRow("Read the window's text", description: windowTextTrusted
+          ? "Alfred also reads the window's text, which is more exact for code and numbers. Nothing in the window changes."
+          : "Needs Accessibility access for Manor in System Settings. Until then, answers use the image.") {
+          HStack(spacing: Space.s2) {
+            if prefs.includeWindowText && !windowTextTrusted {
+              Button("Allow access") { WindowText.requestTrust() }.buttonStyle(.manor(.secondary, size: .small))
+            }
+            toggle("Read the window's text", $prefs.includeWindowText)
+          }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+          windowTextTrusted = WindowText.isTrusted
+        }
       }
       SettingsRow("Answer text size") {
         HStack(spacing: Space.s2) {

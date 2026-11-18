@@ -47,6 +47,8 @@ public final class Preferences: ObservableObject {
     @Published public var prefetchAnswers: Bool { didSet { set(prefetchAnswers, "prefetchAnswers") } }
     /// Every answer also sees a screenshot of the display under the cursor (needs Screen Recording).
     @Published public var includeScreen: Bool { didSet { set(includeScreen, "includeScreen") } }
+    /// With the screen included, answers also get the front window's text (needs Accessibility).
+    @Published public var includeWindowText: Bool { didSet { set(includeWindowText, "includeWindowText") } }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -62,6 +64,7 @@ public final class Preferences: ObservableObject {
         saveSessions = value("saveSessions") ?? true
         prefetchAnswers = value("prefetchAnswers") ?? true
         includeScreen = value("includeScreen") ?? true
+        includeWindowText = value("includeWindowText") ?? true
     }
 
     private func set(_ value: Any, _ key: String) { defaults.set(value, forKey: Self.prefix + key) }

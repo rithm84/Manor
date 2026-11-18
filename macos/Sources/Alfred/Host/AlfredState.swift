@@ -40,6 +40,7 @@ final class AlfredState: ObservableObject {
     /// OpenAI client for the topic router (new problem → new chat).
     private var routerClient: LLMClient?
     private var askedForScreen = false
+    private var askedForWindowText = false
     /// Tests feed screenshots here instead of capturing the display.
     var screenshotOverride: (() async throws -> String)?
     private var warmTimer: Timer?
@@ -285,7 +286,14 @@ final class AlfredState: ObservableObject {
     private func screenContextReady(force: Bool = false) -> Bool {
         guard prefs.includeScreen || force else { return false }
         if screenshotOverride != nil { return true }
-        if ScreenCapture.hasPermission { return true }
+        if ScreenCapture.hasPermission {
+            // Reading the window's text needs Accessibility; ask once, and answer from the image meanwhile.
+            if prefs.includeWindowText, !WindowText.isTrusted, !askedForWindowText {
+                askedForWindowText = true
+                WindowText.requestTrust()
+            }
+            return true
+        }
         if !askedForScreen {
             askedForScreen = true
             ScreenCapture.requestPermission()
@@ -294,8 +302,10 @@ final class AlfredState: ObservableObject {
         return false
     }
 
-    private var captureScreen: () async throws -> String {
-        screenshotOverride ?? { try await ScreenCapture.captureJPEGDataURL() }
+    private var captureScreen: () async throws -> ScreenSnapshot {
+        if let screenshotOverride { return { ScreenSnapshot(image: try await screenshotOverride()) } }
+        let readText = prefs.includeWindowText
+        return { try await WindowCapture.capture(readText: readText) }
     }
 
     /// For answers to the conversation or screen in a chat that already has history: a fast model (GPT-6 Luna,

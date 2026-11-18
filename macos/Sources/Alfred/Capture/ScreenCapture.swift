@@ -44,7 +44,7 @@ enum ScreenCapture {
     @discardableResult
     static func requestPermission() -> Bool { CGRequestScreenCaptureAccess() }
 
-    private static func encodeJPEG(_ image: CGImage) -> Data? {
+    static func encodeJPEG(_ image: CGImage) -> Data? {
         let data = NSMutableData()
         guard let dest = CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil) else { return nil }
         CGImageDestinationAddImage(dest, image, [kCGImageDestinationLossyCompressionQuality: 0.82] as CFDictionary)
