@@ -22,7 +22,6 @@ enum DemoContent {
 
     - **Why it works:** when the second number of the pair is reached, the first is already in `seen`.
     - Brute force checks every pair: O(n²) time, O(1) space.
-    - Storing **after** the check means an element is never paired with itself; duplicates like `[3, 3]` still work.
 
     ```python
     def two_sum(nums: list[int], target: int) -> list[int]:
@@ -33,13 +32,17 @@ enum DemoContent {
             need = target - x
             # 3. Partner already seen: that's the pair.
             if need in seen:
-                return [seen[need], i]
+                return [seen[need], i]  # earlier index first
             # 4. Otherwise remember this number for later ones.
             seen[x] = i
         return []
     ```
 
     **Complexity:** O(n) time, O(n) extra space for the map.
+
+    **Edge cases:**
+    - A number never pairs with itself (it's stored only after its own check).
+    - Duplicates like `[3, 3]` with target 6 still pair (the second 3 finds the first).
     """
 
     static let followUp = (heading: "why store after the check?", answer: """

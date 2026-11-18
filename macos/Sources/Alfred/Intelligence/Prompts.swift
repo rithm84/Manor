@@ -90,7 +90,7 @@ enum Prompts {
         Answer the most recent unanswered question from THEM (or the typed request). If ME already started answering,
         build on where they are. Guidance, not a script: no first-person role-play, no preamble.
 
-        GenUITPUT TEMPLATE — follow exactly, nothing before or after:
+        OUTPUT TEMPLATE — follow exactly, nothing before or after:
         **<the answer itself in one sentence, not an instruction; the whole sentence in bold>**
         <when the problem has more than one standard approach of similar complexity (BFS or DFS for reachability, a heap
          or quickselect for top-k), one short line right after it naming them and the one shown: `Also works: DFS.
@@ -109,8 +109,14 @@ enum Prompts {
 
         **Complexity:** <time> time, <auxiliary space> space   ← coding questions only
 
+        **Edge cases:**   ← coding questions only, the last thing in the answer
+        - <an edge case an interviewer checks, ≤ 15 words, then where the code handles it in parentheses: `Don't count
+           a minute for the last rotten batch (the loop runs only while fresh oranges remain).`>
+        - <2–4 total, the ones specific to this problem first; a conventional one like bounds checks or empty input
+           only when the code handles it deliberately>
+
         RULES
-        - At most 120 words outside code and diagram. No headings. No closing summary.
+        - At most 150 words outside code and diagram. No headings other than the bold labels above. No closing summary.
         - Never walk through numeric examples step by step unless asked; state the key invariant instead.
         - Be exact: correct complexity (time AND auxiliary space), correct API and class names. If you are not
           certain about a detail, leave it out rather than guess.
@@ -498,6 +504,10 @@ enum Prompts {
               When the problem has more than one standard approach of similar complexity (BFS or DFS, a heap or
               quickselect), name them at the top and say which one you show and why in a few words; the diagram and
               code use that one.
+              End with **Edge cases:** as the last section: 2–4 short bullets, each an edge case an interviewer would
+              check and, in parentheses, where the code handles it (`Don't count a minute for the last rotten batch
+              (the loop runs only while fresh oranges remain).`). Problem-specific cases come first; conventional ones
+              (bounds checks, empty input) only when the code handles them deliberately.
             """
         case .coding:
             """
@@ -509,7 +519,7 @@ enum Prompts {
                heap or quickselect), say so right after it in one short line, naming the one shown and why; the
                diagram and code follow that one.
             2. Bullets: why it works (the invariant, or why a pointer move / greedy choice / skipped state is safe),
-               brute force only if it's a useful stepping stone, and edge cases the code actually handles.
+               and brute force only if it's a useful stepping stone.
             3. One fenced code block: optimal, correct, idiomatic, interview-ready; keep any starter template/signature
                shown (from the screen if there is one). Walk through it with numbered plain-English comments, one above
                each logical step (`# 1. Map each value to its index.`, `# 2. …`; 3–7 steps, the code's variable names)
@@ -517,6 +527,10 @@ enum Prompts {
                lines whose purpose isn't obvious (`seen.add(nxt)  # mark when queued, not when popped`), a few words
                each and only where they help.
             4. **Complexity** — time and space; separate auxiliary space from stored/output space when they differ.
+            5. **Edge cases:** last, 2–4 short bullets: each an edge case an interviewer would check and, in
+               parentheses, where the code handles it (`An empty grid returns 0 (the size check before the loop).`).
+               Problem-specific cases first; conventional ones (bounds checks, empty input) only when the code handles
+               them deliberately.
             For follow-ups (optimize, test cases, a bug on screen) answer just the follow-up.
             """
         case .systemDesign:
