@@ -1,7 +1,0 @@
-import '@fontsource-variable/outfit'
-import '@fontsource-variable/dm-sans'
-import '@fontsource/jetbrains-mono/400.css'
-import './components/ui/ui.css'
-import './styles/tokens.css'
-import './styles/base.css'
-import './app/frame.css'
