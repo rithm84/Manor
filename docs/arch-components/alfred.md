@@ -26,7 +26,7 @@ Alfred never reads or writes Manor's account data or calls Manor's backend. Its 
 
 The following diagram shows how one answer is produced.
 
-![Alfred's runtime inside Manor's process: a hot key, the menu bar, or the notch starts an answer; in Prep mode, system audio (the other side) and the microphone (you) stream to Deepgram Flux, whose transcript feeds the context engine's rolling memory and open question; the answer engine combines that with a screenshot of the display under the pointer and your knowledge documents, streams from the OpenAI Responses API with your own key using GPT-6.1 Terra and a GPT-6 Luna topic router, and renders in the notch overlay as Markdown, diagrams, and generative UI; AlfredWriter streams an /alfred block into a note from the note's title and nearby text only; with Manor in front, the hot key opens Alfred in Manor instead, which calls the same model with Manor's tools and shows each action with Undo.](../diagrams/svg/alfred-runtime.svg)
+![Alfred's runtime inside Manor's process: a hot key, the menu bar, or the notch starts an answer; in Prep mode, system audio (the other side) and the microphone (you) stream to Deepgram Flux, whose transcript feeds the context engine's rolling memory and open question; the answer engine combines that with an image and the text of the window you are working in and your knowledge documents, streams from the OpenAI Responses API with your own key using GPT-6.1 Terra and a GPT-6 Luna topic router, and renders in the notch overlay as Markdown, diagrams, and generative UI; AlfredWriter streams an /alfred block into a note from the note's title and nearby text only; with Manor in front, the hot key opens Alfred in Manor instead, which calls the same model with Manor's tools and shows each action with Undo.](../diagrams/svg/alfred-runtime.svg)
 
 <details><summary>Diagram key</summary>
 
@@ -44,7 +44,7 @@ The mode is saved per Mac (`manor.alfred.mode`).
 
 ### Capture
 
-- **Screen.** `ScreenCapture` takes one `SCScreenshotManager` capture of the display under the pointer, leaving out every window of Manor's process, and sends it as a JPEG of at most 2048 pixels on its longest edge.
+- **Screen.** `WindowCapture` finds the topmost ordinary window that isn't Manor's in the window server's front-to-back list, so asking from the notch (which can make Manor the active app) still captures what you were looking at. It captures only that window with `SCContentFilter(desktopIndependentWindow:)` and sends a JPEG of at most 2048 pixels on its longest edge, with the app's name and the window's title. At the same time `WindowText` reads the window's text through the Accessibility API: static text, text areas and fields, headings, web content, and the current selection, never secure text fields, capped at 12,000 characters and 0.4 seconds with a 0.25-second messaging timeout. It sets `AXManualAccessibility` so Chromium and Electron apps expose their content; nothing on screen changes. The prompt quotes the text as content from the screen, not instructions. Without Accessibility, answers use the image alone; with no other window, `ScreenCapture` falls back to the display under the pointer without Manor's windows.
 - **System audio** comes from a ScreenCaptureKit stream with audio capture on and the current process excluded, at 16 kHz mono; it is labeled as the other side.
 - **Microphone** is an `AVAudioEngine` input tap, read-only, with no voice processing, rebuilt when the input device changes; it is labeled as you. Speakers come from the source, not from diarization, and an interviewer's voice that leaks into the microphone is removed from your side of the transcript.
 
@@ -118,7 +118,7 @@ Each successful action becomes a row carrying the tool's `undo` closure. Failure
 
 ## Permissions
 
-Permissions belong to Manor's bundle. The build script writes `NSMicrophoneUsageDescription` and `NSScreenCaptureUsageDescription` into `Info.plist` and signs with `Resources/Manor.entitlements`, whose `com.apple.security.device.audio-input` entitlement lets the hardened runtime read the microphone. Each permission is requested the first time Alfred needs it, and Settings links to the matching System Settings pane for each permission. Screenshots exclude Manor's own windows.
+Permissions belong to Manor's bundle. The build script writes `NSMicrophoneUsageDescription` and `NSScreenCaptureUsageDescription` into `Info.plist` and signs with `Resources/Manor.entitlements`, whose `com.apple.security.device.audio-input` entitlement lets the hardened runtime read the microphone. Each permission is requested the first time Alfred needs it, and Settings links to the matching System Settings pane for each permission. Reading window text needs Accessibility, which Settings requests from its "Read the window's text" row. Screenshots exclude Manor's own windows.
 
 ## Settings
 
