@@ -259,7 +259,7 @@ extension DiagramLayout {
 
         // Edge labels as small chips, nudged along until they're clear of nodes and other labels.
         for l in labels {
-            let w = monoWidth(l.text, size: 10.5) + 10
+            let w = monoWidth(l.text, size: DiagramLayout.minText) + 10
             var rect = CGRect(x: l.at.x - w * l.anchor.x, y: l.at.y - 16 * l.anchor.y, width: w, height: 16)
             for _ in 0..<6 where !b.isFree(rect.insetBy(dx: -1, dy: -1)) { rect = rect.offsetBy(dx: 0, dy: l.anchor.y == 1 ? -8 : 9) }
             b.add(DItem(id: l.id + "b", shape: .box(rect, radius: 5), fill: .faint, stroke: .faint, decor: true))

@@ -68,6 +68,9 @@ enum DiagramLayout {
     static let arcBase: CGFloat = 22, arcStep: CGFloat = 20
     static let gutterPad: CGFloat = 14
 
+    /// The smallest diagram text: Manor never sets interface text below 12 pt.
+    static let minText: CGFloat = 12
+
     static func monoWidth(_ s: String, size: CGFloat) -> CGFloat { CGFloat(s.count) * size * 0.6 }
     static func sansWidth(_ s: String, size: CGFloat) -> CGFloat { CGFloat(s.count) * size * 0.55 }
 
@@ -264,7 +267,7 @@ enum DiagramLayout {
                                          stroke: tone, lineWidth: 1.6, arrow: true, arrowStart: double))
                 if let label {
                     let floor = CGPoint(x: (p1.x + p2.x) / 2, y: baseY + depth)
-                    let w = monoWidth(label, size: 11) + 12
+                    let w = monoWidth(label, size: minText) + 12
                     var pill = DItem(id: "arrow.\(n).pill", shape: .box(CGRect(x: floor.x - w / 2, y: floor.y - 8, width: w, height: 16), radius: 8))
                     pill.accent = resolved  // opaque tint, so the arc doesn't show through the label
                     scene.items.append(pill)
@@ -737,7 +740,7 @@ enum DiagramLayout {
         var nodeW = max(nodeR * 2, (nodes.map { monoWidth($0.label, size: 13) }.max() ?? 0) + 16)
         var radius = nodeR
         if subChars > 0 {
-            nodeW = max(nodeW, sansWidth(String(repeating: "m", count: subChars), size: 11) + 22, 58)
+            nodeW = max(nodeW, sansWidth(String(repeating: "m", count: subChars), size: minText) + 22, 58)
             radius = 23
         }
         let pos = placeTree(nodes, root: 0, binary: true, nodeW: nodeW, dy: subChars > 0 ? 74 : 62)
@@ -824,7 +827,7 @@ enum DiagramLayout {
         let all = s.grid.flatMap { $0 }
         let w = max(30, (all.map { monoWidth($0, size: 12.5) }.max() ?? 0) + 14)
         let h: CGFloat = 28
-        let rowLabelW = s.rowLabels.map { monoWidth($0, size: 11) }.max() ?? 0
+        let rowLabelW = s.rowLabels.map { monoWidth($0, size: minText) }.max() ?? 0
         let x0 = rowLabelW > 0 ? rowLabelW + 10 : 0
         let y0: CGFloat = s.colLabels.isEmpty ? 0 : 18
         for (c, label) in s.colLabels.enumerated() {
@@ -877,7 +880,7 @@ enum DiagramLayout {
         let values = s.values.map { Double($0 ?? "") ?? 0 }
         let maxV = max(values.max() ?? 1, 1)
         let unit = 96 / CGFloat(maxV)
-        let w = max(24, (s.values.map { monoWidth($0 ?? "", size: 11) }.max() ?? 0) + 10)
+        let w = max(24, (s.values.map { monoWidth($0 ?? "", size: minText) }.max() ?? 0) + 10)
         let gap: CGFloat = 6
         let base: CGFloat = 96 + 20
         b.bar = (base, unit)
@@ -954,7 +957,7 @@ enum DiagramLayout {
         // With per-node state lines, nodes become two-line rounded boxes (half-height `rh`).
         let rh: CGFloat = subChars > 0 ? 23 : nodeR
         var nodeW = max(rh * 2, (s.nodes.map { monoWidth(displayLabel($0), size: 13) }.max() ?? 0) + 16)
-        if subChars > 0 { nodeW = max(nodeW, sansWidth(String(repeating: "m", count: subChars), size: 11) + 22, 62) }
+        if subChars > 0 { nodeW = max(nodeW, sansWidth(String(repeating: "m", count: subChars), size: minText) + 22, 62) }
         var pos: [String: CGPoint] = [:]
         var layerOf: [String: Int] = [:]
         var vertical = false
@@ -1034,7 +1037,7 @@ enum DiagramLayout {
                 var side: CGFloat = bend == 0 ? (normal.y <= 0 ? 1 : -1) : (bend > 0 ? 1 : -1)
                 if bend == 0 && abs(normal.y) < 0.2 { side = normal.x >= 0 ? 1 : -1 }
                 let lp = CGPoint(x: apex.x + normal.x * 11 * side, y: apex.y + normal.y * 11 * side)
-                let w = monoWidth(label, size: 10.5) + 10
+                let w = monoWidth(label, size: minText) + 10
                 b.add(DItem(id: "\(s.name).el\(k)", shape: .box(CGRect(x: lp.x - w / 2, y: lp.y - 8, width: w, height: 16), radius: 5), fill: .faint, stroke: .faint))
                 b.add(DItem(id: "\(s.name).elt\(k)", shape: .text(label, at: lp, anchor: CGPoint(x: 0.5, y: 0.5)), font: .edge,
                             textTone: e.color.map { .accent($0) } ?? .muted))
@@ -1264,7 +1267,7 @@ enum DiagramLayout {
                 let tone = DItem.Tone.accent(color ?? .blue)
                 // The cell a pointer sits on takes the pointer's color as its border.
                 for i in b.shapes[key] ?? [] where b.items[i].outline == nil { b.items[i].outline = color ?? .blue }
-                let w = monoWidth(label, size: 10.5) + 14
+                let w = monoWidth(label, size: minText) + 14
                 let slot = "\(key)\(below)"
                 let level = pointerStack[slot, default: 0]
                 pointerStack[slot] = level + 1
@@ -1318,7 +1321,7 @@ enum DiagramLayout {
                         // grids); for nodes, left / below / above when the right side is taken.
                         let rowEnd = isGrid ? (b.items.compactMap { $0.cell ? $0.shape.bounds : nil }
                             .filter { abs($0.midY - r.midY) < 1 }.map(\.maxX).max() ?? r.maxX) : r.maxX
-                        let tw = monoWidth(text, size: 10.5)
+                        let tw = monoWidth(text, size: minText)
                         typealias Callout = (lead: [CGPoint]?, at: CGPoint, anchor: CGPoint)
                         var options: [Callout] = [([CGPoint(x: r.maxX + 3, y: r.midY), CGPoint(x: rowEnd + 8, y: r.midY)],
                                                    CGPoint(x: rowEnd + 12, y: r.midY), CGPoint(x: 0, y: 0.5))]
@@ -1327,7 +1330,7 @@ enum DiagramLayout {
                                         (nil, CGPoint(x: r.midX, y: r.maxY + 6), CGPoint(x: 0.5, y: 0)),
                                         (nil, CGPoint(x: r.midX, y: r.minY - 6), CGPoint(x: 0.5, y: 1))]
                         }
-                        let frame = { (o: Callout) in CGRect(x: o.at.x - tw * o.anchor.x, y: o.at.y - 12 * o.anchor.y, width: tw, height: 12) }
+                        let frame = { (o: Callout) in CGRect(x: o.at.x - tw * o.anchor.x, y: o.at.y - 15 * o.anchor.y, width: tw, height: 15) }
                         let pick = options.first { b.isFree(frame($0).insetBy(dx: -3, dy: -2)) } ?? options[0]
                         if let lead = pick.lead {
                             b.add(DItem(id: "\(s.name).ml\(n).\(key)", shape: .polyline(lead), stroke: .accent(.purple), lineWidth: 1, dashed: true))
@@ -1336,16 +1339,16 @@ enum DiagramLayout {
                                     font: .edge, textTone: .accent(.purple)))
                     } else if isNodeLike || isGrid {
                         // Badge on the upper-right (distances, visit order, dp values).
-                        let w = max(16, monoWidth(text, size: 9.5) + 9)
+                        let w = max(18, monoWidth(text, size: minText) + 10)
                         let topDown = b.topDown || s.kind == .tree || s.kind == .heap || s.kind == .trie
                         let candidates: [CGPoint] = isGrid ? [CGPoint(x: r.maxX - 3, y: r.minY - 4)]
                             : (topDown ? [CGPoint(x: r.maxX + w / 2 + 3, y: r.midY), CGPoint(x: r.minX - w / 2 - 3, y: r.midY),
                                           CGPoint(x: r.midX, y: r.maxY + 11), CGPoint(x: r.maxX + w / 2 - 2, y: r.minY - 6)]
                                        : [CGPoint(x: r.midX, y: r.minY - 11), CGPoint(x: r.midX, y: r.maxY + 11),
                                           CGPoint(x: r.maxX + w / 2 + 3, y: r.midY), CGPoint(x: r.minX - w / 2 - 3, y: r.midY)])
-                        let rects = candidates.map { CGRect(x: $0.x - w / 2, y: $0.y - 8, width: w, height: 16) }
+                        let rects = candidates.map { CGRect(x: $0.x - w / 2, y: $0.y - 9, width: w, height: 18) }
                         let rect = rects.first(where: { b.isFree($0.insetBy(dx: -2, dy: -2)) }) ?? rects[0]
-                        b.add(DItem(id: "\(s.name).m\(n).\(key)", shape: .box(rect, radius: 8), fill: .accent(.purple), solid: true))
+                        b.add(DItem(id: "\(s.name).m\(n).\(key)", shape: .box(rect, radius: 9), fill: .accent(.purple), solid: true))
                         b.add(DItem(id: "\(s.name).mt\(n).\(key)", shape: .text(text, at: CGPoint(x: rect.midX, y: rect.midY), anchor: CGPoint(x: 0.5, y: 0.5)),
                                     font: .badge, textTone: .accent(.purple)))
                     } else {
@@ -1490,7 +1493,7 @@ extension DItem.Shape {
         case .cubic(let a, let c1, let c2, let b):
             return box([a, CGPoint(x: (a.x + 3 * c1.x + 3 * c2.x + b.x) / 8, y: (a.y + 3 * c1.y + 3 * c2.y + b.y) / 8), b])
         case .text(let s, let at, let anchor):
-            let w = DiagramLayout.monoWidth(s, size: 11), h: CGFloat = 14
+            let w = DiagramLayout.monoWidth(s, size: DiagramLayout.minText), h: CGFloat = 16
             return CGRect(x: at.x - w * anchor.x, y: at.y - h * anchor.y, width: w, height: h)
         case .textBlock(_, let r): return r
         case .dot(let c, let r): return CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)
