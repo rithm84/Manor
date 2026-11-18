@@ -63,4 +63,7 @@ struct WindowDragRegion: View {
 enum WindowChromeMetrics {
   /// The unified toolbar's height; the window buttons are centered in it.
   static let toolbarHeight: CGFloat = 52
+  /// The top band the window toolbar covers and takes clicks in; content that must be seen and clicked starts
+  /// below it.
+  static let titlebarBand: CGFloat = 32
 }

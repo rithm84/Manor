@@ -39,10 +39,13 @@ struct WorkspaceStripTab: View {
 struct WorkspaceReader: View {
   @Bindable var model: ProblemWorkspaceModel
   let detail: ProblemDetail
+  let onClose: () -> Void
 
   var body: some View {
     VStack(spacing: 0) {
       HStack(spacing: Space.s1) {
+        WorkspaceBackButton(action: onClose)
+        Rectangle().fill(Palette.hairline).frame(width: 1, height: 16).padding(.horizontal, Space.s1)
         WorkspaceStripTab(title: "Description", selected: model.readerTab == .description) { model.readerTab = .description }
         if model.coding {
           WorkspaceStripTab(title: "Submissions", count: ProblemSubmissionStats.listed(model.history).count, selected: model.readerTab == .submissions) { model.readerTab = .submissions }
@@ -539,5 +542,18 @@ struct WorkspaceSourceFacts: View {
       guard let value = ProblemSourceDate.instant(date.value) else { return date.value }
       return DisplayDates.string(value, "MMM d, yyyy, h:mm a zzz")
     }
+  }
+}
+
+/// Returns from a problem to the library (Command-[ as well).
+struct WorkspaceBackButton: View {
+  let action: () -> Void
+  var body: some View {
+    Button(action: action) {
+      Label("Library", systemImage: "chevron.left").font(.ui(Typography.Size.sm, weight: .medium))
+    }
+    .buttonStyle(.manor(.ghost, size: .small))
+    .keyboardShortcut("[", modifiers: .command)
+    .help("Back to the library (⌘[)")
   }
 }

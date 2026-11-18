@@ -45,17 +45,23 @@ private struct ProblemWorkspaceContent: View {
   @Environment(AppContext.self) private var context
   @Environment(\.pageIsActive) private var isActive
   @Environment(\.windowButtonsClearance) private var buttonsClearance
+  @Environment(AppModel.self) private var appModel
 
   var body: some View {
     VStack(spacing: 0) {
-      header
-      Hairline()
+      // The title bar band stays clear (the window toolbar covers it and takes its clicks); the back button leads
+      // the reader's tab row below it.
+      WindowDragRegion().frame(height: appModel.isFullScreen ? 0 : WindowChromeMetrics.titlebarBand)
+      if model.detail == nil {
+        header
+        Hairline()
+      }
       Group {
         if let detail = model.detail {
           if detail.canExecute {
-            ProblemSolvingLayout(model: model, detail: detail, active: isActive)
+            ProblemSolvingLayout(model: model, detail: detail, active: isActive, onClose: back)
           } else {
-            WorkspaceReader(model: model, detail: detail)
+            WorkspaceReader(model: model, detail: detail, onClose: back)
           }
         } else if let error = model.loadError {
           VStack(spacing: Space.s4) {
@@ -92,23 +98,15 @@ private struct ProblemWorkspaceContent: View {
     }
   }
 
+  private func back() { model.afterProtected(onClose) }
+
+  /// While a problem loads (or fails to), the back button has a strip of its own.
   private var header: some View {
     HStack(spacing: Space.s2) {
-      Button { model.afterProtected(onClose) } label: {
-        Label("Library", systemImage: "arrow.left").font(.ui(Typography.Size.sm, weight: .medium))
-      }
-      .buttonStyle(.manor(.ghost, size: .small))
-      .help("Back to the library")
-      if let detail = model.detail, model.readerTab != .description || detail.canExecute {
-        Text(detail.problem.title)
-          .font(.ui(Typography.Size.sm, weight: .semibold))
-          .foregroundStyle(Palette.inkBody)
-          .lineLimit(1)
-      }
+      WorkspaceBackButton(action: back)
       Spacer()
     }
     .padding(.horizontal, Space.s3)
-    .padding(.leading, buttonsClearance > 0 ? buttonsClearance - Space.s3 : 0)
     .frame(height: workspaceStripHeight - 1)
   }
 
@@ -152,6 +150,7 @@ private struct ProblemSolvingLayout: View {
   @Bindable var model: ProblemWorkspaceModel
   let detail: ProblemDetail
   let active: Bool
+  let onClose: () -> Void
   @State private var readerFraction = ProblemWorkspacePreferences.readerFraction
   @State private var consoleFraction = ProblemWorkspacePreferences.consoleFraction
 
@@ -161,7 +160,7 @@ private struct ProblemSolvingLayout: View {
       let reader = min(880, max(280, min(width - 360, width * readerFraction)))
       HStack(spacing: 0) {
         if !model.fullscreen {
-          WorkspaceReader(model: model, detail: detail)
+          WorkspaceReader(model: model, detail: detail, onClose: onClose)
             .frame(width: reader)
           PaneDivider(axis: .vertical, fraction: $readerFraction, range: 0.25...0.70, length: width) {
             ProblemWorkspacePreferences.readerFraction = readerFraction
