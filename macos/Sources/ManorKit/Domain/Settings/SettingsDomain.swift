@@ -150,11 +150,7 @@ public enum SettingsDomain {
     var text = "Connected to \(host)."
     if let count = status.lastItemCount { text += " The last check found \(count) \(count == 1 ? "item" : "items")." }
     if let checked = status.lastCheckedAt {
-      let formatter = DateFormatter()
-      formatter.locale = Locale(identifier: "en_US")
-      formatter.timeZone = timeZone
-      formatter.dateFormat = "MMM d, h:mm a"
-      text += " Checked \(formatter.string(from: checked))."
+      text += " Checked \(DisplayDates.string(checked, "MMM d, h:mm a", timeZone: timeZone))."
     }
     return text
   }

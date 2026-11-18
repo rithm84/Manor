@@ -228,11 +228,7 @@ struct SettingsConnectionsSection: View {
   }
 
   private func agentDescription(_ agent: SettingsDomain.AgentConnection) -> String {
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US")
-    formatter.timeZone = context.timeZone
-    formatter.dateFormat = "MMM d, yyyy"
-    return "Connected \(formatter.string(from: agent.authorizedAt)) · Connection \(agent.clientId.prefix(8))"
+    return "Connected \(DisplayDates.string(agent.authorizedAt, "MMM d, yyyy", timeZone: context.timeZone)) · Connection \(agent.clientId.prefix(8))"
   }
 
   // MARK: Confirmations

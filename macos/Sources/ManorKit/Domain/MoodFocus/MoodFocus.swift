@@ -163,10 +163,10 @@ public enum MoodFocusDates {
   }
 
   static let isoFormatter = formatter("yyyy-MM-dd")
-  static let monthFormatter = formatter("MMMM yyyy")
-  static let shortMonthFormatter = formatter("MMM")
-  static let dayFormatter = formatter("EEE, MMM d")
-  static let fullFormatter = formatter("EEEE, MMMM d, yyyy")
+  static var monthFormatter: DateFormatter { DisplayDates.formatter("MMMM yyyy") }
+  static var shortMonthFormatter: DateFormatter { DisplayDates.formatter("MMM") }
+  static var dayFormatter: DateFormatter { DisplayDates.formatter("EEE, MMM d") }
+  static var fullFormatter: DateFormatter { DisplayDates.formatter("EEEE, MMMM d, yyyy") }
   static let isoMonthFormatter = formatter("yyyy-MM")
 
   public static func date(_ string: String) -> Date? {

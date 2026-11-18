@@ -91,12 +91,7 @@ public enum HabitDates {
 
   private static func format(_ date: String, _ pattern: String) -> String {
     guard let number = dayNumber(date) else { return date }
-    let formatter = DateFormatter()
-    formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.locale = Locale(identifier: "en_US")
-    formatter.timeZone = TimeZone(identifier: "UTC")
-    formatter.dateFormat = pattern
-    return formatter.string(from: Date(timeIntervalSince1970: TimeInterval(number) * 86_400))
+    return DisplayDates.string(Date(timeIntervalSince1970: TimeInterval(number) * 86_400), pattern)
   }
 
   // MARK: Civil calendar

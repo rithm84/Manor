@@ -530,17 +530,14 @@ struct WorkspaceSourceFacts: View {
     case .month:
       formatter.dateFormat = "yyyy-MM"
       guard let value = formatter.date(from: date.value) else { return date.value }
-      formatter.dateFormat = "MMM yyyy"
-      return formatter.string(from: value)
+      return DisplayDates.string(value, "MMM yyyy")
     case .day:
       formatter.dateFormat = "yyyy-MM-dd"
       guard let value = formatter.date(from: date.value) else { return date.value }
-      formatter.dateFormat = "MMM d, yyyy"
-      return formatter.string(from: value)
+      return DisplayDates.string(value, "MMM d, yyyy")
     case .instant:
       guard let value = ProblemSourceDate.instant(date.value) else { return date.value }
-      formatter.dateFormat = "MMM d, yyyy, h:mm a zzz"
-      return formatter.string(from: value)
+      return DisplayDates.string(value, "MMM d, yyyy, h:mm a zzz")
     }
   }
 }

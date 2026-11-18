@@ -259,7 +259,7 @@ public enum ProblemDateLabels {
   private static func formatter(_ format: String, zone: TimeZone = TimeZone(identifier: "UTC")!) -> DateFormatter {
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.locale = Locale(identifier: "en_US")
+    formatter.locale = .current
     formatter.timeZone = zone
     formatter.setLocalizedDateFormatFromTemplate(format)
     return formatter

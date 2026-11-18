@@ -57,7 +57,7 @@ struct SettingsTests {
     let zone = try #require(TimeZone(identifier: "America/Los_Angeles"))
     let checked = try #require(SettingsDomain.parseTimestamp("2026-11-17T17:05:00Z"))
     let status = SettingsDomain.CourseFeedStatus(connected: true, host: "bruinlearn.ucla.edu", lastCheckedAt: checked, lastItemCount: 1, lastError: nil)
-    #expect(SettingsDomain.courseFeedSummary(status, timeZone: zone) == "Connected to bruinlearn.ucla.edu. The last check found 1 item. Checked Nov 17, 9:05 AM.")
+    #expect(SettingsDomain.courseFeedSummary(status, timeZone: zone) == "Connected to bruinlearn.ucla.edu. The last check found 1 item. Checked Nov 17 at 9:05 AM.")
     let failed = SettingsDomain.CourseFeedStatus(connected: true, host: "canvas.test", lastCheckedAt: nil, lastItemCount: 4, lastError: "The feed returned 404")
     #expect(SettingsDomain.courseFeedSummary(failed, timeZone: zone) == "Connected to canvas.test. The last check failed: The feed returned 404")
     #expect(SettingsDomain.courseFeedConnected(host: "canvas.test", count: 2) == "Course calendar connected to canvas.test. 2 items are due in the next two weeks.")

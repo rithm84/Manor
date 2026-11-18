@@ -90,17 +90,9 @@ public enum KnowledgeBase {
   public static func timeLabel(_ date: Date, now: Date, timeZone: TimeZone) -> String {
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = timeZone
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US")
-    formatter.timeZone = timeZone
-    if calendar.isDate(date, inSameDayAs: now) {
-      formatter.dateFormat = "h:mm a"
-    } else if calendar.component(.year, from: date) == calendar.component(.year, from: now) {
-      formatter.dateFormat = "MMM d"
-    } else {
-      formatter.dateFormat = "MMM d, yyyy"
-    }
-    return formatter.string(from: date)
+    let pattern = calendar.isDate(date, inSameDayAs: now) ? "h:mm a"
+      : calendar.component(.year, from: date) == calendar.component(.year, from: now) ? "MMM d" : "MMM d, yyyy"
+    return DisplayDates.string(date, pattern, timeZone: timeZone)
   }
 
   public static func hasPending(_ entries: [Entry]) -> Bool { entries.contains { $0.status == .pending } }

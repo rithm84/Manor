@@ -355,9 +355,9 @@ public enum PomodoroDates {
 
   static let isoFormatter = formatter("yyyy-MM-dd")
   static let isoMonthFormatter = formatter("yyyy-MM")
-  static let monthFormatter = formatter("MMMM yyyy")
-  static let shortDayFormatter = formatter("MMM d")
-  static let headingFormatter = formatter("EEE, MMM d")
+  static var monthFormatter: DateFormatter { DisplayDates.formatter("MMMM yyyy") }
+  static var shortDayFormatter: DateFormatter { DisplayDates.formatter("MMM d") }
+  static var headingFormatter: DateFormatter { DisplayDates.formatter("EEE, MMM d") }
 
   static func date(_ string: String) -> Date? { isoFormatter.date(from: string) }
 
@@ -390,8 +390,7 @@ public enum PomodoroDates {
 
   /// The local start time, "9:05 AM", in the account time zone.
   public static func startTimeLabel(_ session: PomodoroSession, timeZone: TimeZone) -> String {
-    let formatter = formatter("h:mm a", timeZone: timeZone)
-    return formatter.string(from: session.startedAt)
+    DisplayDates.string(session.startedAt, "h:mm a", timeZone: timeZone)
   }
 }
 

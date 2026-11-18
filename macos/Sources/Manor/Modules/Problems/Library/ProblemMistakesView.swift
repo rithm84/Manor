@@ -117,11 +117,7 @@ struct ProblemMistakesView: View {
 
   private func dateLabel(_ timestamp: String) -> String {
     guard let date = ProblemSourceDate.instant(timestamp) else { return "" }
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US")
-    formatter.timeZone = timeZone
-    formatter.setLocalizedDateFormatFromTemplate("MMMd")
-    return formatter.string(from: date)
+    return DisplayDates.string(date, "MMM d", timeZone: timeZone)
   }
 
   private func add() {

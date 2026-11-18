@@ -203,13 +203,10 @@ public enum ProblemSubmissionStats {
     let elapsed = now.timeIntervalSince(then)
     if elapsed < 60 { return "Just now" }
     if elapsed >= 7 * 86_400 {
-      let formatter = DateFormatter()
-      formatter.locale = Locale(identifier: "en_US")
-      formatter.timeZone = timeZone
       var calendar = Calendar(identifier: .gregorian)
       calendar.timeZone = timeZone
-      formatter.dateFormat = calendar.component(.year, from: then) == calendar.component(.year, from: now) ? "MMM d" : "MMM d, yyyy"
-      return formatter.string(from: then)
+      let sameYear = calendar.component(.year, from: then) == calendar.component(.year, from: now)
+      return DisplayDates.string(then, sameYear ? "MMM d" : "MMM d, yyyy", timeZone: timeZone)
     }
     if elapsed >= 86_400 {
       let days = Int(elapsed / 86_400)
@@ -225,11 +222,7 @@ public enum ProblemSubmissionStats {
 
   public static func submittedAt(_ iso: String, timeZone: TimeZone = .current) -> String {
     guard let date = parseTimestamp(iso) else { return iso }
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US")
-    formatter.timeZone = timeZone
-    formatter.dateFormat = "MMM d, yyyy, h:mm a"
-    return formatter.string(from: date)
+    return DisplayDates.string(date, "MMM d, yyyy, h:mm a", timeZone: timeZone)
   }
 
   public static func parseTimestamp(_ iso: String) -> Date? {

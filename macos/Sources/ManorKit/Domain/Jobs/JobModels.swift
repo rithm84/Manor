@@ -370,9 +370,9 @@ public enum JobDates {
     formatter.dateFormat = format
     return formatter
   }
-  private static let shortFormatter = formatter("MMM d")
-  private static let weekdayFormatter = formatter("EEEE")
-  private static let longFormatter = formatter("MMM d, yyyy")
+  private static var shortFormatter: DateFormatter { DisplayDates.formatter("MMM d") }
+  private static var weekdayFormatter: DateFormatter { DisplayDates.formatter("EEEE") }
+  private static var longFormatter: DateFormatter { DisplayDates.formatter("MMM d, yyyy") }
 
   /// "Aug 29".
   public static func short(_ string: String) -> String {

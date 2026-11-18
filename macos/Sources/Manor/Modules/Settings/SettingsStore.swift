@@ -268,11 +268,7 @@ final class SettingsStore {
 
   private static func dayLabel(_ value: String) -> String {
     guard let date = LocalDate.date(from: String(value.prefix(10)), in: .gmt) else { return value }
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US")
-    formatter.timeZone = .gmt
-    formatter.dateFormat = "MMM d"
-    return formatter.string(from: date)
+    return DisplayDates.string(date, "MMM d", timeZone: .gmt)
   }
 
   // MARK: Agents
