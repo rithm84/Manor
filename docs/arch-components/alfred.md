@@ -1,6 +1,6 @@
 # Alfred
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -26,7 +26,7 @@ Alfred never reads or writes Manor's account data or calls Manor's backend. Its 
 
 The following diagram shows how one answer is produced.
 
-![Alfred's runtime inside Manor's process: a hot key, the menu bar, or the notch starts an answer; in Prep mode, system audio (the other side) and the microphone (you) stream to Deepgram Flux, whose transcript feeds the context engine's rolling memory and open question; the answer engine combines that with a screenshot of the display under the pointer and your knowledge documents, streams from the OpenAI Responses API with your own key using GPT-6.1 Terra and a GPT-6 Luna topic router, and renders in the notch overlay as Markdown, diagrams, and generative UI; AlfredWriter streams an /alfred block into a note from the note's title and nearby text only.](../diagrams/svg/alfred-runtime.svg)
+![Alfred's runtime inside Manor's process: a hot key, the menu bar, or the notch starts an answer; in Prep mode, system audio (the other side) and the microphone (you) stream to Deepgram Flux, whose transcript feeds the context engine's rolling memory and open question; the answer engine combines that with a screenshot of the display under the pointer and your knowledge documents, streams from the OpenAI Responses API with your own key using GPT-6.1 Terra and a GPT-6 Luna topic router, and renders in the notch overlay as Markdown, diagrams, and generative UI; AlfredWriter streams an /alfred block into a note from the note's title and nearby text only; with Manor in front, the hot key opens Alfred in Manor instead, which calls the same model with Manor's tools and shows each action with Undo.](../diagrams/svg/alfred-runtime.svg)
 
 <details><summary>Diagram key</summary>
 
@@ -80,7 +80,7 @@ The overlay renders Markdown with a small streaming parser and a syntax highligh
 
 ## Hosting inside Manor
 
-`AlfredHost.shared` is the host API: `start(_:)` with the app's actions (open Manor, open Settings, quit), `stop()`, `mode`, `keepsRunningWhenManorQuits`, preferences, knowledge, settings, and `openAsk()`. `AppDelegate` starts it through `AlfredBridge` when launch finishes and stops it when Manor terminates, which saves the session, unregisters hot keys, and stops listening. Listening starts at launch only when Prep mode and **Listen when Manor opens** are both on.
+`AlfredHost.shared` is the host API: `start(_:)` with the app's actions (open Manor, open Settings, quit, and `handleInApp`, which sees each hot key first), `stop()`, `mode`, `keepsRunningWhenManorQuits`, preferences, knowledge, settings, and `openAsk()`. `AppDelegate` starts it through `AlfredBridge` when launch finishes and stops it when Manor terminates, which saves the session, unregisters hot keys, and stops listening. Listening starts at launch only when Prep mode and **Listen when Manor opens** are both on.
 
 ### Quitting and reopening
 
@@ -93,6 +93,21 @@ The overlay renders Markdown with a small streaming parser and a syntax highligh
 - **Installing an update** allows the quit before the updater relaunches (see [releases and updates](releases-and-updates.md)).
 
 In General mode, quitting behaves normally.
+
+## Alfred in Manor
+
+When a hot key fires, `AlfredHost` offers it to the app's `handleInApp` action before the overlay. `AlfredDialogModel` (`Manor/Modules/Alfred/AlfredDialog.swift`) takes Control-Option-H, and Control-Option-Space in General mode, when Manor is active and its key window is a main window rather than a panel. It then toggles a centered Manor dialog, and otherwise the overlay handles the key as usual. The View menu's **Ask Alfred** command opens the same dialog.
+
+The dialog drives `AlfredAssistant` (`Alfred/Host/AlfredAssistant.swift`), a conversation model that knows nothing about Manor's data:
+
+1. On each message it asks the host's `AlfredToolbox` for an `AlfredAppSnapshot`: the page and a compact text summary with record IDs, capped at 4,000 characters.
+2. It streams a Responses API request with the toolbox's tools as function definitions, `store: false`, and encrypted reasoning carried between rounds (`OpenAIClient.streamResponse`, which also yields finished output items).
+3. It validates each function call against the tool's JSON Schema and runs it through the toolbox. Tools with an `AlfredToolConfirmation` wait for the user's approval in the conversation first.
+4. It sends the outputs back and repeats, up to eight rounds per message.
+
+Each successful action becomes a row carrying the tool's `undo` closure. Failures go back to the model only, so it explains or asks. Earlier turns are kept as compact request-and-reply text, including what was done and later undone, so follow-ups have context without resending old tool traffic. The model is the answer model when the answer provider is OpenAI, and OpenAI's default otherwise.
+
+`ManorAlfredToolbox` (`Manor/Modules/AlfredTools/`) implements the toolbox over `ManorToolCatalog` (`ManorKit/Domain/AlfredTools/`). Writes go through `Gateway.command` with the same inputs the pages send. References resolve through `ManorTargetMatcher`, which fails with the candidates when a reference names several records or none. Every write returns an inverse for Undo, except ending a Pomodoro session, which confirms first. Debug builds launched with `ALFRED_NOTES_DEMO=1` script the model's turns so the dialog can be reviewed without a key; the scripted turns still call the real tools.
 
 ## Keys, data, and logs
 
@@ -111,8 +126,8 @@ Permissions belong to Manor's bundle. The build script writes `NSMicrophoneUsage
 
 ## Notes writer
 
-`AlfredWriter.shared.write(_:in:)` takes a request and a `DocumentContext` (the note's title, the text before and after the cursor, any selection, the block's request history, and its current source) and returns a stream of Markdown deltas. It uses the answer model and your knowledge and instructions, never captures the screen or audio, and trims context to a few thousand characters. A refinement returns the full revised block rather than a patch. The Notes editor turns the stream into an `alfred` block, described in [Notes editor](notes-editor.md#alfred-blocks); that command is in progress.
+`AlfredWriter.shared.write(_:in:)` takes a request and a `DocumentContext` (the note's title, the text before and after the cursor, any selection, the block's request history, and its current source) and returns a stream of Markdown deltas. It uses the answer model and your knowledge and instructions, never captures the screen or audio, and trims context to a few thousand characters. A refinement returns the full revised block rather than a patch. The Notes editor turns the stream into an `alfred` block or a selection preview, described in [Notes editor](notes-editor.md#alfred-blocks). The `purpose` (insert, refine a block, or rewrite an inline or block selection) shapes the instructions, and requests carry up to six downscaled images.
 
 ## Tests
 
-`Tests/AlfredTests` covers configuration parsing and defaults, Markdown, server-sent events and request bodies, transcript echo removal, the context engine, the knowledge budget, the diagram parser, layout, readability, step-throughs and flowcharts, prefetch matching, overlay edit shortcuts, chat tabs, the router, and generative UI parsing and streaming. Host wiring, capture, and the Keychain are verified by running the app (see [testing and QA](testing-and-qa.md)).
+`Tests/AlfredTests` covers configuration parsing and defaults, Markdown, server-sent events and request bodies, transcript echo removal, the context engine, the knowledge budget, the diagram parser, layout, readability, step-throughs and flowcharts, prefetch matching, overlay edit shortcuts, chat tabs, the router, and generative UI parsing and streaming, plus the Responses output-item parser and `AlfredAssistant`'s action, Undo, and confirmation flow against a scripted toolbox. `ManorKitTests` covers the Manor tool catalog and argument parsing. Host wiring, capture, and the Keychain are verified by running the app (see [testing and QA](testing-and-qa.md)).

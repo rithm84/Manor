@@ -1,6 +1,6 @@
 # Manor architecture
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 Manor is a native Mac app backed by one Supabase project per environment. The app reads your account from a copy kept on the Mac and writes every change through one transactional command boundary that agents share. This page maps the system and how its parts relate. The linked component slices under [arch-components](arch-components/) carry the detailed contracts, limits, and failure rules. The [PRD](PRD.md) owns product behavior and vocabulary, and the [design charter](DESIGN.md) owns the visual direction.
 
@@ -122,6 +122,5 @@ Open items:
 - The production X account needs reconnecting; its legacy token is rejected.
 - Independent file backup storage credentials, the scheduled backup, and a full remote database-plus-files restore rehearsal are outstanding.
 - Builds are signed with the self-signed Manor Signing certificate, not a Developer ID, and are not notarized, so a first install needs Gatekeeper approval.
-- Alfred's `/alfred` Notes command is in progress.
 
 The exact migration inventory is in [`tools/recovery/current-status.json`](../tools/recovery/current-status.json). A deployment existing is not evidence that a check passed; the [testing and QA](arch-components/testing-and-qa.md) slice describes how changes are verified.

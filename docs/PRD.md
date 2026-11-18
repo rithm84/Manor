@@ -1,6 +1,6 @@
 # Manor PRD
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 This page defines what Manor does: its scope, behavior, business rules, and vocabulary. It states the current product only. The dated history of how each rule was decided is in [product decisions](DECISIONS.md), the technical design is in the [architecture](ARCHITECTURE.md), and the visual direction is in the [design charter](DESIGN.md).
 
@@ -52,7 +52,7 @@ Manor is a native macOS app built with SwiftUI and AppKit for macOS 15 and later
 - **Links** that leave the app open in your browser, and a Manor link opens the app on the page it names.
 - **Closing the window** keeps Manor running, so it reopens instantly from the Dock; Quit ends it, except in Alfred's Prep mode (see [Alfred](#alfred)).
 - **Agents** operate Manor through remote MCP, which needs no open Manor window.
-- **Alfred** gives Manor a notch overlay, a menu bar item, and Control-Option shortcuts that work in any app (see [Alfred](#alfred)). The rest of Manor uses ordinary in-app shortcuts.
+- **Alfred** gives Manor a notch overlay, a menu bar item, and Control-Option shortcuts that work in any app; with Manor in front, the same shortcut opens Alfred inside Manor (see [Alfred](#alfred)). The rest of Manor uses ordinary in-app shortcuts.
 - **Permissions** belong to Manor: it asks for Screen and System Audio Recording and Microphone access only when Alfred first needs them, with no separate onboarding. Manor sends no desktop notifications.
 
 Production and staging are separate apps, `Manor` and `Manor Staging`, that can be installed side by side; a link for one never opens the other.
@@ -138,7 +138,7 @@ Answers are Markdown with code, plus two visual forms Alfred draws natively as t
 
 ### Your keys and your data
 
-Alfred calls model providers with your own keys: OpenAI for answers, conversation memory, topic routing, and Notes writing, and Deepgram for live transcription. You enter them in Settings, where each is checked with its provider; they are stored in the Mac's Keychain and sent only to that provider. Alfred doesn't route through Manor's backend and doesn't read or change your Manor records.
+Alfred calls model providers with your own keys: OpenAI for answers, conversation memory, topic routing, Notes writing, and Alfred in Manor, and Deepgram for live transcription. You enter them in Settings, where each is checked with its provider; they are stored in the Mac's Keychain and sent only to that provider. Alfred doesn't route through Manor's backend. It reads and changes your Manor records only when you ask it to inside Manor (see [Alfred in Manor](#alfred-in-manor)).
 
 Knowledge documents (your résumé, experience, job descriptions, and notes) stay on your Mac. You choose which ones Alfred uses. Finished sessions are saved as Markdown files on your Mac when session saving is on.
 
@@ -148,17 +148,25 @@ Every Alfred shortcut uses Control and Option, so none collide with editors or c
 
 In Prep mode, quitting Manor from the Dock or with Command-Q hides Manor's windows and Dock icon instead of ending the process, so Alfred keeps listening from the menu bar. **Quit Manor** in Alfred's menu ends it. Logging out, restarting, shutting down, and installing an update always quit.
 
+### Alfred in Manor
+
+When Manor's window is in front, Control-Option-H (and Control-Option-Space in General mode) opens Alfred as a centered dialog inside Manor instead of the notch card; **Ask Alfred** in the View menu does the same. Alfred sees a compact summary of the page you're on, such as today's tasks, habits, the timer, roles, or the open note's outline, and answers questions about it or changes things when you ask: complete, reopen, reschedule, and prioritize tasks, create tasks and notes, log habits and daily ratings, start, pause, resume, and stop Pomodoro sessions, move roles between stages, mark online assessments done, add to the open note, and open pages.
+
+- **Every change is visible and reversible.** Each action shows as its own row in the conversation with an **Undo** button. An action that can't be undone, such as ending a Pomodoro session, asks first and runs only when you approve.
+- **No guessing.** When a request could mean several records, or none, Alfred asks instead of picking one.
+- **Same rules as the pages.** Alfred's changes go through the same commands the pages use, so they sync, appear in history, and follow every module's rules.
+- **Conversation.** Alfred remembers the conversation until you start a new chat or sign out. Closing the dialog leaves it as it was.
+
 ### Writing in Notes
 
-Typing `/alfred` and a request in a block, then pressing Return, asks Alfred to write into the note. There is no dialog or separate prompt field; the slash menu lists Alfred so `/al` completes the command.
+Typing `/alfred` in a block and pressing Return opens the **Alfred composer**: a centered dialog that names the note it writes into, takes a multi-line request (Return sends, Shift-Return adds a line, Escape closes), and accepts images by drag and drop, paste, or the add button, shown as removable thumbnails and downscaled before sending.
 
-- **An Alfred block** holds everything generated for the request: prose, data-structure diagrams, and generative UI, drawn in the note's own typography in light and dark. While Alfred thinks, the block shows a restrained working state that honors Reduce Motion; then the content streams in.
-- **Refining.** The block offers an inline **Ask Alfred to change…** line when you point at or select it. Alfred rewrites the block in place, remembering the block's earlier requests. The block menu adds **Try again**, **Copy**, **Delete**, and **Turn into regular blocks**, which unwraps the prose into ordinary blocks and keeps each diagram and generative UI element as its own block for hand-editing.
-- **Control.** Escape stops a running generation, and a whole insertion or rewrite undoes as one step. A missing key or network failure shows inline in the block with a retry.
-- **Context.** Alfred sees the note's title, nearby text, and, when refining, the block's current content and requests. It never sees your screen or audio from Notes.
-- **Storage.** The block keeps Alfred's full output, the requests in order, and the model that wrote it, so it survives sync, version history, and agent tools unchanged. Markdown export writes the latest request as a quote followed by the content, and search indexes the block's prose.
-
-The Notes command is in progress; until it ships, Alfred works from the notch and the menu bar.
+- **An Alfred block** holds everything generated for the request where `/alfred` was typed: prose, data-structure diagrams, and generative UI. It renders with the note's own block views, so its headings, lists, tables, code, quotes, callouts, toggles, and math look and behave like the rest of the note, in light and dark. While Alfred thinks, the block shows a restrained working state that honors Reduce Motion; then the content streams in and grows in place.
+- **Refining.** The block shows **Ask Alfred to change…** when you point at or select it, which opens the composer titled for the change with the block's earlier requests. Alfred rewrites the block in place. The block menu adds **Try again**, **Copy**, **Delete**, and **Turn into regular blocks**, which unwraps the prose into ordinary blocks and keeps each diagram and generative UI element as its own block for hand-editing.
+- **Editing a selection.** Select text in a block or select whole blocks, then press Command-J, choose **Ask Alfred** in the formatting toolbar, or choose it in the block menu. The composer offers one-click requests: Improve writing, Shorter, Longer, Fix spelling and grammar, Simplify, Make a list, Make a table, and Visualize as a diagram. The result streams into a preview under the selection, which stays highlighted; nothing in the note changes until you choose **Replace selection** (Return) or **Insert below**. **Try again**, **Ask for changes…**, and **Discard** (Escape) work on the preview. Replacements come back as the note's own blocks, or as inline text that keeps the surrounding text and styles for a selection inside one block.
+- **Control.** Escape stops a running generation, and a whole insertion, rewrite, or replacement undoes as one step. A missing key or network failure shows inline with a retry, never in a separate alert.
+- **Context.** Alfred sees the note's title, nearby text, the request and its images, the selection when editing one, and, when refining, the block's current content and requests. It never sees your screen or audio from Notes.
+- **Storage.** The block keeps Alfred's full output, the requests in order with their images saved as note attachments, and the model that wrote it, so it survives sync, version history, and agent tools unchanged. Markdown export writes the latest request as a quote followed by the content, Markdown import turns diagram and UI fences back into visual blocks, and search indexes the block's text.
 
 ## Streak system
 
@@ -299,7 +307,7 @@ Manor's look is a smooth, native Mac product: SF Pro for interface and reading t
 
 ## Scope
 
-**Non-goals:** a web app or web view shell; unrestricted agent database access; an assistant that operates your Manor records outside the MCP tools; a Journal or any private encrypted writing surface; an AI-written daily synthesis; a user-facing action log; multi-user collaboration, teams, or sharing; a general-purpose collaborative workspace; a standalone calendar workspace; mascots or characters.
+**Non-goals:** a web app or web view shell; unrestricted agent database access; an assistant that changes your Manor records unasked or outside Manor's commands; a Journal or any private encrypted writing surface; an AI-written daily synthesis; a user-facing action log; multi-user collaboration, teams, or sharing; a general-purpose collaborative workspace; a standalone calendar workspace; mascots or characters.
 
 **Deferred:** a native iOS companion and proactive notifications; custom tracker creation; fitness ingestion until its schemas are agreed; finance and media modules; additional jobs sources; Google Calendar push updates and iCloud CalDAV.
 

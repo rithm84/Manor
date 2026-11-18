@@ -1,6 +1,6 @@
 # Manor product decisions
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 This page is the dated record of Manor's product decisions. The [PRD](PRD.md) states the behavior those decisions produce today, and the [architecture](ARCHITECTURE.md) records the technical design. When a decision changes behavior, the PRD changes in the same edit, so the two pages always agree.
 
@@ -33,8 +33,9 @@ Each entry names the decision and, in parentheses, the PRD sections it shapes. A
 | 2026-09-14 | Every module reads from a copy of the account kept on the Mac and updated from the backend's change feed; saves stay server-authoritative ([reliable data](PRD.md#reliable-data-and-offline-work)). |
 | 2026-11-17 | Manor is a native SwiftUI and AppKit app; the backend, data, and agent tools carry over unchanged ([platform](PRD.md#platform)). |
 | 2026-11-17 | Alfred, Manor's personal assistant, runs inside Manor as a notch overlay and menu bar item with General and Prep modes, Control-Option shortcuts, and Manor-owned Screen Recording and Microphone permissions requested on first use. This supersedes the earlier rules of no embedded assistant, no summon UI, no desktop hotkey, and no permission onboarding; Codex stays the agent that operates your Manor data ([Alfred](PRD.md#alfred), [platform](PRD.md#platform)). |
-| 2026-11-17 | `/alfred <request>` in Notes writes an Alfred block in place, refined by asking Alfred again ([writing in Notes](PRD.md#writing-in-notes)). |
 | 2026-11-17 | In Prep mode, quitting Manor from the Dock or with Command-Q hides Manor and leaves Alfred in the menu bar ([Alfred](PRD.md#alfred)). |
+| 2026-11-18 | `/alfred` in Notes opens a composer dialog with images; the result lands in an Alfred block rendered with the note's own block views, and selected text or blocks can be rewritten through a preview that changes nothing until applied ([writing in Notes](PRD.md#writing-in-notes)). |
+| 2026-11-18 | With Manor in front, Alfred's shortcut opens Alfred inside Manor, where it acts on your records when you ask, through the same commands the pages use; each action offers Undo and irreversible ones ask first. Codex remains the agent for everything outside the app ([Alfred in Manor](PRD.md#alfred-in-manor), [scope](PRD.md#scope)). |
 
 ## Modules
 
@@ -77,3 +78,4 @@ Each entry names the decision and, in parentheses, the PRD sections it shapes. A
 | 2026-09-13 | The Mac app is a webview shell around the React frontend. | 2026-11-17 native app. |
 | 2026-09-09 | Manor embeds no conversational assistant, summon UI, desktop hotkey, or permission onboarding. | 2026-11-17 Alfred. |
 | 2026-09-09 | An AI-written daily synthesis per day, updated from debriefs. | 2026-11-17 removal of the daily synthesis. |
+| 2026-11-17 | `/alfred <request>` in Notes writes an Alfred block in place, refined by asking Alfred again. | 2026-11-18 composer and selection editing. |

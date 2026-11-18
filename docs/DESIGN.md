@@ -1,6 +1,6 @@
 # Manor design charter
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 This page defines Manor's visual and interaction direction for the native Mac app. Product behavior is in the [PRD](PRD.md); the tokens and components that implement this charter are in the [design system](arch-components/design-system.md) slice.
 
@@ -43,7 +43,7 @@ On macOS 26, Liquid Glass is for chrome that floats over content: the sidebar, s
 
 The window has a hidden, unified title bar; the system window buttons sit inside the sidebar's top corner, and content runs to the top edge. Manor draws no fake window controls or OS chrome.
 
-The sidebar docks by default and floats as a glass panel on macOS 26. Collapsed, it appears when you point at the left edge. Selected items use a background fill with weight and color emphasis, never a left-edge accent bar.
+The sidebar docks by default and floats as a glass panel on macOS 26, inset from the window edge with corners concentric with the window's; the window buttons and the sidebar toggle share its top row. Collapsed, it appears when you point at the left edge. Rows follow the system sidebar: plum symbols, and a neutral pill with a heavier title for the selected item, never a left-edge accent bar.
 
 ## Accessibility
 

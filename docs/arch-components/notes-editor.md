@@ -1,6 +1,6 @@
 # Notes editor and document format
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-18_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -59,4 +59,11 @@ Markdown with local assets is imported by an agent instead. The `import_markdown
 
 ## Alfred blocks
 
-`/alfred <request>` creates an `alfred` block whose content Alfred streams through `AlfredWriter`. The block has no children; its props are `source` (Alfred's full output: Markdown with ` ```diagram ` and ` ```ui ` fences), `requests` (the prompts in order), and `model` (provenance). Streaming status is view state and isn't stored. The block renders its source with Alfred's embeddable views (`AlfredContentView`, `AlfredDiagramView`, and `AlfredGenerativeView`) in document typography. A refinement sends the current source and request history and replaces the source with the full revised block; **Turn into regular blocks** unwraps the prose into ordinary blocks and keeps each diagram and generative UI element as its own block. Markdown export writes the latest request as a quote followed by the source, and search indexes the source's prose with the fences removed. This command is in progress; the [Alfred](alfred.md#notes-writer) slice covers the writer.
+`/alfred` opens `NoteAlfredComposer`, a centered dialog for the request and up to six images (dropped, pasted, or picked), which `NoteAlfredImage` downscales to about 2,048 pixels on the long edge and encodes as PNG or JPEG within Alfred's size limits. Sending inserts an `alfred` block where `/alfred` was typed (taking the place of an empty block) and streams `AlfredWriter` output into it, flushing about twenty times a second.
+
+- **Format.** The block has no children. Its props are `source` (Alfred's full output: Markdown with ` ```diagram ` and ` ```ui ` fences), `requests` (each prompt with its images as `manor-attachment://` URLs uploaded through the Files service after the run), and `model` (provenance). Streaming status is view state in `NoteAlfredRun` and isn't stored.
+- **Rendering.** The layout converts `source` with `NoteMarkdown`'s Alfred options into the editor's own blocks, read-only, with ids derived from the block's id and position so streaming growth keeps views stable. Streaming conversion holds back an unfinished last line, unclosed fences, and unclosed `<details>`. `NoteAlfredBlockView` draws only the header (the request, or the thinking shimmer that holds still under Reduce Motion) and the footer (empty and error states, and **Ask Alfred to change…**). Clicks between them pass through to the content views.
+- **Runs.** A run commits as one undo step when it finishes, fails, or is stopped. Escape stops every running block. Refinements send the current source and request history, and the reply replaces the source. **Try again** reloads the request's stored images. **Turn into regular blocks** replaces the block with `NoteMarkdown` blocks, with visuals becoming standalone `diagram` and `generativeUI` blocks, which render with Alfred's views and edit their source on double-click.
+- **Selection edits.** Command-J, the toolbar, and the block menu open the composer for a text range in one block or for whole blocks (`NoteAlfredSelection`), sending the selection as Markdown. `NoteAlfredSelectionEdit` streams into a preview laid out under the selection without touching the document. **Replace selection** splices inline text into the block, keeping the text and styles around it, or replaces the blocks. **Insert below** adds the converted blocks. Either applies as one undo step.
+- **Markdown.** Export writes the latest request as a quote followed by the source. The app's import and the server's `markdownImport` both turn diagram and UI fences into visual blocks. Search indexes the prose of `source`, and the server's embeddings include the block's JSON.
+

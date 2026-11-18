@@ -32,6 +32,9 @@ flowchart TB
   writer(["`**AlfredWriter**
   /alfred block in a note
   Title + nearby text only`"]):::app
+  assistant(["`**Alfred in Manor**
+  Centered dialog when Manor is in front
+  Manor's tools · Undo per action`"]):::app
 
   sys --> flux
   mic --> flux
@@ -42,3 +45,5 @@ flowchart TB
   answer <-->|streamed| model
   answer --> overlay
   writer <-->|streamed| model
+  hotkey -->|Manor in front| assistant
+  assistant <-->|tool calls| model
