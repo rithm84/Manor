@@ -19,7 +19,9 @@ cd "$ROOT/macos"
 COPYFILE_DISABLE=1 tar -czf "$TMP/manor-src.tgz" --exclude='.build*' --exclude='build' --exclude='config/production.env' \
   Package.swift Package.resolved VERSION Sources Tests Vendor Resources scripts config
 "${DT[@]}" put "$TMP/manor-src.tgz" /Users/lume/manor-src.tgz >/dev/null
-"${DT[@]}" exec "osascript -e 'quit app \"Manor Staging\"' 2>/dev/null; rm -rf ~/manor/Sources ~/manor/Tests; mkdir -p ~/manor && cd ~/manor && tar -xzf ~/manor-src.tgz && scripts/build-app.sh staging --debug > build.log 2>&1; echo build-exit \$?; grep -E 'error:' build.log | sort -u | head -15" 1800
+# Alfred's Prep mode keeps Manor running when asked to quit, so a sandbox app that stays up is force-quit:
+# otherwise the old build would keep running and the test would exercise stale code.
+"${DT[@]}" exec "osascript -e 'quit app \"Manor Staging\"' 2>/dev/null; sleep 2; pkill -9 -f 'Manor Staging.app/Contents/MacOS' 2>/dev/null; rm -rf ~/manor/Sources ~/manor/Tests; mkdir -p ~/manor && cd ~/manor && tar -xzf ~/manor-src.tgz && scripts/build-app.sh staging --debug > build.log 2>&1; echo build-exit \$?; grep -E 'error:' build.log | sort -u | head -15" 1800
 if [[ "${1:-}" != "--no-launch" ]]; then
   OPEN_ENV=""; [[ -n "${ALFRED_NOTES_DEMO:-}" ]] && OPEN_ENV="--env ALFRED_NOTES_DEMO=1"
   "${DT[@]}" exec "open $OPEN_ENV ~/manor/build/'Manor Staging.app'; sleep 4" 60 >/dev/null
