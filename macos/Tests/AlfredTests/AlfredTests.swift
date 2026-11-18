@@ -194,6 +194,16 @@ final class KnowledgeTests: XCTestCase {
 }
 
 final class DiagramTests: XCTestCase {
+    func testRefListsKeepSeparatorsInsideBrackets() {
+        // A comma or space inside brackets belongs to the ref; only top-level separators split the list.
+        let doc = DiagramParser.parse("""
+        grid dp = [[0, 1], [1, 2]]
+        array a = [1, 2, 3, 4]
+        pending dp[0][ 1 ], a[3]
+        """)
+        XCTAssertEqual(doc.annotations, [.pending(.cell("dp", 0, 1)), .pending(.index("a", 3))])
+    }
+
     func testStructuresAndAnnotations() {
         let doc = DiagramParser.parse("""
         array nums = [2, 7, 11, 15]

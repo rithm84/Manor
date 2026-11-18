@@ -759,7 +759,8 @@ enum DiagramParser {
             switch ch {
             case "[": depth += 1; cur.append(ch)
             case "]": depth = max(0, depth - 1); cur.append(ch)
-            case " ", ",", "\t" where depth == 0:
+            // `where` binds only to the last pattern of a case, so each separator carries its own.
+            case " " where depth == 0, "," where depth == 0, "\t" where depth == 0:
                 if !cur.isEmpty { out.append(cur); cur = "" }
             default: cur.append(ch)
             }
