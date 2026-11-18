@@ -138,6 +138,7 @@ extension NoteEditorController {
       case .mathSource: setMathEditing(textView.blockID, false); focusAfter(textView.blockID); return true
       case .block:
         if blocks.block(id: textView.blockID)?.kind == .codeBlock { insertCodeNewline(textView); return true }
+        if !suggestions.isOpen, !textView.isPlain, openAlfredForTypedCommand(textView) { return true }
         splitBlock(textView)
         return true
       }
@@ -741,12 +742,50 @@ extension NoteEditorController {
       if before.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { suggestions.open(.mention, in: textView, anchor: caret - 1) }
       return
     }
+    // Fast typing (or a paste of a short command) can deliver "/alf" as one insertion; the menu still opens
+    // at its trigger with the query already typed.
+    if !textView.isPlain, (text as NSString).length > 1, openMenu(forInsertedRun: text, caret: caret, in: textView) { return }
     guard !textView.isPlain else { return }
     // Shortcuts apply at the start of any text block.
     if block.kind.hasInlineContent, text == " " || text == "-" {
       if applyBlockShortcut(textView, block: block, caret: caret) { return }
     }
     if ["*", "_", "`", "~", "$"].contains(text) { applyInlineShortcut(textView, caret: caret) }
+  }
+
+  /// Opens the slash or mention menu for a trigger inside a multi-character insertion, when the trigger starts
+  /// a word and the rest of the insertion is its query.
+  private func openMenu(forInsertedRun text: String, caret: Int, in textView: NoteTextView) -> Bool {
+    let run = text as NSString
+    let string = textView.string as NSString
+    let start = caret - run.length
+    guard start >= 0, !text.contains("\n") else { return false }
+    let triggers = CharacterSet(charactersIn: services.mentionCandidates.isEmpty ? "/" : "/@")
+    let found = run.rangeOfCharacter(from: triggers, options: .backwards)
+    guard found.location != NSNotFound else { return false }
+    let anchor = start + found.location
+    let query = run.substring(from: found.location + 1)
+    guard query.rangeOfCharacter(from: .whitespacesAndNewlines) == nil else { return false }
+    let before = anchor >= 1 ? string.substring(with: NSRange(location: anchor - 1, length: 1)) : " "
+    guard before.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+    suggestions.open(run.substring(with: found) == "/" ? .slash : .mention, in: textView, anchor: anchor)
+    return true
+  }
+
+  /// Return on a block that reads exactly "/alfred" opens the composer, even when the menu never opened.
+  func openAlfredForTypedCommand(_ textView: NoteTextView) -> Bool {
+    let range = textView.selectedRange()
+    let string = textView.string as NSString
+    guard range.length == 0, range.location == string.length,
+          string.trimmingCharacters(in: .whitespaces).lowercased() == "/alfred" else { return false }
+    let whole = NSRange(location: 0, length: string.length)
+    if textView.shouldChangeText(in: whole, replacementString: "") {
+      textView.textStorage?.replaceCharacters(in: whole, with: "")
+      textView.didChangeText()
+      textView.setSelectedRange(NSRange(location: 0, length: 0))
+    }
+    openAlfredComposer(insertingAt: textView.blockID)
+    return true
   }
 
   private func applyBlockShortcut(_ textView: NoteTextView, block: NoteBlock, caret: Int) -> Bool {
