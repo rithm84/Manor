@@ -32,6 +32,12 @@ enum PerfLog {
     DispatchQueue.main.async { write(String(format: "launch %@ %.0f ms, footprint %.0f MB", label, elapsed, footprintMB)) }
   }
 
+  /// Records a free-form line with the current footprint.
+  static func mark(_ text: String) {
+    guard path != nil else { return }
+    write(String(format: "%@, footprint %.0f MB", text, footprintMB))
+  }
+
   static func beginSwitch(to route: String) {
     guard path != nil else { return }
     switchStart = (route, CACurrentMediaTime())

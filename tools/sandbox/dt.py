@@ -10,6 +10,7 @@ laptop or a cloud session) drives the same one.
   dt.py get <remote> <local>         download a file
   dt.py shot <out.png> [scale]       screenshot (PNG, optional scale 0.1 to 1)
   dt.py click X Y [double|right]     mouse click in screen coordinates
+  dt.py move X Y                     move the pointer (hover)
   dt.py drag X1 Y1 X2 Y2
   dt.py scroll X Y up|down [amount]
   dt.py type "<text>"
@@ -121,6 +122,9 @@ def main(argv):
         sandbox().computer_use.mouse.click(x=int(argv[1]), y=int(argv[2]), double=(extra == "double") or None,
                                            button="right" if extra == "right" else None)
         print("clicked")
+    elif cmd == "move":
+        sandbox().computer_use.mouse.move(x=int(argv[1]), y=int(argv[2]))
+        print("moved")
     elif cmd == "drag":
         sandbox().computer_use.mouse.drag(start_x=int(argv[1]), start_y=int(argv[2]), end_x=int(argv[3]), end_y=int(argv[4]))
         print("dragged")

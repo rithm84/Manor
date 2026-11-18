@@ -117,10 +117,10 @@ public final class AlfredWriter {
 
     /// At most this many images go with one request, counting the current request's first; earlier turns'
     /// images fill what's left, newest first.
-    public static let maxImages = 6
+    nonisolated public static let maxImages = 6
     /// Per-image and total limits on encoded image bytes (callers downscale before sending).
-    public static let maxImageBytes = 4 * 1024 * 1024
-    public static let maxTotalImageBytes = 16 * 1024 * 1024
+    nonisolated public static let maxImageBytes = 4 * 1024 * 1024
+    nonisolated public static let maxTotalImageBytes = 16 * 1024 * 1024
 
     public enum WriterError: LocalizedError, Equatable {
         /// No key for the answer provider. Settings ▸ Alfred fixes it.

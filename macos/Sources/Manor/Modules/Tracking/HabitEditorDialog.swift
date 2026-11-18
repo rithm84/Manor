@@ -117,7 +117,8 @@ struct HabitEditorPanel: View {
     .padding(.horizontal, Space.s6)
     .padding(.vertical, Space.s5)
     .animation(Motion.base, value: model.kind)
-    .onAppear { nameFocused = true }
+    // A turn later, so focus lands here after a dialog this one replaces has let go of it.
+    .onAppear { DispatchQueue.main.async { nameFocused = true } }
   }
 
   private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {

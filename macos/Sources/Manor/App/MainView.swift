@@ -29,15 +29,44 @@ struct MainView: View {
     }
     .background(Palette.surfaceCanvas)
     .onAppear { PerfLog.launch("signed-in-window") }
+    .task { await prewarmHeavyPages() }
     .onChange(of: context.route, initial: true) { _, route in
       if !visited.contains(route) { visited.append(route) }
       DispatchQueue.main.async { PerfLog.endSwitch(to: route.rawValue) }
       // Keystrokes never land in a field on a page that just went out of view.
-      DispatchQueue.main.async {
-        guard let window = NSApp.keyWindow, let responder = window.firstResponder as? NSView, responder.window == window else { return }
-        if responder.convert(responder.bounds, to: nil).minX >= window.frame.width { window.makeFirstResponder(nil) }
-      }
+      DispatchQueue.main.async { Self.releaseOffscreenFocus() }
     }
+  }
+
+  /// Notes and Problems take a few hundred milliseconds to build the first time (the editor, the catalog table).
+  /// Visited pages stay alive anyway, so once the window has settled and input pauses they are built offscreen,
+  /// one at a time, and the first click on them costs what a revisit does.
+  private func prewarmHeavyPages() async {
+    try? await Task.sleep(for: .seconds(1.5))
+    for route in [Route.notes, .problems] {
+      guard !Task.isCancelled else { return }
+      while !Task.isCancelled, Self.secondsSinceInput < 0.4 || DialogPresence.shared.isAnyOpen {
+        try? await Task.sleep(for: .milliseconds(250))
+      }
+      guard !visited.contains(route) else { continue }
+      let start = CACurrentMediaTime()
+      visited.append(route)
+      DispatchQueue.main.async {
+        PerfLog.mark(String(format: "prewarm %@ %.0f ms", route.rawValue, (CACurrentMediaTime() - start) * 1000))
+        // A page built offscreen never keeps the keyboard.
+        Self.releaseOffscreenFocus()
+      }
+      try? await Task.sleep(for: .milliseconds(800))
+    }
+  }
+
+  private static func releaseOffscreenFocus() {
+    guard let window = NSApp.keyWindow, let responder = window.firstResponder as? NSView, responder.window == window else { return }
+    if responder.convert(responder.bounds, to: nil).minX >= window.frame.width { window.makeFirstResponder(nil) }
+  }
+
+  private static var secondsSinceInput: Double {
+    CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
   }
 
   /// The room the docked sidebar takes at the leading edge.
@@ -64,6 +93,8 @@ struct MainView: View {
         }
       }
       .frame(maxHeight: .infinity)
+      // While a dialog is open the sidebar is inert, so focus can't fall back onto it when one dialog replaces another.
+      .disabled(DialogPresence.shared.isAnyOpen)
       .transition(.move(edge: .leading))
     }
   }

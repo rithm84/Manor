@@ -406,7 +406,10 @@ final class ManorPopoverController: NSObject {
   private func installDismissal() {
     let mouse: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
     if let local = NSEvent.addLocalMonitorForEvents(matching: mouse.union(.scrollWheel), handler: { [weak self] event in
-      MainActor.assumeIsolated { self?.outsideClick(event) ?? event }
+      // Local monitors run on the main thread; the decision crosses back as a Bool, the event never moves.
+      nonisolated(unsafe) let event = event
+      let keep = MainActor.assumeIsolated { self?.keepsOutsideClick(event) ?? true }
+      return keep ? event : nil
     }) { monitors.append(local) }
     if let global = NSEvent.addGlobalMonitorForEvents(matching: mouse, handler: { [weak self] _ in
       MainActor.assumeIsolated { self?.close(refocus: false) }
@@ -427,18 +430,19 @@ final class ManorPopoverController: NSObject {
 
   /// A click outside the topmost popover closes it and goes no further, so the page or dialog underneath keeps its
   /// state. A click on the trigger closes it too instead of reopening it.
-  private func outsideClick(_ event: NSEvent) -> NSEvent? {
-    guard isTopmost, let panel, event.timestamp != Self.handledClick else { return event }
-    if event.window === panel { return event }
+  /// Whether a click or scroll outside the popover goes on to its target (false swallows it).
+  private func keepsOutsideClick(_ event: NSEvent) -> Bool {
+    guard isTopmost, let panel, event.timestamp != Self.handledClick else { return true }
+    if event.window === panel { return true }
     if event.type == .scrollWheel {
       close(refocus: false)
-      return event
+      return true
     }
     Self.handledClick = event.timestamp
     // A click inside a popover further down the stack belongs to that one; it handles it after this closes.
     let insideLower = Self.stack.contains { $0 !== self && $0.panel === event.window }
     close(refocus: !insideLower)
-    return insideLower ? event : nil
+    return insideLower
   }
 
   private func handle(_ event: NSEvent) -> Bool {

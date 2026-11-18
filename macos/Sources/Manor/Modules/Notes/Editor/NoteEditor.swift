@@ -489,7 +489,10 @@ final class NoteDialogPresenter {
     let frame = window.convertToScreen(window.contentLayoutRect)
     panel.setFrame(frame, display: false)
     let chrome = NoteDialogChrome(width: width, dismiss: { [weak self] in self?.cancel() }, content: content())
-    panel.contentView = NSHostingView(rootView: chrome)
+    let host = NSHostingView(rootView: chrome)
+    // The panel covers the window's content so the backdrop dims all of it; the dialog never resizes the panel.
+    host.sizingOptions = []
+    panel.contentView = host
     window.addChildWindow(panel, ordered: .above)
     panel.makeKeyAndOrderFront(nil)
     self.panel = panel
@@ -525,18 +528,19 @@ private struct NoteDialogChrome<Content: View>: View {
         .ignoresSafeArea()
         .onTapGesture { dismiss() }
         .opacity(shown ? 1 : 0)
-      content
-        .tint(Palette.primary)
-        .frame(width: width)
-        .fixedSize(horizontal: false, vertical: true)
-        .background(RoundedRectangle(cornerRadius: Radius.cardLarge, style: .continuous).fill(Palette.surfaceCard))
-        .overlay(RoundedRectangle(cornerRadius: Radius.cardLarge, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: Radius.cardLarge, style: .continuous))
-        .shadow(color: .black.opacity(0.14), radius: 30, y: 14)
-        .padding(Space.s8)
-        .scaleEffect(shown ? 1 : 0.96)
-        .opacity(shown ? 1 : 0)
-        .onExitCommand { dismiss() }
+      // Sized to its content but never taller than the window: a long dialog scrolls its body and keeps its footer.
+      GeometryReader { space in
+        CappedHeight(cap: min(720, space.size.height - Space.s8 * 2)) { content.tint(Palette.primary) }
+          .frame(width: min(width, space.size.width - Space.s8 * 2))
+          .background(RoundedRectangle(cornerRadius: Radius.cardLarge, style: .continuous).fill(Palette.surfaceCard))
+          .overlay(RoundedRectangle(cornerRadius: Radius.cardLarge, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 1))
+          .clipShape(RoundedRectangle(cornerRadius: Radius.cardLarge, style: .continuous))
+          .shadow(color: .black.opacity(0.14), radius: 30, y: 14)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+      }
+      .scaleEffect(shown ? 1 : 0.96)
+      .opacity(shown ? 1 : 0)
+      .onExitCommand { dismiss() }
     }
     .onAppear { withAnimation(Motion.panel) { shown = true } }
   }
