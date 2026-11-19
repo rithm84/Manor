@@ -13,7 +13,8 @@ struct ProblemRowActions {
 
 /// The library index: an `NSTableView` that only builds the rows on screen, so ten thousand problems scroll and
 /// re-filter instantly. Group headings float while their group scrolls. Return opens the selected problem and
-/// Space shows its details.
+/// Space shows its details. A click that opens a problem keeps its row as the place arrow keys continue from, but
+/// draws no selection: the highlight appears only once the keyboard moves it.
 struct ProblemTable: NSViewRepresentable {
   let index: ProblemLibraryIndex
   let rows: [ProblemListRow]
@@ -162,15 +163,17 @@ struct ProblemTable: NSViewRepresentable {
       }
     }
 
-    /// Selects the row a click opened, so keyboard navigation continues from it on return.
+    /// Selects the row a click opened, so keyboard navigation continues from it on return, without highlighting it:
+    /// back on the list, nothing looks chosen until an arrow key moves the selection.
     func select(row: Int) {
       guard let table else { return }
+      table.showsSelection = false
       table.selectRowIndexes([row], byExtendingSelection: false)
       table.window?.makeFirstResponder(table)
     }
 
     func openSelected(details: Bool) {
-      guard let table, let problem = problem(at: table.selectedRow) else { return }
+      guard let table, table.showsSelection, let problem = problem(at: table.selectedRow) else { return }
       if details { actions.details(problem, false) } else { actions.open(problem) }
     }
 
@@ -182,6 +185,10 @@ struct ProblemTable: NSViewRepresentable {
 final class ProblemNSTableView: NSTableView {
   weak var coordinator: ProblemTable.Coordinator?
   private(set) var hoveredRow = -1
+  /// False while the selection is only the anchor a click left behind; the keyboard moving it shows it again.
+  var showsSelection = true {
+    didSet { if oldValue != showsSelection { enumerateAvailableRowViews { view, _ in view.needsDisplay = true } } }
+  }
   private var tracking: NSTrackingArea?
 
   override func updateTrackingAreas() {
@@ -222,6 +229,10 @@ final class ProblemNSTableView: NSTableView {
     switch event.keyCode {
     case 36, 76: coordinator?.openSelected(details: false)
     case 49: coordinator?.openSelected(details: true)
+    // Up, Down, Home, End, Page Up, Page Down: moving the selection shows it.
+    case 126, 125, 115, 119, 116, 121:
+      showsSelection = true
+      super.keyDown(with: event)
     default: super.keyDown(with: event)
     }
   }
@@ -245,7 +256,14 @@ final class ProblemNSRowView: NSTableRowView {
     NSRect(x: 0, y: bounds.maxY - 1, width: bounds.width, height: 1).fill()
   }
 
+  /// A hidden selection gives its row's content the ordinary text style too, so nothing on it reads as selected.
+  override var interiorBackgroundStyle: NSView.BackgroundStyle {
+    (superview as? ProblemNSTableView)?.showsSelection == false ? .normal : super.interiorBackgroundStyle
+  }
+
   override func drawSelection(in dirtyRect: NSRect) {
+    // A selection a click left behind draws as an ordinary row (the background pass already drew hover and the hairline).
+    guard (superview as? ProblemNSTableView)?.showsSelection ?? true else { return }
     NSColor(isHovered ? Palette.surfaceSelectedHover : Palette.surfaceSelected).setFill()
     bounds.fill()
     NSColor(Palette.hairline).setFill()
