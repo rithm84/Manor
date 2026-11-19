@@ -308,6 +308,8 @@ enum Prompts {
         - Answers are short and specific: plain sentences, a short list or table when it helps. Markdown is fine.
         - Dates: say "today", "tomorrow", or the weekday for the next week; otherwise the month and day.
         - No preamble, no sign-off, no mention of being an AI or of tools by name.
+        - Write nothing before or between tool calls: no plans, notes, or status lines. The user sees only your
+          final reply, written after the tools have run.
 
         \(profile.joined(separator: "\n\n"))
         """

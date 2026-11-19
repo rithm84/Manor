@@ -216,16 +216,22 @@ public final class AlfredAssistant {
                     blocks = []
                     stop = try await stream(client, body: body, blocks: &blocks, answer: &answer)
                 }
+                let calls = blocks.filter { $0["type"] as? String == "tool_use" }
                 if let answer {
-                    answer.isComplete = true
-                    if !answer.text.isEmpty { replies.append(answer.text) }
+                    if calls.isEmpty {
+                        answer.isComplete = true
+                        if !answer.text.isEmpty { replies.append(answer.text) }
+                    } else {
+                        // Text written before a tool call is the model's working note, not the reply: the model still
+                        // gets it back with the round, but the conversation doesn't show it.
+                        entries.removeAll { $0 === answer }
+                    }
                 }
                 switch stop {
                 case "refusal": throw LLMError(status: 0, message: "Alfred couldn't help with that one. Try rephrasing the request.", provider: "Anthropic")
                 case "max_tokens": throw LLMError(status: 0, message: "Alfred stopped early (max_output_tokens).", provider: "Anthropic")
                 default: break
                 }
-                let calls = blocks.filter { $0["type"] as? String == "tool_use" }
                 items.append(["role": "assistant", "content": blocks])
                 guard !calls.isEmpty else { break }
                 phase = .acting
