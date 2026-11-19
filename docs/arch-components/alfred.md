@@ -15,7 +15,7 @@ Alfred is the `Alfred` Swift target in `macos/Sources/Alfred/`. It has no packag
 | `Host` | `AlfredHost`, the state model, the menu bar item, settings models, and `AlfredWriter` |
 | `Audio`, `Capture` | Microphone and system-audio capture, PCM conversion, and screenshots |
 | `Transcription` | Deepgram Flux streaming, the listener, and the transcript |
-| `Intelligence` | The answer and context engines, prompts, and the OpenAI and chat-completions clients |
+| `Intelligence` | The answer and context engines, prompts, and the Anthropic and OpenAI clients |
 | `Core` | Configuration, hot keys, the Keychain store, knowledge, preferences, and logging |
 | `UI` | The overlay, Markdown, the diagram language, generative UI, theme, and the embeddable views |
 | `Debug` | Demo content and snapshot rendering, enabled only by environment variables |
@@ -26,7 +26,7 @@ Alfred never reads or writes Manor's account data or calls Manor's backend. Its 
 
 The following diagram shows how one answer is produced.
 
-![Alfred's runtime inside Manor's process: a hot key, the menu bar, or the notch starts an answer; in Prep mode, system audio (the other side) and the microphone (you) stream to Deepgram Flux, whose transcript feeds the context engine's rolling memory and open question; the answer engine combines that with an image and the text of the window you are working in and your knowledge documents, streams from the OpenAI Responses API with your own key using GPT-6.1 Terra and a GPT-6 Luna topic router, and renders in the notch overlay as Markdown, diagrams, and generative UI; AlfredWriter streams an /alfred block into a note from the note's title and nearby text only; with Manor in front, the hot key opens Alfred in Manor instead, which calls the same model with Manor's tools and shows each action with Undo.](../diagrams/svg/alfred-runtime.svg)
+![Alfred's runtime inside Manor's process: a hot key, the menu bar, or the notch starts an answer; in Prep mode, system audio (the other side) and the microphone (you) stream to Deepgram Flux, whose transcript feeds the context engine's rolling memory and open question; the answer engine combines that with an image and the text of the window you are working in and your knowledge documents, streams from Claude Opus 5.5 in fast mode with your own Anthropic key, with a GPT-6 Luna topic router on your OpenAI key, and renders in the notch overlay as Markdown, diagrams, and generative UI; AlfredWriter streams an /alfred block into a note from the note's title and nearby text only; with Manor in front, the hot key opens Alfred in Manor instead, which calls the same model with Manor's tools and shows each action with Undo.](../diagrams/svg/alfred-runtime.svg)
 
 <details><summary>Diagram key</summary>
 
@@ -60,11 +60,10 @@ In Prep mode, the interview, coding, and system design answer styles share a cla
 
 | Use | Default model |
 |---|---|
-| Answers, conversation memory, and the Notes writer | GPT-6.1 Terra on OpenAI's fast tier, low reasoning effort |
-| New-topic router | GPT-6 Luna without reasoning; it can be turned off |
-| Answers, memory, and the Notes writer with `ALFRED_ANSWER_PROVIDER` / `ALFRED_CONTEXT_PROVIDER` set to `anthropic` | Claude Opus 5.5 in fast mode, low effort |
+| Answers, conversation memory, the Notes writer, and Alfred in Manor | Claude Opus 5.5 in fast mode, low effort |
+| New-topic router | GPT-6 Luna on OpenAI's priority tier without reasoning; off without an OpenAI key or with `ALFRED_ROUTER_MODEL=off` |
 
-`OpenAIClient` streams the OpenAI Responses API with server-sent events and `store: false`. `AnthropicClient` streams the Anthropic Messages API: the instructions go in a cached system block, low effort bounds Claude Opus 5.5's always-on thinking (only its text reaches the answer), the fast tier becomes `speed: "fast"`, and a classifier refusal is retried on Anthropic's recommended fallback model (`fallbacks: "default"`). A chat-completions client serves other compatible providers configured by environment variables. `Config.makeClient(for:)` builds the client for a provider. Answers are capped at 6,000 output tokens, plus room for Claude's thinking. Alfred in Manor, which acts through function calling, stays on OpenAI.
+Anthropic runs everything that reasons; OpenAI only answers the router's yes-or-no question. The memory pass stays on Claude: measured on the same transcripts, it was faster than GPT-6 Luna and followed the prompt more closely ([benchmarks](benchmarks.md#alfred-answers)). `AnthropicClient` streams the Anthropic Messages API: the instructions go in a cached system block, low effort bounds Claude Opus 5.5's always-on thinking (only its text reaches the answer), the fast tier becomes `speed: "fast"`, and a classifier refusal is retried on Anthropic's recommended fallback model (`fallbacks: "default"`). `OpenAIClient` streams the OpenAI Responses API with `store: false` for the router. `Config.makeClient(for:)` builds the client for a provider. Answers are capped at 6,000 output tokens, plus room for Claude's thinking.
 
 ## Rendering
 
@@ -104,17 +103,17 @@ When a hot key fires, `AlfredHost` offers it to the app's `handleInApp` action b
 The dialog drives `AlfredAssistant` (`Alfred/Host/AlfredAssistant.swift`), a conversation model that knows nothing about Manor's data:
 
 1. On each message it asks the host's `AlfredToolbox` for an `AlfredAppSnapshot`: the page and a compact text summary with record IDs, capped at 4,000 characters.
-2. It streams a Responses API request with the toolbox's tools as function definitions, `store: false`, and encrypted reasoning carried between rounds (`OpenAIClient.streamResponse`, which also yields finished output items).
+2. It streams a Messages API request with the toolbox's tools as tool definitions (`AnthropicClient.streamMessage`, which rebuilds each finished content block). Each round's assistant content, thinking blocks included, is appended unchanged with the tool results after it, so the model's reasoning carries between rounds.
 3. It validates each function call against the tool's JSON Schema and runs it through the toolbox. Tools with an `AlfredToolConfirmation` wait for the user's approval in the conversation first.
-4. It sends the outputs back and repeats, up to eight rounds per message.
+4. It sends every output of a round back in one message and repeats, up to eight rounds per message.
 
-Each successful action becomes a row carrying the tool's `undo` closure. Failures go back to the model only, so it explains or asks. Earlier turns are kept as compact request-and-reply text, including what was done and later undone, so follow-ups have context without resending old tool traffic. The model is the answer model when the answer provider is OpenAI, and OpenAI's default otherwise.
+Each successful action becomes a row carrying the tool's `undo` closure. Failures go back to the model only, so it explains or asks. Earlier turns are kept as compact request-and-reply text, including what was done and later undone, so follow-ups have context without resending old tool traffic. It runs on the answer model, Claude Opus 5.5 in fast mode.
 
 `ManorAlfredToolbox` (`Manor/Modules/AlfredTools/`) implements the toolbox over `ManorToolCatalog` (`ManorKit/Domain/AlfredTools/`). Writes go through `Gateway.command` with the same inputs the pages send. References resolve through `ManorTargetMatcher`, which fails with the candidates when a reference names several records or none. Every write returns an inverse for Undo, except ending a Pomodoro session, which confirms first. Debug builds launched with `ALFRED_NOTES_DEMO=1` script the model's turns so the dialog can be reviewed without a key; the scripted turns still call the real tools.
 
 ## Keys, data, and logs
 
-- **Keys.** `KeyStore` keeps `OPENAI_API_KEY` and `DEEPGRAM_API_KEY` as generic passwords under the Keychain service `app.manor.alfred.api-keys`. **Check and Save** validates each with its provider before storing it. Precedence is the process environment, then the Keychain, then `~/Library/Application Support/Manor/Alfred/.env.local`, then, in a development checkout only, `macos/.env.local`. Keys go only to their own provider.
+- **Keys.** `KeyStore` keeps `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and `DEEPGRAM_API_KEY` as generic passwords under the Keychain service `app.manor.alfred.api-keys`. **Check and Save** validates each with its provider before storing it. Precedence is the process environment, then the Keychain, then `~/Library/Application Support/Manor/Alfred/.env.local`, then, for builds made from a checkout on this Mac, `macos/.env.local` and the repository's `.env.local`. Keys go only to their own provider.
 - **Data on this Mac** lives under `~/Library/Application Support/Manor/Alfred/`: `knowledge.json` for personal context (résumé, experience, job descriptions, and notes, imported from PDF, Word, RTF, HTML, Markdown, or text) and `Sessions/` for saved Markdown sessions.
 - **Preferences** are `UserDefaults` keys under `manor.alfred.`: mode, interview style, coding language, role context, extra instructions, text scale, microphone capture, listen on launch, save sessions, prepare answers early, and include screen.
 - **Logs** use the subsystem `app.manor` and category `alfred` and never contain keys, transcripts, or screenshots.

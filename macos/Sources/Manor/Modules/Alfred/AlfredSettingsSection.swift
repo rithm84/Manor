@@ -14,7 +14,7 @@ struct AlfredSettingsSection: View {
     VStack(alignment: .leading, spacing: Space.s5) {
       SettingsSectionTitle(title: "Alfred")
       if !model.isReady {
-        SettingsNotice(text: "Add an OpenAI key below to start using Alfred. Press ⌃⌥Space from any app to ask.")
+        SettingsNotice(text: "Add an Anthropic key below to start using Alfred. Press ⌃⌥Space from any app to ask.")
       }
       modeCard
       if prefs.alfredMode == .interview { interviewCard }

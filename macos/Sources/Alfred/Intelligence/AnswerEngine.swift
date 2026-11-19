@@ -80,7 +80,7 @@ struct PrefetchBasis: Equatable {
     var meWords: Int
 }
 
-/// Latency-critical answer path: streaming calls on the configured answer tier (OpenAI fast by default).
+/// Latency-critical answer path: streaming calls to Claude Opus 5.5 in fast mode.
 ///
 /// Two lanes:
 ///  - **visible**: started by the hotkey or a typed question; streams into the active chat.
@@ -307,7 +307,7 @@ final class AnswerEngine: ObservableObject {
                          sessionID: UUID, start: Date) async throws {
         var request = OpenAIClient.Request(
             model: config.answerModel,
-            instructions: Prompts.answerInstructions(profile, style: .for(model: config.answerModel)),
+            instructions: Prompts.answerInstructions(profile),
             parts: Self.parts(for: context),
             history: context.history,
             serviceTier: tierUnsupported ? nil : config.answerTier,

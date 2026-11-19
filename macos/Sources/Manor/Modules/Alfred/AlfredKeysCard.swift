@@ -4,6 +4,7 @@ import SwiftUI
 /// Provider keys: paste, check with the provider, and keep in the Keychain.
 struct AlfredKeysCard: View {
   @ObservedObject var model: AlfredSettingsModel
+  @State private var anthropic = ""
   @State private var openAI = ""
   @State private var deepgram = ""
   @State private var checking = false
@@ -11,13 +12,14 @@ struct AlfredKeysCard: View {
   @State private var confirmRemove = false
 
   private var canSave: Bool {
-    !checking && !(openAI.trimmingCharacters(in: .whitespaces).isEmpty && deepgram.trimmingCharacters(in: .whitespaces).isEmpty)
+    !checking && ![anthropic, openAI, deepgram].allSatisfy { $0.trimmingCharacters(in: .whitespaces).isEmpty }
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: Space.s2) {
       SettingsCard("Keys") {
-        keyRow("OpenAI", status: model.openAIKey, text: $openAI, purpose: "Answers in both modes.")
+        keyRow("Anthropic", status: model.anthropicKey, text: $anthropic, purpose: "Answers, memory, and writing in both modes.")
+        keyRow("OpenAI", status: model.openAIKey, text: $openAI, purpose: "Spotting when a new problem needs its own chat.")
         keyRow("Deepgram", status: model.deepgramKey, text: $deepgram, purpose: "Live transcription in Prep mode.")
         HStack(spacing: Space.s2) {
           if model.hasSavedKeys {
@@ -105,7 +107,8 @@ struct AlfredKeysCard: View {
   private func save() async {
     checking = true
     defer { checking = false }
-    results = await model.checkAndSave(openAI: openAI, deepgram: deepgram)
+    results = await model.checkAndSave(anthropic: anthropic, openAI: openAI, deepgram: deepgram)
+    if case .rejected? = results[AlfredSettingsModel.anthropicKeyName] {} else { anthropic = "" }
     if case .rejected? = results[AlfredSettingsModel.openAIKeyName] {} else { openAI = "" }
     if case .rejected? = results[AlfredSettingsModel.deepgramKeyName] {} else { deepgram = "" }
   }

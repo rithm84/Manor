@@ -117,9 +117,9 @@ final class AlfredState: ObservableObject {
             clients[id] = c
             return c
         }
-        let answer = clientFor(config.answerProvider)
+        let answer = clientFor(.anthropic)
         // The background context pass only runs in Prep mode.
-        let ctx = mode == .interview ? clientFor(config.contextProvider) : nil
+        let ctx = mode == .interview ? clientFor(.anthropic) : nil
         let router = config.routerModel == nil ? nil : clientFor(.openai)
         // Release clients no role uses any more.
         for (id, c) in clients where c !== answer && c !== ctx && c !== router { c.invalidate(); clients[id] = nil }
@@ -236,8 +236,8 @@ final class AlfredState: ObservableObject {
         answerVisible = true
         let general = mode == .general
         guard let client else {
-            let id = answers.begin(heading: "Alfred needs an OpenAI key", usedScreen: false, general: general)
-            answers.fail("Add your OpenAI key in Manor Settings, under Alfred.", id: id)
+            let id = answers.begin(heading: "Alfred needs an Anthropic key", usedScreen: false, general: general)
+            answers.fail("Add your Anthropic key in Manor Settings, under Alfred.", id: id)
             openSettings()
             return
         }

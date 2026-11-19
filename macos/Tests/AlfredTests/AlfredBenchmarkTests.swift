@@ -104,13 +104,64 @@ final class AlfredBenchmarkTests: XCTestCase {
         try (lines.joined(separator: "\n") + "\n").write(to: outDir.appendingPathComponent("results.jsonl"), atomically: true, encoding: .utf8)
     }
 
+    /// The background memory pass on each candidate model: same prompt, schema, and transcripts.
+    func testContext() async throws {
+        let env = ProcessInfo.processInfo.environment
+        guard let out = env["ALFRED_BENCH_OUT"], env["ALFRED_BENCH_CONTEXT"] != nil else { throw XCTSkip("Set ALFRED_BENCH_OUT and ALFRED_BENCH_CONTEXT") }
+        let file = env["ALFRED_BENCH_ENV"].flatMap { try? String(contentsOfFile: $0, encoding: .utf8) } ?? ""
+        let config = Config(values: EnvFile.parse(file))
+        let outDir = URL(fileURLWithPath: out, isDirectory: true)
+        try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+        let profile = Prompts.Profile(mode: .interview, language: "Python", knowledge: "", role: "Software engineer intern loop at a large tech company", extra: "")
+        let transcripts: [(String, String, String)] = [
+            ("fold", "Interviewer is Priya, a staff engineer on the payments team. Problem: merge intervals. ME explained sorting by start, then merging overlaps; Priya agreed. ME mentioned O(n log n).",
+             """
+             THEM: Okay, nice. So that works. Let's switch gears a little. Tell me about a project you're proud of where you had to make a tradeoff under time pressure.
+             ME: Sure, so last summer at my internship I built a feature flag service, and we had about two weeks
+             THEM: Mm-hm.
+             """),
+            ("coding", "",
+             """
+             THEM: Hi, thanks for joining. I'm Dev, I work on search infra. Let's jump into a coding question.
+             ME: Sounds good.
+             THEM: Given a string s, find the length of the longest substring without repeating characters. s can be up to fifty thousand characters, letters, digits, symbols and spaces.
+             ME: Okay, so my first thought is a sliding window with a set, where I expand the right side
+             THEM: Right. What happens when you hit a repeat?
+             """),
+            ("smalltalk", "",
+             """
+             THEM: Can you hear me okay?
+             ME: Yep, loud and clear. How's your day going?
+             THEM: Pretty good, busy week with the launch. Give me one second to pull up the doc.
+             """),
+        ]
+        var rows: [String] = []
+        for (id, memory, recent) in transcripts {
+            let input = "## Previous memory\n\(memory.isEmpty ? "(empty)" : memory)\n\n## Older turns to fold into memory\n(none)\n\n## Recent conversation (most recent last)\n\(recent)"
+            for (label, provider, model, tier, effort) in [("luna", LLMProvider.openai, "gpt-6-luna", "priority", "none"),
+                                                         ("opus-fast", LLMProvider.anthropic, "claude-opus-5-5", "fast", "low")] {
+                guard let client = config.makeClient(for: provider) else { continue }
+                let request = OpenAIClient.Request(model: model, instructions: Prompts.contextInstructions(profile), parts: [.text(input)],
+                                                   serviceTier: tier, effort: effort, maxOutputTokens: 4_000,
+                                                   jsonSchema: (name: "alfred_context", schema: Prompts.contextSchema))
+                let start = Date()
+                let text: String
+                do { text = try await client.complete(request) } catch { text = "ERROR \(error.localizedDescription)" }
+                let row = "\(label)\t\(id)\t\((Date().timeIntervalSince(start) * 100).rounded() / 100)s\t\(text)"
+                print("CONTEXT \(row)")
+                rows.append(row)
+            }
+        }
+        try rows.joined(separator: "\n").write(to: outDir.appendingPathComponent("context.tsv"), atomically: true, encoding: .utf8)
+    }
+
     private func measure(_ item: Case, variant: String, key: String, config: Config, image: String?) async throws
         -> (text: String, metrics: [String: Any]) {
         let parts = variant.split(separator: "+").map(String.init)
         let effort = parts.first ?? "low"
         let profile = Prompts.Profile(mode: item.mode, language: "Python", knowledge: "", role: "Software engineer intern loop at a large tech company",
                                       extra: "", assistant: item.assistant)
-        var instructions = Prompts.answerInstructions(profile, style: .for(model: "claude-opus-5-5"))
+        var instructions = Prompts.answerInstructions(profile)
         if parts.contains("direct") { instructions += "\n\nAnswer directly without deliberating." }
         let context = AssistContext(memory: "", turns: item.turns.map { Turn(speaker: $0.0, text: $0.1) }, live: [], brief: nil, briefIsFresh: false,
                                     history: item.history, typed: item.typed, screenshot: item.screen ? image : nil,
@@ -238,9 +289,50 @@ final class AnthropicClientTests: XCTestCase {
     func testBaseURLGetsTheAPIVersion() {
         XCTAssertEqual(Config(values: ["ANTHROPIC_BASE_URL": "https://api.anthropic.com"]).anthropicBaseURL.absoluteString, "https://api.anthropic.com/v1")
         XCTAssertEqual(Config(values: [:]).anthropicBaseURL.absoluteString, "https://api.anthropic.com/v1")
-        let config = Config(values: ["ALFRED_ANSWER_PROVIDER": "anthropic", "ANTHROPIC_API_KEY": "k"])
+        let config = Config(values: ["ANTHROPIC_API_KEY": "k"])
         XCTAssertEqual(config.answerModel, "claude-opus-5-5")
         XCTAssertEqual(config.answerTier, "fast")
         XCTAssertTrue(config.makeClient(for: .anthropic) is AnthropicClient)
+    }
+}
+
+/// A live tool-use round trip for Alfred in Manor, skipped unless `ALFRED_BENCH_ASSISTANT` is set: the model must
+/// look up a task, then complete it, across two tool rounds whose thinking blocks are sent back unchanged.
+@MainActor
+final class AlfredAssistantLiveTests: XCTestCase {
+    final class FakeToolbox: AlfredToolbox {
+        var calls: [(String, [String: Any])] = []
+        let tools = [
+            AlfredTool(name: "find_tasks", description: "Search the user's tasks by words in the title. Returns ids and titles.",
+                       parameters: ["type": "object", "properties": ["query": ["type": "string"]], "required": ["query"], "additionalProperties": false]),
+            AlfredTool(name: "complete_task", description: "Mark a task done by id.",
+                       parameters: ["type": "object", "properties": ["id": ["type": "string"]], "required": ["id"], "additionalProperties": false]),
+        ]
+        func snapshot() async -> AlfredAppSnapshot { AlfredAppSnapshot(page: "Home", details: "Today: 2 tasks (ids hidden; search to find them).") }
+        func call(_ name: String, arguments: [String: Any]) async -> AlfredToolResult {
+            calls.append((name, arguments))
+            switch name {
+            case "find_tasks": return .found(#"[{"id": "t-42", "title": "Do the laundry"}, {"id": "t-7", "title": "Write the report"}]"#)
+            case "complete_task": return .done("Completed \u{201C}Do the laundry\u{201D}")
+            default: return .failed("Unknown tool")
+            }
+        }
+    }
+
+    func testCompletesATaskThroughTwoToolRounds() async throws {
+        guard ProcessInfo.processInfo.environment["ALFRED_BENCH_ASSISTANT"] != nil else { throw XCTSkip("Set ALFRED_BENCH_ASSISTANT") }
+        let toolbox = FakeToolbox()
+        let assistant = AlfredAssistant(appName: "Manor")
+        assistant.toolbox = toolbox
+        XCTAssertTrue(assistant.isAvailable, "needs ANTHROPIC_API_KEY in an env file Alfred reads")
+        let start = Date()
+        assistant.send("Check off my laundry task")
+        while assistant.isWorking, Date().timeIntervalSince(start) < 90 { try await Task.sleep(for: .milliseconds(100)) }
+        let summary = assistant.entries.map { "\($0.kind): \($0.text)" }.joined(separator: "\n")
+        print("ASSISTANT \(String(format: "%.1f", Date().timeIntervalSince(start))) s\n\(summary)")
+        XCTAssertEqual(toolbox.calls.last?.0, "complete_task", summary)
+        XCTAssertEqual(toolbox.calls.last?.1["id"] as? String, "t-42", summary)
+        XCTAssertFalse(assistant.entries.contains { $0.kind == .failure }, summary)
+        XCTAssertTrue(assistant.entries.contains { $0.kind == .answer && !$0.text.isEmpty }, summary)
     }
 }

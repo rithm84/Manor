@@ -156,55 +156,13 @@ final class OpenAIClient: LLMClient, @unchecked Sendable {
         }
     }
 
-    /// One event of a Responses stream, for callers that need whole output items (function calls, reasoning)
-    /// as well as text.
-    enum ResponseEvent: @unchecked Sendable {
-        case delta(String)
-        /// A finished output item (`response.output_item.done`), as the API sent it.
-        case item([String: Any])
-        case completed(serviceTier: String?)
-        case incomplete(reason: String)
-    }
-
-    /// Streams a Responses request built by the caller (`body` without `stream`, which this sets).
-    func streamResponse(_ body: [String: Any]) -> AsyncThrowingStream<ResponseEvent, Error> {
-        AsyncThrowingStream { continuation in
-            let task = Task {
-                do {
-                    var body = body
-                    body["stream"] = true
-                    let (bytes, response) = try await session.bytes(for: try urlRequest(body: body, stream: true))
-                    if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-                        var data = Data()
-                        for try await b in bytes { data.append(b) }
-                        try Self.check(response, data: data)
-                    }
-                    for try await line in bytes.lines {
-                        guard let event = try SSE.responseEvent(fromLine: line) else { continue }
-                        continuation.yield(event)
-                        if case .completed = event { break }
-                        if case .incomplete = event { break }
-                    }
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: error)
-                }
-            }
-            continuation.onTermination = { _ in task.cancel() }
-        }
-    }
-
     private func urlRequest(_ req: Request, stream: Bool) throws -> URLRequest {
-        try urlRequest(body: req.body(stream: stream), stream: stream)
-    }
-
-    private func urlRequest(body: [String: Any], stream: Bool) throws -> URLRequest {
         var request = URLRequest(url: baseURL.appendingPathComponent("responses"))
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if stream { request.setValue("text/event-stream", forHTTPHeaderField: "Accept") }
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.httpBody = try JSONSerialization.data(withJSONObject: req.body(stream: stream))
         return request
     }
 
@@ -229,22 +187,6 @@ final class OpenAIClient: LLMClient, @unchecked Sendable {
 
 /// Server-sent-event decoding for the Responses API stream.
 enum SSE {
-    /// Decodes a line for `streamResponse`: text deltas, finished output items, and the end of the response.
-    static func responseEvent(fromLine line: String) throws -> OpenAIClient.ResponseEvent? {
-        guard line.hasPrefix("data:") else { return nil }
-        let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
-        guard payload != "[DONE]", let data = payload.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let type = json["type"] as? String else { return nil }
-        if type == "response.output_item.done", let item = json["item"] as? [String: Any] { return .item(item) }
-        switch try event(fromLine: line) {
-        case .delta(let text): return .delta(text)
-        case .completed(let tier, _, _): return .completed(serviceTier: tier)
-        case .incomplete(let reason): return .incomplete(reason: reason)
-        case nil: return nil
-        }
-    }
-
     static func event(fromLine line: String) throws -> OpenAIClient.StreamEvent? {
         guard line.hasPrefix("data:") else { return nil }
         let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)

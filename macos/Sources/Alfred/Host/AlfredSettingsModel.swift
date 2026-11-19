@@ -25,6 +25,7 @@ public final class AlfredSettingsModel: ObservableObject {
 
     public enum PermissionState: Equatable, Sendable { case granted, denied, notAsked }
 
+    public static let anthropicKeyName = "ANTHROPIC_API_KEY"
     public static let openAIKeyName = "OPENAI_API_KEY"
     public static let deepgramKeyName = "DEEPGRAM_API_KEY"
 
@@ -52,9 +53,10 @@ public final class AlfredSettingsModel: ObservableObject {
 
     // MARK: Keys
 
+    public var anthropicKey: KeyStatus { status(Self.anthropicKeyName, config.anthropicKey) }
     public var openAIKey: KeyStatus { status(Self.openAIKeyName, config.openAIKey) }
     public var deepgramKey: KeyStatus { status(Self.deepgramKeyName, config.deepgramKey) }
-    /// Answers need an OpenAI key; Prep mode's listening also needs Deepgram.
+    /// Answers need an Anthropic key; Prep mode's listening also needs Deepgram, and the new-topic check OpenAI.
     public var isReady: Bool { config.answerReady }
     public var hasSavedKeys: Bool { !config.appKeys.isEmpty }
 
@@ -65,14 +67,17 @@ public final class AlfredSettingsModel: ObservableObject {
 
     /// Checks each non-empty key with its provider, then saves it to the Keychain. A rejected key never replaces a
     /// working one; a key that couldn't be checked (offline) is saved anyway.
-    public func checkAndSave(openAI: String, deepgram: String) async -> [String: CheckResult] {
+    public func checkAndSave(anthropic: String, openAI: String, deepgram: String) async -> [String: CheckResult] {
         var results: [String: CheckResult] = [:]
         var saved = false
-        for (name, raw) in [(Self.openAIKeyName, openAI), (Self.deepgramKeyName, deepgram)] {
+        for (name, raw) in [(Self.anthropicKeyName, anthropic), (Self.openAIKeyName, openAI), (Self.deepgramKeyName, deepgram)] {
             let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !value.isEmpty else { continue }
-            let result = name == Self.openAIKeyName ? await KeyCheck.openAI(value, baseURL: config.openAIBaseURL)
-                                                    : await KeyCheck.deepgram(value)
+            let result: KeyCheck.Result = switch name {
+            case Self.anthropicKeyName: await KeyCheck.anthropic(value, baseURL: config.anthropicBaseURL)
+            case Self.openAIKeyName: await KeyCheck.openAI(value, baseURL: config.openAIBaseURL)
+            default: await KeyCheck.deepgram(value)
+            }
             switch result {
             case .ok: results[name] = .ok
             case .rejected(let why): results[name] = .rejected(why); continue

@@ -20,18 +20,22 @@ final class ConfigTests: XCTestCase {
     }
 
     func testDefaultsAndTierMapping() {
-        let c = Config(values: ["ALFRED_CONTEXT_TIER": "default", "ALFRED_ANSWER_TIER": "priority", "DEEPGRAM_LANGUAGE_HINTS": "en, es"])
-        XCTAssertEqual(c.answerModel, "gpt-6.1-terra")
-        XCTAssertEqual(c.contextModel, "gpt-6.1-terra")
+        let c = Config(values: ["ALFRED_CONTEXT_TIER": "default", "ALFRED_ANSWER_TIER": "standard", "DEEPGRAM_LANGUAGE_HINTS": "en, es"])
+        XCTAssertEqual(c.answerModel, "claude-opus-5-5")
+        XCTAssertEqual(c.contextModel, "claude-opus-5-5")
         XCTAssertNil(c.contextTier)
-        XCTAssertEqual(c.answerTier, "priority")
+        XCTAssertNil(c.answerTier)
         XCTAssertEqual(c.deepgramLanguageHints, ["en", "es"])
         XCTAssertFalse(c.hasOpenAI)
+        XCTAssertFalse(c.answerReady, "answers need an Anthropic key")
 
-        let d = Config(values: [:])
+        // Every reasoning path runs on Claude Opus 5.5 in fast mode at low effort; OpenAI only routes.
+        let d = Config(values: ["ANTHROPIC_API_KEY": "a"])
         XCTAssertEqual(d.answerTier, "fast")
         XCTAssertEqual(d.contextTier, "fast")
-        XCTAssertEqual(d.answerModel, "gpt-6.1-terra")
+        XCTAssertEqual(d.answerEffort, "low")
+        XCTAssertEqual(d.assistantModel, "claude-opus-5-5")
+        XCTAssertTrue(d.answerReady)
         XCTAssertEqual(d.deepgramModel, "flux-general-en")
     }
 }
@@ -592,8 +596,8 @@ final class ChatThreadTests: XCTestCase {
         let input = req.body(stream: true)["input"] as! [[String: Any]]
         XCTAssertEqual(input.map { $0["role"] as! String }, ["user", "assistant", "user"])
         XCTAssertEqual(input[1]["content"] as? String, "a")
-        let messages = ChatCompletionsClient.body(req, stream: true)["messages"] as! [[String: Any]]
-        XCTAssertEqual(messages.map { $0["role"] as! String }, ["system", "user", "assistant", "user"])
+        let messages = AnthropicClient.body(req, stream: true)["messages"] as! [[String: Any]]
+        XCTAssertEqual(messages.map { $0["role"] as! String }, ["user", "assistant", "user"])
     }
 }
 
@@ -894,7 +898,7 @@ final class ModeTests: XCTestCase {
         XCTAssertFalse(text.contains("transcript"))
         let profile = Prompts.Profile(mode: .coding, language: "Python", knowledge: "", role: "Acme onsite", extra: "Be brief",
                                       assistant: .general)
-        let instructions = Prompts.answerInstructions(profile, style: .standard)
+        let instructions = Prompts.answerInstructions(profile)
         XCTAssertTrue(instructions.contains("personal assistant built into Manor"))
         XCTAssertFalse(instructions.contains("Acme onsite"), "interview context stays out of General answers")
         XCTAssertTrue(instructions.contains("Be brief"))
@@ -904,12 +908,11 @@ final class ModeTests: XCTestCase {
     /// Prep mode's problem-solving styles ask clarifying questions first when a problem is under-specified;
     /// meetings and General mode never do.
     func testClarifyFirstOnlyInInterviewProblemStyles() {
-        func instructions(_ mode: AssistMode, _ assistant: AlfredMode = .interview, _ style: Prompts.Style = .standard) -> String {
-            Prompts.answerInstructions(Prompts.Profile(mode: mode, language: "Python", knowledge: "", role: "", extra: "", assistant: assistant), style: style)
+        func instructions(_ mode: AssistMode, _ assistant: AlfredMode = .interview) -> String {
+            Prompts.answerInstructions(Prompts.Profile(mode: mode, language: "Python", knowledge: "", role: "", extra: "", assistant: assistant))
         }
         for mode in [AssistMode.interview, .coding, .systemDesign] {
             XCTAssertTrue(instructions(mode).contains("CLARIFY FIRST"), "\(mode)")
-            XCTAssertTrue(instructions(mode, .interview, .strict).contains("CLARIFY FIRST"), "\(mode) strict")
         }
         XCTAssertFalse(instructions(.meeting).contains("CLARIFY FIRST"))
         XCTAssertFalse(instructions(.coding, .general).contains("CLARIFY FIRST"))

@@ -1,6 +1,6 @@
 # Manor architecture
 
-_Last updated: 2026-11-18_
+_Last updated: 2026-11-19_
 
 Manor is a native Mac app backed by one Supabase project per environment. The app reads your account from a copy kept on the Mac and writes every change through one transactional command boundary that agents share. This page maps the system and how its parts relate. The linked component slices under [arch-components](arch-components/) carry the detailed contracts, limits, and failure rules. The [PRD](PRD.md) owns product behavior and vocabulary, and the [design charter](DESIGN.md) owns the visual direction.
 
@@ -12,7 +12,7 @@ Diagrams across these documents color each node by its role; open **Diagram key*
 
 The system has one durable authority, Postgres behind `manor_command`, and several clients and executors around it. The following diagram shows the parts and who talks to whom.
 
-![Manor's system landscape: you use the Manor app and Alfred, which share one process on your Mac; the app keeps an on-device mirror and drafts, signs in with Supabase Auth, sends commands and feed pulls to Postgres, and calls Edge Functions for problem runs and uploads; agent hosts reach the manor-mcp Edge Function; Edge Functions run code in Blaxel sandboxes; cron workers pull from Google, X, and SimplifyJobs; Alfred calls OpenAI and Deepgram with your own keys; the app checks GitHub Releases for signed updates.](diagrams/svg/architecture-system-landscape.svg)
+![Manor's system landscape: you use the Manor app and Alfred, which share one process on your Mac; the app keeps an on-device mirror and drafts, signs in with Supabase Auth, sends commands and feed pulls to Postgres, and calls Edge Functions for problem runs and uploads; agent hosts reach the manor-mcp Edge Function; Edge Functions run code in Blaxel sandboxes; cron workers pull from Google, X, and SimplifyJobs; Alfred calls Anthropic, OpenAI, and Deepgram with your own keys; the app checks GitHub Releases for signed updates.](diagrams/svg/architecture-system-landscape.svg)
 
 <details><summary>Diagram key</summary>
 
@@ -103,7 +103,7 @@ Staging holds synthetic data, and staging jobs never use production integration 
 | Agent endpoint | `manor-mcp` Edge Function |
 | Editor sandboxes and grading | Blaxel sandboxes in `us-was-1` (Ashburn, Virginia) |
 | Embeddings | OpenAI `text-embedding-3-small`, billed to Manor's server-side key |
-| Alfred answers, memory, and Notes writing | Your OpenAI key: GPT-6.1 Terra on the fast tier; GPT-6 Luna routes new topics |
+| Alfred answers, memory, Notes writing, and Alfred in Manor | Your Anthropic key: Claude Opus 5.5 in fast mode, low effort; your OpenAI key runs GPT-6 Luna, which routes new topics |
 | Alfred transcription | Your Deepgram key, Flux streaming |
 | Calendar, bookmarks, and jobs sources | Google Calendar API, X API, SimplifyJobs listings on GitHub |
 | Weekly review generation | A scheduled ChatGPT task through remote MCP |

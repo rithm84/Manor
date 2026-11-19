@@ -40,7 +40,7 @@ Manor brings your tasks, habits, notes, and other records together in one place 
 - **Jobs.** A Pipeline board from To apply through Offer with a flow chart of every application, and a Listings view of the SimplifyJobs internship catalog.
 - **Notes.** A block editor with columns, tabs, tables, media, equations, and a live table of contents. Drafts are protected on your Mac before they sync, concurrent edits merge by block, and seven days of versions can be restored.
 - **Bookmarks.** X bookmarks and agent-supplied captures with text and semantic search.
-- **Alfred.** A personal assistant in the notch. Ask it about anything on your screen or any question you have. Inside Manor, the same shortcut opens Alfred in the window, where it answers about the page you're on and makes changes you ask for, each with Undo. In Notes, `/alfred` writes diagrams, tables, and prose as real blocks, and Command-J rewrites a selection through a preview. It uses your own OpenAI key and keeps its data on your Mac.
+- **Alfred.** A personal assistant in the notch. Ask it about anything on your screen or any question you have. Inside Manor, the same shortcut opens Alfred in the window, where it answers about the page you're on and makes changes you ask for, each with Undo. In Notes, `/alfred` writes diagrams, tables, and prose as real blocks, and Command-J rewrites a selection through a preview. It runs on Claude Opus 5.5 with your own Anthropic key and keeps its data on your Mac.
 - **Weekly reviews.** A scheduled review of habits, mood, focus, and tasks, written by a hosted ChatGPT task and saved back into Manor.
 
 Light and dark modes are both first-class, and Liquid Glass draws the floating chrome on macOS 26.
@@ -136,7 +136,7 @@ Manor runs as a native Mac app installed from its [releases](https://github.com/
 
 ## Credits
 
-[Supabase](https://supabase.com/) for the backend, [supabase-swift](https://github.com/supabase/supabase-swift), [GRDB](https://github.com/groue/GRDB.swift) for SQLite, [swift-markdown](https://github.com/swiftlang/swift-markdown), [SwiftMath](https://github.com/mgriebling/SwiftMath) for equations, [Blaxel](https://blaxel.ai/) for code execution sandboxes, open-source language servers for the code editor, [Deepgram](https://deepgram.com/) and [OpenAI](https://openai.com/) for Alfred, [restic](https://restic.net/) and [rclone](https://rclone.org/) for recovery, [Pele](https://pele.run/) for diagrams, and the [Outfit](https://fonts.google.com/specimen/Outfit) typeface and Latin Modern Math font under their open licenses.
+[Supabase](https://supabase.com/) for the backend, [supabase-swift](https://github.com/supabase/supabase-swift), [GRDB](https://github.com/groue/GRDB.swift) for SQLite, [swift-markdown](https://github.com/swiftlang/swift-markdown), [SwiftMath](https://github.com/mgriebling/SwiftMath) for equations, [Blaxel](https://blaxel.ai/) for code execution sandboxes, open-source language servers for the code editor, [Anthropic](https://www.anthropic.com/), [Deepgram](https://deepgram.com/), and [OpenAI](https://openai.com/) for Alfred, [restic](https://restic.net/) and [rclone](https://rclone.org/) for recovery, [Pele](https://pele.run/) for diagrams, and the [Outfit](https://fonts.google.com/specimen/Outfit) typeface and Latin Modern Math font under their open licenses.
 
 ## License
 

@@ -138,7 +138,7 @@ Answers are Markdown with code, plus two visual forms Alfred draws natively as t
 
 ### Your keys and your data
 
-Alfred calls model providers with your own keys: OpenAI for answers, conversation memory, topic routing, Notes writing, and Alfred in Manor, and Deepgram for live transcription. Answers, memory, and Notes writing can run on Anthropic's Claude Opus 5.5 in fast mode instead; OpenAI stays the default. You enter them in Settings, where each is checked with its provider; they are stored in the Mac's Keychain and sent only to that provider. Alfred doesn't route through Manor's backend. It reads and changes your Manor records only when you ask it to inside Manor (see [Alfred in Manor](#alfred-in-manor)).
+Alfred calls model providers with your own keys: Anthropic's Claude Opus 5.5 in fast mode for answers, conversation memory, Notes writing, and Alfred in Manor; OpenAI only to check whether a new problem needs its own chat; and Deepgram for live transcription. You enter them in Settings, where each is checked with its provider; they are stored in the Mac's Keychain and sent only to that provider. Alfred doesn't route through Manor's backend. It reads and changes your Manor records only when you ask it to inside Manor (see [Alfred in Manor](#alfred-in-manor)).
 
 Knowledge documents (your résumé, experience, job descriptions, and notes) stay on your Mac. You choose which ones Alfred uses. Finished sessions are saved as Markdown files on your Mac when session saving is on.
 

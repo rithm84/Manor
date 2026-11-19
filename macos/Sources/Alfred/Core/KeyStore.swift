@@ -6,7 +6,7 @@ import Security
 enum KeyStore {
     static let service = "app.manor.alfred.api-keys"
     /// The keys the setup screen manages.
-    static let names = ["OPENAI_API_KEY", "DEEPGRAM_API_KEY"]
+    static let names = ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "DEEPGRAM_API_KEY"]
 
     static func get(_ name: String) -> String? {
         let query: [String: Any] = [
@@ -64,6 +64,13 @@ enum KeyCheck {
     static func openAI(_ key: String, baseURL: URL = URL(string: "https://api.openai.com/v1")!) async -> Result {
         var req = URLRequest(url: baseURL.appendingPathComponent("models"))
         req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        return await run(req)
+    }
+
+    static func anthropic(_ key: String, baseURL: URL = URL(string: "https://api.anthropic.com/v1")!) async -> Result {
+        var req = URLRequest(url: baseURL.appendingPathComponent("models"))
+        req.setValue(key, forHTTPHeaderField: "x-api-key")
+        req.setValue(AnthropicClient.apiVersion, forHTTPHeaderField: "anthropic-version")
         return await run(req)
     }
 

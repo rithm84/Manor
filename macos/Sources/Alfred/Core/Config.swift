@@ -6,62 +6,51 @@ import Foundation
 ///   1. Process environment
 ///   2. Keys saved in Settings ▸ Alfred (Keychain, `KeyStore`)
 ///   3. `~/Library/Application Support/Manor/Alfred/.env.local`
-///   4. `<repo>/macos/.env.local`, then `<repo>/macos/.env` (development builds)
+///   4. `<repo>/macos/.env.local`, then `<repo>/macos/.env`, then the repository's own `.env.local` (builds made
+///      from a checkout on this Mac)
 
-/// LLM providers Alfred can route a role (answers / context) to.
+/// The two model providers Alfred uses: Anthropic for everything that reasons, OpenAI for the quick new-topic check.
 enum LLMProvider: String, Equatable {
-    /// OpenAI Responses API.
-    case openai
-    /// Nebius Token Factory (OpenAI-compatible Chat Completions).
-    case nebius
-    /// Fireworks AI (OpenAI-compatible Chat Completions; has an ultrafast DeepSeek router).
-    case fireworks
-    /// Anthropic Messages API (Claude Opus 5.5, fast mode).
+    /// Anthropic Messages API: answers, conversation memory, the Notes writer, and Alfred in Manor.
     case anthropic
+    /// OpenAI Responses API: the new-topic router only.
+    case openai
 
     var title: String {
         switch self {
-        case .openai: "OpenAI"
-        case .nebius: "Nebius"
-        case .fireworks: "Fireworks"
         case .anthropic: "Anthropic"
+        case .openai: "OpenAI"
         }
     }
 }
 
 struct Config: Equatable {
-    var openAIKey: String?
-    var openAIBaseURL: URL
-    var nebiusKey: String?
-    var nebiusBaseURL: URL
-    var fireworksKey: String?
-    var fireworksBaseURL: URL
     var anthropicKey: String?
     var anthropicBaseURL: URL
+    var openAIKey: String?
+    var openAIBaseURL: URL
 
-    /// Provider per role (ALFRED_ANSWER_PROVIDER / ALFRED_CONTEXT_PROVIDER).
-    var answerProvider: LLMProvider
-    var contextProvider: LLMProvider
-
-    /// Always-on context model (rolling memory, open-question detection).
-    var contextModel: String
-    var contextTier: String?
-    var contextEffort: String?
+    /// Claude Opus 5.5 in fast mode for every reasoning path; thinking is always on, so low effort keeps it short.
+    static let model = "claude-opus-5-5"
 
     /// Hotkey answer model (latency critical).
     var answerModel: String
     var answerTier: String?
     var answerEffort: String?
-    /// Decides whether a ⌃⌥S screenshot shows a new problem (→ new chat tab). OpenAI only; "off" disables it.
+    /// Always-on context model (rolling memory, open-question detection).
+    var contextModel: String
+    var contextTier: String?
+    var contextEffort: String?
+    /// In-app Alfred acts in Manor through tool use on the answer model.
+    var assistantModel: String { answerModel }
+    var assistantTier: String? { answerTier }
+    var assistantEffort: String? { answerEffort }
+    /// Decides whether a ⌃⌥S screenshot shows a new problem (→ new chat tab). OpenAI only; "off" or no OpenAI key
+    /// disables it.
     var routerModel: String?
     var routerTier: String?
     var routerEffort: String?
     var answerMaxOutputTokens: Int
-    /// In-app Alfred acts in Manor through function calling on OpenAI's Responses API: the answer model when the
-    /// answer provider is OpenAI, otherwise OpenAI's default.
-    var assistantModel: String
-    var assistantTier: String?
-    var assistantEffort: String?
 
     var deepgramKey: String?
     var deepgramModel: String
@@ -76,21 +65,17 @@ struct Config: Equatable {
     var appKeys: Set<String> = []
 
     var hasOpenAI: Bool { !(openAIKey ?? "").isEmpty }
+    var hasAnthropic: Bool { !(anthropicKey ?? "").isEmpty }
     func key(for provider: LLMProvider) -> String? {
         switch provider {
-        case .openai: openAIKey
-        case .nebius: nebiusKey
-        case .fireworks: fireworksKey
         case .anthropic: anthropicKey
+        case .openai: openAIKey
         }
     }
-    func hasKey(for provider: LLMProvider) -> Bool { !(key(for: provider) ?? "").isEmpty }
     func baseURL(for provider: LLMProvider) -> URL {
         switch provider {
-        case .openai: openAIBaseURL
-        case .nebius: nebiusBaseURL
-        case .fireworks: fireworksBaseURL
         case .anthropic: anthropicBaseURL
+        case .openai: openAIBaseURL
         }
     }
 
@@ -98,17 +83,13 @@ struct Config: Equatable {
     func makeClient(for provider: LLMProvider) -> LLMClient? {
         guard let key = key(for: provider), !key.isEmpty else { return nil }
         switch provider {
-        case .openai: return OpenAIClient(apiKey: key, baseURL: baseURL(for: provider))
-        case .anthropic: return AnthropicClient(apiKey: key, baseURL: baseURL(for: provider))
-        case .nebius, .fireworks: return ChatCompletionsClient(apiKey: key, baseURL: baseURL(for: provider), providerName: provider.title)
+        case .anthropic: return AnthropicClient(apiKey: key, baseURL: anthropicBaseURL)
+        case .openai: return OpenAIClient(apiKey: key, baseURL: openAIBaseURL)
         }
     }
-    /// The answer path is the one that must work for Alfred to be useful.
-    var answerReady: Bool { hasKey(for: answerProvider) }
 
-    static let nebiusDefaultModel = "deepseek-ai/DeepSeek-V4.1-Flash-1017"
-    static let fireworksDefaultModel = "accounts/fireworks/routers/deepseek-v4p1-flash-1017-ultrafast"
-    static let anthropicDefaultModel = "claude-opus-5-5"
+    /// The answer path is the one that must work for Alfred to be useful.
+    var answerReady: Bool { hasAnthropic }
     var hasDeepgram: Bool { !(deepgramKey ?? "").isEmpty }
 
     static func load() -> Config {
@@ -116,6 +97,7 @@ struct Config: Equatable {
         if let repo = Paths.repoRoot {
             files.append(repo.appendingPathComponent(".env.local"))
             files.append(repo.appendingPathComponent(".env"))
+            files.append(repo.deletingLastPathComponent().appendingPathComponent(".env.local"))
         }
 
         var merged: [String: String] = [:]
@@ -146,48 +128,22 @@ struct Config: Equatable {
             return ["default", "standard", "none"].contains(raw.lowercased()) ? nil : raw
         }
 
-        openAIKey = str("OPENAI_API_KEY")
-        openAIBaseURL = str("OPENAI_BASE_URL").flatMap(URL.init(string:)) ?? URL(string: "https://api.openai.com/v1")!
-        nebiusKey = str("NEBIUS_TOKEN_FACTORY_API_KEY") ?? str("NEBIUS_API_KEY")
-        nebiusBaseURL = str("NEBIUS_BASE_URL").flatMap(URL.init(string:)) ?? URL(string: "https://api.tokenfactory.nebius.com/v1")!
-        fireworksKey = str("FIREWORKS_API_KEY")
-        fireworksBaseURL = str("FIREWORKS_BASE_URL").flatMap(URL.init(string:)) ?? URL(string: "https://api.fireworks.ai/inference/v1")!
         anthropicKey = str("ANTHROPIC_API_KEY")
         // Alfred's base URLs end in the API version; a bare host (as other tools set it) gets /v1.
         anthropicBaseURL = str("ANTHROPIC_BASE_URL").flatMap(URL.init(string:)).map { ["", "/"].contains($0.path) ? $0.appendingPathComponent("v1") : $0 }
             ?? URL(string: "https://api.anthropic.com/v1")!
+        openAIKey = str("OPENAI_API_KEY")
+        openAIBaseURL = str("OPENAI_BASE_URL").flatMap(URL.init(string:)) ?? URL(string: "https://api.openai.com/v1")!
 
-        answerProvider = LLMProvider(rawValue: (str("ALFRED_ANSWER_PROVIDER") ?? "").lowercased()) ?? .openai
-        contextProvider = LLMProvider(rawValue: (str("ALFRED_CONTEXT_PROVIDER") ?? "").lowercased()) ?? .openai
-
-        // Defaults per provider: GPT-6.1 Terra on OpenAI's fast tier for both
-        // roles (Sol-level correctness, ~2-3 s answers, ~7x cheaper than Sol Ultrafast); DeepSeek V4.1
-        // Flash on Nebius (default tier, reasoning off) and on the Fireworks ultrafast router (low reasoning).
-        let model = str("ALFRED_MODEL") ?? "gpt-6.1-terra"
-        func defaults(_ p: LLMProvider, answer: Bool) -> (model: String, tier: String?, effort: String) {
-            switch p {
-            case .openai: (model, "fast", "low")
-            case .nebius: (Self.nebiusDefaultModel, nil, "none")
-            case .fireworks: (Self.fireworksDefaultModel, nil, "low")
-            // Claude Opus 5.5 in fast mode; thinking is always on, so low effort keeps it short.
-            case .anthropic: (Self.anthropicDefaultModel, "fast", "low")
-            }
-        }
-        let c = defaults(contextProvider, answer: false)
-        contextModel = str("ALFRED_CONTEXT_MODEL") ?? c.model
-        contextTier = tier("ALFRED_CONTEXT_TIER", c.tier)
-        contextEffort = str("ALFRED_CONTEXT_EFFORT") ?? c.effort
-
-        let a = defaults(answerProvider, answer: true)
-        answerModel = str("ALFRED_ANSWER_MODEL") ?? a.model
-        answerTier = tier("ALFRED_ANSWER_TIER", a.tier)
-        answerEffort = str("ALFRED_ANSWER_EFFORT") ?? a.effort
-        let o = defaults(.openai, answer: true)
-        assistantModel = answerProvider == .openai ? answerModel : o.model
-        assistantTier = answerProvider == .openai ? answerTier : o.tier
-        assistantEffort = answerProvider == .openai ? answerEffort : o.effort
-        // GPT-6 Luna on the fast tier, no reasoning: ~0.7 s for the yes/no with a low-detail screenshot
-        // (Terra fast was ~1.05 s).
+        // Benchmarked against the earlier GPT-6.1 Terra default (docs/arch-components/benchmarks.md): first answer text
+        // in about 1.2 s, full coding answers in about 5 s, and a faster, more faithful memory pass than GPT-6 Luna.
+        answerModel = str("ALFRED_ANSWER_MODEL") ?? Self.model
+        answerTier = tier("ALFRED_ANSWER_TIER", "fast")
+        answerEffort = str("ALFRED_ANSWER_EFFORT") ?? "low"
+        contextModel = str("ALFRED_CONTEXT_MODEL") ?? Self.model
+        contextTier = tier("ALFRED_CONTEXT_TIER", "fast")
+        contextEffort = str("ALFRED_CONTEXT_EFFORT") ?? "low"
+        // GPT-6 Luna on the priority tier, no reasoning: ~0.7 s for the yes/no with a low-detail screenshot.
         let router = str("ALFRED_ROUTER_MODEL") ?? "gpt-6-luna"
         routerModel = router.lowercased() == "off" ? nil : router
         routerTier = tier("ALFRED_ROUTER_TIER", "priority")

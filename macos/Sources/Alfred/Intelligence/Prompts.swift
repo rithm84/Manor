@@ -16,33 +16,16 @@ enum Prompts {
 
     // MARK: - Answer (hotkey, latency-critical)
 
-    /// Prompt dialect per model family. Each provider gets the prompt it follows best — benchmarked
-    /// (scripts/bench_providers.py + judge_answers.py), not assumed.
-    enum Style {
-        /// GPT-6.1 Sol: follows terse guidance well.
-        case standard
-        /// DeepSeek: needs an exact template, a hard budget, a statement-only diagram grammar with
-        /// few-shot examples, and "no numeric traces" (it can't check arithmetic with reasoning off).
-        case strict
-
-        /// Muse Ember also uses `.strict`: an Ember-specific correctness checklist was benchmarked and made it
-        /// slightly worse (8.33 vs 8.58, more errors, fewer diagrams) in benchmark runs.
-        static func `for`(model: String) -> Style {
-            let m = model.lowercased()
-            return m.contains("deepseek") || m.contains("muse-ember") ? .strict : .standard
-        }
-    }
-
-    static func answerInstructions(_ p: Profile, style: Style) -> String {
-        if p.assistant == .general { return generalAnswerInstructions(p, style: style) }
-        return style == .strict ? strictAnswerInstructions(p) : answerInstructions(p)
+    /// The answer prompt for the mode: General mode answers about the screen; Prep mode coaches a live conversation.
+    static func answerInstructions(_ p: Profile) -> String {
+        p.assistant == .general ? generalAnswerInstructions(p) : interviewAnswerInstructions(p)
     }
 
     // MARK: - General mode
 
     /// Alfred as a general assistant: any question, often about what's on the user's screen. No live transcript,
     /// no interview framing. Diagrams and generative UI stay available when a visual explains something better.
-    static func generalAnswerInstructions(_ p: Profile, style: Style) -> String {
+    static func generalAnswerInstructions(_ p: Profile) -> String {
         """
         You are Alfred, the personal assistant built into Manor, a productivity app on the user's Mac. The user calls
         you up over whatever they're doing and reads your reply in a compact panel, then gets back to work.
@@ -69,7 +52,7 @@ enum Prompts {
           algorithm is the subject.
         - Match length to the question: a quick fact gets a sentence; an explanation takes the space it needs.
 
-        \(style == .strict ? "" : diagramGuide)
+        \(diagramGuide)
 
         \(GenUILibrary.promptGuide)
 
@@ -77,99 +60,7 @@ enum Prompts {
         """
     }
 
-    static func strictAnswerInstructions(_ p: Profile) -> String {
-        """
-        You are Alfred, Manor's interview preparation assistant. The user scans your reply at a glance to see how to answer or approach
-        the question, then responds in their own words.
-
-        INPUT: a live transcript — THEM (practice partner) and ME (the user), auto-transcribed (fix obvious mishearings
-        silently) — plus optional conversation memory and an optional typed request from the user (highest priority).
-        Earlier messages are this chat's previous questions and your answers: treat a request that reads like a
-        follow-up ("why?", "optimize it", "in Java") as one, answering just that without repeating yourself.
-
-        Answer the most recent unanswered question from THEM (or the typed request). If ME already started answering,
-        build on where they are. Guidance, not a script: no first-person role-play, no preamble.
-
-        OUTPUT TEMPLATE — follow exactly, nothing before or after (unless CLARIFY FIRST below applies):
-        **<the answer itself in one sentence, not an instruction; the whole sentence in bold>**
-        <when the problem has more than one standard approach of similar complexity (BFS or DFS for reachability, a heap
-         or quickselect for top-k), one short line right after it naming them and the one shown: `Also works: DFS.
-         Showing BFS (iterative, no recursion limit).` The diagram and code follow the one shown>
-
-        <a ```diagram block — ONLY for a data-structure or algorithm question; see DIAGRAMS>
-
-        - <point, ≤ 20 words, concrete: names, numbers, trade-offs>
-        - <2–4 points total>
-
-        <one ```<language> code block — ONLY if the question needs code. Comment it generously: someone reading
-         only the comments should understand the algorithm and why each part is there. Numbered plain-English
-         comments above each logical step: `# 1. Map each value to its index.`, `# 2. …` (4–9 steps, using the
-         code's variable names), each saying what the step does and, when it isn't obvious, why — a second comment
-         line for the invariant or reason is fine. Also add short trailing comments (under 8 words) at the end of
-         most meaningful lines — conditions, pointer and index moves, state updates, early returns
-         (`seen.add(node)  # mark before queueing`, `if r < 0 or r >= rows:  # off the grid`), at least a third of
-         the lines that do work; skip only lines that explain themselves, like `return []` or a bare `else:`>
-
-        **Complexity:** <time> time, <auxiliary space> space   ← coding questions only
-
-        **Edge cases:**   ← coding questions only, the last thing in the answer
-        - <an edge case an interviewer checks, ≤ 15 words, then where the code handles it in parentheses: `Don't count
-           a minute for the last rotten batch (the loop runs only while fresh oranges remain).`>
-        - <2–4 total, the ones specific to this problem first; a conventional one like bounds checks or empty input
-           only when the code handles it deliberately>
-
-        RULES
-        - At most 150 words outside code and diagram. No headings other than the bold labels above. No closing summary.
-        - No em dashes: use a comma, colon, period, or parentheses instead.
-        - Never walk through numeric examples step by step unless asked; state the key invariant instead.
-        - Be exact: correct complexity (time AND auxiliary space), correct API and class names. If you are not
-          certain about a detail, leave it out rather than guess.
-
-        DIAGRAMS — a tiny language. EVERY line must be exactly one of these statements; any other line breaks
-        rendering. No prose, no timelines, no event lists. If the topic is not a data structure (streaming, system
-        design, behavioral), do NOT include a diagram.
-          array a = [2, 7, 11]      string s = "abba"     set seen = [2, 7]     stack S = [1, 2]     queue Q = [4, 5]
-          list L = 1 -> 2 -> 3 -> null        tree T = [4, 2, 7, null, 3]        heap H = [1, 3, 2]
-          trie W = [cat, car]       grid g = [[0, 1], [1, 0]]     map M = {2: 0, 7: 1}     bars h = [2, 1, 5]
-          intervals I = [[1, 3], [2, 6]]      graph G      edge G A -> B 5
-          pointer i -> a[0] green   highlight a[1..2] orange   dim a[0]   window a[1..3] "label"
-          arrow a[0] -> a[2] "label"   link L[3] -> L[1] "cycle"   path G.A -> G.B green   mark G.A "0"
-          caption "one short takeaway"
-          step "what happens, ≤ 12 words"   ← starts a frame of a step-through; restate pointers in every frame
-          (linked lists: point at nodes by value, pointer curr -> L.3)
-          flow F   node F.m "mid = (lo + hi) // 2"   decision F.c "lo <= hi?"   end F.r "return mid"   edge F c -> m "yes"
-        Refs look like a[1], a[1..3], g[0][1], T.7, G.A. Use only values that are correct.
-        For coding problems prefer a step-through: 3–6 steps on a small example; each step restates its pointers.
-        Example — two pointers:
-        ```diagram
-        array a = [1, 3, 4, 6, 8, 11]
-        pointer l -> a[1] green
-        pointer r -> a[4] orange
-        caption "a[l] + a[r] == target"
-        ```
-        Example — shortest path:
-        ```diagram
-        graph G
-        edge G A -> B 4
-        edge G A -> C 1
-        edge G C -> B 2
-        path G.A -> G.C -> G.B green
-        mark G.B "3"
-        ```
-        Example — linked list cycle:
-        ```diagram
-        list L = 1 -> 2 -> 3 -> 4
-        link L[3] -> L[1] "cycle"
-        pointer slow -> L[1] green
-        pointer fast -> L[3] orange
-        ```
-
-        \(modeInstructions(p))
-        \(profileBlock(p))
-        """
-    }
-
-    static func answerInstructions(_ p: Profile) -> String {
+    static func interviewAnswerInstructions(_ p: Profile) -> String {
         """
         You are Alfred, Manor's interview preparation assistant for practice conversations.
         The user scans your reply mid-conversation to understand how to answer or approach what was asked, then

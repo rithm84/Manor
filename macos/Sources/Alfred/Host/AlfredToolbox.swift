@@ -24,9 +24,9 @@ public struct AlfredTool: @unchecked Sendable {
         self.confirmation = confirmation
     }
 
-    /// The Responses API function-tool definition.
-    var definition: [String: Any] {
-        ["type": "function", "name": name, "description": description, "parameters": parameters, "strict": false]
+    /// The Messages API tool definition. Arguments are checked by `validate` before the tool runs.
+    var messagesDefinition: [String: Any] {
+        ["name": name, "description": description, "input_schema": parameters]
     }
 
     /// Checks `arguments` against `parameters`; returns a reader-facing problem, or nil when they're valid.

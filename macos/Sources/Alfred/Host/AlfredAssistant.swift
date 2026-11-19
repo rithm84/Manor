@@ -88,8 +88,8 @@ public final class AlfredAssistant {
 
     public var isWorking: Bool { phase != .idle }
     /// Whether a key for the assistant's provider is set.
-    public var isAvailable: Bool { script != nil || !(config.openAIKey ?? "").isEmpty }
-    public static let missingKeyMessage = "Add an OpenAI key in Settings, under Alfred, to ask Alfred here."
+    public var isAvailable: Bool { script != nil || config.hasAnthropic }
+    public static let missingKeyMessage = "Add an Anthropic key in Settings, under Alfred, to ask Alfred here."
 
     private let appName: String
     /// Earlier turns, compacted to the request and what Alfred said and did.
@@ -97,7 +97,7 @@ public final class AlfredAssistant {
     /// Things that happened since the last request (undos), told to the model with the next one.
     private var notes: [String] = []
     private var task: Task<Void, Never>?
-    private var client: (id: String, client: OpenAIClient)?
+    private var client: (id: String, client: AnthropicClient)?
     private var tierUnsupported = false
 
     static let maxRounds = 8
@@ -191,6 +191,8 @@ public final class AlfredAssistant {
         notes = []
         if let snapshot { message += "## Page: \(snapshot.page)\n\(snapshot.details)\n\n" }
         message += "## Request\n\(prompt)"
+        // This turn's messages: the request, then each round's assistant content and the tool results it asked for.
+        // They are only ever appended, so the thinking blocks they carry stay valid for the next round.
         var items: [[String: Any]] = [["role": "user", "content": message]]
         var replies: [String] = []
         var actions: [String] = []
@@ -201,27 +203,40 @@ public final class AlfredAssistant {
                 try Task.checkCancellation()
                 phase = .thinking
                 var answer: Entry?
-                var calls: [[String: Any]] = []
-                var body = requestBody(config: config, input: history + items, tools: tools)
+                var blocks: [[String: Any]] = []
+                var body = requestBody(config: config, messages: history + items, tools: tools)
+                var stop: String?
                 do {
-                    try await stream(client, body: body, items: &items, calls: &calls, answer: &answer)
-                } catch let error as LLMError where error.isTierRejection && body["service_tier"] != nil {
+                    stop = try await stream(client, body: body, blocks: &blocks, answer: &answer)
+                } catch let error as LLMError where error.isTierRejection && body["speed"] != nil {
+                    // Fast mode unavailable (or rate-limited): the same request at standard speed.
                     tierUnsupported = true
-                    body["service_tier"] = nil
+                    body["speed"] = nil
                     answer?.text = ""
-                    try await stream(client, body: body, items: &items, calls: &calls, answer: &answer)
+                    blocks = []
+                    stop = try await stream(client, body: body, blocks: &blocks, answer: &answer)
                 }
                 if let answer {
                     answer.isComplete = true
                     if !answer.text.isEmpty { replies.append(answer.text) }
                 }
+                switch stop {
+                case "refusal": throw LLMError(status: 0, message: "Alfred couldn't help with that one. Try rephrasing the request.", provider: "Anthropic")
+                case "max_tokens": throw LLMError(status: 0, message: "Alfred stopped early (max_output_tokens).", provider: "Anthropic")
+                default: break
+                }
+                let calls = blocks.filter { $0["type"] as? String == "tool_use" }
+                items.append(["role": "assistant", "content": blocks])
                 guard !calls.isEmpty else { break }
                 phase = .acting
+                var results: [[String: Any]] = []
                 for call in calls {
                     try Task.checkCancellation()
                     let output = await perform(call, tools: tools, actions: &actions)
-                    items.append(["type": "function_call_output", "call_id": call["call_id"] as? String ?? "", "output": output])
+                    results.append(["type": "tool_result", "tool_use_id": call["id"] as? String ?? "", "content": output])
                 }
+                // Every result of a round goes back in one message.
+                items.append(["role": "user", "content": results])
             }
         } catch is CancellationError {
         } catch let error as URLError where error.code == .cancelled {
@@ -232,14 +247,15 @@ public final class AlfredAssistant {
         remember(prompt: prompt, replies: replies, actions: actions)
     }
 
-    /// Streams one model round: text into an answer entry, finished items into `items`, function calls into `calls`.
-    private func stream(_ client: OpenAIClient, body: [String: Any], items: inout [[String: Any]], calls: inout [[String: Any]],
-                        answer: inout Entry?) async throws {
+    /// Streams one model round: text into an answer entry and every finished content block into `blocks`.
+    /// Returns why the model stopped.
+    private func stream(_ client: AnthropicClient, body: [String: Any], blocks: inout [[String: Any]], answer: inout Entry?) async throws -> String? {
+        var stop: String?
         var finished = false
-        for try await event in client.streamResponse(body) {
+        for try await event in client.streamMessage(body) {
             try Task.checkCancellation()
             switch event {
-            case .delta(let text):
+            case .text(let text):
                 if answer == nil {
                     let entry = append(.answer, "")
                     entry.isComplete = false
@@ -247,24 +263,22 @@ public final class AlfredAssistant {
                 }
                 answer?.text += text
                 phase = .writing
-            case .item(let item):
-                items.append(item)
-                if item["type"] as? String == "function_call" { calls.append(item) }
-            case .completed:
+            case .block(let block):
+                blocks.append(block)
+            case .stop(let reason):
+                stop = reason
                 finished = true
-            case .incomplete(let reason):
-                throw LLMError(status: 0, message: "Alfred stopped early (\(reason)).")
             }
         }
         try Task.checkCancellation()
-        if !finished { throw LLMError(status: 0, message: "The connection dropped before Alfred finished.") }
+        if !finished { throw LLMError(status: 0, message: "The connection dropped before Alfred finished.", provider: "Anthropic") }
+        return stop
     }
 
     /// Runs one function call and returns its output for the model.
     private func perform(_ call: [String: Any], tools: [AlfredTool], actions: inout [String]) async -> String {
         let name = call["name"] as? String ?? ""
-        let raw = call["arguments"] as? String ?? "{}"
-        let arguments = (try? JSONSerialization.jsonObject(with: Data(raw.utf8))) as? [String: Any] ?? [:]
+        let arguments = call["input"] as? [String: Any] ?? [:]
         return await perform(name, arguments: arguments, tools: tools, actions: &actions)
     }
 
@@ -327,38 +341,34 @@ public final class AlfredAssistant {
 
     // MARK: Requests
 
-    private func requestBody(config: Config, input: [[String: Any]], tools: [AlfredTool]) -> [String: Any] {
+    private func requestBody(config: Config, messages: [[String: Any]], tools: [AlfredTool]) -> [String: Any] {
         let knowledge = KnowledgeStore.promptBlock(AlfredHost.shared.knowledge.docs)
         let extra = AlfredHost.shared.preferences.extraInstructions
+        let instructions = Prompts.assistantInstructions(appName: appName, knowledge: knowledge, extra: extra)
         var body: [String: Any] = [
             "model": config.assistantModel,
-            "instructions": Prompts.assistantInstructions(appName: appName, knowledge: knowledge, extra: extra),
-            "input": input,
-            "store": false,
-            "max_output_tokens": config.answerMaxOutputTokens,
-            "prompt_cache_key": "alfred-assistant",
+            // Thinking counts toward max_tokens, so the reply's cap gets room for it on top.
+            "max_tokens": config.answerMaxOutputTokens + 12_000,
+            // Tools and instructions are the same every round: cached, so later rounds start sooner.
+            "system": [["type": "text", "text": instructions, "cache_control": ["type": "ephemeral"]]],
+            "messages": messages,
+            "stream": true,
+            "fallbacks": "default",
         ]
-        if !tools.isEmpty {
-            body["tools"] = tools.map(\.definition)
-            body["parallel_tool_calls"] = true
-        }
-        if let tier = config.assistantTier, !tierUnsupported { body["service_tier"] = tier }
-        if let effort = config.assistantEffort, effort != "none" {
-            body["reasoning"] = ["effort": effort]
-            // Stateless requests carry the model's reasoning between tool rounds.
-            body["include"] = ["reasoning.encrypted_content"]
-        }
+        if !tools.isEmpty { body["tools"] = tools.map(\.messagesDefinition) }
+        if let effort = AnthropicClient.effort(config.assistantEffort) { body["output_config"] = ["effort": effort] }
+        if config.assistantTier?.lowercased() == "fast", !tierUnsupported { body["speed"] = "fast" }
         return body
     }
 
     private var config: Config { AlfredHost.shared.currentState?.config ?? AlfredHost.shared.settings.config }
 
-    private func client(for config: Config) -> OpenAIClient? {
-        guard let key = config.openAIKey, !key.isEmpty else { return nil }
-        let id = "\(key)|\(config.openAIBaseURL)"
+    private func client(for config: Config) -> AnthropicClient? {
+        guard let key = config.anthropicKey, !key.isEmpty else { return nil }
+        let id = "\(key)|\(config.anthropicBaseURL)"
         if let client, client.id == id { return client.client }
         client?.client.invalidate()
-        let made = OpenAIClient(apiKey: key, baseURL: config.openAIBaseURL)
+        let made = AnthropicClient(apiKey: key, baseURL: config.anthropicBaseURL)
         client = (id, made)
         return made
     }
@@ -371,7 +381,7 @@ public final class AlfredAssistant {
             default: break
             }
         }
-        if let error = error as? LLMError, error.status == 401 { return "OpenAI didn't accept the key. Check it in Settings, under Alfred." }
+        if let error = error as? LLMError, error.status == 401 { return "Anthropic didn't accept the key. Check it in Settings, under Alfred." }
         return error.localizedDescription
     }
 }

@@ -143,6 +143,89 @@ final class AnthropicClient: LLMClient, @unchecked Sendable {
         }
     }
 
+    /// One event of a raw Messages stream, for callers that run their own tool loop.
+    enum MessageEvent {
+        /// Visible answer text as it arrives.
+        case text(String)
+        /// A finished content block, rebuilt exactly as the API sent it (thinking with its signature, text,
+        /// tool use with its parsed input, or any other block), to send back unchanged on the next request.
+        case block([String: Any])
+        /// Why the model stopped (`end_turn`, `tool_use`, `max_tokens`, `refusal`, ...).
+        case stop(String?)
+    }
+
+    /// Streams a full Messages request body (built by the caller) and rebuilds its content blocks.
+    func streamMessage(_ body: [String: Any]) -> AsyncThrowingStream<MessageEvent, Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    var request = URLRequest(url: baseURL.appendingPathComponent("messages"))
+                    request.httpMethod = "POST"
+                    headers(&request)
+                    request.setValue(Self.fallbackBeta, forHTTPHeaderField: "anthropic-beta")
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+                    request.httpBody = try JSONSerialization.data(withJSONObject: body)
+                    let (bytes, response) = try await session.bytes(for: request)
+                    if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+                        var data = Data()
+                        for try await b in bytes { data.append(b) }
+                        try check(response, data: data)
+                    }
+                    var blocks: [Int: [String: Any]] = [:]
+                    var partialJSON: [Int: String] = [:]
+                    var stop: String?
+                    for try await line in bytes.lines {
+                        guard line.hasPrefix("data:"),
+                              let json = try? JSONSerialization.jsonObject(with: Data(line.dropFirst(5).trimmingCharacters(in: .whitespaces).utf8)) as? [String: Any]
+                        else { continue }
+                        let index = json["index"] as? Int ?? 0
+                        switch json["type"] as? String {
+                        case "content_block_start":
+                            blocks[index] = json["content_block"] as? [String: Any] ?? [:]
+                        case "content_block_delta":
+                            guard let delta = json["delta"] as? [String: Any] else { break }
+                            switch delta["type"] as? String {
+                            case "text_delta":
+                                let text = delta["text"] as? String ?? ""
+                                let soFar = blocks[index]?["text"] as? String ?? ""
+                                blocks[index]?["text"] = soFar + text
+                                if !text.isEmpty { continuation.yield(.text(text)) }
+                            case "thinking_delta":
+                                let soFar = blocks[index]?["thinking"] as? String ?? ""
+                                blocks[index]?["thinking"] = soFar + (delta["thinking"] as? String ?? "")
+                            case "signature_delta":
+                                blocks[index]?["signature"] = delta["signature"]
+                            case "input_json_delta":
+                                partialJSON[index, default: ""] += delta["partial_json"] as? String ?? ""
+                            default:
+                                break
+                            }
+                        case "content_block_stop":
+                            guard var block = blocks.removeValue(forKey: index) else { break }
+                            if let raw = partialJSON.removeValue(forKey: index) {
+                                block["input"] = raw.isEmpty ? [String: Any]() : ((try? JSONSerialization.jsonObject(with: Data(raw.utf8))) ?? [String: Any]())
+                            }
+                            continuation.yield(.block(block))
+                        case "message_delta":
+                            if let s = (json["delta"] as? [String: Any])?["stop_reason"] as? String { stop = s }
+                        case "error":
+                            let err = json["error"] as? [String: Any]
+                            throw LLMError(status: 0, message: err?["message"] as? String ?? "Stream error", provider: providerName)
+                        default:
+                            break
+                        }
+                    }
+                    continuation.yield(.stop(stop))
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
     private static func refusal(provider: String) -> LLMError {
         LLMError(status: 0, message: "Alfred couldn't answer that one. Try rephrasing the request.", provider: provider)
     }

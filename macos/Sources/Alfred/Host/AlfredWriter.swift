@@ -137,7 +137,7 @@ public final class AlfredWriter {
 
         public var errorDescription: String? {
             switch self {
-            case .notConfigured: "Add an OpenAI key in Settings, under Alfred, to write with Alfred."
+            case .notConfigured: "Add an Anthropic key in Settings, under Alfred, to write with Alfred."
             case .emptyPrompt: "Tell Alfred what to write."
             case .tooManyImages: "Alfred takes up to \(AlfredWriter.maxImages) images at a time."
             case .imageTooLarge: "That image is too large. Try a smaller one."
@@ -307,7 +307,7 @@ public final class AlfredWriter {
 
     /// One client per provider, key, and endpoint, reused so later requests skip the TLS handshake.
     private func client(for config: Config) -> LLMClient? {
-        let provider = config.answerProvider
+        let provider = LLMProvider.anthropic
         guard let key = config.key(for: provider), !key.isEmpty else { return nil }
         let id = "\(provider.rawValue)|\(key)|\(config.baseURL(for: provider))"
         if let client, client.id == id { return client.client }

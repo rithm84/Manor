@@ -1,24 +1,6 @@
 import XCTest
 @testable import Alfred
 
-final class ResponseEventTests: XCTestCase {
-    func testFunctionCallItemsAndText() throws {
-        let call = try SSE.responseEvent(fromLine: #"data: {"type":"response.output_item.done","item":{"type":"function_call","call_id":"c1","name":"set_tasks_done","arguments":"{\"tasks\":[\"t1\"]}"}}"#)
-        guard case .item(let item)? = call else { return XCTFail("expected an item") }
-        XCTAssertEqual(item["call_id"] as? String, "c1")
-        XCTAssertEqual(item["name"] as? String, "set_tasks_done")
-
-        guard case .delta(let text)? = try SSE.responseEvent(fromLine: #"data: {"type":"response.output_text.delta","delta":"Done"}"#) else {
-            return XCTFail("expected a delta")
-        }
-        XCTAssertEqual(text, "Done")
-        guard case .completed? = try SSE.responseEvent(fromLine: #"data: {"type":"response.completed","response":{}}"#) else {
-            return XCTFail("expected completion")
-        }
-        XCTAssertNil(try SSE.responseEvent(fromLine: #"data: {"type":"response.output_item.added","item":{}}"#))
-    }
-}
-
 @MainActor
 final class AssistantTests: XCTestCase {
     final class FakeToolbox: AlfredToolbox {
