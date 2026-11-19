@@ -417,10 +417,12 @@ private struct PomodoroSessionRow: View {
   private var timeRange: String {
     let end = session.endedAt ?? session.startedAt.addingTimeInterval(TimeInterval((session.focusedSeconds ?? 0) + session.pausedSeconds))
     let zone = store.timeZone
+    // Patterns are localized templates, so "h:mm" alone would still gain AM or PM; drop the start's matching one here.
+    let startLabel = DisplayDates.string(session.startedAt, "h:mm a", timeZone: zone)
     let endLabel = DisplayDates.string(end, "h:mm a", timeZone: zone)
-    let sameHalf = DisplayDates.string(session.startedAt, "a", timeZone: zone) == DisplayDates.string(end, "a", timeZone: zone)
-    let startLabel = DisplayDates.string(session.startedAt, sameHalf ? "h:mm" : "h:mm a", timeZone: zone)
-    return "\(startLabel) – \(endLabel)"
+    let startParts = startLabel.split(separator: " ")
+    let sameHalf = startParts.count == 2 && endLabel.hasSuffix(" " + startParts[1])
+    return "\(sameHalf ? String(startParts[0]) : startLabel) – \(endLabel)"
   }
 
   private func startEditing() { draft = session.label ?? "" }

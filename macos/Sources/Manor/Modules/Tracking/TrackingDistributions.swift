@@ -1,7 +1,7 @@
 import ManorKit
 import SwiftUI
 
-/// The month's mood and focus, one block each: the level most days landed on, the month as a single bar split by
+/// The month's mood and focus, one block each: the level most days landed on (or Mixed on a tie), the month as a single bar split by
 /// level, and each level's days and share. Rest days sit apart from focus's rated levels and never count toward
 /// its shares, so a rest day never reads as a low score.
 struct TrackingDistributions: View {
@@ -50,18 +50,22 @@ private struct RatingMix: View {
 
   var body: some View {
     let rated = levels.reduce(0) { $0 + $1.count }
-    // The most common level; a tie goes to the better one, which comes first.
-    let top = levels.reduce(nil as RatingLevel?) { best, level in
-      level.count > (best?.count ?? 0) ? level : best
-    }
+    // The most common level, only when one level leads outright; a tie reads as mixed.
+    let most = levels.map(\.count).max() ?? 0
+    let leaders = levels.filter { $0.count == most && most > 0 }
+    let top = leaders.count == 1 ? leaders.first : nil
     VStack(alignment: .leading, spacing: Space.s3) {
       HStack(spacing: Space.s3) {
-        CheckInGlyph(value: top?.glyph ?? (title == "Mood" ? .mood(nil) : .focus(nil)), size: 30)
+        if top == nil, leaders.count > 1 {
+          MixedGlyph(colors: leaders.map(\.tone.strong)).frame(width: 30, height: 30)
+        } else {
+          CheckInGlyph(value: top?.glyph ?? (title == "Mood" ? .mood(nil) : .focus(nil)), size: 30)
+        }
         VStack(alignment: .leading, spacing: 1) {
           Text(title).font(.ui(Typography.Size.xs, weight: .semibold)).foregroundStyle(Palette.inkMuted)
-          Text(top.map { "Mostly \($0.name)" } ?? "No ratings yet")
+          Text(top.map { "Mostly \($0.name)" } ?? (rated == 0 ? "No ratings yet" : "Mixed"))
             .font(.ui(Typography.Size.body, weight: .semibold))
-            .foregroundStyle(top?.tone.strong ?? Palette.inkMuted)
+            .foregroundStyle(top?.tone.strong ?? (rated == 0 ? Palette.inkMuted : Palette.ink))
             .lineLimit(1)
         }
         Spacer(minLength: Space.s2)
@@ -147,5 +151,29 @@ private struct RatingBar: View {
       .clipShape(Capsule())
     }
     .animation(Motion.base, value: levels.map(\.count))
+  }
+}
+
+/// A tie between levels: the circle split evenly among the tied levels' colors.
+private struct MixedGlyph: View {
+  let colors: [Color]
+
+  var body: some View {
+    Canvas { context, size in
+      let center = CGPoint(x: size.width / 2, y: size.height / 2)
+      let radius = min(size.width, size.height) / 2
+      let step = 360.0 / Double(max(colors.count, 1))
+      for (index, color) in colors.enumerated() {
+        var slice = Path()
+        slice.move(to: center)
+        slice.addArc(center: center, radius: radius, startAngle: .degrees(-90 + step * Double(index)),
+                     endAngle: .degrees(-90 + step * Double(index + 1)), clockwise: false)
+        slice.closeSubpath()
+        context.fill(slice, with: .color(color.opacity(0.85)))
+        // A hairline gap between slices.
+        context.stroke(slice, with: .color(Palette.surfaceCanvas), lineWidth: 1.5)
+      }
+    }
+    .accessibilityHidden(true)
   }
 }
