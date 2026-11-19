@@ -1,6 +1,6 @@
 # Alfred
 
-_Last updated: 2026-11-18_
+_Last updated: 2026-11-19_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -62,8 +62,9 @@ In Prep mode, the interview, coding, and system design answer styles share a cla
 |---|---|
 | Answers, conversation memory, and the Notes writer | GPT-6.1 Terra on OpenAI's fast tier, low reasoning effort |
 | New-topic router | GPT-6 Luna without reasoning; it can be turned off |
+| Answers, memory, and the Notes writer with `ALFRED_ANSWER_PROVIDER` / `ALFRED_CONTEXT_PROVIDER` set to `anthropic` | Claude Opus 5.5 in fast mode, low effort |
 
-`OpenAIClient` streams the OpenAI Responses API with server-sent events and `store: false`. A chat-completions client serves compatible providers configured by environment variables. Answers are capped at 6,000 output tokens.
+`OpenAIClient` streams the OpenAI Responses API with server-sent events and `store: false`. `AnthropicClient` streams the Anthropic Messages API: the instructions go in a cached system block, low effort bounds Claude Opus 5.5's always-on thinking (only its text reaches the answer), the fast tier becomes `speed: "fast"`, and a classifier refusal is retried on Anthropic's recommended fallback model (`fallbacks: "default"`). A chat-completions client serves other compatible providers configured by environment variables. `Config.makeClient(for:)` builds the client for a provider. Answers are capped at 6,000 output tokens, plus room for Claude's thinking. Alfred in Manor, which acts through function calling, stays on OpenAI.
 
 ## Rendering
 

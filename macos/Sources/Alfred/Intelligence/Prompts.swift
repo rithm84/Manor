@@ -107,8 +107,8 @@ enum Prompts {
          code's variable names), each saying what the step does and, when it isn't obvious, why — a second comment
          line for the invariant or reason is fine. Also add short trailing comments (under 8 words) at the end of
          most meaningful lines — conditions, pointer and index moves, state updates, early returns
-         (`seen.add(node)  # mark before queueing`, `if r < 0 or r >= rows:  # off the grid`); skip only lines that
-         explain themselves, like `return []` or a bare `else:`>
+         (`seen.add(node)  # mark before queueing`, `if r < 0 or r >= rows:  # off the grid`), at least a third of
+         the lines that do work; skip only lines that explain themselves, like `return []` or a bare `else:`>
 
         **Complexity:** <time> time, <auxiliary space> space   ← coding questions only
 
@@ -120,6 +120,7 @@ enum Prompts {
 
         RULES
         - At most 150 words outside code and diagram. No headings other than the bold labels above. No closing summary.
+        - No em dashes: use a comma, colon, period, or parentheses instead.
         - Never walk through numeric examples step by step unless asked; state the key invariant instead.
         - Be exact: correct complexity (time AND auxiliary space), correct API and class names. If you are not
           certain about a detail, leave it out rather than guess.
@@ -203,6 +204,7 @@ enum Prompts {
         - Show, don't just tell: comparisons, trade-offs, estimates, growth curves and processes land faster as a
           visual — an ```ui block (see RICH UI) in place of the bullets that would describe it.
         - Scannable beats long: tight prose, but take the space a good explanation, diagram or visual needs.
+        - No em dashes: use a comma, colon, period, or parentheses instead.
 
         \(diagramGuide)
 
@@ -498,6 +500,8 @@ enum Prompts {
       answer, in place or not, scale and read/write mix for a design. Never for details that don't change the
       solution, and never for behavioral questions.
     - THEM hasn't already settled it (in the transcript, memory, or the problem on screen), and ME hasn't asked it.
+      A well-known problem's standard statement settles its usual details (four-directional grid moves, the usual
+      input bounds, any valid answer accepted): assume those instead of asking.
     - This chat doesn't already show clarifying questions for this problem, and there's no typed request.
     Then reply with ONLY this, no answer, diagram, or code:
     **Ask before solving.**
@@ -525,12 +529,13 @@ enum Prompts {
               numbered plain-English steps (`# 1. …`, 4–9 of them, the code's variable names), one above each logical
               step, saying what it does and, when it isn't obvious, why (a second line for the invariant is fine),
               plus short trailing comments (under 8 words) on most meaningful lines: conditions, pointer and index
-              moves, state updates, early returns (`left += 1  # shrink past the duplicate`). Skip only lines that
-              explain themselves.
+              moves, state updates, early returns (`left += 1  # shrink past the duplicate`), at least a third of
+              the lines that do work. Skip only lines that explain themselves.
               When the problem has more than one standard approach of similar complexity (BFS or DFS, a heap or
               quickselect), name them at the top and say which one you show and why in a few words; the diagram and
               code use that one.
-              End with **Edge cases:** as the last section: 2–4 short bullets, each an edge case an interviewer would
+              After the code, a **Complexity:** line (time and auxiliary space), then end with **Edge cases:** as the
+              last section: 2–4 short bullets, each an edge case an interviewer would
               check and, in parentheses, where the code handles it (`Don't count a minute for the last rotten batch
               (the loop runs only while fresh oranges remain).`). Problem-specific cases come first; conventional ones
               (bounds checks, empty input) only when the code handles them deliberately.
@@ -554,7 +559,7 @@ enum Prompts {
                each saying what the step does and, when it isn't obvious, why (a second line for the invariant is
                fine). Add short trailing comments (under 8 words) at the end of most meaningful lines: conditions,
                pointer and index moves, state updates, early returns (`seen.add(nxt)  # mark when queued, not when
-               popped`). Skip only lines that explain themselves.
+               popped`), at least a third of the lines that do work. Skip only lines that explain themselves.
             4. **Complexity** — time and space; separate auxiliary space from stored/output space when they differ.
             5. **Edge cases:** last, 2–4 short bullets: each an edge case an interviewer would check and, in
                parentheses, where the code handles it (`An empty grid returns 0 (the size check before the loop).`).

@@ -16,12 +16,15 @@ enum LLMProvider: String, Equatable {
     case nebius
     /// Fireworks AI (OpenAI-compatible Chat Completions; has an ultrafast DeepSeek router).
     case fireworks
+    /// Anthropic Messages API (Claude Opus 5.5, fast mode).
+    case anthropic
 
     var title: String {
         switch self {
         case .openai: "OpenAI"
         case .nebius: "Nebius"
         case .fireworks: "Fireworks"
+        case .anthropic: "Anthropic"
         }
     }
 }
@@ -33,6 +36,8 @@ struct Config: Equatable {
     var nebiusBaseURL: URL
     var fireworksKey: String?
     var fireworksBaseURL: URL
+    var anthropicKey: String?
+    var anthropicBaseURL: URL
 
     /// Provider per role (ALFRED_ANSWER_PROVIDER / ALFRED_CONTEXT_PROVIDER).
     var answerProvider: LLMProvider
@@ -76,6 +81,7 @@ struct Config: Equatable {
         case .openai: openAIKey
         case .nebius: nebiusKey
         case .fireworks: fireworksKey
+        case .anthropic: anthropicKey
         }
     }
     func hasKey(for provider: LLMProvider) -> Bool { !(key(for: provider) ?? "").isEmpty }
@@ -84,6 +90,17 @@ struct Config: Equatable {
         case .openai: openAIBaseURL
         case .nebius: nebiusBaseURL
         case .fireworks: fireworksBaseURL
+        case .anthropic: anthropicBaseURL
+        }
+    }
+
+    /// A client for a provider, or nil without its key.
+    func makeClient(for provider: LLMProvider) -> LLMClient? {
+        guard let key = key(for: provider), !key.isEmpty else { return nil }
+        switch provider {
+        case .openai: return OpenAIClient(apiKey: key, baseURL: baseURL(for: provider))
+        case .anthropic: return AnthropicClient(apiKey: key, baseURL: baseURL(for: provider))
+        case .nebius, .fireworks: return ChatCompletionsClient(apiKey: key, baseURL: baseURL(for: provider), providerName: provider.title)
         }
     }
     /// The answer path is the one that must work for Alfred to be useful.
@@ -91,6 +108,7 @@ struct Config: Equatable {
 
     static let nebiusDefaultModel = "deepseek-ai/DeepSeek-V4.1-Flash-1017"
     static let fireworksDefaultModel = "accounts/fireworks/routers/deepseek-v4p1-flash-1017-ultrafast"
+    static let anthropicDefaultModel = "claude-opus-5-5"
     var hasDeepgram: Bool { !(deepgramKey ?? "").isEmpty }
 
     static func load() -> Config {
@@ -134,6 +152,10 @@ struct Config: Equatable {
         nebiusBaseURL = str("NEBIUS_BASE_URL").flatMap(URL.init(string:)) ?? URL(string: "https://api.tokenfactory.nebius.com/v1")!
         fireworksKey = str("FIREWORKS_API_KEY")
         fireworksBaseURL = str("FIREWORKS_BASE_URL").flatMap(URL.init(string:)) ?? URL(string: "https://api.fireworks.ai/inference/v1")!
+        anthropicKey = str("ANTHROPIC_API_KEY")
+        // Alfred's base URLs end in the API version; a bare host (as other tools set it) gets /v1.
+        anthropicBaseURL = str("ANTHROPIC_BASE_URL").flatMap(URL.init(string:)).map { ["", "/"].contains($0.path) ? $0.appendingPathComponent("v1") : $0 }
+            ?? URL(string: "https://api.anthropic.com/v1")!
 
         answerProvider = LLMProvider(rawValue: (str("ALFRED_ANSWER_PROVIDER") ?? "").lowercased()) ?? .openai
         contextProvider = LLMProvider(rawValue: (str("ALFRED_CONTEXT_PROVIDER") ?? "").lowercased()) ?? .openai
@@ -147,6 +169,8 @@ struct Config: Equatable {
             case .openai: (model, "fast", "low")
             case .nebius: (Self.nebiusDefaultModel, nil, "none")
             case .fireworks: (Self.fireworksDefaultModel, nil, "low")
+            // Claude Opus 5.5 in fast mode; thinking is always on, so low effort keeps it short.
+            case .anthropic: (Self.anthropicDefaultModel, "fast", "low")
             }
         }
         let c = defaults(contextProvider, answer: false)

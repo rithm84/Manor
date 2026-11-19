@@ -1,6 +1,6 @@
 # Benchmarks
 
-_Last updated: 2026-11-18_
+_Last updated: 2026-11-19_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -48,6 +48,17 @@ The retired desktop shell switched routes in 180 to 750 ms before its local mirr
 | After showing Home, Notes, and Problems | 104 to 105 MB | 2026-11-18 |
 | After visiting every page | about 145 MB, about 50 MB of it the Problems library | 2026-11-18 |
 | After 60 hover cards, 30 signature help cycles, 8 rounds of every page, and Notes typing and selection | 156 MB, peak 160 MB, 14 KB leaked | 2026-11-18 |
+
+## Alfred answers
+
+`AlfredBenchmarkTests` sends twelve interview, coding, system design, behavioral, and screen cases with Alfred's real instructions to a live provider, from this Mac's network. Times are from sending the request; "first text" is the first visible answer text, after any thinking.
+
+| Model | Setting | First text, median | Full answer, median | Slowest | Thinking per answer | Measured |
+|---|---|---|---|---|---|---|
+| Claude Opus 5.5, fast mode | Low effort | 1.2 s | 5.3 s | 7.9 s | about 160 tokens | 2026-11-19 |
+| Claude Opus 5.5, fast mode | Medium effort | 2.6 s | 7.8 s | 11.3 s | about 560 tokens | 2026-11-19 |
+
+Full coding answers run 1,400 to 2,500 output tokens with a step-through diagram and commented code. At low effort the generated Python passed every randomized check: 300 graph reachability cases, the rotten oranges examples, 215 top-k cases, and 200 LRU operation sequences. A one-line "answer directly" nudge saved about 0.2 seconds and was not kept. GPT-6.1 Terra on OpenAI's fast tier, the default, answers in about 2 to 3 seconds; it was not re-measured alongside.
 
 ## Upload recovery
 

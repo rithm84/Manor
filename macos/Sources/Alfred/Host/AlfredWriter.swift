@@ -312,8 +312,7 @@ public final class AlfredWriter {
         let id = "\(provider.rawValue)|\(key)|\(config.baseURL(for: provider))"
         if let client, client.id == id { return client.client }
         client?.client.invalidate()
-        let made: LLMClient = provider == .openai ? OpenAIClient(apiKey: key, baseURL: config.baseURL(for: provider))
-            : ChatCompletionsClient(apiKey: key, baseURL: config.baseURL(for: provider), providerName: provider.title)
+        guard let made = config.makeClient(for: provider) else { return nil }
         client = (id, made)
         return made
     }

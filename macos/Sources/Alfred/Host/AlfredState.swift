@@ -113,8 +113,7 @@ final class AlfredState: ObservableObject {
             guard let key = config.key(for: p), !key.isEmpty else { return nil }
             let id = "\(p.rawValue)|\(key)|\(config.baseURL(for: p))"
             if let c = clients[id] { return c }
-            let c: LLMClient = p == .openai ? OpenAIClient(apiKey: key, baseURL: config.baseURL(for: p))
-                : ChatCompletionsClient(apiKey: key, baseURL: config.baseURL(for: p), providerName: p.title)
+            guard let c = config.makeClient(for: p) else { return nil }
             clients[id] = c
             return c
         }
