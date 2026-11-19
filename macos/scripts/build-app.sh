@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Builds Manor.app (production) or "Manor Staging.app" and signs it with the "Manor Signing" certificate.
+# Builds Manor.app (production) or "Manor Staging.app" and signs it with the Developer ID Application certificate
+# for team 2588U5J9Z7 (release builds get a secure timestamp, which notarization requires).
 #
 #   scripts/build-app.sh [production|staging] [--debug] [--open]
 #
 # Configuration comes from config/<mode>.env (SUPABASE_URL and SUPABASE_KEY, the publishable key), which is
-# ignored by git. A stable signing identity keeps Keychain access and update checks working across builds.
+# ignored by git. Signing with the team's Developer ID keeps Keychain access, privacy permissions, and update checks
+# working across builds and certificate renewals; MANOR_SIGN_IDENTITY overrides it, and a Mac without it signs ad hoc.
 set -euo pipefail
 
 MODE="${1:-staging}"
@@ -88,9 +90,13 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-IDENTITY="${MANOR_SIGN_IDENTITY:-Manor Signing}"
-if security find-identity -p codesigning 2>/dev/null | grep -q "\"$IDENTITY\""; then
-  codesign --force --sign "$IDENTITY" --timestamp=none --options runtime --entitlements Resources/Manor.entitlements "$APP"
+TEAM_ID="2588U5J9Z7"
+IDENTITY="${MANOR_SIGN_IDENTITY:-$(security find-identity -v -p codesigning 2>/dev/null | grep -o "\"Developer ID Application: [^\"]*($TEAM_ID)\"" | head -1 | tr -d '"')}"
+# Notarization needs a secure timestamp from Apple; debug builds skip the network round trip.
+TIMESTAMP="--timestamp"
+[[ "$CONFIG" == debug ]] && TIMESTAMP="--timestamp=none"
+if [[ -n "$IDENTITY" ]] && security find-identity -p codesigning 2>/dev/null | grep -q "\"$IDENTITY\""; then
+  codesign --force --sign "$IDENTITY" "$TIMESTAMP" --options runtime --entitlements Resources/Manor.entitlements "$APP"
 else
   echo "warning: signing identity \"$IDENTITY\" not found; signing ad hoc" >&2
   codesign --force --sign - "$APP"

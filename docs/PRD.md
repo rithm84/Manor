@@ -45,7 +45,7 @@ Manor is not a team workspace or a calendar app. Collaboration and shared worksp
 
 ### Platform
 
-Manor is a native macOS app built with SwiftUI and AppKit for macOS 15 and later. It installs from a signed build and updates itself from Manor's releases. On macOS 26 it draws Liquid Glass for floating chrome and uses solid surfaces on earlier systems. There is no website and no web view shell.
+Manor is a native macOS app built with SwiftUI and AppKit for macOS 15 and later. It installs from a build signed with Manor's Developer ID and notarized by Apple, so it opens on any Mac without a warning, and updates itself from Manor's releases. On macOS 26 it draws Liquid Glass for floating chrome and uses solid surfaces on earlier systems. There is no website and no web view shell.
 
 - **Signing in** opens Google in a system sign-in window that returns the result to the app.
 - **Connecting an agent** opens Manor through a link it registered with macOS, and you approve the request inside the app.

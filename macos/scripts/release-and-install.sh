@@ -3,7 +3,8 @@
 #
 #   macos/scripts/release-and-install.sh <version> [notes.md]
 #
-# Checks everything the release needs before it starts: the Manor Signing certificate, the update key, a signed-in
+# Checks everything the release needs before it starts: the Developer ID certificate, notarization credentials, the
+# update key, a signed-in
 # GitHub CLI, and macos/config/production.env (written from the production project's publishable key when missing,
 # using SUPABASE_ACCESS_TOKEN from the environment or the repository's .env.local). The previous Manor.app goes to the
 # Trash rather than being deleted.
@@ -16,7 +17,10 @@ REPO_ROOT="$(cd "$ROOT/.." && pwd)"
 cd "$ROOT"
 
 fail() { echo "✗ $1" >&2; exit 1; }
-security find-identity -p codesigning 2>/dev/null | grep -q '"Manor Signing"' || fail "The Manor Signing certificate isn't in your keychain."
+security find-identity -v -p codesigning 2>/dev/null | grep -q 'Developer ID Application: .*(2588U5J9Z7)' \
+  || fail "The Developer ID Application certificate for team 2588U5J9Z7 isn't in your keychain, or Apple's G2 intermediate is missing."
+xcrun notarytool history --keychain-profile manor-notary >/dev/null 2>&1 \
+  || fail "Notarization credentials are missing: run xcrun notarytool store-credentials manor-notary."
 [[ -f ~/.config/manor/update_ed25519.key ]] || fail "Missing the update key at ~/.config/manor/update_ed25519.key."
 gh auth status >/dev/null 2>&1 || fail "The GitHub CLI isn't signed in (gh auth login)."
 [[ -z "$NOTES" || -f "$NOTES" ]] || fail "No release notes at $NOTES."

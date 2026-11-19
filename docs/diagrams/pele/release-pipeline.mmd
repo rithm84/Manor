@@ -8,12 +8,14 @@ flowchart TB
     A published build matches a commit`"}}:::gate
     build["`**build-app.sh**
     swift build · bundle · Info.plist
-    Signed by the Manor Signing certificate`"]:::app
+    Signed with Developer ID · team 2588U5J9Z7`"]:::app
+    notarize["`**Notarize and staple**
+    Apple's notary service · Gatekeeper check`"]:::external
     sign["`**Sign the archive**
     Ed25519 key in ~/.config/manor`"]:::gate
     release[("`**GitHub release**
     App zip + manor-update.json`")]:::external
-    clean --> build --> sign --> release
+    clean --> build --> notarize --> sign --> release
   end
   subgraph installed ["Installed Manor"]
     direction TB
@@ -21,7 +23,7 @@ flowchart TB
     Launch · hourly · active after an idle hour`"]:::app
     verify{{"`**Verify**
     Ed25519 signature · bundle id · build
-    Same signing certificate`"}}:::gate
+    Developer ID from the same team`"}}:::gate
     offer(["`**Update ready**
     Restart waits for unsaved work`"]):::app
     swap["`**Swap and relaunch**

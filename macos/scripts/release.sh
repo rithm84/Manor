@@ -4,9 +4,11 @@
 #   scripts/release.sh production <version> [notes.md]   # tag v<version>, marked latest
 #   scripts/release.sh staging [notes.md]                 # replaces the rolling "staging" prerelease
 #
-# A release is the app archive plus manor-update.json (version, build, archive name, Ed25519 signature).
-# Installed apps read that manifest, verify the signature with the public key in their Info.plist, and check
-# that the new app is signed with the same certificate before swapping it in.
+# A release is the notarized app archive plus manor-update.json (version, build, archive name, Ed25519
+# signature). Installed apps read that manifest, verify the signature with the public key in their Info.plist, and
+# check that the new app is signed by the same Apple developer team before swapping it in.
+#
+# Notarization uses the "manor-notary" keychain profile (xcrun notarytool store-credentials manor-notary ...).
 set -euo pipefail
 
 MODE="${1:?production or staging}"
@@ -38,6 +40,8 @@ if [[ "$MODE" == production ]] && gh release view "$TAG" --repo "$REPO" >/dev/nu
   exit 1
 fi
 [[ -f ~/.config/manor/update_ed25519.key ]] || { echo "Missing ~/.config/manor/update_ed25519.key" >&2; exit 1; }
+xcrun notarytool history --keychain-profile manor-notary >/dev/null 2>&1 \
+  || { echo "Notarization credentials missing: run xcrun notarytool store-credentials manor-notary" >&2; exit 1; }
 
 if [[ "$MODE" == production ]]; then
   echo "$VERSION" > VERSION
@@ -53,6 +57,22 @@ BUILD="$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Contents/Info.
 ARCHIVE="${NAME// /-}-$VERSION-$BUILD.zip"
 OUT="build/release"
 rm -rf "$OUT" && mkdir -p "$OUT"
+codesign -dv "$APP" 2>&1 | grep -q "TeamIdentifier=2588U5J9Z7" || { echo "$APP isn't signed with the Developer ID certificate" >&2; exit 1; }
+
+# Apple's notary service checks the signed app; its ticket is stapled on so Gatekeeper accepts the download offline.
+ditto -c -k --keepParent "$APP" "$OUT/notarize.zip"
+echo "Notarizing $NAME $VERSION ($BUILD)..."
+SUBMISSION="$(xcrun notarytool submit "$OUT/notarize.zip" --keychain-profile manor-notary --wait --output-format json)"
+STATUS="$(/usr/bin/python3 -c 'import json,sys; print(json.load(sys.stdin).get("status",""))' <<<"$SUBMISSION")"
+if [[ "$STATUS" != Accepted ]]; then
+  ID="$(/usr/bin/python3 -c 'import json,sys; print(json.load(sys.stdin).get("id",""))' <<<"$SUBMISSION")"
+  echo "Notarization $STATUS:" >&2
+  [[ -n "$ID" ]] && xcrun notarytool log "$ID" --keychain-profile manor-notary >&2
+  exit 1
+fi
+rm "$OUT/notarize.zip"
+xcrun stapler staple "$APP"
+spctl --assess --type execute "$APP" || { echo "Gatekeeper rejected the notarized app" >&2; exit 1; }
 ditto -c -k --keepParent "$APP" "$OUT/$ARCHIVE"
 SIGNATURE="$(swift scripts/sign-update.swift "$OUT/$ARCHIVE")"
 cat > "$OUT/manor-update.json" <<JSON

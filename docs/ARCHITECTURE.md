@@ -120,6 +120,5 @@ Open items:
 - Hosted ChatGPT registration and an unattended weekly review run against production are unverified.
 - The production X account needs reconnecting; its legacy token is rejected.
 - Independent file backup storage credentials, the scheduled backup, and a full remote database-plus-files restore rehearsal are outstanding.
-- Builds are signed with the self-signed Manor Signing certificate, not a Developer ID, and are not notarized, so a first install needs Gatekeeper approval.
 
 The exact migration inventory is in [`tools/recovery/current-status.json`](../tools/recovery/current-status.json). A deployment existing is not evidence that a check passed; the [testing and QA](arch-components/testing-and-qa.md) slice describes how changes are verified.

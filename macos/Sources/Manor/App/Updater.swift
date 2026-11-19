@@ -119,17 +119,31 @@ final class Updater {
     return app
   }
 
+  /// Accepts the new app only when Apple's Developer ID chain signed it for the same bundle identifier and the same
+  /// developer team as the running app. Pinning the team, not one certificate, keeps updates working when the
+  /// certificate is renewed.
   private static func checkSameSigner(_ app: URL) throws {
-    var running: SecCode?, mine: SecStaticCode?, requirement: SecRequirement?, theirs: SecStaticCode?
+    var running: SecCode?, mine: SecStaticCode?, info: CFDictionary?, theirs: SecStaticCode?, requirement: SecRequirement?
     guard SecCodeCopySelf([], &running) == errSecSuccess, let running,
           SecCodeCopyStaticCode(running, [], &mine) == errSecSuccess, let mine,
-          SecCodeCopyDesignatedRequirement(mine, [], &requirement) == errSecSuccess, let requirement,
+          SecCodeCopySigningInformation(mine, SecCSFlags(rawValue: kSecCSSigningInformation), &info) == errSecSuccess,
           SecStaticCodeCreateWithPath(app as CFURL, [], &theirs) == errSecSuccess, let theirs else {
+      throw UpdateError("Couldn't read the app's code signature.")
+    }
+    guard let team = (info as? [String: Any])?[kSecCodeInfoTeamIdentifier as String] as? String,
+          let identifier = Bundle.main.bundleIdentifier else {
+      throw UpdateError("This copy of Manor isn't signed by its developer, so it can't update itself. Download the latest version instead.")
+    }
+    // Apple's Developer ID requirement: Apple-anchored chain, the Developer ID intermediate, a Developer ID leaf, and
+    // the leaf's team.
+    let text = "identifier \"\(identifier)\" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] exists"
+      + " and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = \"\(team)\""
+    guard SecRequirementCreateWithString(text as CFString, [], &requirement) == errSecSuccess, let requirement else {
       throw UpdateError("Couldn't read the app's code signature.")
     }
     let flags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures | kSecCSCheckNestedCode | kSecCSStrictValidate)
     guard SecStaticCodeCheckValidity(theirs, flags, requirement) == errSecSuccess else {
-      throw UpdateError("The new version isn't signed with Manor's certificate.")
+      throw UpdateError("The new version isn't signed by Manor's developer.")
     }
   }
 
