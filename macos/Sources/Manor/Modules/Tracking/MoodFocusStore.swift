@@ -92,7 +92,6 @@ final class MoodFocusStore {
     let data = MoodFocusMonthData(
       summary: MoodFocusHistory.monthSummary(entries, month: month),
       trend: MoodFocusHistory.monthTrend(entries, endMonth: month, range: range),
-      grid: MoodFocusHistory.monthGrid(entries, month: month, today: today),
       moods: MoodFocusHistory.moodDistribution(monthEntries),
       focuses: MoodFocusHistory.focusDistribution(monthEntries),
       earliestMonth: MoodFocusHistory.earliestEntryMonth(entries, today: today)
@@ -214,7 +213,6 @@ final class MoodFocusStore {
 struct MoodFocusMonthData {
   let summary: MoodFocusMonthSummary
   let trend: [MoodFocusTrendPoint]
-  let grid: MoodFocusMonthGrid
   let moods: [MoodFocusDistributionRow<Mood>]
   let focuses: [MoodFocusDistributionRow<Focus>]
   let earliestMonth: String

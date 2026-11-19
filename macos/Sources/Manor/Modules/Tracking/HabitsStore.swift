@@ -141,7 +141,6 @@ final class HabitsStore {
       summary: summary, visibleRows: visible, rankedRows: HabitModel.sortRows(visible, by: key.sort),
       archivedCount: summary.rows.filter { $0.status == .retired }.count,
       trendHabitId: habitId, trendHabitName: habitId.flatMap { state.habit($0)?.name }, trend: trend, trendPoints: HabitTrendPoint.points(trend),
-      dayTotals: summary.dayTotals,
       earliestMonth: earliestMonthCache ?? key.month
     )
     historyCache[key] = data
@@ -275,7 +274,6 @@ struct HabitsHistoryData {
   let trendHabitName: String?
   let trend: [HabitTrendMonth]
   let trendPoints: [HabitTrendPoint]
-  let dayTotals: [HabitDayTotal]
   /// The first month with any habit data.
   let earliestMonth: String
 }

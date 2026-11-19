@@ -304,36 +304,3 @@ public struct HabitTrendMonth: Sendable, Hashable, Identifiable {
   public var id: String { month }
 }
 
-// MARK: Day totals
-
-/// How one day's habits went: the habits active that day and how many were completed.
-public struct HabitDayTotal: Sendable, Hashable {
-  public let date: String
-  public let active: Int
-  public let completed: Int
-  public init(date: String, active: Int, completed: Int) {
-    self.date = date
-    self.active = active
-    self.completed = completed
-  }
-
-  /// Every active habit completed.
-  public var perfect: Bool { active > 0 && completed == active }
-}
-
-public extension HabitMonthSummary {
-  /// Each day of the month with its active and completed habit counts, read from the rows' day marks so
-  /// the calendar and the month summary always agree. Future days and days with no active habit count zero.
-  var dayTotals: [HabitDayTotal] {
-    HabitDates.dates(inMonth: month).enumerated().map { index, date in
-      var active = 0
-      var completed = 0
-      for row in rows where row.days.indices.contains(index) {
-        let mark = row.days[index]
-        if mark.isTracked || mark == .pending { active += 1 }
-        if mark == .complete { completed += 1 }
-      }
-      return HabitDayTotal(date: date, active: active, completed: completed)
-    }
-  }
-}

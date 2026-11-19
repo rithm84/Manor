@@ -1,6 +1,6 @@
 # Tracking and Pomodoro
 
-_Last updated: 2026-11-18_
+_Last updated: 2026-11-19_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -20,10 +20,10 @@ A day is one `mood_focus_entries` row keyed by account and date, with independen
 
 ## The Tracking page
 
-`TrackingPage` has Daily and History tabs. Daily shows the day bar, the mood and focus check-in rows with their week strip, and the habit list with week strips, the freeze pool, and an Archived section. A missed row on the Yesterday view shows a Freeze control that spends or returns a freeze. History, under one month navigator, shows the month's numbers, then Trends: habit completion and mood and focus as two separate charts under one 3, 6, or 12-month range, each with its own readout and hover (side by side when the window is wide). Below them come the month calendar of days, and each habit's month beside the mood and focus distributions. Sort order, the archived toggle, and the last tab are remembered on the Mac.
+`TrackingPage` has Daily and History tabs. Daily shows the day bar, the mood and focus check-in rows with their week strip, and the habit list with week strips, the freeze pool, and an Archived section. A missed row on the Yesterday view shows a Freeze control that spends or returns a freeze. History, under one month navigator, shows the month's numbers, then Trends: habit completion and mood and focus as two separate charts under one 3, 6, or 12-month range, each with its own readout and hover (side by side when the window is wide). Below them comes each habit's month beside the month's mood and focus (`TrackingDistributions`): per signal, the most common level, a bar split by level, and each level's days and share, with rest days apart from focus's shares. A single day's check-in opens through Log a past day. Sort order, the archived toggle, and the last tab are remembered on the Mac.
 
 ## Pomodoro
 
 Sessions are `pomodoro_sessions` rows; a partial unique index allows one running or paused session per account. Timer preferences are account settings saved with `save_pomodoro_settings`. The app drives sessions with `start_pomodoro_session`, `pause_pomodoro_session`, `resume_pomodoro_session`, `end_pomodoro_session`, `update_pomodoro_session`, and `delete_pomodoro_session`; agents can also log a past session with `log_pomodoro_session`.
 
-`Pomodoro.swift` computes the remaining time from the start and pauses rather than a ticking counter, so the timer stays correct across sleep and relaunch, and computes month statistics and the informational day streak. The page publishes its countdown to the sidebar badge through `AppContext.pomodoroBadge`. Completion sounds are bundled WAV files played with `AVAudioPlayer` when sounds are on.
+`Pomodoro.swift` computes the remaining time from the start and pauses rather than a ticking counter, so the timer stays correct across sleep and relaunch, and computes month statistics and the informational day streak. The page publishes its countdown to the sidebar badge through `AppContext.pomodoroBadge`. Its header and History tab sit in the centered page column. History's session log groups each day's sessions on one surface under the day's totals and a midnight-to-midnight strip of when you focused (`PomodoroDayHours`); each row shows a completion mark, or a ring filled as far as a stopped session got, its time range, label, and focused time. Completion sounds are bundled WAV files played with `AVAudioPlayer` when sounds are on.

@@ -19,6 +19,7 @@ struct PomodoroHistoryView: View {
       }
       .padding(.horizontal, Space.s8)
       .padding(.bottom, Space.s10)
+      .centeredColumn()
     }
     .scrollBounceBehavior(.basedOnSize)
   }
@@ -203,8 +204,9 @@ private struct PomodoroDayTip: View {
 
 // MARK: Session log
 
+/// Every focus session of the month by day, newest first. Each day is a group: its name and totals beside a strip
+/// of the day's hours that shows when you focused, then its sessions as rows on one quiet surface.
 private struct PomodoroSessionLog: View {
-  @Environment(PomodoroStore.self) private var store
   let days: [PomodoroSessionDay]
   @Binding var confirmDelete: PomodoroSession?
   @State private var expanded = false
@@ -220,21 +222,9 @@ private struct PomodoroSessionLog: View {
         EmptyState(systemImage: "timer", title: "No focus sessions yet", message: "Start the timer and finished sessions will collect here.")
           .frame(minHeight: 220)
       } else {
-        LazyVStack(alignment: .leading, spacing: Space.s4) {
+        LazyVStack(alignment: .leading, spacing: Space.s6) {
           ForEach(shown) { day in
-            VStack(alignment: .leading, spacing: 0) {
-              HStack(alignment: .firstTextBaseline) {
-                Text(PomodoroDates.dayHeading(day.date, today: store.today)).font(.ui(Typography.Size.sm, weight: .semibold)).foregroundStyle(Palette.inkBody)
-                Spacer()
-                Text("\(day.completedCount) completed").font(.ui(Typography.Size.xs, weight: .medium)).foregroundStyle(Palette.inkMuted).tabular()
-              }
-              .padding(.bottom, Space.s2)
-              Hairline()
-              ForEach(day.sessions) { session in
-                PomodoroSessionRow(session: session, onDelete: { confirmDelete = session })
-                Hairline()
-              }
-            }
+            PomodoroSessionDayGroup(day: day, confirmDelete: $confirmDelete)
           }
         }
         if hidden > 0 {
@@ -245,6 +235,106 @@ private struct PomodoroSessionLog: View {
         }
       }
     }
+  }
+}
+
+private struct PomodoroSessionDayGroup: View {
+  @Environment(PomodoroStore.self) private var store
+  let day: PomodoroSessionDay
+  @Binding var confirmDelete: PomodoroSession?
+
+  var body: some View {
+    let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+    VStack(alignment: .leading, spacing: Space.s2) {
+      HStack(alignment: .center, spacing: Space.s4) {
+        VStack(alignment: .leading, spacing: 1) {
+          Text(PomodoroDates.dayHeading(day.date, today: store.today))
+            .font(.ui(Typography.Size.body, weight: .semibold)).foregroundStyle(Palette.ink)
+          Text(totals).font(.ui(Typography.Size.xs)).foregroundStyle(Palette.inkMuted).tabular().lineLimit(1)
+        }
+        .accessibilityElement(children: .combine)
+        Spacer(minLength: Space.s4)
+        PomodoroDayHours(sessions: day.sessions, timeZone: store.timeZone)
+          .frame(width: 220, height: 20)
+          .help("When you focused, midnight to midnight")
+      }
+      VStack(spacing: 0) {
+        ForEach(Array(day.sessions.enumerated()), id: \.element.id) { index, session in
+          if index > 0 { Hairline().padding(.leading, Space.s3 + 22 + Space.s3) }
+          PomodoroSessionRow(session: session, onDelete: { confirmDelete = session })
+        }
+      }
+      .background(shape.fill(Palette.surfacePaper))
+      .overlay(shape.strokeBorder(Palette.hairline))
+      .clipShape(shape)
+    }
+  }
+
+  /// "2 completed, 1 stopped · 55m".
+  private var totals: String {
+    let completed = day.completedCount
+    let stopped = day.sessions.count - completed
+    let focused = day.sessions.reduce(0) { $0 + ($1.focusedSeconds ?? 0) }
+    let counts = [completed > 0 ? "\(completed) completed" : nil, stopped > 0 ? "\(stopped) stopped" : nil].compactMap { $0 }
+    return counts.joined(separator: ", ") + " · " + Pomodoro.formatMinutes(focused)
+  }
+}
+
+/// The day from midnight to midnight as a thin track, with each session at the time it ran: completed sessions in
+/// full plum, stopped ones lighter. Faint ticks mark 6 AM, noon, and 6 PM.
+private struct PomodoroDayHours: View {
+  let sessions: [PomodoroSession]
+  let timeZone: TimeZone
+
+  var body: some View {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = timeZone
+    let spans = sessions.map { session -> (start: Double, length: Double, completed: Bool) in
+      let start = session.startedAt.timeIntervalSince(calendar.startOfDay(for: session.startedAt))
+      let end = session.endedAt ?? session.startedAt.addingTimeInterval(TimeInterval((session.focusedSeconds ?? 0) + session.pausedSeconds))
+      return (start, max(0, end.timeIntervalSince(session.startedAt)), session.status == .completed)
+    }
+    return Canvas { context, size in
+      let day: Double = 86_400
+      let track = CGRect(x: 0, y: (size.height - 6) / 2, width: size.width, height: 6)
+      context.fill(Path(roundedRect: track, cornerRadius: 3, style: .continuous), with: .color(Palette.surfaceSoft))
+      for hour in [6.0, 12, 18] {
+        let x = (size.width * hour / 24).rounded()
+        context.fill(Path(CGRect(x: x - 0.5, y: (size.height - 12) / 2, width: 1, height: 12)), with: .color(Palette.hairlineStrong))
+      }
+      for span in spans {
+        let x = size.width * span.start / day
+        let width = min(max(3, size.width * span.length / day), size.width - x)
+        let rect = CGRect(x: x, y: (size.height - 10) / 2, width: width, height: 10)
+        context.fill(Path(roundedRect: rect, cornerRadius: min(3, width / 2), style: .continuous),
+                     with: .color(span.completed ? Palette.primary : Palette.primary.opacity(0.4)))
+      }
+    }
+    .accessibilityHidden(true)
+  }
+}
+
+/// A completed session's filled mark with a check, or a stopped session's ring filled as far as it got.
+private struct PomodoroSessionMark: View {
+  let fraction: Double
+  let completed: Bool
+
+  var body: some View {
+    ZStack {
+      if completed {
+        Circle().fill(Palette.primary)
+        Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.onPrimary)
+      } else {
+        Circle().strokeBorder(Palette.surfaceStrong, lineWidth: 2.5)
+        Circle()
+          .inset(by: 1.25)
+          .trim(from: 0, to: max(0.04, min(1, fraction)))
+          .stroke(Palette.primary, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+          .rotationEffect(.degrees(-90))
+      }
+    }
+    .frame(width: 22, height: 22)
+    .accessibilityHidden(true)
   }
 }
 
@@ -261,54 +351,54 @@ private struct PomodoroSessionRow: View {
     let focusedSeconds = session.focusedSeconds ?? 0
     let time = PomodoroDates.startTimeLabel(session, timeZone: store.timeZone)
     HStack(spacing: Space.s3) {
-      Text(time).font(.ui(Typography.Size.xs)).foregroundStyle(Palette.inkMuted).tabular().frame(width: 68, alignment: .leading)
-      Group {
-        if completed { Circle().fill(Palette.primary) } else { Circle().strokeBorder(Palette.controlBorder, lineWidth: 1.5) }
+      PomodoroSessionMark(fraction: Double(focusedSeconds) / Double(max(1, session.plannedSeconds)), completed: completed)
+      VStack(alignment: .leading, spacing: 1) {
+        if let draft {
+          TextField("Session label", text: Binding(get: { draft }, set: { self.draft = String($0.prefix(PomodoroLimits.label)) }))
+            .textFieldStyle(.plain)
+            .font(.ui(Typography.Size.sm, weight: .medium))
+            .padding(.horizontal, Space.s2)
+            .frame(height: 26)
+            .background(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous).fill(Palette.surfaceCard))
+            .overlay(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous).strokeBorder(Palette.focusBorder, lineWidth: 1.5))
+            .padding(.leading, -Space.s2)
+            .focused($focused)
+            .onAppear { focused = true }
+            .onSubmit(commit)
+            .onExitCommand { self.draft = nil }
+            .onChange(of: focused) { _, isFocused in if !isFocused { commit() } }
+            .accessibilityLabel("Session label")
+        } else {
+          Text(session.label ?? "Focus session")
+            .font(.ui(Typography.Size.sm, weight: session.label == nil ? .regular : .medium))
+            .foregroundStyle(session.label == nil ? Palette.inkMuted : Palette.ink)
+            .lineLimit(1)
+            .onTapGesture(count: 2) { startEditing() }
+        }
+        Text(timeRange).font(.ui(Typography.Size.xs)).foregroundStyle(Palette.inkMuted).tabular().lineLimit(1)
       }
-      .frame(width: 8, height: 8)
-      if let draft {
-        TextField("Session label", text: Binding(get: { draft }, set: { self.draft = String($0.prefix(PomodoroLimits.label)) }))
-          .textFieldStyle(.plain)
-          .font(.ui(Typography.Size.sm, weight: .medium))
-          .padding(.horizontal, Space.s2)
-          .frame(height: 30)
-          .background(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous).fill(Palette.surfaceCard))
-          .overlay(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous).strokeBorder(Palette.focusBorder, lineWidth: 1.5))
-          .focused($focused)
-          .onAppear { focused = true }
-          .onSubmit(commit)
-          .onExitCommand { self.draft = nil }
-          .onChange(of: focused) { _, isFocused in if !isFocused { commit() } }
-          .accessibilityLabel("Session label")
-      } else {
-        Text(session.label ?? "Focus session")
-          .font(.ui(Typography.Size.sm, weight: session.label == nil || !completed ? .regular : .medium))
-          .foregroundStyle(session.label == nil || !completed ? Palette.inkMuted : Palette.ink)
-          .lineLimit(1)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .onTapGesture(count: 2) { startEditing() }
-      }
+      .frame(maxWidth: .infinity, alignment: .leading)
       HStack(spacing: 2) {
         IconButton("pencil", label: "Edit label", size: 26) { startEditing() }
         IconButton("trash", label: "Delete session", size: 26, action: onDelete)
       }
       .opacity(hovering || draft != nil ? 1 : 0)
       .disabled(store.busy)
-      HStack(spacing: 0) {
+      VStack(alignment: .trailing, spacing: 1) {
         Text(Pomodoro.formatMinutes(focusedSeconds))
-          .font(.ui(Typography.Size.sm, weight: completed ? .semibold : .medium))
-          .foregroundStyle(completed ? Palette.ink : Palette.inkMuted)
+          .font(.ui(Typography.Size.sm, weight: .semibold))
+          .foregroundStyle(completed ? Palette.ink : Palette.inkBody)
         if !completed {
-          Text(" of \(Pomodoro.formatMinutes(session.plannedSeconds))").font(.ui(Typography.Size.sm)).foregroundStyle(Palette.inkMuted)
+          Text("of \(Pomodoro.formatMinutes(session.plannedSeconds))").font(.ui(Typography.Size.xs)).foregroundStyle(Palette.inkMuted)
         }
       }
       .tabular()
+      .frame(minWidth: 52, alignment: .trailing)
     }
-    // The hover fill bleeds past the column so the text lines up with the page edge.
-    .padding(.horizontal, Space.s2)
-    .frame(minHeight: 38)
-    .background(hovering ? Palette.surfaceSoft : .clear, in: RoundedRectangle(cornerRadius: Radius.chip, style: .continuous))
-    .padding(.horizontal, -Space.s2)
+    .padding(.horizontal, Space.s3)
+    .padding(.vertical, Space.s2)
+    .frame(minHeight: 52)
+    .background(hovering ? Palette.surfaceSoft : .clear)
     .contentShape(Rectangle())
     .onHover { hovering = $0 }
     .animation(Motion.fast, value: hovering)
@@ -321,6 +411,16 @@ private struct PomodoroSessionRow: View {
     .accessibilityLabel("\(time), \(session.label ?? "focus session"), \(completed ? "\(Pomodoro.formatMinutes(focusedSeconds)) completed" : "stopped after \(Pomodoro.formatMinutes(focusedSeconds)) of \(Pomodoro.formatMinutes(session.plannedSeconds))")")
     .accessibilityAction(named: "Edit label", startEditing)
     .accessibilityAction(named: "Delete session", onDelete)
+  }
+
+  /// "9:05 – 9:30 AM", or "11:40 AM – 12:05 PM" across noon.
+  private var timeRange: String {
+    let end = session.endedAt ?? session.startedAt.addingTimeInterval(TimeInterval((session.focusedSeconds ?? 0) + session.pausedSeconds))
+    let zone = store.timeZone
+    let endLabel = DisplayDates.string(end, "h:mm a", timeZone: zone)
+    let sameHalf = DisplayDates.string(session.startedAt, "a", timeZone: zone) == DisplayDates.string(end, "a", timeZone: zone)
+    let startLabel = DisplayDates.string(session.startedAt, sameHalf ? "h:mm" : "h:mm a", timeZone: zone)
+    return "\(startLabel) – \(endLabel)"
   }
 
   private func startEditing() { draft = session.label ?? "" }

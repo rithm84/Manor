@@ -91,18 +91,6 @@ struct MoodFocusHistoryTests {
     #expect(MoodFocusHistory.focusLabel(average: 5) == .lockedIn)
   }
 
-  @Test func laysTheMonthOutFromMonday() {
-    let grid = MoodFocusHistory.monthGrid(entries, month: "2026-08", today: "2026-08-20")
-    #expect(grid.leadBlanks == 5)
-    #expect(grid.cells.count == 31)
-    #expect(grid.cells[0].date == "2026-08-01" && grid.cells[0].day == 1 && !grid.cells[0].future && !grid.cells[0].today)
-    #expect(grid.cells[0].entry?.focus == .resting)
-    #expect(grid.cells[19].date == "2026-08-20" && grid.cells[19].today && !grid.cells[19].future && grid.cells[19].entry == nil)
-    #expect(grid.cells[20].future)
-    #expect(MoodFocusHistory.monthGrid([], month: "2026-06", today: "2026-08-20").leadBlanks == 0)
-    #expect(MoodFocusHistory.monthGrid([], month: "2026-02", today: "2026-08-20").cells.count == 28)
-  }
-
   @Test func countsRatedDaysPerLevel() {
     let august = entries.filter { $0.date.hasPrefix("2026-08") }
     let mood = MoodFocusHistory.moodDistribution(august)

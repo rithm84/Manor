@@ -1,6 +1,6 @@
 # Manor PRD
 
-_Last updated: 2026-11-18_
+_Last updated: 2026-11-19_
 
 This page defines what Manor does: its scope, behavior, business rules, and vocabulary. It states the current product only. The dated history of how each rule was decided is in [product decisions](DECISIONS.md), the technical design is in the [architecture](ARCHITECTURE.md), and the visual direction is in the [design charter](DESIGN.md).
 
@@ -215,7 +215,7 @@ Tracking is the daily home for habits, mood, and focus. It has two tabs.
 **History** covers all three signals on one page:
 
 - **Habits:** 3, 6, and 12-month completion trends across all habits or one selected habit, and a month breakdown that gives each habit a completion ring with its day counts. Tiles follow your habit order (draggable, as on the daily list), completion rate, or name, and a toggle shows or hides retired habits. Completion rates count eligible tracked days only: periods before creation, paused or retired periods, and future dates aren't misses.
-- **Mood and focus:** a month summary naming the average mood and focus in scale words, a 3, 6, or 12-month trend of monthly averages with rest days excluded from focus, a month calendar where each day names its mood and focus and opens that day's editor, and per-level distributions for the month.
+- **Mood and focus:** a month summary naming the average mood and focus in scale words, a 3, 6, or 12-month trend of monthly averages with rest days excluded from focus, and the month's mood and focus beside the habits: for each signal, the level most days landed on, the month as one bar split by level, and each level's days and share, with rest days counted apart from focus's levels. **Log a past day** opens any earlier day to see or change its check-in; there is no day calendar.
 
 Mood and Focus are the reference configuration-defined trackers: one date-keyed record per day with independently loggable Mood (Great, Good, Neutral, Bad, Awful) and Focus (Locked In, High, Medium, Low, Locked Out, Resting). Either signal saves in one tap, and a missing signal differs from Resting. Quick capture accepts today and yesterday. The History editor accepts any past day in your saved time zone, never a future one, and a correction preserves the day's other rating. Agents save explicitly stated ratings directly and ask before saving an inferred one. Tracking stores ratings only; there is no written daily synthesis.
 
@@ -225,7 +225,7 @@ Pomodoro is a focus timer with its own page and a live countdown beside its side
 
 Starting a focus session takes an optional label. A running session can be paused, resumed, or stopped early, which records the focused time and marks it stopped; a break can be skipped. When a session reaches its planned length, Manor completes it, plays the completion sound when sounds are on, and offers the next step in the cycle, or starts it when auto-start is on.
 
-The page has Timer and History tabs. History shows month statistics (completed focus sessions, focused time, active days, sessions per active day, the best day, and consecutive days with a completed focus session) and the session log by day, newest first, with inline relabeling and deletion. The day streak is informational and isn't part of the streak system. Agents can query sessions with a range summary, start, pause, resume, end, relabel, and delete sessions, and log a focus session timed elsewhere with its start and duration.
+The page has Timer and History tabs. History is a centered page that shows month statistics (completed focus sessions, focused time, active days, sessions per active day, the best day, and consecutive days with a completed focus session) and the session log by day, newest first. Each day shows its totals and a strip of its hours marking when you focused, then its sessions with their times, label, and focused time; a stopped session shows how far it got. Sessions relabel inline and delete from the row. The day streak is informational and isn't part of the streak system. Agents can query sessions with a range summary, start, pause, resume, end, relabel, and delete sessions, and log a focus session timed elsewhere with its start and duration.
 
 ### Problems
 

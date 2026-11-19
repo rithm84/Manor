@@ -1,6 +1,6 @@
 # Manor product decisions
 
-_Last updated: 2026-11-18_
+_Last updated: 2026-11-19_
 
 This page is the dated record of Manor's product decisions. The [PRD](PRD.md) states the behavior those decisions produce today, and the [architecture](ARCHITECTURE.md) records the technical design. When a decision changes behavior, the PRD changes in the same edit, so the two pages always agree.
 
@@ -38,6 +38,7 @@ Each entry names the decision and, in parentheses, the PRD sections it shapes. A
 | 2026-11-18 | Prep-mode coding answers end with a short edge-case list, each case paired with where the code handles it ([Alfred](PRD.md#alfred)). |
 | 2026-11-18 | Prep-mode code is commented generously, so the comments alone explain it: numbered step comments say what each step does and why, and short trailing comments sit on most meaningful lines ([Alfred](PRD.md#alfred)). |
 | 2026-11-18 | When an interviewer's new problem leaves open something that changes the solution, Prep mode shows the clarifying questions to ask before the answer, so you practice asking them; fully specified problems, typed requests, and quick actions are answered directly ([Alfred](PRD.md#alfred)). |
+| 2026-11-19 | Tracking History drops the month calendar of days, since Log a past day opens any earlier day; the month's mood and focus beside the habits shows each signal's most common level, a split bar, and per-level shares. Pomodoro History is a centered page with a redesigned session log ([Tracking](PRD.md#tracking), [Pomodoro](PRD.md#pomodoro)). |
 | 2026-11-17 | In Prep mode, quitting Manor from the Dock or with Command-Q hides Manor and leaves Alfred in the menu bar ([Alfred](PRD.md#alfred)). |
 | 2026-11-18 | `/alfred` in Notes opens a composer dialog with images; the result lands in an Alfred block rendered with the note's own block views, and selected text or blocks can be rewritten through a preview that changes nothing until applied ([writing in Notes](PRD.md#writing-in-notes)). |
 | 2026-11-18 | With Manor in front, Alfred's shortcut opens Alfred inside Manor, where it acts on your records when you ask, through the same commands the pages use; each action offers Undo and irreversible ones ask first. Codex remains the agent for everything outside the app ([Alfred in Manor](PRD.md#alfred-in-manor), [scope](PRD.md#scope)). |

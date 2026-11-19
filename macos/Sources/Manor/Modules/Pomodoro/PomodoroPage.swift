@@ -22,6 +22,8 @@ struct PomodoroPage: View {
         IconButton("slider.horizontal.3", label: "Timer preferences", size: 32) { preferences = store.settings }
           .overlay(RoundedRectangle(cornerRadius: Radius.control, style: .continuous).strokeBorder(Palette.hairline))
       }
+      // A centered page, like Daily tracking and Bookmarks; the timer stage centers itself below.
+      .centeredColumn()
       if let error = store.error, store.loaded {
         ErrorBanner(error)
           .overlay(alignment: .topTrailing) {
@@ -29,6 +31,7 @@ struct PomodoroPage: View {
           }
           .padding(.horizontal, Space.s8)
           .padding(.bottom, Space.s3)
+          .centeredColumn()
       }
       if !store.loaded {
         ProgressView().controlSize(.small).frame(maxWidth: .infinity, maxHeight: .infinity)

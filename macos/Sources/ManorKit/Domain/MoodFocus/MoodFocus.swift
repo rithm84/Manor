@@ -244,21 +244,6 @@ public struct MoodFocusTrendPoint: Equatable, Sendable, Identifiable {
   public var id: String { month }
 }
 
-public struct MoodFocusDayCell: Equatable, Sendable, Identifiable {
-  public let date: String
-  public let day: Int
-  public let entry: MoodFocusEntry?
-  public let future: Bool
-  public let today: Bool
-  public var id: String { date }
-}
-
-public struct MoodFocusMonthGrid: Equatable, Sendable {
-  /// Empty cells before the first day so the grid starts on Monday.
-  public let leadBlanks: Int
-  public let cells: [MoodFocusDayCell]
-}
-
 public struct MoodFocusDistributionRow<Level: Hashable & Sendable>: Equatable, Sendable {
   public let level: Level
   public let count: Int
@@ -312,15 +297,6 @@ public enum MoodFocusHistory {
   public static func focusLabel(average value: Double?) -> Focus? {
     guard let value else { return nil }
     return Focus.ascending[max(1, min(5, Int(value.rounded()))) - 1]
-  }
-
-  public static func monthGrid(_ entries: [MoodFocusEntry], month: String, today: String) -> MoodFocusMonthGrid {
-    let byDate = Dictionary(self.entries(entries, inMonth: month).map { ($0.date, $0) }, uniquingKeysWith: { first, _ in first })
-    let cells = (1...MoodFocusDates.daysInMonth(month)).map { day -> MoodFocusDayCell in
-      let date = String(format: "%@-%02d", month, day)
-      return MoodFocusDayCell(date: date, day: day, entry: byDate[date], future: date > today, today: date == today)
-    }
-    return MoodFocusMonthGrid(leadBlanks: MoodFocusDates.mondayIndex("\(month)-01"), cells: cells)
   }
 
   /// Rated days per mood level, Great first.

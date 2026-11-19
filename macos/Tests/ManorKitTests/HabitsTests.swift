@@ -226,19 +226,6 @@ struct HabitHistoryTests {
     #expect(HabitDates.monthShift("2025-12", 1) == "2026-01")
   }
 
-  @Test func totalsEachDayForTheCalendar() {
-    let totals = HabitModel.monthSummary("2026-08", in: historyState()).dayTotals
-    #expect(totals.count == 31)
-    #expect(totals[0] == HabitDayTotal(date: "2026-08-01", active: 2, completed: 2))
-    #expect(totals[0].perfect)
-    #expect(totals[1] == HabitDayTotal(date: "2026-08-02", active: 2, completed: 1))
-    #expect(!totals[1].perfect)
-    // The retired habit leaves the day after it retires; today's open habit still counts as active.
-    #expect(totals[3] == HabitDayTotal(date: "2026-08-04", active: 1, completed: 0))
-    #expect(totals[4] == HabitDayTotal(date: "2026-08-05", active: 1, completed: 0))
-    #expect(totals[5].active == 0 && !totals[5].perfect)
-  }
-
   @Test func boundsBackwardNavigationAtTheEarliestMonth() {
     #expect(HabitModel.earliestHistoryMonth(historyState()) == "2026-08")
     var backdated = activeHabit

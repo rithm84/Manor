@@ -2,13 +2,13 @@ import ManorKit
 import SwiftUI
 
 /// History for habits, mood, and focus as one page under one month navigator: the month in numbers, monthly
-/// trends for habits and for mood and focus, the month as a calendar of days, and each habit's month beside the mood and focus mix.
+/// trends for habits and for mood and focus, and each habit's month beside the month's mood and focus. A single
+/// day's check-in is viewed and changed through Log a past day.
 struct TrackingHistoryView: View {
   let habits: HabitsStore
   let moodFocus: MoodFocusStore
   let today: String
   let onOpenHabit: (String) -> Void
-  let onOpenDay: (String) -> Void
   let onAddDay: () -> Void
   @AppStorage("tracking.history.range") private var range = 6
   @AppStorage("tracking.history.sort") private var sortRaw = HabitTileSort.order.rawValue
@@ -31,7 +31,6 @@ struct TrackingHistoryView: View {
         habitOptions: habitData?.visibleRows.map { ($0.habit.id, $0.habit.name) } ?? [],
         wide: width >= 760
       )
-      calendarSection(habitData, moodData)
       breakdown(habitData, moodData)
     }
     .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
@@ -58,38 +57,9 @@ struct TrackingHistoryView: View {
       Spacer(minLength: Space.s4)
       Button(action: onAddDay) { Label("Log a past day", systemImage: "plus") }
         .buttonStyle(.secondary)
-        .help("Add or change mood and focus for an earlier day")
+        .help("See or change the check-in for an earlier day")
         .disabled(!moodFocus.loaded)
     }
-  }
-
-  // MARK: Calendar
-
-  private func calendarSection(_ habitData: HabitsHistoryData?, _ moodData: MoodFocusMonthData?) -> some View {
-    VStack(alignment: .leading, spacing: Space.s3) {
-      HStack(alignment: .lastTextBaseline, spacing: Space.s4) {
-        HistorySectionHead(title: "Days", subtitle: "Open a day to see it or change its check-in.")
-        Spacer(minLength: Space.s4)
-        if width >= 640 { calendarLegend }
-      }
-      if let moodData {
-        TrackingCalendar(grid: moodData.grid, totals: habitData?.dayTotals ?? [], onOpen: onOpenDay)
-      } else {
-        TrackingCalendar(grid: MoodFocusHistory.monthGrid([], month: month, today: today), totals: habitData?.dayTotals ?? [], onOpen: onOpenDay)
-          .disabled(true)
-      }
-    }
-  }
-
-  private var calendarLegend: some View {
-    HStack(spacing: Space.s4) {
-      HistoryLegendItem(label: "Mood") { MoodFocusSwatch(shape: .square, color: Palette.inkMuted) }
-      HistoryLegendItem(label: "Focus") { MoodFocusSwatch(shape: .circle, color: Palette.inkMuted) }
-      HistoryLegendItem(label: "Habits done") {
-        Capsule().fill(Palette.completion).frame(width: 14, height: 4)
-      }
-    }
-    .accessibilityHidden(true)
   }
 
   // MARK: Breakdown
@@ -101,7 +71,7 @@ struct TrackingHistoryView: View {
     if width >= 760 {
       HStack(alignment: .top, spacing: Space.s8) {
         habitsColumn.frame(maxWidth: .infinity, alignment: .topLeading)
-        mix.frame(width: width >= 960 ? 260 : 224)
+        mix.frame(width: width >= 1100 ? 340 : width >= 960 ? 312 : 280)
       }
     } else {
       VStack(alignment: .leading, spacing: Space.s8) {

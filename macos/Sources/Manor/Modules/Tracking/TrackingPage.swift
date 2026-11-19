@@ -143,7 +143,6 @@ struct TrackingContent: View {
             TrackingHistoryView(
               habits: habits, moodFocus: moodFocus, today: today,
               onOpenHabit: openDetail,
-              onOpenDay: { openDay($0, adding: false) },
               onAddDay: { openDay(HabitDates.addDays(today, -1), adding: true) }
             )
           }
