@@ -88,8 +88,8 @@ public final class AlfredAssistant {
 
     public var isWorking: Bool { phase != .idle }
     /// Whether a key for the assistant's provider is set.
-    public var isAvailable: Bool { script != nil || config.hasAnthropic }
-    public static let missingKeyMessage = "Add an Anthropic key in Settings, under Alfred, to ask Alfred here."
+    public var isAvailable: Bool { script != nil || config.answerReady }
+    public static let missingKeyMessage = "Sign in to Manor to ask Alfred here."
 
     private let appName: String
     /// Earlier turns, compacted to the request and what Alfred said and did.
@@ -370,11 +370,10 @@ public final class AlfredAssistant {
     private var config: Config { AlfredHost.shared.currentState?.config ?? AlfredHost.shared.settings.config }
 
     private func client(for config: Config) -> AnthropicClient? {
-        guard let key = config.anthropicKey, !key.isEmpty else { return nil }
-        let id = "\(key)|\(config.anthropicBaseURL)"
+        guard let id = config.clientID(for: .anthropic), let access = config.access(for: .anthropic) else { return nil }
         if let client, client.id == id { return client.client }
         client?.client.invalidate()
-        let made = AnthropicClient(apiKey: key, baseURL: config.anthropicBaseURL)
+        let made = AnthropicClient(auth: access.auth, baseURL: access.baseURL)
         client = (id, made)
         return made
     }
@@ -387,7 +386,7 @@ public final class AlfredAssistant {
             default: break
             }
         }
-        if let error = error as? LLMError, error.status == 401 { return "Anthropic didn't accept the key. Check it in Settings, under Alfred." }
+        if let error = error as? LLMError, error.status == 401 { return "Your Manor session expired. Sign in again to use Alfred." }
         return error.localizedDescription
     }
 }

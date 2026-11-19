@@ -43,8 +43,13 @@ final class Listener: ObservableObject {
     func start(config: Config, captureMic: Bool, eagerThem: Double? = nil) async {
         guard !isActive else { return }
         await teardown()  // clean up anything left from a failed session
-        guard let key = config.deepgramKey, !key.isEmpty else {
-            status = .failed("Add a Deepgram key in Manor Settings, under Alfred")
+        let authorization: @Sendable () async throws -> String
+        if let key = config.deepgramKey, !key.isEmpty {
+            authorization = { "Token \(key)" }
+        } else if config.isHosted, let hosted = config.hosted {
+            authorization = { try await hosted.deepgramAuthorization() }
+        } else {
+            status = .failed("Sign in to Manor to use Alfred's listening")
             return
         }
         generation += 1
@@ -52,7 +57,7 @@ final class Listener: ObservableObject {
         status = .starting
         notice = nil
         micEnabled = captureMic
-        let options = FluxStream.Options(apiKey: key, model: config.deepgramModel,
+        let options = FluxStream.Options(authorization: authorization, model: config.deepgramModel,
                                          eotThreshold: config.deepgramEOTThreshold,
                                          eagerEOTThreshold: config.deepgramEagerEOTThreshold,
                                          eotTimeoutMs: config.deepgramEOTTimeoutMs,

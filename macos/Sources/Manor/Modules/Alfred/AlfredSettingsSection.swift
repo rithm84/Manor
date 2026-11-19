@@ -2,8 +2,9 @@ import Alfred
 import AppKit
 import SwiftUI
 
-/// Settings ▸ Alfred: the mode, what answers can see, interview preferences, personal context, keys,
-/// permissions, and the ⌃⌥ shortcuts. Everything here is kept on this Mac.
+/// Settings ▸ Alfred: the mode, what answers can see, interview preferences, personal context, models,
+/// permissions, and the ⌃⌥ shortcuts. Everything here is kept on this Mac. Alfred runs on Manor's own model access,
+/// so there are no keys to enter.
 struct AlfredSettingsSection: View {
   @State private var windowTextTrusted = WindowText.isTrusted
   @ObservedObject private var prefs = AlfredHost.shared.preferences
@@ -13,13 +14,9 @@ struct AlfredSettingsSection: View {
   var body: some View {
     VStack(alignment: .leading, spacing: Space.s5) {
       SettingsSectionTitle(title: "Alfred")
-      if !model.isReady {
-        SettingsNotice(text: "Add an Anthropic key below to start using Alfred. Press ⌃⌥Space from any app to ask.")
-      }
       modeCard
       if prefs.alfredMode == .interview { interviewCard }
       AlfredKnowledgeCard(editing: $editing)
-      AlfredKeysCard(model: model)
       modelsCard
       permissionsCard
       shortcutsCard

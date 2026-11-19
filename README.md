@@ -40,7 +40,7 @@ Manor brings your tasks, habits, notes, and other records together in one place 
 - **Jobs.** A Pipeline board from To apply through Offer with a flow chart of every application, and a Listings view of the SimplifyJobs internship catalog.
 - **Notes.** A block editor with columns, tabs, tables, media, equations, and a live table of contents. Drafts are protected on your Mac before they sync, concurrent edits merge by block, and seven days of versions can be restored.
 - **Bookmarks.** X bookmarks and agent-supplied captures with text and semantic search.
-- **Alfred.** A personal assistant in the notch. Ask it about anything on your screen or any question you have. Inside Manor, the same shortcut opens Alfred in the window, where it answers about the page you're on and makes changes you ask for, each with Undo. In Notes, `/alfred` writes diagrams, tables, and prose as real blocks, and Command-J rewrites a selection through a preview. It runs on Claude Opus 5.5 with your own Anthropic key and keeps its data on your Mac.
+- **Alfred.** A personal assistant in the notch. Ask it about anything on your screen or any question you have. Inside Manor, the same shortcut opens Alfred in the window, where it answers about the page you're on and makes changes you ask for, each with Undo. In Notes, `/alfred` writes diagrams, tables, and prose as real blocks, and Command-J rewrites a selection through a preview. It runs on Claude Opus 5.5, included with your Manor account with no keys to enter, and keeps its data on your Mac.
 - **Weekly reviews.** A scheduled review of habits, mood, focus, and tasks, written by a hosted ChatGPT task and saved back into Manor.
 
 Light and dark modes are both first-class, and Liquid Glass draws the floating chrome on macOS 26.

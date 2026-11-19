@@ -16,7 +16,7 @@ Alfred is the `Alfred` Swift target in `macos/Sources/Alfred/`. It has no packag
 | `Audio`, `Capture` | Microphone and system-audio capture, PCM conversion, and screenshots |
 | `Transcription` | Deepgram Flux streaming, the listener, and the transcript |
 | `Intelligence` | The answer and context engines, prompts, and the Anthropic and OpenAI clients |
-| `Core` | Configuration, hot keys, the Keychain store, knowledge, preferences, and logging |
+| `Core` | Configuration, provider access (hosted or a development key), hot keys, knowledge, preferences, and logging |
 | `UI` | The overlay, Markdown, the diagram language, generative UI, theme, and the embeddable views |
 | `Debug` | Demo content and snapshot rendering, enabled only by environment variables |
 
@@ -26,7 +26,7 @@ Alfred never reads or writes Manor's account data or calls Manor's backend. Its 
 
 The following diagram shows how one answer is produced.
 
-![Alfred's runtime inside Manor's process: a hot key, the menu bar, or the notch starts an answer; in Prep mode, system audio (the other side) and the microphone (you) stream to Deepgram Flux, whose transcript feeds the context engine's rolling memory and open question; the answer engine combines that with an image and the text of the window you are working in and your knowledge documents, streams from Claude Opus 5.5 in fast mode with your own Anthropic key, with a GPT-6 Luna topic router on your OpenAI key, and renders in the notch overlay as Markdown, diagrams, and generative UI; AlfredWriter streams an /alfred block into a note from the note's title and nearby text only; with Manor in front, the hot key opens Alfred in Manor instead, which calls the same model with Manor's tools and shows each action with Undo.](../diagrams/svg/alfred-runtime.svg)
+![Alfred's runtime inside Manor's process: a hot key, the menu bar, or the notch starts an answer; in Prep mode, system audio (the other side) and the microphone (you) stream to Deepgram Flux, whose transcript feeds the context engine's rolling memory and open question; the answer engine combines that with an image and the text of the window you are working in and your knowledge documents, streams from Claude Opus 5.5 in fast mode through Manor's alfred-proxy function, with a GPT-6 Luna topic router, and renders in the notch overlay as Markdown, diagrams, and generative UI; AlfredWriter streams an /alfred block into a note from the note's title and nearby text only; with Manor in front, the hot key opens Alfred in Manor instead, which calls the same model with Manor's tools and shows each action with Undo.](../diagrams/svg/alfred-runtime.svg)
 
 <details><summary>Diagram key</summary>
 
@@ -111,9 +111,21 @@ Each successful action becomes a row carrying the tool's `undo` closure. Failure
 
 `ManorAlfredToolbox` (`Manor/Modules/AlfredTools/`) implements the toolbox over `ManorToolCatalog` (`ManorKit/Domain/AlfredTools/`). Writes go through `Gateway.command` with the same inputs the pages send. References resolve through `ManorTargetMatcher`, which fails with the candidates when a reference names several records or none. Every write returns an inverse for Undo, except ending a Pomodoro session, which confirms first. Debug builds launched with `ALFRED_NOTES_DEMO=1` script the model's turns so the dialog can be reviewed without a key; the scripted turns still call the real tools.
 
+## Hosted model access
+
+`supabase/functions/alfred-proxy` holds Manor's Anthropic, OpenAI, and Deepgram keys as function secrets and serves only the Manor app: it verifies the session token locally, refuses agent tokens (ChatGPT, Codex) and signed-out requests, and checks the account's allowance before each request.
+
+| Route | What it does |
+|---|---|
+| `POST /anthropic/messages` | Passes an Opus 5.5 request through and streams the reply back unchanged. Only `claude-opus-5-5`, at most 32,000 output tokens, and the app's own tools are accepted; server tools and MCP connectors are refused. |
+| `POST /openai/responses` | The new-topic check on GPT-6 Luna, with a reply capped at 1,000 tokens and no tools. |
+| `POST /deepgram/token` | A Deepgram grant that lives about 30 seconds: the app opens each Flux connection, and each reconnection, with a fresh one, and the stream stays open after it expires. The Deepgram key needs the Member role. |
+
+Usage is read from the provider's own numbers as the stream passes (`message_start` and `message_delta`) and added to `manor_private.alfred_usage`, one row per account and UTC day with request, token, listening-session, and new-topic-check counts and an estimated cost at list price (fast mode is twice the standard rate). No request or response content is stored or logged. Limits are function secrets: `ALFRED_DAILY_LIMIT_USD` (default 10), `ALFRED_MONTHLY_LIMIT_USD` (100), `ALFRED_DAILY_LISTENING_SESSIONS` (20), `ALFRED_DAILY_ROUTER_REQUESTS` (500), `ALFRED_UNLIMITED_ACCOUNTS` (account IDs without limits), and `ALFRED_HOSTED=off`, which pauses every route. A refused request returns the provider's own error shape with a reader-facing reason. The rules live in `_shared/alfredProxy.ts` with Deno tests.
+
 ## Keys, data, and logs
 
-- **Keys.** `KeyStore` keeps `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and `DEEPGRAM_API_KEY` as generic passwords under the Keychain service `app.manor.alfred.api-keys`. **Check and Save** validates each with its provider before storing it. Precedence is the process environment, then the Keychain, then `~/Library/Application Support/Manor/Alfred/.env.local`, then, for builds made from a checkout on this Mac, `macos/.env.local` and the repository's `.env.local`. Keys go only to their own provider.
+- **Keys.** The app holds no provider keys. `AlfredHost.setAccount(token:)`, called by Manor on sign-in and sign-out, gives Alfred a way to read the account's current access token, and the clients send it with the publishable key to the `alfred-proxy` Edge Function named in `Info.plist` (`ProviderAuth`, `HostedEndpoint`). A provider key in development settings (the process environment, `~/Library/Application Support/Manor/Alfred/.env.local`, or, in debug builds only, `macos/.env.local` and the repository's `.env.local`) overrides the proxy for that provider. Release builds never read the checkout, so a staging or production build made on a developer's Mac still uses the proxy. Signed out with no development key, Alfred asks you to sign in.
 - **Data on this Mac** lives under `~/Library/Application Support/Manor/Alfred/`: `knowledge.json` for personal context (résumé, experience, job descriptions, and notes, imported from PDF, Word, RTF, HTML, Markdown, or text) and `Sessions/` for saved Markdown sessions.
 - **Preferences** are `UserDefaults` keys under `manor.alfred.`: mode, interview style, coding language, role context, extra instructions, text scale, microphone capture, listen on launch, save sessions, prepare answers early, and include screen.
 - **Logs** use the subsystem `app.manor` and category `alfred` and never contain keys, transcripts, or screenshots.

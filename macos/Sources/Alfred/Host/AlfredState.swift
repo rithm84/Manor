@@ -110,8 +110,7 @@ final class AlfredState: ObservableObject {
     /// rebuilt when a provider's key or endpoint actually changes.
     private func configureEngines() {
         func clientFor(_ p: LLMProvider) -> LLMClient? {
-            guard let key = config.key(for: p), !key.isEmpty else { return nil }
-            let id = "\(p.rawValue)|\(key)|\(config.baseURL(for: p))"
+            guard let id = config.clientID(for: p) else { return nil }
             if let c = clients[id] { return c }
             guard let c = config.makeClient(for: p) else { return nil }
             clients[id] = c
@@ -236,8 +235,8 @@ final class AlfredState: ObservableObject {
         answerVisible = true
         let general = mode == .general
         guard let client else {
-            let id = answers.begin(heading: "Alfred needs an Anthropic key", usedScreen: false, general: general)
-            answers.fail("Add your Anthropic key in Manor Settings, under Alfred.", id: id)
+            let id = answers.begin(heading: "Sign in to use Alfred", usedScreen: false, general: general)
+            answers.fail("Alfred runs on your Manor account. Sign in to Manor, then ask again.", id: id)
             openSettings()
             return
         }

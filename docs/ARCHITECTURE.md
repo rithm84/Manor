@@ -12,7 +12,7 @@ Diagrams across these documents color each node by its role; open **Diagram key*
 
 The system has one durable authority, Postgres behind `manor_command`, and several clients and executors around it. The following diagram shows the parts and who talks to whom.
 
-![Manor's system landscape: you use the Manor app and Alfred, which share one process on your Mac; the app keeps an on-device mirror and drafts, signs in with Supabase Auth, sends commands and feed pulls to Postgres, and calls Edge Functions for problem runs and uploads; agent hosts reach the manor-mcp Edge Function; Edge Functions run code in Blaxel sandboxes; cron workers pull from Google, X, and SimplifyJobs; Alfred calls Anthropic, OpenAI, and Deepgram with your own keys; the app checks GitHub Releases for signed updates.](diagrams/svg/architecture-system-landscape.svg)
+![Manor's system landscape: you use the Manor app and Alfred, which share one process on your Mac; the app keeps an on-device mirror and drafts, signs in with Supabase Auth, sends commands and feed pulls to Postgres, and calls Edge Functions for problem runs and uploads; agent hosts reach the manor-mcp Edge Function; Edge Functions run code in Blaxel sandboxes; cron workers pull from Google, X, and SimplifyJobs; Alfred calls Anthropic, OpenAI, and Deepgram through the alfred-proxy Edge Function, which holds Manor's keys; the app checks GitHub Releases for signed updates.](diagrams/svg/architecture-system-landscape.svg)
 
 <details><summary>Diagram key</summary>
 
@@ -23,7 +23,7 @@ The system has one durable authority, Postgres behind `manor_command`, and sever
 
 The Manor app is a SwiftUI and AppKit process. It owns presentation, local protection of unsaved work, and a SQLite mirror of the account; it owns no business rules that the server doesn't also enforce. Supabase owns authentication, authoritative rows, private files, change feeds, scheduled work, and the Edge Functions that hold secrets. There is no second general-purpose API server.
 
-Agents never reach Postgres directly. They call the `manor-mcp` Edge Function with a scoped OAuth token, and every tool runs the same named operations the app's commands run. Alfred, which shares Manor's process, calls its model providers directly with keys you supply and doesn't touch account data.
+Agents never reach Postgres directly. They call the `manor-mcp` Edge Function with a scoped OAuth token, and every tool runs the same named operations the app's commands run. Alfred, which shares Manor's process, reaches its model providers through the `alfred-proxy` Edge Function with the signed-in account's session, so the app holds no provider keys; the proxy sees model requests but never touches account data.
 
 ### Implementation stack
 
@@ -103,8 +103,8 @@ Staging holds synthetic data, and staging jobs never use production integration 
 | Agent endpoint | `manor-mcp` Edge Function |
 | Editor sandboxes and grading | Blaxel sandboxes in `us-was-1` (Ashburn, Virginia) |
 | Embeddings | OpenAI `text-embedding-3-small`, billed to Manor's server-side key |
-| Alfred answers, memory, Notes writing, and Alfred in Manor | Your Anthropic key: Claude Opus 5.5 in fast mode, low effort; your OpenAI key runs GPT-6 Luna, which routes new topics |
-| Alfred transcription | Your Deepgram key, Flux streaming |
+| Alfred answers, memory, Notes writing, and Alfred in Manor | Claude Opus 5.5 in fast mode, low effort, through `alfred-proxy` with Manor's Anthropic key; GPT-6 Luna routes new topics with Manor's OpenAI key |
+| Alfred transcription | Deepgram Flux streaming, opened with a short-lived token from `alfred-proxy` |
 | Calendar, bookmarks, and jobs sources | Google Calendar API, X API, SimplifyJobs listings on GitHub |
 | Weekly review generation | A scheduled ChatGPT task through remote MCP |
 | Releases | GitHub Releases with an Ed25519-signed feed |

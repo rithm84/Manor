@@ -53,6 +53,16 @@ public final class AlfredHost {
 
     public var isStarted: Bool { state != nil }
 
+    /// The host app's signed-in account: a way to read its current access token (refreshed as needed), or nil when
+    /// signed out. Alfred reaches its models through Manor's proxy with it, so there are no provider keys in the app.
+    public func setAccount(token: (@Sendable () async throws -> String)?) {
+        let changed = (HostedEndpoint.token == nil) != (token == nil)
+        HostedEndpoint.token = token
+        guard changed else { return }
+        state?.reloadConfig()
+        settingsModel?.refreshConfig()
+    }
+
     /// General or Prep. Setting it takes effect at once: Prep starts listening, General stops it.
     public var mode: AlfredMode {
         get { preferences.alfredMode }

@@ -1,3 +1,4 @@
+import Alfred
 import AppKit
 import ManorKit
 import Observation
@@ -56,12 +57,16 @@ final class AppModel {
         context.account = account
       } else if let gateway = session.gateway {
         context = AppContext(session: session, gateway: gateway, account: account, toasts: toasts)
+        // Alfred reaches its models through Manor's proxy as this account.
+        let auth = session.client.auth
+        AlfredHost.shared.setAccount { try await auth.session.accessToken }
         // Uploads interrupted by a quit or a dropped connection continue in the background.
         FileService.shared(for: gateway).resumePending()
         if let link = pendingLink { pendingLink = nil; handle(url: link) }
       }
     case .signedOut, .starting:
       context = nil
+      AlfredHost.shared.setAccount(token: nil)
     }
   }
 

@@ -92,12 +92,12 @@ final class OpenAIClient: LLMClient, @unchecked Sendable {
         }
     }
 
-    private let apiKey: String
+    private let auth: ProviderAuth
     private let baseURL: URL
     private let session: URLSession
 
-    init(apiKey: String, baseURL: URL) {
-        self.apiKey = apiKey
+    init(auth: ProviderAuth, baseURL: URL) {
+        self.auth = auth
         self.baseURL = baseURL
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 60
@@ -113,15 +113,23 @@ final class OpenAIClient: LLMClient, @unchecked Sendable {
 
     /// Opens (and keeps alive) the TLS/HTTP2 connection so the first hotkey answer skips the handshake.
     func warmUp() {
-        var request = URLRequest(url: baseURL.appendingPathComponent("models"))
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 10
-        session.dataTask(with: request) { _, _, _ in }.resume()
+        Task { [session, baseURL] in
+            var request = URLRequest(url: baseURL.appendingPathComponent("models"))
+            request.timeoutInterval = 10
+            guard (try? await self.authorize(&request)) != nil else { return }
+            _ = try? await session.data(for: request)
+        }
+    }
+
+    /// A direct request carries the key; a hosted one carries the account's session for Manor's proxy.
+    private func authorize(_ request: inout URLRequest) async throws {
+        if case .apiKey(let key) = auth { request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization") }
+        _ = try await auth.applyHosted(to: &request)
     }
 
     /// Non-streaming call; returns the concatenated output text.
     func complete(_ req: Request) async throws -> String {
-        let (data, response) = try await session.data(for: try urlRequest(req, stream: false))
+        let (data, response) = try await session.data(for: try await urlRequest(req, stream: false))
         try Self.check(response, data: data)
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw APIError(status: 0, message: "Malformed response")
@@ -134,7 +142,7 @@ final class OpenAIClient: LLMClient, @unchecked Sendable {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let (bytes, response) = try await session.bytes(for: try urlRequest(req, stream: true))
+                    let (bytes, response) = try await session.bytes(for: try await urlRequest(req, stream: true))
                     if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
                         var data = Data()
                         for try await b in bytes { data.append(b) }
@@ -156,10 +164,10 @@ final class OpenAIClient: LLMClient, @unchecked Sendable {
         }
     }
 
-    private func urlRequest(_ req: Request, stream: Bool) throws -> URLRequest {
+    private func urlRequest(_ req: Request, stream: Bool) async throws -> URLRequest {
         var request = URLRequest(url: baseURL.appendingPathComponent("responses"))
         request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        try await authorize(&request)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if stream { request.setValue("text/event-stream", forHTTPHeaderField: "Accept") }
         request.httpBody = try JSONSerialization.data(withJSONObject: req.body(stream: stream))

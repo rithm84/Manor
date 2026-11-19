@@ -2,12 +2,14 @@ import Foundation
 
 /// Provider configuration. Secrets never live in UserDefaults.
 ///
+/// Shipped builds hold no provider keys: Alfred reaches every provider through Manor's `alfred-proxy` function with
+/// the signed-in account's session. A provider key found in development settings overrides that for its provider.
 /// Resolution order (first match wins per key):
 ///   1. Process environment
-///   2. Keys saved in Settings ▸ Alfred (Keychain, `KeyStore`)
-///   3. `~/Library/Application Support/Manor/Alfred/.env.local`
-///   4. `<repo>/macos/.env.local`, then `<repo>/macos/.env`, then the repository's own `.env.local` (builds made
-///      from a checkout on this Mac)
+///   2. `~/Library/Application Support/Manor/Alfred/.env.local`
+///   3. Debug builds only: `<repo>/macos/.env.local`, then `<repo>/macos/.env`, then the repository's own
+///      `.env.local`. Release builds never read the checkout, so a staging or production build made on a developer's
+///      Mac still goes through the proxy.
 
 /// The two model providers Alfred uses: Anthropic for everything that reasons, OpenAI for the quick new-topic check.
 enum LLMProvider: String, Equatable {
@@ -61,11 +63,15 @@ struct Config: Equatable {
 
     /// Files that contributed values, for display in Settings.
     var sources: [URL]
-    /// Keys that came from the Keychain (entered in Settings ▸ Providers).
-    var appKeys: Set<String> = []
+    /// Manor's proxy for this build, when the app's Info.plist names a Supabase project.
+    var hosted: HostedEndpoint?
+    /// Whether the host app has an account signed in, which the proxy requires.
+    var signedIn = false
 
     var hasOpenAI: Bool { !(openAIKey ?? "").isEmpty }
     var hasAnthropic: Bool { !(anthropicKey ?? "").isEmpty }
+    /// Requests can go through Manor's proxy.
+    var isHosted: Bool { hosted != nil && signedIn }
     func key(for provider: LLMProvider) -> String? {
         switch provider {
         case .anthropic: anthropicKey
@@ -79,26 +85,41 @@ struct Config: Equatable {
         }
     }
 
-    /// A client for a provider, or nil without its key.
+    /// How to reach a provider: its development key when one is set, otherwise Manor's proxy while signed in.
+    func access(for provider: LLMProvider) -> (auth: ProviderAuth, baseURL: URL)? {
+        if let key = key(for: provider), !key.isEmpty { return (.apiKey(key), baseURL(for: provider)) }
+        guard let hosted, signedIn, let token = HostedEndpoint.token else { return nil }
+        return (.hosted(publishableKey: hosted.publishableKey, token: token), provider == .anthropic ? hosted.anthropic : hosted.openAI)
+    }
+
+    /// A client for a provider, or nil when it can't be reached.
     func makeClient(for provider: LLMProvider) -> LLMClient? {
-        guard let key = key(for: provider), !key.isEmpty else { return nil }
+        guard let access = access(for: provider) else { return nil }
         switch provider {
-        case .anthropic: return AnthropicClient(apiKey: key, baseURL: anthropicBaseURL)
-        case .openai: return OpenAIClient(apiKey: key, baseURL: openAIBaseURL)
+        case .anthropic: return AnthropicClient(auth: access.auth, baseURL: access.baseURL)
+        case .openai: return OpenAIClient(auth: access.auth, baseURL: access.baseURL)
         }
     }
 
+    /// Identifies a provider's client, so a client is rebuilt only when how it connects changes.
+    func clientID(for provider: LLMProvider) -> String? {
+        if let key = key(for: provider), !key.isEmpty { return "\(provider.rawValue)|key|\(key.hashValue)|\(baseURL(for: provider))" }
+        return isHosted ? "\(provider.rawValue)|hosted|\(hosted!.base)" : nil
+    }
+
     /// The answer path is the one that must work for Alfred to be useful.
-    var answerReady: Bool { hasAnthropic }
-    var hasDeepgram: Bool { !(deepgramKey ?? "").isEmpty }
+    var answerReady: Bool { hasAnthropic || isHosted }
+    var hasDeepgram: Bool { !(deepgramKey ?? "").isEmpty || isHosted }
 
     static func load() -> Config {
         var files: [URL] = [Paths.userEnvFile]
+        #if DEBUG
         if let repo = Paths.repoRoot {
             files.append(repo.appendingPathComponent(".env.local"))
             files.append(repo.appendingPathComponent(".env"))
             files.append(repo.deletingLastPathComponent().appendingPathComponent(".env.local"))
         }
+        #endif
 
         var merged: [String: String] = [:]
         var sources: [URL] = []
@@ -107,13 +128,12 @@ struct Config: Equatable {
             merged.merge(EnvFile.parse(text)) { _, new in new }
             sources.insert(file, at: 0)
         }
-        // Keys entered in the app beat env files; the process environment still wins (CI, self-tests).
-        let appKeys = KeyStore.all
-        merged.merge(appKeys) { _, app in app }
+        // The process environment wins (CI, self-tests).
         merged.merge(ProcessInfo.processInfo.environment) { _, env in env }
 
         var config = Config(values: merged, sources: sources)
-        config.appKeys = Set(appKeys.keys)
+        config.hosted = HostedEndpoint(info: Bundle.main.infoDictionary)
+        config.signedIn = HostedEndpoint.token != nil
         return config
     }
 

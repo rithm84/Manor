@@ -63,7 +63,7 @@ flowchart TB
   hosts -->|remote MCP| edge
   edge --> pg
   cron --> pg
-  alfred -->|your own keys| models
+  alfred -->|via alfred-proxy · Manor's keys| models
   shell -->|update checks| gh
   edge -->|jailed runs · LSP| blaxel
   cron async_1@-.->|scheduled pulls| sources

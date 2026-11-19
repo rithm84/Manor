@@ -117,7 +117,7 @@ Read a selected skill's full SKILL.md (plus companion files) before applying it.
 
 ## Working Rules
 
-- **Secrets:** `.env.local` holds server-side credentials, including the Supabase access token, the OpenAI embedding key, and Google web OAuth credentials. Never commit it, echo it, or move it. Alfred's own provider keys live in the user's Keychain; never log or print them.
+- **Secrets:** `.env.local` holds server-side credentials, including the Supabase access token, the OpenAI embedding key, and Google web OAuth credentials. Never commit it, echo it, or move it. Alfred's provider keys (Anthropic, OpenAI, Deepgram) are `alfred-proxy` function secrets; `.env.local` copies of them are development overrides. Never log or print them.
 - **Real data only:** signed-in surfaces use real account data and honest empty states; never substitute fixtures or invented records.
 - **QA:** before calling UI work done, run the staging build in the remote macOS sandbox and exercise every flow on the changed pages in both themes and window states, as the testing and QA slice describes.
 - **Docs:** one source of truth per fact; abridge and point rather than duplicate across docs. New long-form research goes in `docs/`.

@@ -12,12 +12,12 @@ final class AnthropicClient: LLMClient, @unchecked Sendable {
     /// Server-side refusal fallback: a classifier decline is retried on the model Anthropic recommends.
     static let fallbackBeta = "server-side-fallback-2026-07-01"
 
-    private let apiKey: String
+    private let auth: ProviderAuth
     private let baseURL: URL
     private let session: URLSession
 
-    init(apiKey: String, baseURL: URL) {
-        self.apiKey = apiKey
+    init(auth: ProviderAuth, baseURL: URL) {
+        self.auth = auth
         self.baseURL = baseURL
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 90
@@ -29,10 +29,12 @@ final class AnthropicClient: LLMClient, @unchecked Sendable {
     func invalidate() { session.finishTasksAndInvalidate() }
 
     func warmUp() {
-        var request = URLRequest(url: baseURL.appendingPathComponent("models"))
-        headers(&request)
-        request.timeoutInterval = 10
-        session.dataTask(with: request) { _, _, _ in }.resume()
+        Task { [session, baseURL] in
+            var request = URLRequest(url: baseURL.appendingPathComponent("models"))
+            request.timeoutInterval = 10
+            guard (try? await self.authorize(&request)) != nil else { return }
+            _ = try? await session.data(for: request)
+        }
     }
 
     /// Effort levels the Messages API accepts; anything lower than `low` (Alfred's "none" and "minimal") is `low`.
@@ -81,7 +83,7 @@ final class AnthropicClient: LLMClient, @unchecked Sendable {
     }
 
     func complete(_ req: LLMRequest) async throws -> String {
-        let (data, response) = try await session.data(for: try urlRequest(req, stream: false))
+        let (data, response) = try await session.data(for: try await urlRequest(req, stream: false))
         try check(response, data: data)
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw LLMError(status: 0, message: "Malformed response", provider: providerName)
@@ -95,7 +97,7 @@ final class AnthropicClient: LLMClient, @unchecked Sendable {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let (bytes, response) = try await session.bytes(for: try urlRequest(req, stream: true))
+                    let (bytes, response) = try await session.bytes(for: try await urlRequest(req, stream: true))
                     if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
                         var data = Data()
                         for try await b in bytes { data.append(b) }
@@ -161,7 +163,7 @@ final class AnthropicClient: LLMClient, @unchecked Sendable {
                 do {
                     var request = URLRequest(url: baseURL.appendingPathComponent("messages"))
                     request.httpMethod = "POST"
-                    headers(&request)
+                    try await authorize(&request)
                     request.setValue(Self.fallbackBeta, forHTTPHeaderField: "anthropic-beta")
                     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                     request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
@@ -230,15 +232,17 @@ final class AnthropicClient: LLMClient, @unchecked Sendable {
         LLMError(status: 0, message: "Alfred couldn't answer that one. Try rephrasing the request.", provider: provider)
     }
 
-    private func headers(_ request: inout URLRequest) {
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+    /// A direct request carries the key; a hosted one carries the account's session for Manor's proxy.
+    private func authorize(_ request: inout URLRequest) async throws {
+        if case .apiKey(let key) = auth { request.setValue(key, forHTTPHeaderField: "x-api-key") }
+        _ = try await auth.applyHosted(to: &request)
         request.setValue(Self.apiVersion, forHTTPHeaderField: "anthropic-version")
     }
 
-    private func urlRequest(_ req: LLMRequest, stream: Bool) throws -> URLRequest {
+    private func urlRequest(_ req: LLMRequest, stream: Bool) async throws -> URLRequest {
         var request = URLRequest(url: baseURL.appendingPathComponent("messages"))
         request.httpMethod = "POST"
-        headers(&request)
+        try await authorize(&request)
         request.setValue(Self.fallbackBeta, forHTTPHeaderField: "anthropic-beta")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if stream { request.setValue("text/event-stream", forHTTPHeaderField: "Accept") }

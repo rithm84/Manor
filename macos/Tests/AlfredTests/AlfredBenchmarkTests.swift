@@ -286,6 +286,39 @@ final class AnthropicClientTests: XCTestCase {
         XCTAssertNil(AnthropicClient.body(OpenAIClient.Request(model: "m", instructions: "", parts: []), stream: false)["speed"])
     }
 
+    /// Shipped builds reach providers through Manor's proxy as the signed-in account; a development key overrides it.
+    func testHostedAccessUsesTheSessionAndADevelopmentKeyOverridesIt() async throws {
+        let info: [String: Any] = ["ManorSupabaseURL": "https://example.supabase.co", "ManorSupabaseKey": "sb_publishable_x"]
+        let hosted = try XCTUnwrap(HostedEndpoint(info: info))
+        XCTAssertEqual(hosted.anthropic.absoluteString, "https://example.supabase.co/functions/v1/alfred-proxy/anthropic")
+        XCTAssertEqual(hosted.deepgramToken.absoluteString, "https://example.supabase.co/functions/v1/alfred-proxy/deepgram/token")
+        XCTAssertNil(HostedEndpoint(info: ["ManorSupabaseURL": "https://example.supabase.co"]))
+
+        let saved = HostedEndpoint.token
+        defer { HostedEndpoint.token = saved }
+        HostedEndpoint.token = { "session-token" }
+        var config = Config(values: [:])
+        config.hosted = hosted
+        XCTAssertFalse(config.answerReady, "nothing until the account is signed in")
+        config.signedIn = true
+        XCTAssertTrue(config.answerReady)
+        XCTAssertTrue(config.hasDeepgram)
+        let access = try XCTUnwrap(config.access(for: .anthropic))
+        XCTAssertEqual(access.baseURL, hosted.anthropic)
+        var request = URLRequest(url: access.baseURL)
+        let applied = try await access.auth.applyHosted(to: &request)
+        XCTAssertTrue(applied)
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer session-token")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "apikey"), "sb_publishable_x")
+        XCTAssertEqual(config.access(for: .openai)?.baseURL, hosted.openAI)
+
+        var development = Config(values: ["ANTHROPIC_API_KEY": "dev"])
+        development.hosted = hosted
+        development.signedIn = true
+        XCTAssertEqual(development.access(for: .anthropic)?.baseURL.absoluteString, "https://api.anthropic.com/v1")
+        XCTAssertNotEqual(development.clientID(for: .anthropic), config.clientID(for: .anthropic))
+    }
+
     func testBaseURLGetsTheAPIVersion() {
         XCTAssertEqual(Config(values: ["ANTHROPIC_BASE_URL": "https://api.anthropic.com"]).anthropicBaseURL.absoluteString, "https://api.anthropic.com/v1")
         XCTAssertEqual(Config(values: [:]).anthropicBaseURL.absoluteString, "https://api.anthropic.com/v1")

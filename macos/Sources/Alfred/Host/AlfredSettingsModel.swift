@@ -2,32 +2,13 @@ import AppKit
 import AVFoundation
 import Combine
 
-/// Everything Settings ▸ Alfred shows and changes: keys, models, permissions, and the session folder.
+/// Everything Settings ▸ Alfred shows and changes: models, permissions, and the session folder.
 /// Preferences and knowledge are edited directly through `AlfredHost.shared.preferences` and `.knowledge`.
 @MainActor
 public final class AlfredSettingsModel: ObservableObject {
-    public enum KeySource: Equatable, Sendable { case saved, envFile, missing }
-
-    public struct KeyStatus: Equatable, Sendable {
-        public let name: String
-        /// The last four characters of the key in use, for recognition.
-        public let suffix: String?
-        public let source: KeySource
-    }
-
-    public enum CheckResult: Equatable, Sendable {
-        case ok
-        case rejected(String)
-        case unreachable(String)
-    }
-
     public enum Permission: Sendable { case screenRecording, microphone }
 
     public enum PermissionState: Equatable, Sendable { case granted, denied, notAsked }
-
-    public static let anthropicKeyName = "ANTHROPIC_API_KEY"
-    public static let openAIKeyName = "OPENAI_API_KEY"
-    public static let deepgramKeyName = "DEEPGRAM_API_KEY"
 
     @Published private(set) var config: Config
     @Published public private(set) var screenRecording: PermissionState = .notAsked
@@ -51,51 +32,12 @@ public final class AlfredSettingsModel: ObservableObject {
         state.$config.removeDuplicates().sink { [weak self] in self?.config = $0 }.store(in: &bag)
     }
 
-    // MARK: Keys
-
-    public var anthropicKey: KeyStatus { status(Self.anthropicKeyName, config.anthropicKey) }
-    public var openAIKey: KeyStatus { status(Self.openAIKeyName, config.openAIKey) }
-    public var deepgramKey: KeyStatus { status(Self.deepgramKeyName, config.deepgramKey) }
-    /// Answers need an Anthropic key; Prep mode's listening also needs Deepgram, and the new-topic check OpenAI.
+    /// Whether Alfred can answer: signed in to Manor, or a development key is set.
     public var isReady: Bool { config.answerReady }
-    public var hasSavedKeys: Bool { !config.appKeys.isEmpty }
 
-    private func status(_ name: String, _ value: String?) -> KeyStatus {
-        guard let value, !value.isEmpty else { return KeyStatus(name: name, suffix: nil, source: .missing) }
-        return KeyStatus(name: name, suffix: String(value.suffix(4)), source: config.appKeys.contains(name) ? .saved : .envFile)
-    }
-
-    /// Checks each non-empty key with its provider, then saves it to the Keychain. A rejected key never replaces a
-    /// working one; a key that couldn't be checked (offline) is saved anyway.
-    public func checkAndSave(anthropic: String, openAI: String, deepgram: String) async -> [String: CheckResult] {
-        var results: [String: CheckResult] = [:]
-        var saved = false
-        for (name, raw) in [(Self.anthropicKeyName, anthropic), (Self.openAIKeyName, openAI), (Self.deepgramKeyName, deepgram)] {
-            let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !value.isEmpty else { continue }
-            let result: KeyCheck.Result = switch name {
-            case Self.anthropicKeyName: await KeyCheck.anthropic(value, baseURL: config.anthropicBaseURL)
-            case Self.openAIKeyName: await KeyCheck.openAI(value, baseURL: config.openAIBaseURL)
-            default: await KeyCheck.deepgram(value)
-            }
-            switch result {
-            case .ok: results[name] = .ok
-            case .rejected(let why): results[name] = .rejected(why); continue
-            case .unreachable(let why): results[name] = .unreachable(why)
-            }
-            if KeyStore.set(name, value) { saved = true }
-        }
-        if saved { reload() }
-        return results
-    }
-
-    public func removeSavedKeys() {
-        KeyStore.names.forEach { KeyStore.set($0, nil) }
-        reload()
-    }
-
-    private func reload() {
-        if let state = host?.currentState { state.reloadConfig() } else { config = Config.load() }
+    /// Picks up a sign-in or sign-out when no Alfred session is running to publish it.
+    func refreshConfig() {
+        if host?.currentState == nil { config = Config.load() }
     }
 
     // MARK: Models

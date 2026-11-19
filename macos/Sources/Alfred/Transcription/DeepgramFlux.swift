@@ -13,7 +13,9 @@ final class FluxStream: @unchecked Sendable {
     }
 
     struct Options {
-        var apiKey: String
+        /// The Authorization header for one connection: "Token <key>" with a development key, or "Bearer <token>"
+        /// with a short-lived token from Manor's proxy, fetched fresh for every connection and reconnection.
+        var authorization: @Sendable () async throws -> String
         var model: String
         var eotThreshold: Double?
         var eagerEOTThreshold: Double?
@@ -115,11 +117,32 @@ final class FluxStream: @unchecked Sendable {
     private func connect() {
         generation += 1
         let gen = generation
+        state = attempts == 0 ? .connecting : .reconnecting
+        let authorization = options.authorization
+        Task { [weak self] in
+            let header: Result<String, Error>
+            do { header = .success(try await authorization()) } catch { header = .failure(error) }
+            self?.q.async { [weak self] in
+                guard let self, gen == self.generation, self.state != .closed else { return }
+                switch header {
+                case .success(let value): self.open(value, gen: gen)
+                case .failure(let error):
+                    // An account without access (signed out, or today's listening used up) won't fix itself.
+                    if let error = error as? LLMError, [401, 403, 429].contains(error.status) {
+                        self.state = .failed(error.message)
+                    } else {
+                        self.handleDisconnect(error, status: nil)
+                    }
+                }
+            }
+        }
+    }
+
+    private func open(_ authorization: String, gen: Int) {
         var request = URLRequest(url: url)
-        request.setValue("Token \(options.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(authorization, forHTTPHeaderField: "Authorization")
         let task = session.webSocketTask(with: request)
         self.task = task
-        state = attempts == 0 ? .connecting : .reconnecting
         task.resume()
         receive(task, gen: gen)
         Log.stt.info("[\(self.name, privacy: .public)] connecting (attempt \(self.attempts + 1))")
