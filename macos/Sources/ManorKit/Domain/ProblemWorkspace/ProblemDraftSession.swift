@@ -177,13 +177,21 @@ public final class ProblemDraftSession {
     return remote.source
   }
 
+  /// Saves pending code to the cloud, one write at a time. A caller that finds a write in flight waits for it, then
+  /// saves whatever is still pending itself. The wait is a loop that clears a finished write before checking again:
+  /// the write's own caller clears it only once it resumes, and a waiter can resume first, so waiting on the same
+  /// finished write again would return at once and spin forever on the main actor, allocating on every pass.
   public func sync() async throws {
     _ = await cloudRead.value
-    try await localWrites.value
-    if let cloudWrite {
-      try await cloudWrite.value
-      if local?.pending == true { return try await sync() }
-      return
+    while true {
+      if let inFlight = cloudWrite {
+        try await inFlight.value
+        if cloudWrite == inFlight { cloudWrite = nil }
+        continue
+      }
+      try await localWrites.value
+      // Nothing between this check and starting the write below suspends, so no other write can start in between.
+      if cloudWrite == nil { break }
     }
     guard let draft = local, draft.pending else { return }
     if cloudConflict != nil {
@@ -196,7 +204,8 @@ public final class ProblemDraftSession {
       try await self.acknowledge(draft, revision: receipt.revision)
     }
     cloudWrite = pending
-    defer { cloudWrite = nil }
+    // A waiter may already have cleared this write and started the next one; leave that one in place.
+    defer { if cloudWrite == pending { cloudWrite = nil } }
     do { try await pending.value } catch {
       var committed = false
       do {

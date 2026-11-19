@@ -68,7 +68,7 @@ Inside the sandbox, one bridge serves every language, keeps a server warm per la
 
 ## Code drafts
 
-`CodeDraftStore` is a GRDB database at `Application Support/Manor/<environment>/ProblemCodeDrafts.sqlite`, keyed by account, problem, and language, with the source, content version, cloud revision, and a pending flag. Every keystroke is protected locally; the cloud save is debounced 600 milliseconds and goes through `save_problem_draft` with `expected_revision` and `content_version`, bounded to 256 KiB of UTF-8. The cloud draft loads with `manor_problem_query` (`read_problem_draft`).
+`CodeDraftStore` is a GRDB database at `Application Support/Manor/<environment>/ProblemCodeDrafts.sqlite`, keyed by account, problem, and language, with the source, content version, cloud revision, and a pending flag. Every keystroke is protected locally; the cloud save is debounced 600 milliseconds and goes through `save_problem_draft` with `expected_revision` and `content_version`, bounded to 256 KiB of UTF-8. The cloud draft loads with `manor_problem_query` (`read_problem_draft`). Cloud saves run one at a time: a save requested while another is in flight waits for it, then sends whatever is still pending, so typing during a slow save ends in exactly one more save.
 
 An unedited local draft takes the cloud copy. Local edits that started from a different cloud revision raise a conflict that offers keeping yours or using the cloud's. A save that failed is resolved by re-reading the cloud copy. Opening a draft re-stamps it with the current content version, and the server rejects a draft for a changed statement. Sign-out waits for pending drafts, then deletes only synced ones.
 

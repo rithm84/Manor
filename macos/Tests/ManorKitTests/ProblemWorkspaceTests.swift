@@ -221,24 +221,73 @@ private final class FakeDraftCloud: ProblemDraftCloud {
   var stored: CloudCodeDraft?
   var saves: [LocalCodeDraft] = []
   var failSaves = false
+  /// Holds each save open until `release()`, like a slow network.
+  var holdSaves = false
+  private var held: CheckedContinuation<Void, Never>?
+  private var heldWaiters: [CheckedContinuation<Void, Never>] = []
 
   func loadDraft(problemId: String, language: ProblemLanguage) async throws -> CloudCodeDraft? { stored }
 
   func saveDraft(_ draft: LocalCodeDraft) async throws -> CloudCodeDraft {
     saves.append(draft)
+    if holdSaves {
+      await withCheckedContinuation { continuation in
+        held = continuation
+        heldWaiters.forEach { $0.resume() }
+        heldWaiters = []
+      }
+    }
     if failSaves { throw ManorConnectionError(operation: "save_problem_draft", detail: "offline") }
     if let stored, stored.revision != draft.cloudRevision { throw ManorRequestError(operation: "save_problem_draft", code: "PT409", detail: "conflict") }
     let saved = CloudCodeDraft(id: draft.id, problemId: draft.problemId, language: .python, contentVersion: draft.contentVersion, source: draft.code, revision: (stored?.revision ?? 0) + 1, updatedAt: "2026-10-12T12:00:00Z")
     stored = saved
     return saved
   }
+
+  /// Returns once a save is being held.
+  func waitForHeldSave() async {
+    if held != nil { return }
+    await withCheckedContinuation { heldWaiters.append($0) }
+  }
+
+  func release() {
+    holdSaves = false
+    held?.resume()
+    held = nil
+  }
 }
 
 @Suite("Problem draft session")
 @MainActor
 struct ProblemDraftSessionTests {
-  private func session(_ cloud: FakeDraftCloud, store: CodeDraftStore, boundary: CodeDraftProtectionBoundary? = nil) -> ProblemDraftSession {
-    ProblemDraftSession(accountId: "account", problemId: "problem", language: .python, contentVersion: 1, store: store, boundary: boundary ?? CodeDraftProtectionBoundary(), cloud: cloud, saveDelay: .milliseconds(10)) { _, _ in }
+  private func session(_ cloud: FakeDraftCloud, store: CodeDraftStore, boundary: CodeDraftProtectionBoundary? = nil, saveDelay: Duration = .milliseconds(10)) -> ProblemDraftSession {
+    ProblemDraftSession(accountId: "account", problemId: "problem", language: .python, contentVersion: 1, store: store, boundary: boundary ?? CodeDraftProtectionBoundary(), cloud: cloud, saveDelay: saveDelay) { _, _ in }
+  }
+
+  /// Typing while a save is in flight, with a second save waiting on it (the debounce timer firing): the waiter
+  /// resumes before the save that started it has cleared its in-flight marker. It must save the newer code once,
+  /// not call itself forever on the finished save (which froze the editor and grew memory without bound).
+  @Test(.timeLimit(.minutes(1))) func typingDuringASaveWithAnotherWaitingSavesTheNewerCode() async throws {
+    let cloud = FakeDraftCloud()
+    let store = try CodeDraftStore()
+    let draft = session(cloud, store: store, saveDelay: .seconds(60))
+    _ = try await draft.open(starterCode: "starter")
+    _ = await draft.reconciled()
+    draft.protect("a")
+    try await draft.protected()
+    cloud.holdSaves = true
+    let first = Task { try await draft.sync() }
+    await cloud.waitForHeldSave()
+    let second = Task { try await draft.sync() }
+    for _ in 0..<10 { await Task.yield() }
+    draft.protect("ab")
+    try await draft.protected()
+    cloud.release()
+    try await first.value
+    try await second.value
+    #expect(cloud.stored?.source == "ab")
+    #expect(cloud.saves.map(\.code) == ["a", "ab"])
+    #expect(try await !store.hasPending(accountId: "account"))
   }
 
   @Test func uneditedCodeTakesTheCloudDraft() async throws {
