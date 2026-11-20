@@ -8,6 +8,9 @@ struct MainView: View {
   @Environment(AppContext.self) private var context
   @State private var visited: [Route] = []
   @State private var overlaySidebar = false
+  /// Whether the pointer is over the floating sidebar, and how many of its menus are open.
+  @State private var overSidebar = false
+  @State private var sidebarMenus = 0
 
   var body: some View {
     // The docked sidebar is an overlay beside the inset pages, not a stack sibling: its selection changes on every
@@ -154,7 +157,16 @@ struct MainView: View {
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(GlassSupport.isActive ? .clear : Palette.hairline))
             .shadow(color: .black.opacity(0.16), radius: 24, x: 4)
             .padding([.leading, .bottom, .top], Space.s2)
-            .onHover { if !$0 { withAnimation(Motion.panel) { overlaySidebar = false } } }
+            .onHover { inside in
+              overSidebar = inside
+              hideFloatingSidebarIfIdle()
+            }
+            // A menu opened from the sidebar keeps it showing; choosing from the menu or dismissing it away from
+            // the sidebar hides it.
+            .environment(\.holdsFloatingPanel) { held in
+              sidebarMenus = max(0, sidebarMenus + (held ? 1 : -1))
+              hideFloatingSidebarIfIdle()
+            }
             .transition(.move(edge: .leading).combined(with: .opacity))
         }
       }
@@ -162,6 +174,11 @@ struct MainView: View {
       // Measured from the window's top edge like the window buttons, not from below the hidden title bar.
       .ignoresSafeArea(.container, edges: .top)
     }
+  }
+
+  private func hideFloatingSidebarIfIdle() {
+    guard overlaySidebar, !overSidebar, sidebarMenus == 0 else { return }
+    withAnimation(Motion.panel) { overlaySidebar = false }
   }
 
   @ViewBuilder

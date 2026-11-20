@@ -109,9 +109,21 @@ public struct ManorMenuButton<Content: View, Label: View>: View {
     self.label = label
   }
 
+  @Environment(\.holdsFloatingPanel) private var holdsFloatingPanel
+
   public var body: some View {
     Button { open.toggle() } label: { label() }
       .buttonStyle(.plain)
       .manorPopover(isPresented: $open) { ManorMenuList(content: content) }
+      // The menu is its own window, so moving onto it reads as leaving a hover-revealed panel; the panel stays while
+      // the menu is open.
+      .onChange(of: open) { _, now in holdsFloatingPanel?(now) }
+      .onDisappear { if open { holdsFloatingPanel?(false) } }
   }
+}
+
+/// Set by a panel that shows only while hovered (the floating sidebar). A menu inside it reports opening and
+/// closing, so the panel doesn't vanish while the pointer is on the menu.
+public extension EnvironmentValues {
+  @Entry var holdsFloatingPanel: ((Bool) -> Void)? = nil
 }
