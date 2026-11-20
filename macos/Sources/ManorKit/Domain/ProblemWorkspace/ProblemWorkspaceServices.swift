@@ -75,7 +75,7 @@ public final class ProblemWorkspaceServices {
 
   /// Before an explicit sign-out: tries to save every open draft, then refuses while any code is still only on this
   /// device. Returns the message that cancels sign-out, or nil.
-  public static func signOutBlocker(accountId: String, environment: AppConfig.Environment) async -> String? {
+  public static func signOutBlocker(accountId: String, environment: AppConfig.Environment, cloud: ProblemDraftCloud? = nil) async -> String? {
     if let services = existing(accountId: accountId) {
       for open in services.drafts.values {
         guard let session = open() else { continue }
@@ -87,13 +87,45 @@ public final class ProblemWorkspaceServices {
       return "Some of your code hasn't been saved yet. Sign-out was cancelled so it isn't lost."
     }
     do {
-      if try await draftStore(environment: environment).hasPending(accountId: accountId) {
-        return "Some of your code is saved only on this Mac. Connect to the internet so it can sync, then sign out again."
+      let store = try draftStore(environment: environment)
+      var conflicted = false
+      // Drafts no editor has open (an edit typed while its last save was in flight, then the problem closed) are
+      // saved here, so they don't hold sign-out forever.
+      if let cloud {
+        for draft in try await store.drafts(accountId: accountId) where draft.pending {
+          if await savePending(draft, cloud: cloud, store: store) == .conflict { conflicted = true }
+        }
+      }
+      if try await store.hasPending(accountId: accountId) {
+        if conflicted {
+          return "Some of your code on this Mac differs from a newer saved copy. Open the problem to choose which to keep, then sign out again."
+        }
+        return "Some of your code is saved only on this Mac and couldn't sync just now. Check your connection, then sign out again."
       }
     } catch {
       return "Your saved code could not be checked, so sign-out was cancelled. \(error.localizedDescription)"
     }
     return nil
+  }
+
+  enum PendingSave { case saved, conflict, failed }
+
+  /// Saves one pending draft that no editor holds. A draft whose cloud copy moved on since it was edited is left for
+  /// the editor to resolve, where you choose which version to keep.
+  static func savePending(_ draft: LocalCodeDraft, cloud: ProblemDraftCloud, store: CodeDraftStore) async -> PendingSave {
+    guard let language = ProblemLanguage(rawValue: draft.language) else { return .failed }
+    do {
+      let receipt = try await cloud.saveDraft(draft)
+      try await store.acknowledge(accountId: draft.accountId, problemId: draft.problemId, language: language, source: draft.code, revision: receipt.revision)
+      return .saved
+    } catch {
+      guard let latest = try? await cloud.loadDraft(problemId: draft.problemId, language: language) else { return .failed }
+      if latest.source == draft.code, latest.contentVersion == draft.contentVersion {
+        try? await store.acknowledge(accountId: draft.accountId, problemId: draft.problemId, language: language, source: draft.code, revision: latest.revision)
+        return .saved
+      }
+      return latest.revision != draft.cloudRevision ? .conflict : .failed
+    }
   }
 
   /// After sign-out: closes the account's connections and removes its synced drafts from this device.

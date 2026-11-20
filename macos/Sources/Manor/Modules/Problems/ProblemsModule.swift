@@ -6,8 +6,10 @@ enum ProblemsModule {
     let environment = session.config.environment
     // Explicit sign-out first tries to save open code, then cancels while any code exists only on this Mac.
     session.signOutGuards.append { [weak session] in
-      guard let accountId = session?.gateway?.accountId else { return nil }
-      return await ProblemWorkspaceServices.signOutBlocker(accountId: accountId, environment: environment)
+      guard let gateway = session?.gateway else { return nil }
+      return await ProblemWorkspaceServices.signOutBlocker(
+        accountId: gateway.accountId, environment: environment, cloud: GatewayDraftCloud(gateway: gateway)
+      )
     }
     // Afterwards the account's language-server connections close and its synced drafts leave this Mac.
     session.signOutCleanups.append { accountId in

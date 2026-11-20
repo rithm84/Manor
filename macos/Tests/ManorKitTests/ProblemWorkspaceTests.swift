@@ -213,6 +213,32 @@ struct CodeDraftProtectionTests {
     try await store.clearSynced(accountId: "account")
     #expect(try await store.read(accountId: "account", problemId: "problem", language: .python) == nil)
   }
+
+  /// A draft edited while its save was in flight, then closed, is saved by sign-out instead of blocking it forever.
+  @MainActor @Test func signOutSavesPendingDraftsNoEditorHolds() async throws {
+    let store = try CodeDraftStore()
+    let cloud = FakeDraftCloud()
+    cloud.stored = CloudCodeDraft(id: "d", problemId: "problem", language: .python, contentVersion: 1, source: "print(1)", revision: 5, updatedAt: "")
+    var value = draft("print(2)")
+    value.cloudRevision = 5
+    try await store.write(value)
+    #expect(await ProblemWorkspaceServices.savePending(value, cloud: cloud, store: store) == .saved)
+    #expect(cloud.stored?.source == "print(2)")
+    #expect(try await !store.hasPending(accountId: "account"))
+  }
+
+  /// A cloud copy that moved on since the edit is a conflict for the editor to resolve, never overwritten.
+  @MainActor @Test func signOutLeavesConflictingDraftsPending() async throws {
+    let store = try CodeDraftStore()
+    let cloud = FakeDraftCloud()
+    cloud.stored = CloudCodeDraft(id: "d", problemId: "problem", language: .python, contentVersion: 1, source: "from another Mac", revision: 7, updatedAt: "")
+    var value = draft("print(2)")
+    value.cloudRevision = 5
+    try await store.write(value)
+    #expect(await ProblemWorkspaceServices.savePending(value, cloud: cloud, store: store) == .conflict)
+    #expect(cloud.stored?.source == "from another Mac")
+    #expect(try await store.hasPending(accountId: "account"))
+  }
 }
 
 /// A cloud that records saves and can be told to hold a different draft.
