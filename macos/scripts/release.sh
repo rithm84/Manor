@@ -57,7 +57,8 @@ BUILD="$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Contents/Info.
 ARCHIVE="${NAME// /-}-$VERSION-$BUILD.zip"
 OUT="build/release"
 rm -rf "$OUT" && mkdir -p "$OUT"
-codesign -dv "$APP" 2>&1 | grep -q "TeamIdentifier=2588U5J9Z7" || { echo "$APP isn't signed with the Developer ID certificate" >&2; exit 1; }
+# Read the whole output first: under pipefail, grep -q quitting early can kill codesign on a closed pipe.
+grep -q "TeamIdentifier=2588U5J9Z7" <<<"$(codesign -dv "$APP" 2>&1)" || { echo "$APP isn't signed with the Developer ID certificate" >&2; exit 1; }
 
 # Apple's notary service checks the signed app; its ticket is stapled on so Gatekeeper accepts the download offline.
 ditto -c -k --keepParent "$APP" "$OUT/notarize.zip"

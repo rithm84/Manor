@@ -95,7 +95,7 @@ IDENTITY="${MANOR_SIGN_IDENTITY:-$(security find-identity -v -p codesigning 2>/d
 # Notarization needs a secure timestamp from Apple; debug builds skip the network round trip.
 TIMESTAMP="--timestamp"
 [[ "$CONFIG" == debug ]] && TIMESTAMP="--timestamp=none"
-if [[ -n "$IDENTITY" ]] && security find-identity -p codesigning 2>/dev/null | grep -q "\"$IDENTITY\""; then
+if [[ -n "$IDENTITY" ]] && grep -q "\"$IDENTITY\"" <<<"$(security find-identity -p codesigning 2>/dev/null)"; then
   codesign --force --sign "$IDENTITY" "$TIMESTAMP" --options runtime --entitlements Resources/Manor.entitlements "$APP"
 else
   echo "warning: signing identity \"$IDENTITY\" not found; signing ad hoc" >&2

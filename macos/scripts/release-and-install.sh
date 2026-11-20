@@ -17,7 +17,7 @@ REPO_ROOT="$(cd "$ROOT/.." && pwd)"
 cd "$ROOT"
 
 fail() { echo "✗ $1" >&2; exit 1; }
-security find-identity -v -p codesigning 2>/dev/null | grep -q 'Developer ID Application: .*(2588U5J9Z7)' \
+grep -q 'Developer ID Application: .*(2588U5J9Z7)' <<<"$(security find-identity -v -p codesigning 2>/dev/null)" \
   || fail "The Developer ID Application certificate for team 2588U5J9Z7 isn't in your keychain, or Apple's G2 intermediate is missing."
 xcrun notarytool history --keychain-profile manor-notary >/dev/null 2>&1 \
   || fail "Notarization credentials are missing: run xcrun notarytool store-credentials manor-notary."
