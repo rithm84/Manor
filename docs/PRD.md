@@ -47,7 +47,7 @@ Manor is not a team workspace or a calendar app. Collaboration and shared worksp
 
 Manor is a native macOS app built with SwiftUI and AppKit for macOS 15 and later. It installs from a build signed with Manor's Developer ID and notarized by Apple, so it opens on any Mac without a warning, and updates itself from Manor's releases. On macOS 26 it draws Liquid Glass for floating chrome and uses solid surfaces on earlier systems. There is no website and no web view shell.
 
-- **Signing in** opens Google in a system sign-in window that returns the result to the app.
+- **Signing in** opens Apple's sign-in page in a system sign-in window that returns the result to the app.
 - **Connecting an agent** opens Manor through a link it registered with macOS, and you approve the request inside the app.
 - **Links** that leave the app open in your browser, and a Manor link opens the app on the page it names.
 - **Closing the window** keeps Manor running, so it reopens instantly from the Dock; Quit ends it, except in Alfred's Prep mode (see [Alfred](#alfred)).
@@ -67,7 +67,7 @@ Every module reads from a copy of your account kept on the Mac, so its pages ope
 
 ### Accounts and dates
 
-Account creation and sign-in use Google only. Manor has no password of its own, email-and-password signup, password reset, or verification email. A new user also passes the shared signup-password gate before the account is created; returning users sign in with Google without repeating it. Display names are independent of authentication, and account data stays private to its owner. Connecting Google Calendar is a separate, optional consent.
+Account creation and sign-in use Sign in with Apple only. Manor has no password of its own, email-and-password signup, password reset, or verification email. An Apple ID new to Manor is asked for the shared invitation password before the account is created, whether Apple shares the real email or a Hide My Email address; returning users sign in with Apple without repeating it. An account can carry an Apple ID whose email differs from the account's own. Display names are independent of authentication, and account data stays private to its owner. Connecting Google Calendar is a separate, optional consent.
 
 Each account saves a time zone, initially taken from the system, and travel doesn't silently change it. That time zone governs today and yesterday, streak boundaries, recurrence, and weekly reviews. Changing it doesn't relabel existing daily history, and calendar events keep their intended instants.
 

@@ -61,7 +61,7 @@ Notes and code drafts are written to per-environment SQLite stores on the Mac be
 
 ### People and agents authenticate differently and meet at row-level security
 
-You sign in with Google through a system authentication session that returns on the build's URL scheme; a new account must first pass the signup gate. Agents complete OAuth 2.1 with Supabase Auth, and the consent step opens Manor through a static bridge page so you approve inside the app. Both end at owner-scoped row-level security and the same operation catalog. The [auth and deep links](arch-components/auth-and-deep-links.md) slice owns the flows.
+You sign in with Apple through a system authentication session that returns on the build's URL scheme; a new Apple ID must first pass the invitation gate. Agents complete OAuth 2.1 with Supabase Auth, and the consent step opens Manor through a static bridge page so you approve inside the app. Both end at owner-scoped row-level security and the same operation catalog. The [auth and deep links](arch-components/auth-and-deep-links.md) slice owns the flows.
 
 ### Code runs in sandboxes the app never holds credentials for
 
@@ -94,7 +94,7 @@ Staging holds synthetic data, and staging jobs never use production integration 
 
 | Role | Provider or system |
 |---|---|
-| Sign-in | Supabase Auth with Google as the only provider; a signup gate and a before-user-created hook |
+| Sign-in | Supabase Auth with Sign in with Apple as the only provider; an invitation gate and a before-user-created hook |
 | Agent authorization | Supabase Auth OAuth 2.1 server; the consent bridge page on GitHub Pages |
 | Durable records, feeds, and commands | Supabase Postgres in AWS us-east-2 |
 | Private files and the catalog snapshot | Supabase Storage (`manor-files`, `manor-catalog`) |
@@ -112,7 +112,7 @@ Staging holds synthetic data, and staging jobs never use production integration 
 
 ## Status
 
-The production project carries the applied migrations over the preserved account data, the twelve Edge Functions, the five `manor-*` schedules, Google-only Auth with both hooks, and the OAuth server. The native app replaces the earlier webview app against the same backend, schema, and tools.
+The production project carries the applied migrations over the preserved account data, the twelve Edge Functions, the five `manor-*` schedules, Apple-only Auth with both hooks, and the OAuth server. The native app replaces the earlier webview app against the same backend, schema, and tools.
 
 Open items:
 

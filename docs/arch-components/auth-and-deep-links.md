@@ -1,12 +1,12 @@
 # Auth and deep links
 
-_Last updated: 2026-11-17_
+_Last updated: 2026-11-19_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
 People and agents authenticate differently and end at the same row-level policies and operation catalog. Both flows leave the app and come back through a link on the build's URL scheme, as the following diagram shows.
 
-![Sign-in and agent consent: Manor opens a PKCE Google sign-in in an authentication session that returns manor://auth/callback with a code, which the app exchanges for a session saved on disk; an agent's OAuth request lands on the consent bridge page in the agent's own window, which opens manor://oauth/consent; you allow access in Manor, which approves the request and saves the return address with manor_oauth_handoff_save; the bridge page takes it with manor_oauth_handoff_take and continues the agent to its callback with the code.](../diagrams/svg/auth-deep-links.svg)
+![Sign-in and agent consent: Manor opens a PKCE Sign in with Apple in an authentication session that returns manor://auth/callback with a code, which the app exchanges for a session saved on disk; an agent's OAuth request lands on the consent bridge page in the agent's own window, which opens manor://oauth/consent; you allow access in Manor, which approves the request and saves the return address with manor_oauth_handoff_save; the bridge page takes it with manor_oauth_handoff_take and continues the agent to its callback with the code.](../diagrams/svg/auth-deep-links.svg)
 
 <details><summary>Diagram key</summary>
 
@@ -17,15 +17,24 @@ People and agents authenticate differently and end at the same row-level policie
 
 ## Sign-in
 
-Supabase Auth uses Google as the only provider. Email and password, magic link, phone, and anonymous sign-in are off, and Manor sends no email of its own. `ManorSession.signInWithGoogle` runs the PKCE flow through `ASWebAuthenticationSession` with `<scheme>://auth/callback` as the return URL; `completeSignIn(from:)` exchanges the code, or adopts tokens from a fragment, which is how a verify link from `scripts/staging-session.sh` signs a staging build in. A refused sign-in shows its reason on the sign-in panel.
+Supabase Auth uses Sign in with Apple as the only provider. Email and password, magic link, phone, and anonymous sign-in are off, and Manor sends no email of its own. A Developer ID app can't present the native Sign in with Apple sheet, whose entitlement is only for App Store apps, so Manor uses Apple's web flow: the Services ID `app.manor.signin` with a client secret, a JWT signed with the Sign in with Apple key. Apple accepts a secret for at most six months; `macos/scripts/apple-sign-in.sh staging|production` makes a new 180-day one and sets it on the project. `ManorSession.signInWithApple` runs the PKCE flow through `ASWebAuthenticationSession` with `<scheme>://auth/callback` as the return URL; `completeSignIn(from:)` exchanges the code, or adopts tokens from a fragment, which is how a verify link from `scripts/staging-session.sh` signs a staging build in. A refused sign-in shows its reason on the sign-in panel.
 
-`FileAuthStorage` keeps the session in `Application Support/<bundle id>/Session/`, in files readable only by you with complete file protection. It doesn't use the Keychain, because the Keychain asks for permission again after every update of an app signed with a self-signed certificate.
+`FileAuthStorage` keeps the session in `Application Support/<bundle id>/Session/`, in files readable only by you with complete file protection. It doesn't use the Keychain, so a session never waits on a Keychain prompt.
 
 On sign-in the session builds a `Gateway` for the account, opens the local mirror, and shows the cached account from `UserDefaults` at once if this Mac has opened it before, then loads the profile. A first sign-in saves the profile with the system time zone.
 
 ## Signup gate
 
-A new account must pass the shared signup gate before Google creates it. `requestSignup` sends the email and gate password to the `signup-gate` Edge Function, which checks the password against a stored hash with rate limits and records a short-lived, single-use grant bound to that email; then Google sign-in starts with that email as the login hint. Supabase's before-user-created hook rejects any account creation without a valid grant, including direct Auth API and OAuth requests, and consumes the grant server-side. The password never appears in metadata, URLs, or logs.
+A new account must pass the shared invitation gate before Auth creates it. Apple may share a Hide My Email address, so the gate can't ask for an email in advance; it asks after Apple signs the person in.
+
+1. An Apple ID with no account reaches Supabase's before-user-created hook, which finds no grant and refuses with `invitation_required <ticket>`. The ticket names the email Apple shared, expires after 15 minutes, and is signed with an HMAC key that never leaves the database.
+2. `ManorSession` reads the ticket from the refusal into `pendingInvitation`, and the sign-in panel asks for the invitation password.
+3. `redeemInvitation(password:)` sends the ticket and password to the `signup-gate` Edge Function. It checks the ticket with `manor_signup_ticket_email`, rate-limits by email, compares the password against its secret, and records a short-lived, single-use grant for that email.
+4. The app signs in with Apple again. Apple shares the same address with Manor every time, so the hook finds the grant, consumes it, and the account is created.
+
+The hook refuses any provider other than Apple and any unverified email, including direct Auth API requests. The password never appears in metadata, URLs, or logs.
+
+`macos/scripts/link-apple.sh staging|production <account-id>` attaches an Apple ID to an existing account whatever email either uses: it turns on Supabase's manual identity linking for the run, opens Apple's page for the account owner, and turns linking off again. `--drop-google` then removes an account's Google identity once Apple is linked.
 
 ## Agent consent
 

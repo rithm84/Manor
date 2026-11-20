@@ -3,9 +3,10 @@ import SwiftUI
 // MARK: Buttons
 
 /// Manor's button family. `.primary` is the one main action in a region; `.secondary` is a bordered
-/// neutral; `.ghost` is a quiet toolbar or row action; `.danger` confirms destruction.
+/// neutral; `.ghost` is a quiet toolbar or row action; `.danger` confirms destruction; `.apple` is the Sign in with
+/// Apple button, solid black in light mode and white in dark as Apple's guidelines ask.
 public struct ManorButtonStyle: ButtonStyle {
-  public enum Kind { case primary, secondary, ghost, danger }
+  public enum Kind { case primary, secondary, ghost, danger, apple }
   public enum Size { case regular, small }
   let kind: Kind
   let size: Size
@@ -48,6 +49,7 @@ public struct ManorButtonStyle: ButtonStyle {
       switch kind {
       case .primary: return Palette.onPrimary
       case .danger: return Palette.onDanger
+      case .apple: return Palette.surfaceCanvas
       case .secondary, .ghost: return Palette.ink
       }
     }
@@ -57,6 +59,7 @@ public struct ManorButtonStyle: ButtonStyle {
       switch kind {
       case .primary: return pressed ? Palette.primaryActive : hovering ? Palette.primaryHover : Palette.primary
       case .danger: return Palette.overdueError.opacity(pressed ? 0.85 : hovering ? 0.92 : 1)
+      case .apple: return Palette.ink.opacity(pressed ? 0.8 : hovering ? 0.88 : 1)
       case .secondary: return pressed ? Palette.surfaceSelected : hovering ? Palette.surfaceHover : Palette.surfaceCanvas
       case .ghost: return pressed ? Palette.surfaceSelected : hovering ? Palette.surfaceHover : .clear
       }
@@ -65,14 +68,14 @@ public struct ManorButtonStyle: ButtonStyle {
 }
 
 /// A button's capsule: tinted, interactive Liquid Glass on macOS 26 (plum for primary, red for danger, clear
-/// for secondary), and the solid fills with a hairline for secondary elsewhere. Ghost buttons stay flat.
+/// for secondary), and the solid fills with a hairline for secondary elsewhere. Ghost and Apple buttons stay flat.
 private struct ButtonSurface: ViewModifier {
   let kind: ManorButtonStyle.Kind
   let fill: Color
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
   func body(content: Content) -> some View {
-    if GlassSupport.isActive, !reduceTransparency, kind != .ghost {
+    if GlassSupport.isActive, !reduceTransparency, kind != .ghost, kind != .apple {
       content.glassSurface(
         Capsule(), fallback: fill, interactive: true,
         tint: kind == .primary ? Palette.primary : kind == .danger ? Palette.overdueError : nil

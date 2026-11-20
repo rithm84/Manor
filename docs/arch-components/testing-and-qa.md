@@ -24,7 +24,7 @@ Tests exercise pure logic and real SQLite stores, never a broad mock of the app.
 Signed-in, end-to-end checks run on the staging identity, never production:
 
 1. Build and register a staging bundle with `macos/scripts/build-app.sh staging --debug`.
-2. Sign it in without Google with `macos/scripts/staging-session.sh [email]`. The script creates a synthetic Google-provider user directly in the staging database when needed, mints a session from a magic link with the service key, and opens the app with a `manor-staging://auth/callback#…` link. `PRINT_LINK=1` prints the one-time link instead, for a build running on another Mac.
+2. Sign it in without Apple's sign-in page with `macos/scripts/staging-session.sh [email]`. The script creates a synthetic Apple-provider user directly in the staging database when needed, mints a session from a magic link with the service key, and opens the app with a `manor-staging://auth/callback#…` link. `PRINT_LINK=1` prints the one-time link instead, for a build running on another Mac.
 3. Simulate another device by running `manor_command` as the same user through the Management API; the mirror's cursor should advance within seconds.
 4. Delete the synthetic user and its rows afterwards.
 

@@ -82,6 +82,7 @@ public final class ManorSession {
       if case .signedIn(let current) = state, current.id == session.user.id.uuidString.lowercased() { return }
       await open(session)
     case .signedOut:
+      pendingInvitation = nil
       await closeAccount()
       state = .signedOut(message: nil)
     case .tokenRefreshed, .userUpdated:
@@ -92,9 +93,10 @@ public final class ManorSession {
   }
 
   private func open(_ session: Session) async {
+    pendingInvitation = nil
     let accountId = session.user.id.uuidString.lowercased()
     let email = session.user.email ?? ""
-    let googleName = session.user.userMetadata["full_name"]?.stringValue ?? session.user.userMetadata["name"]?.stringValue ?? email
+    let providerName = session.user.userMetadata["full_name"]?.stringValue ?? session.user.userMetadata["name"]?.stringValue ?? email
     // A sign-in for a different account replaces the open one; its mirror stops before the new one starts.
     if gateway != nil { await closeAccount() }
     let gateway = Gateway(client: client, accountId: accountId, config: config)
@@ -103,17 +105,17 @@ public final class ManorSession {
     if let cached { state = .signedIn(cached) }
     if let factory = mirrorFactory, let mirror = await factory(gateway) { gateway.attachMirror(mirror) }
     do {
-      let account = try await loadAccount(gateway: gateway, email: email, googleName: googleName)
+      let account = try await loadAccount(gateway: gateway, email: email, providerName: providerName)
       state = .signedIn(account)
     } catch {
       if cached == nil { state = .signedOut(message: error.localizedDescription) }
     }
   }
 
-  private func loadAccount(gateway: Gateway, email: String, googleName: String) async throws -> ManorAccount {
+  private func loadAccount(gateway: Gateway, email: String, providerName: String) async throws -> ManorAccount {
     let rows = try await gateway.rows("profiles")
     let profile = rows.first
-    let name = profile?["name"]?.string.flatMap { $0.isEmpty ? nil : $0 } ?? googleName
+    let name = profile?["name"]?.string.flatMap { $0.isEmpty ? nil : $0 } ?? providerName
     let timezone = profile?["timezone"]?.string ?? TimeZone.current.identifier
     if profile == nil || profile?["timezone"]?.string == nil {
       try await gateway.command("save_profile", [
@@ -136,47 +138,63 @@ public final class ManorSession {
 
   // MARK: Sign-in
 
-  public func signInWithGoogle(loginHint: String? = nil) async throws {
+  /// Signs in with Apple through Apple's web sign-in page. A Developer ID app can't show the native Sign in with Apple
+  /// sheet (that entitlement is only for App Store apps), so the page opens in a browser sheet and returns to the app.
+  /// An Apple ID with no Manor account yet comes back refused with an invitation ticket, which sets `pendingInvitation`.
+  public func signInWithApple() async throws {
     isAuthenticating = true
     defer { isAuthenticating = false }
-    var params: [(name: String, value: String?)] = []
-    if let loginHint { params.append((name: "login_hint", value: loginHint)) }
     do {
       let scheme = config.authRedirectURL.scheme ?? config.urlScheme
-      try await client.auth.signInWithOAuth(provider: .google, redirectTo: config.authRedirectURL, queryParams: params) { @MainActor url in
+      try await client.auth.signInWithOAuth(provider: .apple, redirectTo: config.authRedirectURL, scopes: "name email") { @MainActor url in
         try await OAuthWebSession.run(url, callbackScheme: scheme)
       }
+      pendingInvitation = nil
     } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
       return
+    } catch {
+      let message = (error as? AuthError)?.message ?? error.localizedDescription
+      if let ticket = Self.invitationTicket(in: message) { pendingInvitation = ticket; return }
+      throw error
     }
   }
 
-  /// Passes the shared signup gate, then signs in with the Google account it was granted for.
-  public func requestSignup(email: String, password: String) async throws {
-    let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard trimmed.contains("@") else { throw SignupError.invalidEmail }
+  /// Set when an Apple ID has no Manor account yet: the signed ticket Manor's backend returned, naming the email Apple
+  /// shared (a Hide My Email address works too). `redeemInvitation(password:)` turns it into an account.
+  public private(set) var pendingInvitation: String?
+
+  /// Forgets a pending invitation, to start over with another Apple ID.
+  public func cancelInvitation() { pendingInvitation = nil }
+
+  /// Reads the ticket from the signup hook's refusal, `invitation_required <ticket>`.
+  nonisolated static func invitationTicket(in message: String) -> String? {
+    let prefix = "invitation_required "
+    guard let range = message.range(of: prefix) else { return nil }
+    let ticket = message[range.upperBound...].prefix { $0.isHexDigit || $0 == "." }
+    return ticket.isEmpty ? nil : String(ticket)
+  }
+
+  /// Passes the invitation gate for the pending Apple ID, then signs in with it again to create the account.
+  public func redeemInvitation(password: String) async throws {
+    guard let ticket = pendingInvitation else { return }
     do {
       let data: Data = try await client.functions.invoke(
-        "signup-gate", options: FunctionInvokeOptions(body: ["email": trimmed, "password": password])
+        "signup-gate", options: FunctionInvokeOptions(body: ["ticket": ticket, "password": password])
       ) { data, _ in data }
       let body = try ManorJSON.plainDecoder.decode(JSONValue.self, from: data)
-      guard body["granted"]?.bool == true else { throw SignupError.refused("That invitation could not be verified.") }
-    } catch FunctionsError.httpError(_, let data) {
+      guard body["granted"]?.bool == true else { throw SignupError("That invitation could not be verified.") }
+    } catch FunctionsError.httpError(let status, let data) {
       let body = try? ManorJSON.plainDecoder.decode(JSONValue.self, from: data)
-      throw SignupError.refused(body?["error"]?.string ?? "That invitation could not be verified.")
+      // An expired ticket needs a fresh Apple sign-in, which issues a new one.
+      if status == 400 { pendingInvitation = nil }
+      throw SignupError(body?["error"]?.string ?? "That invitation could not be verified.")
     }
-    try await signInWithGoogle(loginHint: trimmed)
+    try await signInWithApple()
   }
 
-  public enum SignupError: LocalizedError {
-    case invalidEmail
-    case refused(String)
-    public var errorDescription: String? {
-      switch self {
-      case .invalidEmail: return "Enter the Google email address you were invited with."
-      case .refused(let message): return message
-      }
-    }
+  public struct SignupError: LocalizedError {
+    public let errorDescription: String?
+    init(_ message: String) { errorDescription = message }
   }
 
   /// Completes a sign-in that arrived as a deep link (`<scheme>://auth/callback?code=` or a token fragment).
@@ -187,6 +205,7 @@ public final class ManorSession {
     }
     do {
       if let message = params["error_description"] ?? params["error"] {
+        if let ticket = Self.invitationTicket(in: message) { pendingInvitation = ticket; return }
         state = .signedOut(message: message)
       } else if let access = params["access_token"], let refresh = params["refresh_token"] {
         // A verify link returns the session in the fragment, which the PKCE handler does not accept.

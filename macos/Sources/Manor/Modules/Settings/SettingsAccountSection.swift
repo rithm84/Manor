@@ -57,7 +57,7 @@ struct SettingsAccountSection: View {
       .manorDialog(isPresented: $confirmSignOut, width: 420) {
         ConfirmPanel(
           title: "Sign out of Manor?",
-          message: "This Mac forgets your account's local copy. Sign in again with Google whenever you like.",
+          message: "This Mac forgets your account's local copy. Sign in again with Apple whenever you like.",
           confirmLabel: "Sign out",
           destructive: false,
           onCancel: { confirmSignOut = false },

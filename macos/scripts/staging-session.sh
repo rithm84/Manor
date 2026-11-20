@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Signs the installed "Manor Staging" app in as a synthetic staging user, without Google.
+# Signs the installed "Manor Staging" app in as a synthetic staging user, without Apple's sign-in page.
 #
 #   scripts/staging-session.sh [email]          (PRINT_LINK=1 prints the link instead of opening it)
 #
@@ -26,9 +26,9 @@ begin
     uid := gen_random_uuid();
     insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
     values ('00000000-0000-0000-0000-000000000000', uid, 'authenticated', 'authenticated', '$EMAIL', now(),
-      '{"provider":"google","providers":["google"]}', '{"full_name":"Native Test"}', now(), now());
+      '{"provider":"apple","providers":["apple"]}', '{"full_name":"Native Test"}', now(), now());
     insert into auth.identities (id, user_id, provider_id, provider, identity_data, created_at, updated_at, last_sign_in_at)
-    values (gen_random_uuid(), uid, uid::text, 'google', jsonb_build_object('sub', uid::text, 'email', '$EMAIL'), now(), now(), now());
+    values (gen_random_uuid(), uid, uid::text, 'apple', jsonb_build_object('sub', uid::text, 'email', '$EMAIL'), now(), now(), now());
   end if;
   -- Auth reads these as strings; NULL makes it fail with "Database error finding user".
   update auth.users set confirmation_token = coalesce(confirmation_token, ''), recovery_token = coalesce(recovery_token, ''),

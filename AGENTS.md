@@ -47,7 +47,9 @@ Run from the repository root unless noted:
 - `macos/scripts/build-app.sh [production|staging] [--debug] [--open]`: build, bundle, sign with the Developer ID certificate, and register `Manor.app` or `Manor Staging.app` in `macos/build/`.
 - `macos/scripts/release.sh production <version> [notes.md]` and `macos/scripts/release.sh staging [notes.md]`: build, sign, notarize, and publish an update to GitHub Releases. Requires a clean tree, the Ed25519 key at `~/.config/manor/update_ed25519.key`, and the `manor-notary` notarization profile.
 - `macos/scripts/release-and-install.sh <version> [notes.md]`: check the release prerequisites, publish a production release with `release.sh`, and install it in Applications on this Mac (the previous copy goes to the Trash).
-- `macos/scripts/staging-session.sh [email]`: sign the installed staging app in as a synthetic staging user without Google (`PRINT_LINK=1` prints the link). Staging only.
+- `macos/scripts/staging-session.sh [email]`: sign the installed staging app in as a synthetic staging user without Apple's sign-in page (`PRINT_LINK=1` prints the link). Staging only.
+- `macos/scripts/apple-sign-in.sh staging|production`: turn on Sign in with Apple for a Supabase project, or renew its 180-day client secret.
+- `macos/scripts/link-apple.sh staging|production <account-id> [--drop-google]`: attach an Apple ID to an existing account, then optionally remove its Google sign-in.
 - `npm --prefix supabase run typecheck` and `npm --prefix supabase test`: backend type checks and Deno tests.
 - `npm --prefix docs/diagrams ci` once, then `npm --prefix docs/diagrams run render`: render every diagram in `docs/diagrams/pele/` to `docs/diagrams/svg/` (pass names after `--` to render only those).
 
