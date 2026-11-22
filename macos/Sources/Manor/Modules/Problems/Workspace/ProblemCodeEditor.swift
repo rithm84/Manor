@@ -93,6 +93,16 @@ final class WorkspaceTextView: NSTextView {
       editor?.requestCompletion(trigger: nil, explicit: true)
       return
     }
+    // Command-/ and Command-Shift-K also arrive here: the SwiftUI window doesn't always offer them as key
+    // equivalents to the text view first.
+    if flags == .command, event.charactersIgnoringModifiers == "/" || event.keyCode == 44 {
+      editor?.toggleComment()
+      return
+    }
+    if flags == [.command, .shift], event.charactersIgnoringModifiers?.lowercased() == "k" {
+      editor?.deleteLines()
+      return
+    }
     // Option-Up and Option-Down move lines; with Shift they copy them.
     if let editor, event.keyCode == 126 || event.keyCode == 125, flags == .option || flags == [.option, .shift] {
       let up = event.keyCode == 126
@@ -101,6 +111,12 @@ final class WorkspaceTextView: NSTextView {
     }
     super.keyDown(with: event)
   }
+
+  /// The Edit menu's Toggle Line Comment (Command-/), sent to whichever editor has focus.
+  @objc func manorToggleLineComment(_ sender: Any?) { editor?.toggleComment() }
+
+  /// The Edit menu's Delete Line (Command-Shift-K).
+  @objc func manorDeleteLines(_ sender: Any?) { editor?.deleteLines() }
 
   override func performKeyEquivalent(with event: NSEvent) -> Bool {
     let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])

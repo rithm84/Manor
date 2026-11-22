@@ -67,6 +67,16 @@ struct ManorCommands: Commands {
     CommandGroup(replacing: .appSettings) {
       Button("Settings…") { model.context?.navigate(to: .settings) }.keyboardShortcut(",")
     }
+    // Code editor commands go to whichever solution editor has focus; elsewhere they do nothing.
+    CommandGroup(after: .textEditing) {
+      Divider()
+      Button("Toggle Line Comment") { NSApp.sendAction(Selector(("manorToggleLineComment:")), to: nil, from: nil) }
+        .keyboardShortcut("/")
+        .disabled(model.context?.route != .problems)
+      Button("Delete Line") { NSApp.sendAction(Selector(("manorDeleteLines:")), to: nil, from: nil) }
+        .keyboardShortcut("k", modifiers: [.command, .shift])
+        .disabled(model.context?.route != .problems)
+    }
     CommandGroup(before: .sidebar) {
       Button(model.sidebarDocked ? "Hide Sidebar" : "Show Sidebar") { model.toggleSidebar() }
         .keyboardShortcut("\\")
