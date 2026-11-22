@@ -51,7 +51,7 @@ final class WorkspaceTextView: NSTextView {
   override func insertNewline(_ sender: Any?) {
     if editor?.acceptCompletion() == true { return }
     guard let editor else { return super.insertNewline(sender) }
-    editor.insertNewlineWithIndent()
+    editor.newline()
   }
 
   override func insertTab(_ sender: Any?) {
@@ -75,9 +75,10 @@ final class WorkspaceTextView: NSTextView {
     super.moveDown(sender)
   }
 
+  /// Escape closes whatever is open and otherwise does nothing (NSTextView's default would open completions).
   override func cancelOperation(_ sender: Any?) {
-    if editor?.dismissPopups() == true { return }
-    super.cancelOperation(sender)
+    guard let editor else { return super.cancelOperation(sender) }
+    editor.dismissPopups()
   }
 
   /// Option-Escape (and Control-Space) ask the language server for completions.
@@ -87,28 +88,40 @@ final class WorkspaceTextView: NSTextView {
   }
 
   override func keyDown(with event: NSEvent) {
-    if event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .control, event.charactersIgnoringModifiers == " " {
+    let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])
+    if flags == .control, event.charactersIgnoringModifiers == " " {
       editor?.requestCompletion(trigger: nil, explicit: true)
+      return
+    }
+    // Option-Up and Option-Down move lines; with Shift they copy them.
+    if let editor, event.keyCode == 126 || event.keyCode == 125, flags == .option || flags == [.option, .shift] {
+      let up = event.keyCode == 126
+      if flags == .option { editor.moveLines(up: up) } else { editor.copyLines(up: up) }
       return
     }
     super.keyDown(with: event)
   }
 
   override func performKeyEquivalent(with event: NSEvent) -> Bool {
-    if window?.firstResponder === self, event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command, event.charactersIgnoringModifiers == "/" {
+    let flags = event.modifierFlags.intersection([.command, .option, .control, .shift])
+    if window?.firstResponder === self, flags == .command, event.charactersIgnoringModifiers == "/" {
       editor?.toggleComment()
+      return true
+    }
+    if window?.firstResponder === self, flags == [.command, .shift], event.charactersIgnoringModifiers?.lowercased() == "k" {
+      editor?.deleteLines()
       return true
     }
     return super.performKeyEquivalent(with: event)
   }
 
   override func insertText(_ string: Any, replacementRange: NSRange) {
-    if let text = string as? String, replacementRange.location == NSNotFound, let editor, editor.insertPaired(text) { return }
+    if let text = string as? String, replacementRange.location == NSNotFound, let editor, editor.typed(text) { return }
     super.insertText(string, replacementRange: replacementRange)
   }
 
   override func deleteBackward(_ sender: Any?) {
-    if editor?.deletePair() == true { return }
+    if editor?.backspace() == true { return }
     super.deleteBackward(sender)
   }
 
@@ -205,6 +218,8 @@ struct WorkspaceEditorColors {
   let background: NSColor
   let lineHighlight: NSColor
   let selection: NSColor
+  /// The tint on a bracket and its match beside the caret.
+  let bracketMatch: NSColor
   let insertion: NSColor
   let syntax: [ProblemSyntax.Kind: NSColor]
   let error: NSColor
@@ -224,6 +239,7 @@ struct WorkspaceEditorColors {
     background = resolve(Palette.surfaceCanvas)
     lineHighlight = resolve(Palette.surfacePaper)
     selection = resolve(Palette.selection)
+    bracketMatch = resolve(Palette.selection).withAlphaComponent(0.55)
     insertion = resolve(Palette.primary)
     var syntax: [ProblemSyntax.Kind: NSColor] = [:]
     for kind in [ProblemSyntax.Kind.keyword, .type, .function, .string, .number, .comment, .attribute, .constant] {
@@ -258,6 +274,11 @@ final class WorkspaceEditorCoordinator: NSObject, NSTextViewDelegate, NSTextStor
   private var highlightGeneration = 0
   private var syncTask: Task<Void, Never>?
   private var lastEdit: (range: NSRange, text: String)?
+  /// Offsets of closing brackets and quotes the editor inserted itself, which typing steps over and Backspace removes
+  /// with their opener. Kept in step with every edit; forgotten once the caret leaves.
+  private var autoClosed: Set<Int> = []
+  /// The bracket pair highlighted beside the caret.
+  private var bracketHighlight: [NSRange] = []
   private var hover: WorkspaceHover?
   private var signature: WorkspaceSignatureHelp?
   private let completion = WorkspaceCompletion()
@@ -578,7 +599,10 @@ final class WorkspaceEditorCoordinator: NSObject, NSTextViewDelegate, NSTextStor
       let extra = layout.extraLineFragmentRect
       if extra.height > 0 { return NSRect(x: extra.minX, y: extra.minY, width: 1, height: extra.height).offsetBy(dx: textView.textContainerOrigin.x, dy: textView.textContainerOrigin.y) }
     }
-    let glyphs = layout.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+    // A caret before a character uses that character's box, so a word at the start of a line anchors on its own
+    // line rather than at the end of the previous one.
+    let probe = range.length == 0 && range.location < length ? NSRange(location: range.location, length: 1) : range
+    let glyphs = layout.glyphRange(forCharacterRange: probe, actualCharacterRange: nil)
     var rect = layout.boundingRect(forGlyphRange: glyphs.length == 0 ? NSRange(location: max(0, glyphs.location - 1), length: min(1, layout.numberOfGlyphs)) : glyphs, in: container)
     if range.length == 0 {
       rect.origin.x = glyphs.length == 0 && glyphs.location > 0 ? rect.maxX : rect.minX
@@ -603,6 +627,11 @@ final class WorkspaceEditorCoordinator: NSObject, NSTextViewDelegate, NSTextStor
 
   func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
     lastEdit = (affectedCharRange, replacementString ?? "")
+    let delta = ((replacementString ?? "") as NSString).length - affectedCharRange.length
+    autoClosed = Set(autoClosed.compactMap { offset in
+      if offset >= NSMaxRange(affectedCharRange) { return offset + delta }
+      return offset < affectedCharRange.location ? offset : nil
+    })
     return true
   }
 
@@ -620,10 +649,20 @@ final class WorkspaceEditorCoordinator: NSObject, NSTextViewDelegate, NSTextStor
     textView.needsDisplay = true
     ruler?.needsDisplay = true
     noteUse()
+    let selection = textView.selectedRange()
+    // The list belongs to the word being typed; leaving it (an arrow key, a click, stepping over a closer) closes it,
+    // so Return or Tab can't replace text the list no longer refers to.
     if completion.isVisible, let start = completion.wordStart {
-      let selection = textView.selectedRange()
-      if selection.location < start || selection.length > 0 { completion.hide() }
+      if selection.location < start || selection.length > 0
+        || Self.wordStart(in: text as NSString, before: selection.location) != start { completion.hide() }
     }
+    // Auto-inserted closers count only while the caret stays on their line, before them.
+    if !autoClosed.isEmpty {
+      let source = text as NSString
+      let line = source.lineRange(for: NSRange(location: selection.location, length: 0))
+      autoClosed = autoClosed.filter { $0 >= selection.location && NSLocationInRange($0, line) }
+    }
+    highlightMatchingBracket()
     signature?.selectionChanged()
     #if DEBUG
     if ProcessInfo.processInfo.environment["MANOR_QA_HOVER"] != nil, textView.selectedRange().length == 0 {
@@ -684,6 +723,9 @@ final class WorkspaceEditorCoordinator: NSObject, NSTextViewDelegate, NSTextStor
       return
     }
     guard (edit.text as NSString).length == 1 else { completion.hide(); return }
+    // Like other code editors, typing in a string or comment (notes in a docstring) suggests nothing; asking for
+    // suggestions with the shortcut still works there.
+    if CodeIndentation.isInsideStringOrComment(source.substring(to: caret), language: language) { completion.hide(); return }
     let unit = (edit.text as NSString).character(at: 0)
     if Self.isIdentifier(unit) {
       if completion.isVisible, let start = completion.wordStart, Self.wordStart(in: source, before: caret) == start, refilter() { return }
@@ -797,123 +839,89 @@ final class WorkspaceEditorCoordinator: NSObject, NSTextViewDelegate, NSTextStor
     textView.scrollRangeToVisible(textView.selectedRange())
   }
 
-  private var indentUnit: String { String(repeating: " ", count: tabSize) }
+  private var editing: CodeEditing { CodeEditing(language: language, tabSize: tabSize) }
 
-  /// A new line keeps the current indentation, adds a level after an opening bracket or a Python colon, and moves a
-  /// closing bracket that follows the caret onto its own line. Inside a string or comment (notes in a docstring) a
-  /// trailing colon or bracket is prose, so the line keeps its indentation.
-  func insertNewlineWithIndent() {
-    let source = text as NSString
+  /// Applies one rule's edit as its own undo step.
+  private func perform(_ edit: CodeEdit, undoStep: Bool = true) {
+    if undoStep { textView.breakUndoCoalescing() }
+    if edit.range.length > 0 || !edit.text.isEmpty {
+      guard textView.shouldChangeText(in: edit.range, replacementString: edit.text) else { return }
+      textView.textStorage?.replaceCharacters(in: edit.range, with: edit.text)
+      textView.didChangeText()
+    }
+    textView.setSelectedRange(edit.selection)
+    textView.scrollRangeToVisible(edit.selection)
+  }
+
+  /// Return: indentation, bracket splitting, and comment continuation by the editor's rules.
+  func newline() {
+    perform(editing.newline(in: text as NSString, selection: textView.selectedRange()))
+  }
+
+  func indent() { perform(editing.indent(in: text as NSString, selection: textView.selectedRange())) }
+
+  func outdent() { perform(editing.outdent(in: text as NSString, selection: textView.selectedRange())) }
+
+  func toggleComment() { perform(editing.toggleComment(in: text as NSString, selection: textView.selectedRange())) }
+
+  func moveLines(up: Bool) {
+    completion.hide()
+    if let edit = editing.moveLines(in: text as NSString, selection: textView.selectedRange(), up: up) { perform(edit) }
+  }
+
+  func copyLines(up: Bool) {
+    completion.hide()
+    perform(editing.copyLines(in: text as NSString, selection: textView.selectedRange(), up: up))
+  }
+
+  func deleteLines() {
+    completion.hide()
+    perform(editing.deleteLines(in: text as NSString, selection: textView.selectedRange()))
+  }
+
+  /// A typed character: pairing, stepping over a closer, wrapping a selection, or re-indenting a closer line.
+  /// False lets the text view insert it as usual.
+  func typed(_ value: String) -> Bool {
+    guard (value as NSString).length == 1,
+          let result = editing.type(value, in: text as NSString, selection: textView.selectedRange(), autoClosed: autoClosed) else { return false }
+    let stepping = result.edit.range.length == 0 && result.edit.text.isEmpty
+    if stepping {
+      autoClosed.remove(textView.selectedRange().location)
+      completion.hide()
+    }
+    perform(result.edit, undoStep: false)
+    if let closer = result.autoCloser { autoClosed.insert(closer) }
+    return true
+  }
+
+  /// Backspace: an auto-inserted pair together, or leading spaces back to the previous tab stop.
+  func backspace() -> Bool {
+    guard let edit = editing.backspace(in: text as NSString, selection: textView.selectedRange(), autoClosed: autoClosed) else { return false }
+    perform(edit, undoStep: false)
+    return true
+  }
+
+  /// Tints the bracket beside the caret and its match, as code editors do.
+  private func highlightMatchingBracket() {
+    guard let layout = textView.layoutManager else { return }
+    for range in bracketHighlight where NSMaxRange(range) <= (text as NSString).length {
+      layout.removeTemporaryAttribute(.backgroundColor, forCharacterRange: range)
+    }
+    bracketHighlight = []
     let selection = textView.selectedRange()
+    let source = text as NSString
+    guard selection.length == 0, source.length < 200_000 else { return }
+    let units = Array(text.utf16)
     let caret = selection.location
-    let line = source.lineRange(for: NSRange(location: caret, length: 0))
-    let before = source.substring(with: NSRange(location: line.location, length: caret - line.location))
-    let indent = String(before.prefix { $0 == " " || $0 == "\t" })
-    let opener = before.trimmingCharacters(in: .whitespaces).last
-    let opens = (opener == "{" || opener == "(" || opener == "[" || (language == .python && opener == ":"))
-      && !CodeIndentation.isInsideStringOrComment(source.substring(to: caret), language: language)
-    let next: UInt16 = NSMaxRange(selection) < source.length ? source.character(at: NSMaxRange(selection)) : 0
-    let closes = (opener == "{" && next == 125) || (opener == "(" && next == 41) || (opener == "[" && next == 93)
-    if opens && closes {
-      let first = "\n" + indent + indentUnit
-      insert(first + "\n" + indent, replacing: selection, caret: (first as NSString).length)
-    } else {
-      insert("\n" + indent + (opens ? indentUnit : ""), replacing: selection)
-    }
-  }
-
-  func indent() {
-    let selection = textView.selectedRange()
-    let source = text as NSString
-    if selection.length > 0, source.substring(with: selection).contains("\n") {
-      transformLines { self.indentUnit + $0 }
-      return
-    }
-    let line = source.lineRange(for: NSRange(location: selection.location, length: 0))
-    let column = selection.location - line.location
-    insert(String(repeating: " ", count: tabSize - column % tabSize), replacing: selection)
-  }
-
-  func outdent() {
-    let width = tabSize
-    transformLines { line in
-      var removed = 0
-      var result = Substring(line)
-      while removed < width, result.first == " " { result = result.dropFirst(); removed += 1 }
-      if removed == 0, result.first == "\t" { result = result.dropFirst() }
-      return String(result)
-    }
-  }
-
-  func toggleComment() {
-    let marker = ProblemSyntax.lineComment(language)
-    let source = text as NSString
-    let lines = source.substring(with: source.lineRange(for: textView.selectedRange())).components(separatedBy: "\n")
-    let content = lines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-    let commented = !content.isEmpty && content.allSatisfy { $0.trimmingCharacters(in: .whitespaces).hasPrefix(marker) }
-    let indentWidth = content.map { $0.prefix { $0 == " " }.count }.min() ?? 0
-    transformLines { line in
-      guard !line.trimmingCharacters(in: .whitespaces).isEmpty else { return line }
-      if commented {
-        guard let range = line.range(of: marker) else { return line }
-        var result = line
-        result.removeSubrange(range)
-        if result[range.lowerBound...].hasPrefix(" ") { result.remove(at: range.lowerBound) }
-        return result
+    for offset in [caret - 1, caret] where offset >= 0 && offset < units.count {
+      if let match = CodeIndentation.matchingBracket(units, at: offset, language: language) {
+        bracketHighlight = [NSRange(location: offset, length: 1), NSRange(location: match, length: 1)]
+        for range in bracketHighlight {
+          layout.addTemporaryAttribute(.backgroundColor, value: colors.bracketMatch, forCharacterRange: range)
+        }
+        return
       }
-      let index = line.index(line.startIndex, offsetBy: min(indentWidth, line.count))
-      return String(line[..<index]) + marker + " " + String(line[index...])
     }
-  }
-
-  /// Rewrites every selected line, keeping the lines selected.
-  private func transformLines(_ transform: (String) -> String) {
-    let source = text as NSString
-    let range = source.lineRange(for: textView.selectedRange())
-    let original = source.substring(with: range)
-    let trailingNewline = original.hasSuffix("\n")
-    var lines = original.components(separatedBy: "\n")
-    if trailingNewline { lines.removeLast() }
-    let replaced = lines.map(transform).joined(separator: "\n") + (trailingNewline ? "\n" : "")
-    guard replaced != original, textView.shouldChangeText(in: range, replacementString: replaced) else { return }
-    textView.textStorage?.replaceCharacters(in: range, with: replaced)
-    textView.didChangeText()
-    textView.setSelectedRange(NSRange(location: range.location, length: (replaced as NSString).length - (trailingNewline ? 1 : 0)))
-  }
-
-  private static let pairs: [String: String] = ["(": ")", "[": "]", "{": "}", "\"": "\""]
-
-  /// Typing an opening bracket inserts its closer; typing a closer that is already next steps over it.
-  func insertPaired(_ value: String) -> Bool {
-    let selection = textView.selectedRange()
-    guard selection.length == 0 else { return false }
-    let source = text as NSString
-    let next = selection.location < source.length ? source.substring(with: NSRange(location: selection.location, length: 1)) : ""
-    if [")", "]", "}", "\""].contains(value), next == value {
-      textView.setSelectedRange(NSRange(location: selection.location + 1, length: 0))
-      return true
-    }
-    guard let closer = Self.pairs[value] else { return false }
-    let freeAfter = next.isEmpty || next == " " || next == "\n" || next == "\t" || [")", "]", "}", ",", ";", ":"].contains(next)
-    guard freeAfter else { return false }
-    if value == "\"" {
-      let previous: UInt16 = selection.location > 0 ? source.character(at: selection.location - 1) : 32
-      guard !Self.isIdentifier(previous), previous != 34 else { return false }
-    }
-    insert(value + closer, replacing: selection, caret: (value as NSString).length)
-    return true
-  }
-
-  /// Backspace between an empty pair removes both halves.
-  func deletePair() -> Bool {
-    let selection = textView.selectedRange()
-    let source = text as NSString
-    guard selection.length == 0, selection.location > 0, selection.location < source.length else { return false }
-    let previous = source.substring(with: NSRange(location: selection.location - 1, length: 1))
-    let next = source.substring(with: NSRange(location: selection.location, length: 1))
-    guard Self.pairs[previous] == next else { return false }
-    insert("", replacing: NSRange(location: selection.location - 1, length: 2))
-    return true
   }
 }
 

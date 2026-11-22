@@ -32,8 +32,9 @@ public struct LSPTextEdit: Hashable, Sendable {
 
   init?(_ value: JSONValue?) {
     guard let newText = value?["newText"]?.string else { return nil }
-    // An InsertReplaceEdit carries `insert` and `replace`; the editor applies the replace range.
-    guard let range = LSPRange(value?["range"]) ?? LSPRange(value?["replace"]) ?? LSPRange(value?["insert"]) else { return nil }
+    // An InsertReplaceEdit carries `insert` and `replace`; like other code editors, the editor inserts by default,
+    // keeping the rest of a word the caret is inside.
+    guard let range = LSPRange(value?["range"]) ?? LSPRange(value?["insert"]) ?? LSPRange(value?["replace"]) else { return nil }
     self.range = range
     self.newText = newText
   }

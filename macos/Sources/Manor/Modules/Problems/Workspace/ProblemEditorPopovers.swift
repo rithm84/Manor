@@ -165,7 +165,14 @@ final class WorkspaceSignatureHelp {
     guard caret > 0, caret <= text.length else { close(); return }
     let previous = text.substring(with: NSRange(location: caret - 1, length: 1))
     let triggers = coordinator.model.services.languageServers.connection(coordinator.language)?.signatureTriggerCharacters ?? ["(", ","]
-    if triggers.contains(previous) { request(trigger: previous) } else if isVisible { request(trigger: nil) }
+    // A "(" or "," typed in a string or comment is prose and opens nothing; help already open keeps following the
+    // caret, as it does through a string argument.
+    if triggers.contains(previous),
+       !CodeIndentation.isInsideStringOrComment(text.substring(to: caret), language: coordinator.language) {
+      request(trigger: previous)
+    } else if isVisible {
+      request(trigger: nil)
+    }
   }
 
   func selectionChanged() {
