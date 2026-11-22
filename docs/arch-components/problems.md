@@ -1,6 +1,6 @@
 # Problems library and execution
 
-_Last updated: 2026-11-18_
+_Last updated: 2026-11-21_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -52,7 +52,7 @@ Up to 12 open workspaces stay alive per account, and `manor://leetcode/<id>` ope
 
 ## Code editor
 
-The editor is native: `WorkspaceCodeEditor` wraps an `NSTextView` subclass on an explicit TextKit stack with non-contiguous layout, a line-number ruler, the system find bar, auto-indent, bracket pairing, comment toggling, and indenting. Automatic text substitutions are off.
+The editor is native: `WorkspaceCodeEditor` wraps an `NSTextView` subclass on an explicit TextKit stack with non-contiguous layout, a line-number ruler, the system find bar, auto-indent, bracket pairing, comment toggling, and indenting. Auto-indent adds a level after an opening bracket or a Python colon only in code; inside a string, docstring, or comment the new line keeps its indentation. Automatic text substitutions are off.
 
 - **Highlighting** is a hand-written incremental lexer per language (`ProblemSyntax`) that keeps per-line state and stops re-lexing once a line's end state matches its old value. Sources up to 60,000 UTF-16 units lex on the main thread; longer ones lex in the background.
 - **Completion** is a non-activating panel that filters by prefix, then subsequence, and opens on the server's trigger characters or Option-Escape and Control-Space. Before a server connects, it offers language keywords and words from the document.

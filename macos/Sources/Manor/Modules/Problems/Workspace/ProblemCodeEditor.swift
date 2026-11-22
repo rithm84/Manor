@@ -800,7 +800,8 @@ final class WorkspaceEditorCoordinator: NSObject, NSTextViewDelegate, NSTextStor
   private var indentUnit: String { String(repeating: " ", count: tabSize) }
 
   /// A new line keeps the current indentation, adds a level after an opening bracket or a Python colon, and moves a
-  /// closing bracket that follows the caret onto its own line.
+  /// closing bracket that follows the caret onto its own line. Inside a string or comment (notes in a docstring) a
+  /// trailing colon or bracket is prose, so the line keeps its indentation.
   func insertNewlineWithIndent() {
     let source = text as NSString
     let selection = textView.selectedRange()
@@ -809,7 +810,8 @@ final class WorkspaceEditorCoordinator: NSObject, NSTextViewDelegate, NSTextStor
     let before = source.substring(with: NSRange(location: line.location, length: caret - line.location))
     let indent = String(before.prefix { $0 == " " || $0 == "\t" })
     let opener = before.trimmingCharacters(in: .whitespaces).last
-    let opens = opener == "{" || opener == "(" || opener == "[" || (language == .python && opener == ":")
+    let opens = (opener == "{" || opener == "(" || opener == "[" || (language == .python && opener == ":"))
+      && !CodeIndentation.isInsideStringOrComment(source.substring(to: caret), language: language)
     let next: UInt16 = NSMaxRange(selection) < source.length ? source.character(at: NSMaxRange(selection)) : 0
     let closes = (opener == "{" && next == 125) || (opener == "(" && next == 41) || (opener == "[" && next == 93)
     if opens && closes {
