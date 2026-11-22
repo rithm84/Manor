@@ -371,6 +371,7 @@ struct TaskCreateDialog: View {
   @State private var error: String?
   @State private var repeatsOpen = false
   @State private var confirmDiscard = false
+  @State private var returnMonitor: Any?
   @FocusState private var titleFocused: Bool
 
   struct Draft: Equatable {
@@ -453,7 +454,37 @@ struct TaskCreateDialog: View {
       draft = fresh
       initial = fresh
       titleFocused = true
+      installReturnShortcut()
     }
+    .onDisappear { removeReturnShortcut() }
+  }
+
+  /// Return creates the task from anywhere in the dialog once its required fields are set, not only from the title.
+  /// A focused text field keeps Return for itself (the title submits through it), and a picker or the discard
+  /// confirmation that's open takes precedence.
+  private func installReturnShortcut() {
+    guard returnMonitor == nil else { return }
+    returnMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+      guard event.keyCode == 36 || event.keyCode == 76, !event.isARepeat,
+            event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty,
+            let window = event.window, window.isKeyWindow, !(window is NSPanel), window.attachedSheet == nil,
+            !confirmDiscard, canSubmit, !TaskCreateDialog.textFieldHasFocus(in: window)
+      else { return event }
+      submit()
+      return nil
+    }
+  }
+
+  private func removeReturnShortcut() {
+    if let returnMonitor { NSEvent.removeMonitor(returnMonitor) }
+    returnMonitor = nil
+  }
+
+  private static func textFieldHasFocus(in window: NSWindow) -> Bool {
+    guard let responder = window.firstResponder else { return false }
+    if responder is NSText { return true }
+    if let field = responder as? NSTextField, field.isEditable { return true }
+    return false
   }
 
   private var canSubmit: Bool {
