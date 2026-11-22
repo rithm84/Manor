@@ -16,7 +16,7 @@ Manor provides the productivity interface and the domain rules. Agents provide g
 
 Alfred is different from those agents. It is Manor's own assistant for the moment you're in: it answers questions about what is on your screen or, in Prep mode, about a live conversation. It doesn't operate your Manor records.
 
-Manor is not a team workspace or a calendar app. Collaboration and shared workspaces are out of scope. Each account owns its data; the jobs listings and the problem catalog are shared Manor content, and your practice on them is your own.
+Manor is not a general-purpose collaborative workspace, a team workspace, or a calendar app. Collaboration and shared workspaces are out of scope. Each account owns its data; the jobs listings and the problem catalog are shared Manor content, and your practice on them is your own.
 
 ## Vocabulary
 
@@ -26,7 +26,7 @@ Manor is not a team workspace or a calendar app. Collaboration and shared worksp
 | **Codex** | The agent you use to operate Manor through its MCP tools. Other OAuth-capable agent hosts work the same way. |
 | **MCP tools** | Manor's agent operations, served by its remote MCP endpoint. |
 | **Alfred** | Manor's personal assistant, in the notch and the menu bar. |
-| **General mode** and **Prep mode** | Alfred's two modes: answers about your screen or any question, and an interview preparation assistant that listens to practice conversations. |
+| **General mode** and **Prep mode** | Alfred's two modes: answers about your screen or any question, and a conversation assistant that listens to the call. |
 | **Weekly review** | The scheduled summary of a week of habits, mood, focus, and tasks, written by a hosted agent task. |
 | **Perfect day**, **freeze pool**, **Earn-Back** | The streak mechanics in the [streak system](#streak-system). |
 | **Scratch blocks** | Disposable, Manor-only time blocks on Home's timeline. |
@@ -268,7 +268,7 @@ Ingestion reads SimplifyJobs' structured listings and keeps those that are visib
 
 ### Notes
 
-Notes is a document workspace with drafts protected on the Mac and saves queued to the cloud. The target is rich note-taking: fundamentals, rich content, and editing feel. It doesn't extend Manor into databases, shared workspaces, or project management.
+Notes is a document workspace with drafts protected on the Mac and saves queued to the cloud. The target is high-quality note-taking: fundamentals, rich content, and editing feel. It doesn't extend Manor into databases, shared workspaces, or project management.
 
 **Layout.** Notes has two panes: the note list and the editor. The list header's picker chooses the view (all notes, favorites, recent, archived, Trash, or a folder, with counts) and is where folders are created and renamed. The list collapses into a slim rail, remembered on the Mac. Returning to Notes during a session reopens the list and note you left; a relaunch opens Notes with no note selected. Moving between notes, starring, moving, trashing, and creating never wait for the cloud: the edit is protected on the Mac, the save continues in the background, and a note that fails to sync is offered back.
 

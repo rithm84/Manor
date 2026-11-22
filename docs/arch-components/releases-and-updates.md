@@ -1,6 +1,6 @@
 # Releases and updates
 
-_Last updated: 2026-11-19_
+_Last updated: 2026-11-21_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 

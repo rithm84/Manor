@@ -73,7 +73,7 @@ final class AlfredState: ObservableObject {
             .debounce(for: .milliseconds(400), scheduler: RunLoop.main)
             .sink { [weak self] _ in self?.configureEngines() }
             .store(in: &bag)
-        // Switching modes takes effect at once: listening stops in General and starts in Interview.
+        // Switching modes takes effect at once: listening stops in General and starts in Prep.
         prefs.$alfredMode.dropFirst().removeDuplicates()
             .sink { [weak self] mode in self?.apply(mode) }
             .store(in: &bag)

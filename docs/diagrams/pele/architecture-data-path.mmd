@@ -1,0 +1,21 @@
+---
+title: Manor · data path
+---
+flowchart LR
+  page["`**Manor pages**
+  Read and edit`"]:::app
+  mirror[("`**Local mirror**
+  Account copy`")]:::local
+  gateway["`**Gateway**
+  Commands and feed pulls`"]:::app
+  command["`**manor_command**
+  Revision check · idempotency`"]:::gate
+  database[("`**Postgres**
+  Records · change feed`")]:::backend
+  page -->|reads and writes| gateway
+  gateway -->|reads| mirror
+  gateway -->|named operation| command
+  command -->|commit| database
+  database -->|receipt| gateway
+  gateway async_1@-.->|pull changes| database
+  gateway -->|server data only| mirror

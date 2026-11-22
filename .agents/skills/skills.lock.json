@@ -134,7 +134,7 @@
         "manor-import": {
           "path": ".agents/skills/general/manor-import",
           "files": {
-            "SKILL.md": "sha256:1b39c95187869441615ad817cc6c1a149abb05c0a0935240f3ac21a28da34cea"
+            "SKILL.md": "sha256:8c74775cbb54a2ba63b57c147defd1ab076d4cd615ffe8d67f353068d9caa15b"
           }
         }
       }

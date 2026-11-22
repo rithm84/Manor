@@ -1,6 +1,6 @@
 # AGENTS
 
-_Last updated: 2026-11-19_
+_Last updated: 2026-11-22_
 
 Operational guide for coding agents working on Manor.
 
@@ -61,6 +61,7 @@ At the start of a session (and again after context compaction), before other wor
 
 1. `docs/PRD.md`: product behavior; treat as binding.
 2. `docs/ARCHITECTURE.md`: the system map, then the `docs/arch-components/` slices for the area you touch.
+3. If the ignored local research file exists, skim its workflow workarounds. It is private reference material, not a required checkout dependency.
 
 Before any UI/UX work, additionally read `docs/DESIGN.md` (the design charter).
 

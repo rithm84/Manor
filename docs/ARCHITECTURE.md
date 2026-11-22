@@ -1,6 +1,6 @@
 # Manor architecture
 
-_Last updated: 2026-11-19_
+_Last updated: 2026-11-21_
 
 Manor is a native Mac app backed by one Supabase project per environment. The app reads your account from a copy kept on the Mac and writes every change through one transactional command boundary that agents share. This page maps the system and how its parts relate. The linked component slices under [arch-components](arch-components/) carry the detailed contracts, limits, and failure rules. The [PRD](PRD.md) owns product behavior and vocabulary, and the [design charter](DESIGN.md) owns the visual direction.
 
@@ -51,9 +51,18 @@ Agents never reach Postgres directly. They call the `manor-mcp` Edge Function wi
 
 ### Reads come from the Mac, writes go to the server
 
-A page reads through the [gateway](arch-components/gateway-and-commands.md), which answers from the [local mirror](arch-components/local-mirror-and-sync.md) once the mirror holds a current copy and from Postgres before that. The mirror stays current by poke then pull: launch, focus, the network returning, a one-minute timer, a Realtime insert on `action_events`, or this device's own command starts a pull of the account's change feed. Nothing is written to the mirror except what the server returns.
+The following diagram shows the ordinary read and write paths.
 
-Every write is a named operation through `manor_command`, with a command ID that makes retries idempotent and an expected revision that turns a concurrent edit into a conflict instead of an overwrite. The receipt carries the committed record; the gateway then pulls and tells subscribed pages which tables changed.
+![Pages read the local mirror through the gateway and send writes through the gateway and manor_command to Postgres. The gateway updates the mirror from server data.](diagrams/svg/architecture-data-path.svg)
+
+<details><summary>Diagram key</summary>
+
+![Diagram key of the nine node roles.](diagrams/svg/_key.svg)
+
+</details>
+<p></p>
+
+Before the mirror holds a current copy, the gateway reads from Postgres. Launch, focus, network recovery, a one-minute timer, a Realtime insert, and this device's own commands trigger feed pulls. A command ID makes retries idempotent, and an expected revision detects concurrent edits. The [gateway](arch-components/gateway-and-commands.md) and [local mirror](arch-components/local-mirror-and-sync.md) slices own the details.
 
 ### Unsaved work is protected before it is sent
 

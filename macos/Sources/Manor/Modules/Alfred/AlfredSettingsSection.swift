@@ -35,7 +35,7 @@ struct AlfredSettingsSection: View {
     SettingsCard {
       SettingsRow("Mode", description: prefs.alfredMode == .general
         ? "Ask about anything on your screen, or any question."
-        : "Listens to your call and helps with interview questions as they come.") {
+        : "Listens to your conversation and helps you prepare answers.") {
         SegmentedTabs(AlfredMode.allCases.map { ($0, $0.title) }, selection: $prefs.alfredMode)
       }
       SettingsRow("Include your screen", description: "Answers see the window you're working in. Alfred's panel, other windows, and the desktop are left out.") {
@@ -92,8 +92,8 @@ struct AlfredSettingsSection: View {
         toggle("Listen when Manor opens", $prefs.listenOnLaunch)
       }
       VStack(alignment: .leading, spacing: Space.s2) {
-        Text("This interview").font(.ui(Typography.Size.body, weight: .medium)).foregroundStyle(Palette.ink)
-        AlfredTextArea(text: $prefs.roleContext, placeholder: "Company, role, team, interviewer names, the agenda, and what they care about.")
+        Text("Conversation context").font(.ui(Typography.Size.body, weight: .medium)).foregroundStyle(Palette.ink)
+        AlfredTextArea(text: $prefs.roleContext, placeholder: "Company, role, team, participants, and the agenda.")
       }
       .padding(.vertical, Space.s3)
     }

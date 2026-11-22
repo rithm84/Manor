@@ -92,7 +92,7 @@ Reads return record IDs and revisions; writes require them, so an agent can't ac
 
 Download the app from the [releases](https://github.com/rithm84/Manor/releases), unzip it into Applications, and open it. Builds are signed with Manor's own certificate rather than a Developer ID, so macOS asks you to approve the first launch. After that, Manor updates itself.
 
-Creating an account requires an invitation password, and connecting an agent requires the hosted MCP URL. Neither is published here, so [open an issue](https://github.com/rithm84/Manor/issues) to ask for them. Each account's data is private to that account.
+Manor is invite-only: creating an account requires an invitation password, and connecting an agent requires the hosted MCP URL. Each account's data is private to that account.
 
 ## Building from source
 

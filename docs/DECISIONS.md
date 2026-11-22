@@ -1,6 +1,6 @@
 # Manor product decisions
 
-_Last updated: 2026-11-19_
+_Last updated: 2026-11-21_
 
 This page is the dated record of Manor's product decisions. The [PRD](PRD.md) states the behavior those decisions produce today, and the [architecture](ARCHITECTURE.md) records the technical design. When a decision changes behavior, the PRD changes in the same edit, so the two pages always agree.
 
@@ -43,6 +43,7 @@ Each entry names the decision and, in parentheses, the PRD sections it shapes. A
 | 2026-11-19 | Manor is signed with a Developer ID certificate and notarized by Apple, replacing the self-signed certificate; updates require the same developer team, and builds signed before the switch need one manual install ([platform](PRD.md#platform)). |
 | 2026-11-19 | Sign in with Apple replaces Google as the only sign-in. A new Apple ID is asked for the invitation password after Apple signs it in, so Hide My Email works, and existing accounts keep their data by linking an Apple ID ([accounts and dates](PRD.md#accounts-and-dates)). |
 | 2026-11-19 | Alfred's provider keys move to Manor's backend: a signed-in account uses Alfred with no keys of its own, through a proxy that enforces per-account daily and monthly allowances and counts usage without storing content. This supersedes keeping your own keys in the Keychain ([Alfred](PRD.md#alfred)). |
+| 2026-11-21 | Alfred's live listening mode is named Prep mode ([Alfred](PRD.md#alfred)). |
 | 2026-11-17 | In Prep mode, quitting Manor from the Dock or with Command-Q hides Manor and leaves Alfred in the menu bar ([Alfred](PRD.md#alfred)). |
 | 2026-11-18 | `/alfred` in Notes opens a composer dialog with images; the result lands in an Alfred block rendered with the note's own block views, and selected text or blocks can be rewritten through a preview that changes nothing until applied ([writing in Notes](PRD.md#writing-in-notes)). |
 | 2026-11-18 | With Manor in front, Alfred's shortcut opens Alfred inside Manor, where it acts on your records when you ask, through the same commands the pages use; each action offers Undo and irreversible ones ask first. Codex remains the agent for everything outside the app ([Alfred in Manor](PRD.md#alfred-in-manor), [scope](PRD.md#scope)). |

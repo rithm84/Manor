@@ -5,7 +5,7 @@ import Foundation
 public enum AlfredMode: String, CaseIterable, Identifiable, Sendable {
     /// A general assistant: ask about anything on screen or any question. Never listens.
     case general
-    /// Interview preparation and practice conversations: listens to system audio and microphone, with DSA-focused answers.
+    /// Preparation and live conversation: listens to system audio and microphone, with DSA-focused answers.
     case interview
 
     public var id: String { rawValue }
