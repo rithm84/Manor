@@ -135,13 +135,8 @@ struct NotchSurface: View {
         .frame(width: width)
         .fixedSize(horizontal: false, vertical: true)
         .clipShape(NotchShape(top: radii.top, bottom: radii.bottom))
-        .background {
-            // Shadow on the backing shape only — shadowing the content would render it all offscreen.
-            NotchShape(top: radii.top, bottom: radii.bottom)
-                .fill(Color.black)
-                .shadow(color: .black.opacity(mode == .open ? 0.55 : 0),
-                        radius: mode == .open ? 18 : 6, y: 4)
-        }
+        // Solid black with no shadow, so the card reads as part of the hardware notch.
+        .background { NotchShape(top: radii.top, bottom: radii.bottom).fill(Color.black) }
         .overlay {
             // A hairline rim below the menu bar so the open card reads as a surface on dark wallpapers too.
             NotchShape(top: radii.top, bottom: radii.bottom)
