@@ -23,6 +23,9 @@ final class AlfredState: ObservableObject {
     @Published var answerVisible = false
     /// User expanded the card from the notch even with nothing to show yet.
     @Published var cardPinned = false
+    /// The card is open because the pointer rests on the notch: it folds away when the pointer leaves, until a
+    /// click or typing makes it an ordinary open card.
+    @Published var hoverPeek = false
     @Published var askActive = false
     @Published var askText = ""
     @Published var toast: Toast?
@@ -436,7 +439,7 @@ final class AlfredState: ObservableObject {
 
     /// The card is out of the notch: typing, an answer showing, or pinned open.
     var isCardOpen: Bool {
-        cardPinned || askActive || (answerVisible && (answers.current != nil || answers.threads.count > 1))
+        hoverPeek || cardPinned || askActive || (answerVisible && (answers.current != nil || answers.threads.count > 1))
     }
 
     /// ⌃⌥H: opens Alfred ready to type (the ask box focused); pressing again folds it flush into the notch.
@@ -452,11 +455,34 @@ final class AlfredState: ObservableObject {
     /// Folds the card back into the notch.
     func collapseCard() {
         endAsk()
+        hoverPeek = false
         cardPinned = false
         answerVisible = false
     }
 
+    /// Opens the card for a pointer resting on the notch, without taking the keyboard.
+    func peekFromHover() {
+        guard !(overlayVisible && isCardOpen) else { return }
+        overlayVisible = true
+        answerVisible = true
+        hoverPeek = true
+    }
+
+    /// The pointer left a card it opened: fold it away, unless you've started typing in it.
+    func endHoverPeek() {
+        guard hoverPeek, !askActive else { return }
+        collapseCard()
+    }
+
+    /// A click or typing in a hover-opened card keeps it open like any other.
+    func engageHoverPeek() {
+        guard hoverPeek else { return }
+        hoverPeek = false
+        cardPinned = true
+    }
+
     func beginAsk() {
+        engageHoverPeek()
         overlayVisible = true
         answerVisible = true   // reopening brings the active chat back, not just an empty input
         askActive = true

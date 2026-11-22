@@ -937,6 +937,67 @@ final class ModeTests: XCTestCase {
         XCTAssertEqual(Preferences(defaults: defaults).alfredMode, .interview)
     }
 
+    @MainActor
+    func testNotchOpensOnHoverByDefault() {
+        let suite = "alfred.tests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        XCTAssertEqual(Preferences(defaults: defaults).notchOpening, .hover)
+        Preferences(defaults: defaults).notchOpening = .click
+        XCTAssertEqual(Preferences(defaults: defaults).notchOpening, .click)
+    }
+
+    /// A hover-opened card never takes the keyboard, folds away when the pointer leaves, and stays like any other
+    /// open card once you click or type in it.
+    @MainActor
+    func testHoverPeekLifecycle() {
+        let suite = "alfred.tests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let state = AlfredState(prefs: Preferences(defaults: defaults), knowledge: KnowledgeStore())
+        var focused: [Bool] = []
+        state.focusAskField = { focused.append($0) }
+
+        state.peekFromHover()
+        XCTAssertTrue(state.hoverPeek)
+        XCTAssertTrue(state.isCardOpen)
+        XCTAssertFalse(state.askActive)
+        XCTAssertTrue(focused.isEmpty, "hover must not take the keyboard")
+
+        state.endHoverPeek()
+        XCTAssertFalse(state.isCardOpen)
+
+        // Typing keeps it open: leaving does nothing while the ask field is active.
+        state.peekFromHover()
+        state.askActive = true
+        state.endHoverPeek()
+        XCTAssertTrue(state.isCardOpen)
+        state.collapseCard()
+        XCTAssertFalse(state.isCardOpen)
+        XCTAssertFalse(state.hoverPeek)
+
+        // A click in the card makes it an ordinary open card.
+        state.peekFromHover()
+        state.engageHoverPeek()
+        XCTAssertFalse(state.hoverPeek)
+        state.endHoverPeek()
+        XCTAssertTrue(state.isCardOpen)
+
+        // Clicking the notch on a hover-opened card opens it ready to type.
+        state.collapseCard()
+        state.peekFromHover()
+        state.beginAsk()
+        XCTAssertFalse(state.hoverPeek)
+        XCTAssertTrue(state.askActive)
+        XCTAssertEqual(focused.last, true)
+
+        // A peek never replaces a card that's already open.
+        state.collapseCard()
+        state.beginAsk()
+        state.peekFromHover()
+        XCTAssertFalse(state.hoverPeek)
+    }
+
     func testMenuBarGlyphIsTheManorMark() {
         let path = MenuBarIcon.path(in: CGRect(x: 0, y: 0, width: 41, height: 24))
         XCTAssertFalse(path.isEmpty)

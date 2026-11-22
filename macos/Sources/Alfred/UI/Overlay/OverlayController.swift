@@ -63,6 +63,16 @@ final class OverlayController {
     private var bag = Set<AnyCancellable>()
     private var previousApp: NSRunningApplication?
     private let notch: NotchModel
+    /// Hover opening (Settings ▸ Alfred ▸ Open from the notch): a short rest on the notch opens the card, and
+    /// leaving it folds a hover-opened card away after a grace period.
+    private var hoverOpenTask: Task<Void, Never>?
+    private var hoverCloseTask: Task<Void, Never>?
+    /// False after the card folds away with the pointer still on the notch: hover waits for the pointer to leave
+    /// first, so closing never immediately reopens.
+    private var hoverArmed = true
+    private var cardWasOpen = false
+    static let hoverOpenDelay: Duration = .milliseconds(140)
+    static let hoverCloseDelay: Duration = .milliseconds(350)
 
     static let size = CGSize(width: Theme.cardWidth + 120, height: 820)
 
@@ -220,26 +230,98 @@ final class OverlayController {
             MainActor.assumeIsolated { self?.clickedOutside() }
         }) { monitors.append(global) }
         if let local = NSEvent.addLocalMonitorForEvents(matching: clicks, handler: { [weak self] event in
-            MainActor.assumeIsolated { if event.window !== self?.panel { self?.clickedOutside() } }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if event.window !== self.panel { self.clickedOutside(); return }
+                // Clicking into a hover-opened card keeps it open. The notch strip itself has its own meaning
+                // (see NotchSurface), so a click there is left to it.
+                if !self.inNotchStrip(event.locationInWindow) { self.state.engageHoverPeek() }
+            }
             return event
         }) { monitors.append(local) }
     }
 
     private func clickedOutside() {
+        if state.hoverPeek {
+            state.endHoverPeek()
+            return
+        }
         guard state.askActive else { return }
         // The click already went to (and activated) whatever was clicked; don't switch apps behind it.
         previousApp = nil
         state.endAsk()
     }
 
+    /// The pointer's position in the overlay's SwiftUI space (top-left origin).
+    private func pointerPoint(windowPoint: CGPoint? = nil) -> CGPoint {
+        let point = windowPoint ?? panel.convertPoint(fromScreen: NSEvent.mouseLocation)
+        let viewPoint = hosting.convert(point, from: nil)
+        return hosting.isFlipped ? viewPoint : CGPoint(x: viewPoint.x, y: hosting.bounds.height - viewPoint.y)
+    }
+
+    private func inNotchStrip(_ windowPoint: CGPoint) -> Bool {
+        pointerPoint(windowPoint: windowPoint).y <= notch.geometry.notch.height
+    }
+
+    // MARK: - Hover
+
+    /// Opens the card when the pointer rests on the notch and folds a hover-opened card away once the pointer leaves
+    /// it. Never opens while a mouse button is down (a window drag passing the top edge) or right after the card
+    /// closed under the pointer.
+    private func updateHover(point: CGPoint) {
+        let open = state.overlayVisible && state.isCardOpen
+        defer { cardWasOpen = open }
+        let onSurface = regions.contains(point)
+        if !open {
+            hoverCloseTask?.cancel()
+            hoverCloseTask = nil
+            if cardWasOpen && onSurface { hoverArmed = false }
+            if !onSurface { hoverArmed = true }
+            guard state.prefs.notchOpening == .hover, notch.geometry.hasNotch, onSurface, hoverArmed,
+                  NSEvent.pressedMouseButtons == 0 else { cancelHoverOpen(); return }
+            guard hoverOpenTask == nil else { return }
+            hoverOpenTask = Task { [weak self] in
+                try? await Task.sleep(for: Self.hoverOpenDelay)
+                guard let self, !Task.isCancelled else { return }
+                self.hoverOpenTask = nil
+                // Still resting there, and nothing opened the card in the meantime.
+                guard self.regions.contains(self.pointerPoint()), self.hoverArmed, NSEvent.pressedMouseButtons == 0,
+                      !(self.state.overlayVisible && self.state.isCardOpen) else { return }
+                self.state.peekFromHover()
+                self.updateMouseThrough()
+            }
+            return
+        }
+        cancelHoverOpen()
+        // A little slack around the card, so brushing past its edge doesn't close it.
+        guard state.hoverPeek, !regions.contains(point, margin: 16) else {
+            hoverCloseTask?.cancel()
+            hoverCloseTask = nil
+            return
+        }
+        guard hoverCloseTask == nil else { return }
+        hoverCloseTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.hoverCloseDelay)
+            guard let self, !Task.isCancelled else { return }
+            self.hoverCloseTask = nil
+            guard self.state.hoverPeek, !self.regions.contains(self.pointerPoint(), margin: 16) else { return }
+            self.state.endHoverPeek()
+            self.updateMouseThrough()
+        }
+    }
+
+    private func cancelHoverOpen() {
+        hoverOpenTask?.cancel()
+        hoverOpenTask = nil
+    }
+
     /// The panel spans a large transparent area; only the drawn card takes clicks, everything else passes through
     /// to the windows below, even while typing.
     private func updateMouseThrough() {
         guard panel.isVisible else { return }
-        let windowPoint = panel.convertPoint(fromScreen: NSEvent.mouseLocation)
-        let viewPoint = hosting.convert(windowPoint, from: nil)
-        let swiftUIPoint = hosting.isFlipped ? viewPoint : CGPoint(x: viewPoint.x, y: hosting.bounds.height - viewPoint.y)
-        let inside = regions.contains(swiftUIPoint)
+        let point = pointerPoint()
+        let inside = regions.contains(point)
         if panel.ignoresMouseEvents == inside { panel.ignoresMouseEvents = !inside }
+        updateHover(point: point)
     }
 }

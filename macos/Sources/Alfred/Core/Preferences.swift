@@ -26,6 +26,13 @@ public enum AssistMode: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// How the notch opens Alfred: resting the pointer on it (the default), or clicking it.
+public enum NotchOpening: String, CaseIterable, Identifiable, Sendable {
+    case hover, click
+    public var id: String { rawValue }
+    public var title: String { self == .hover ? "Hover" : "Click" }
+}
+
 /// User-facing, non-secret preferences persisted in UserDefaults under `manor.alfred.*`. Keys never live here.
 @MainActor
 public final class Preferences: ObservableObject {
@@ -49,6 +56,8 @@ public final class Preferences: ObservableObject {
     @Published public var includeScreen: Bool { didSet { set(includeScreen, "includeScreen") } }
     /// With the screen included, answers also get the front window's text (needs Accessibility).
     @Published public var includeWindowText: Bool { didSet { set(includeWindowText, "includeWindowText") } }
+    /// Whether the notch opens Alfred on hover or on click.
+    @Published public var notchOpening: NotchOpening { didSet { set(notchOpening.rawValue, "notchOpening") } }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -65,6 +74,7 @@ public final class Preferences: ObservableObject {
         prefetchAnswers = value("prefetchAnswers") ?? true
         includeScreen = value("includeScreen") ?? true
         includeWindowText = value("includeWindowText") ?? true
+        notchOpening = NotchOpening(rawValue: value("notchOpening") ?? "") ?? .hover
     }
 
     private func set(_ value: Any, _ key: String) { defaults.set(value, forKey: Self.prefix + key) }

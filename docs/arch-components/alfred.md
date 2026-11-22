@@ -1,6 +1,6 @@
 # Alfred
 
-_Last updated: 2026-11-21_
+_Last updated: 2026-11-22_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -76,7 +76,7 @@ The overlay renders Markdown with a small streaming parser and a syntax highligh
 
 ## Overlay and menu bar
 
-- **Overlay.** `OverlayController` owns a borderless, non-activating `NSPanel` above the menu bar level that joins every Space and works beside full-screen apps. It ignores the mouse except inside registered hit regions, so it never blocks the app beneath. A black, hardware-style card springs from the notch and folds back; on a Mac without a notch, it hangs from the top center and fades when hidden.
+- **Overlay.** `OverlayController` owns a borderless, non-activating `NSPanel` above the menu bar level that joins every Space and works beside full-screen apps. It ignores the mouse except inside registered hit regions, so it never blocks the app beneath. A black, hardware-style card springs from the notch and folds back; on a Mac without a notch, it hangs from the top center and fades when hidden. With the notch set to hover (`Preferences.notchOpening`, the default), the same mouse tracking opens a *hover peek* after the pointer rests on the notch for 140 ms with no button held, without making the panel key. The peek folds away 350 ms after the pointer leaves the card and a 16 pt margin, and a click outside closes it. A click inside, or typing, turns it into an ordinary open card. After the card closes with the pointer still on the notch, hover waits for the pointer to leave before it opens again. Clicking the strip level with the camera folds an open card away, or, on a peek, focuses the ask field.
 - **Menu bar.** `StatusMenu` shows a template Manor mark with a dot while listening. Its menu holds the mode, Ask, Answer, listening and microphone controls (Interview only), New Session, the mode submenu, **Alfred Settings…**, **Open Manor**, and **Quit Manor**.
 - **Hot keys.** `HotkeyCenter` registers Carbon hot keys, which need no Accessibility permission. All use Control-Option: Space answers, L and M toggle listening and the microphone, H opens or folds the overlay, N starts a new session, T and W open and close chat tabs, the arrow keys scroll and switch tabs, brackets step through diagrams, and comma opens Settings. A shortcut that another app already holds is flagged in Settings.
 

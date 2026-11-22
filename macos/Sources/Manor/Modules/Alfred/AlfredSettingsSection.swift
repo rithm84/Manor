@@ -56,6 +56,11 @@ struct AlfredSettingsSection: View {
           windowTextTrusted = WindowText.isTrusted
         }
       }
+      SettingsRow("Open from the notch", description: prefs.notchOpening == .hover
+        ? "Alfred opens when you rest the pointer on the notch and closes when you move away. Click it to start typing."
+        : "Click the notch to open Alfred, and click it again to close it.") {
+        SegmentedTabs(NotchOpening.allCases.map { ($0, $0.title) }, selection: $prefs.notchOpening)
+      }
       SettingsRow("Answer text size") {
         HStack(spacing: Space.s2) {
           Image(systemName: "textformat.size.smaller").foregroundStyle(Palette.inkMuted).accessibilityHidden(true)

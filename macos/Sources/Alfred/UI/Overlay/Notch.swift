@@ -80,7 +80,8 @@ extension Theme {
     static let notchInset: CGFloat = 12
 }
 
-/// The whole overlay surface. Tapping the notch opens Alfred ready to type.
+/// The whole overlay surface. Resting the pointer on the notch opens Alfred (or tapping it, in click mode); tapping
+/// the notch opens it ready to type, and tapping it again folds Alfred away.
 struct NotchSurface: View {
     @EnvironmentObject private var state: AlfredState
     @EnvironmentObject private var listener: Listener
@@ -149,10 +150,15 @@ struct NotchSurface: View {
                 .allowsHitTesting(false)
         }
         .contentShape(NotchShape(top: radii.top, bottom: radii.bottom))
-        .onTapGesture {
+        .onTapGesture(coordinateSpace: .local) { location in
             switch mode {
             case .flush: state.beginAsk()
-            case .open: break
+            // The strip level with the camera is the notch itself. Clicking it folds an open card back in, the way
+            // a click there opened it; on a card that hover opened, it means "I want to type" instead. Clicks on
+            // the card below keep working as usual.
+            case .open:
+                guard location.y <= notch.notch.height else { break }
+                if state.hoverPeek { state.beginAsk() } else { state.collapseCard() }
             }
         }
         .opacity(hidden ? 0 : 1)

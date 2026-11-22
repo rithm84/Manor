@@ -1,6 +1,6 @@
 # Manor PRD
 
-_Last updated: 2026-11-21_
+_Last updated: 2026-11-22_
 
 This page defines what Manor does: its scope, behavior, business rules, and vocabulary. It states the current product only. The dated history of how each rule was decided is in [product decisions](DECISIONS.md), the technical design is in the [architecture](ARCHITECTURE.md), and the visual direction is in the [design charter](DESIGN.md).
 
@@ -120,7 +120,7 @@ Manor sends no proactive notifications. Due and at-risk states stay visible insi
 
 ## Alfred
 
-Alfred is Manor's personal assistant. It lives inside Manor's process as an overlay that sits flush with the Mac's notch and as an item in the menu bar, so it is a keystroke away from whatever you're doing. Press Control-Option-Space and a black, hardware-style card springs from the notch and streams the answer; on a Mac without a notch, the card drops from the top center of the screen. The mode you choose is saved on the Mac.
+Alfred is Manor's personal assistant. It lives inside Manor's process as an overlay that sits flush with the Mac's notch and as an item in the menu bar, so it is a keystroke away from whatever you're doing. Press Control-Option-Space and a black, hardware-style card springs from the notch and streams the answer; on a Mac without a notch, the card drops from the top center of the screen. Resting the pointer on the notch opens Alfred without taking the keyboard, and moving away folds it back, unless you clicked into it or started typing; clicking the notch opens Alfred ready to type, and clicking it again folds it away. Settings ▸ Alfred can switch the notch to open on click only. The mode you choose is saved on the Mac.
 
 ### Modes
 

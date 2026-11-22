@@ -8,8 +8,8 @@ final class HitRegions {
 
     func set(_ id: String, _ rect: CGRect?) { rects[id] = rect }
 
-    func contains(_ point: CGPoint) -> Bool {
-        rects.values.contains { $0.insetBy(dx: -4, dy: -4).contains(point) }
+    func contains(_ point: CGPoint, margin: CGFloat = 4) -> Bool {
+        rects.values.contains { $0.insetBy(dx: -margin, dy: -margin).contains(point) }
     }
 }
 
