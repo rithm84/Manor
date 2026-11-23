@@ -1,7 +1,8 @@
 import ManorKit
 import SwiftUI
 
-/// Google Calendar accounts and their calendars, X bookmarks, the course calendar feed, and connected agents.
+/// Google Calendar accounts and their calendars, X bookmarks, the course calendar feed, connecting an agent, and
+/// connected agents.
 struct SettingsConnectionsSection: View {
   @Environment(AppContext.self) private var context
   @Bindable var store: SettingsStore
@@ -41,6 +42,7 @@ struct SettingsConnectionsSection: View {
         xCard
         feedCard
       }
+      connectSection.padding(.top, Space.s4)
       agentsSection.padding(.top, Space.s4)
     }
     .animation(Motion.base, value: store.loadedConnections)
@@ -191,6 +193,18 @@ struct SettingsConnectionsSection: View {
   }
 
   // MARK: Agents
+
+  private var connectSection: some View {
+    VStack(alignment: .leading, spacing: Space.s3) {
+      VStack(alignment: .leading, spacing: 2) {
+        SettingsSectionTitle(title: "Connect an agent")
+        Text("Agents that support MCP can use Manor. Each one asks for access first, and you approve it here.")
+          .font(.ui(Typography.Size.sm)).foregroundStyle(Palette.inkMuted)
+      }
+      AgentConnectCard(connect: SettingsDomain.AgentConnect(
+        supabaseURL: context.session.config.supabaseURL, environment: context.session.config.environment))
+    }
+  }
 
   private var agentsSection: some View {
     VStack(alignment: .leading, spacing: Space.s3) {

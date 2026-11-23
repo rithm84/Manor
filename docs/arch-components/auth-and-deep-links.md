@@ -46,7 +46,7 @@ An agent's authorization must finish in the browser window that started it, beca
 4. Manor stores the returned redirect with `manor_oauth_handoff_save`, which accepts only a signed-in session and only an address on the client's registered redirect URI.
 5. The bridge page takes it once with `manor_oauth_handoff_take` and continues the agent's window to it. The code in that address is useless without the agent's PKCE verifier, so the page needs only the publishable key.
 
-Settings lists connected agent clients (`manor_list_mcp_clients`) and revokes them (`manor_revoke_mcp_client`); revocation takes effect immediately.
+Settings ▸ Connections shows the MCP address (`SettingsDomain.AgentConnect`, derived from the build's Supabase URL) with copy buttons, and ready-made `claude mcp add` and `codex mcp add` commands. It lists connected agent clients (`manor_list_mcp_clients`) and revokes them (`manor_revoke_mcp_client`); revocation takes effect immediately.
 
 ## Row-level security
 

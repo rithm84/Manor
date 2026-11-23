@@ -48,7 +48,7 @@ Manor is not a general-purpose collaborative workspace, a team workspace, or a c
 Manor is a native macOS app built with SwiftUI and AppKit for macOS 15 and later. It installs from a build signed with Manor's Developer ID and notarized by Apple, so it opens on any Mac without a warning, and updates itself from Manor's releases. On macOS 26 it draws Liquid Glass for floating chrome and uses solid surfaces on earlier systems. There is no website and no web view shell.
 
 - **Signing in** opens Apple's sign-in page in a system sign-in window that returns the result to the app.
-- **Connecting an agent** opens Manor through a link it registered with macOS, and you approve the request inside the app.
+- **Connecting an agent** starts from Manor's MCP address, which Settings ▸ Connections shows with copy buttons and the setup for ChatGPT, Claude, Claude Code, and Codex. The agent's request opens Manor through a link it registered with macOS, and you approve it inside the app.
 - **Links** that leave the app open in your browser, and a Manor link opens the app on the page it names.
 - **Closing the window** keeps Manor running, so it reopens instantly from the Dock; Quit ends it, except in Alfred's Prep mode (see [Alfred](#alfred)).
 - **Agents** operate Manor through remote MCP, which needs no open Manor window.

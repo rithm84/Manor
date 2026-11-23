@@ -90,9 +90,24 @@ Reads return record IDs and revisions; writes require them, so an agent can't ac
 
 ## Installing
 
-Download the app from the [releases](https://github.com/rithm84/Manor/releases), unzip it into Applications, and open it. Builds are signed with Manor's own certificate rather than a Developer ID, so macOS asks you to approve the first launch. After that, Manor updates itself.
+Manor runs on Macs with Apple silicon and macOS 15 or later. Download the latest zip from the [releases](https://github.com/rithm84/Manor/releases), unzip it, move Manor into Applications, and open it. Builds are signed with a Developer ID and notarized by Apple, so they open without a warning, and Manor updates itself after that.
 
-Manor is invite-only: creating an account requires an invitation password, and connecting an agent requires the hosted MCP URL. Each account's data is private to that account.
+Sign in with Apple. Manor is invite-only: an Apple ID that is new to Manor is asked for an invitation password before its account is created. Each account's data is private to that account.
+
+## Connecting an agent
+
+Any agent that supports remote MCP can use Manor at this address:
+
+```
+https://pxdxqueevzttpmxjsqes.supabase.co/functions/v1/manor-mcp
+```
+
+The agent signs in to your Manor account, and Manor asks you to allow access before the agent can read or change anything. Settings ▸ Connections in the app shows the address with copy buttons, and lists connected agents so you can remove access.
+
+- **ChatGPT:** open Plugins, choose +, then **Add custom MCP server**, and paste the address.
+- **Claude:** open Customize, then Connectors. Choose **Add**, then **Add custom connector**, and paste the address.
+- **Claude Code:** run `claude mcp add --transport http manor https://pxdxqueevzttpmxjsqes.supabase.co/functions/v1/manor-mcp`, then `/mcp` in Claude Code to sign in.
+- **Codex:** run `codex mcp add manor --url https://pxdxqueevzttpmxjsqes.supabase.co/functions/v1/manor-mcp`, then `codex mcp login manor`.
 
 ## Building from source
 

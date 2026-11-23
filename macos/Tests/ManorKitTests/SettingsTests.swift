@@ -4,6 +4,15 @@ import Testing
 
 @Suite("Settings")
 struct SettingsTests {
+  @Test func agentsConnectToTheProjectsMCPAddress() {
+    let production = SettingsDomain.AgentConnect(supabaseURL: URL(string: "https://abc.supabase.co")!, environment: .production)
+    #expect(production.address == "https://abc.supabase.co/functions/v1/manor-mcp")
+    #expect(production.claudeCodeCommand == "claude mcp add --transport http manor https://abc.supabase.co/functions/v1/manor-mcp")
+    #expect(production.codexCommand == "codex mcp add manor --url https://abc.supabase.co/functions/v1/manor-mcp && codex mcp login manor")
+    // Staging gets its own name, so an agent can hold both.
+    #expect(SettingsDomain.AgentConnect(supabaseURL: URL(string: "https://xyz.supabase.co")!, environment: .staging).name == "manor-staging")
+  }
+
   @Test func pkceChallengeIsTheBase64URLSHA256OfTheVerifier() {
     let pkce = SettingsDomain.PKCE(verifier: "dBjftJeZ4CVP-mJ92heqfaH8vVJT7wbTuCQqHjhvzYk")
     #expect(pkce.challenge == "rpEtg5qH22crqdpHmT6he35bWJDmgt1SNSbiF2Kp2yw")
