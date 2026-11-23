@@ -1,6 +1,6 @@
 # Auth and deep links
 
-_Last updated: 2026-11-19_
+_Last updated: 2026-11-22_
 
 [Back to Manor architecture](../ARCHITECTURE.md)
 
@@ -62,4 +62,4 @@ The native app sends no `Origin` header, so Edge Functions treat such a request 
 
 ## Sign-out and expiry
 
-Explicit sign-out first runs every registered guard; any guard that reports unsynced Notes drafts, unsynced code drafts, or files still uploading cancels it with that message. The code-draft guard first saves every pending draft on this Mac, including ones no editor has open, and names a conflict with a newer saved copy as one to resolve in the editor rather than a connection problem. After a sign-out completes, the session stops the mirror and runs cleanups that delete the account's mirror file, synced drafts, and pending upload journals, and forgets the cached account. Session expiry is different: local drafts stay, authenticated operations stop, and the same account has to sign in again before they replay. Another account never inherits them.
+Explicit sign-out first runs every registered guard; any guard that reports unsynced Notes drafts, unsynced code drafts, or files still uploading cancels it with that message. The code-draft guard first saves every pending draft on this Mac, including ones no editor has open, and names a conflict with a newer saved copy as one to resolve in the editor rather than a connection problem. Sign-out ends only this Mac's session, so agents' connections stay until you revoke them in Settings. After a sign-out completes, the session stops the mirror and runs cleanups that delete the account's mirror file, synced drafts, and pending upload journals, and forgets the cached account. Session expiry is different: local drafts stay, authenticated operations stop, and the same account has to sign in again before they replay. Another account never inherits them.

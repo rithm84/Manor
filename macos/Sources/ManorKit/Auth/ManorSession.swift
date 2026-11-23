@@ -226,7 +226,9 @@ public final class ManorSession {
       if let message = await check() { return message }
     }
     let accountId = gateway?.accountId
-    try? await client.auth.signOut()
+    // Only this Mac's session ends. The default (every session) would also end agents' connections, which you manage
+    // and revoke in Settings, so a sign-out here would silently disconnect ChatGPT or Codex.
+    try? await client.auth.signOut(scope: .local)
     await closeAccount()
     if let accountId {
       for cleanup in signOutCleanups { await cleanup(accountId) }
