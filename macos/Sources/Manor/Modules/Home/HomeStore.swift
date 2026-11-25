@@ -102,6 +102,10 @@ final class HomeStore {
   func saveTask(_ task: TaskItem) async throws -> TaskItem {
     guard let context = context(named: task.context) else { throw TaskRecordError("Choose a Context before saving this task") }
     let existingRow = rows["tasks"]?[task.id]
+    var task = task
+    // A copy taken while the task was still being created never saw a revision; the server's first one is the
+    // version it was edited from.
+    if task.revision == nil, let revision = existingRow?.revision { task.revision = revision }
     let command = try TaskCommands.saveTask(task, contextId: context.id, existing: existingRow.map(TaskCommands.Existing.init(row:)))
     let previous = self.task(task.id)
     var optimistic = task

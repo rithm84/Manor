@@ -149,7 +149,8 @@ struct TaskRepeatsRow: View {
 // MARK: Task detail
 
 /// The centered task detail. Edits form a local draft; Save changes or closing commits it, and a failed save
-/// keeps it with the error. Completion stays on the card.
+/// keeps it with the error. Closing again after a failed save offers to discard the draft, so the dialog can always
+/// be left. Completion stays on the card.
 struct TaskDetailDialog: View {
   @Environment(HomeModel.self) private var model
   let request: HomeModel.DetailRequest
@@ -163,6 +164,8 @@ struct TaskDetailDialog: View {
   /// The caret lands after the title instead of selecting all of it, so a stray keystroke never replaces it.
   @State private var titleSelection: TextSelection?
   @State private var caretPending = false
+  /// Shown when closing after a save failed: discard the draft or keep editing.
+  @State private var confirmDiscard = false
 
   var body: some View {
     VStack(spacing: 0) {
@@ -219,9 +222,32 @@ struct TaskDetailDialog: View {
           .frame(height: 220)
       }
     }
+    .overlay { if confirmDiscard { discardConfirmation } }
+    .animation(Motion.fast, value: confirmDiscard)
     .onAppear(perform: reset)
     .onChange(of: request.id) { _, _ in reset() }
-    .onChange(of: model.dismissals) { _, _ in close() }
+    .onChange(of: model.dismissals) { _, _ in if !confirmDiscard { close() } }
+    // A task opened right after it was created has no revision until the server confirms it; adopt it then, so
+    // the edit saves instead of being refused as stale.
+    .onChange(of: model.store.task(request.id)?.revision) { _, revision in
+      guard let revision, draft?.revision == nil, baseline?.revision == nil else { return }
+      draft?.revision = revision
+      baseline?.revision = revision
+    }
+  }
+
+  private var discardConfirmation: some View {
+    ZStack {
+      Palette.overlayBackdrop.opacity(0.6)
+        .onTapGesture { confirmDiscard = false }
+      ConfirmPanel(title: "Close without saving?", message: "Your changes to this task couldn't be saved and will be lost.",
+        confirmLabel: "Discard changes", destructive: true,
+        onCancel: { confirmDiscard = false }, onConfirm: {
+          confirmDiscard = false
+          model.detail = nil
+        })
+        .frame(maxWidth: 360)
+    }
   }
 
   private func reset() {
@@ -314,11 +340,16 @@ struct TaskDetailDialog: View {
     return draft
   }
 
-  /// Closing commits the draft; a failed save keeps the dialog open with the error.
+  /// Closing commits the draft; a failed save keeps the dialog open with the error, and closing again then asks
+  /// whether to discard the draft.
   func close() {
     guard !saving else { return }
     guard dirty else {
       model.detail = nil
+      return
+    }
+    if error != nil {
+      confirmDiscard = true
       return
     }
     commit { model.detail = nil }
